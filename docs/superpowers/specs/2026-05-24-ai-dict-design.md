@@ -100,7 +100,7 @@ Each platform implements the workflow through the same hexagonal **ports & adapt
 ### 4.2 Monorepo layout (pnpm workspaces)
 
 ```
-ai-dictionary/
+ai-dict/
 ├── packages/
 │   ├── core/                            # DOMAIN. Pure. Zero IO. Zero browser API.
 │   │   ├── src/
