@@ -181,7 +181,8 @@ ai-dictionary/
 │       │   │   ├── safari-floating-trigger.ts
 │       │   │   ├── safari-storage-store.ts
 │       │   │   ├── safari-kv-store.ts
-│       │   │   └── message-relay-lookup-client.ts
+│       │   │   ├── message-relay-lookup-client.ts
+│       │   │   └── message-relay-settings-store.ts
 │       │   └── manifest.json
 │       ├── test/
 │       │   ├── adapters/*.test.ts
@@ -216,11 +217,11 @@ esbuild per platform package. Workspace symlinks resolve `core` + `adapters-shar
 
 | File | Responsibility | Depends on | I/O |
 |---|---|---|---|
-| `workflow.ts` | Orchestrate steps [1]–[5]. Uses ports only. | All 5 ports. | None directly. |
+| `workflow.ts` | Orchestrate steps [1]–[5]. Uses ports only. | 5 ports (not `Storage`; that one is SW-side). | None directly. |
 | `ports.ts` | Interfaces: `SelectionSource`, `TriggerUI`, `ResultRenderer`, `LookupClient`, `SettingsStore`, `Storage`. | — | — |
 | `prompt-template.ts` | Render user template with placeholders. | — | Pure. |
-| `cache-policy.ts` | Cache key derive (SHA-1 short hash of `word+context+target`), LRU eviction (cap 1000) over a `Storage` port. | `Storage` port | None. |
-| `history-policy.ts` | Append + list + clear over a `Storage` port. Newest-first; cap 500 First-In-First-Out (FIFO). | `Storage` port | None. |
+| `cache-policy.ts` | Cache key derive (fast non-crypto hash, FNV-1a 64-bit, of `word+context+target`), LRU eviction (cap 1000) over a `Storage` port. | `Storage` port | None. |
+| `history-policy.ts` | Append + list (with `limit`/`cursor` paging) + clear over a `Storage` port. Newest-first; cap 500 First-In-First-Out (FIFO). | `Storage` port | None. |
 | `default-template.ts` | The default Gemini prompt string. See Appendix A. | — | — |
 | `wire-schema.ts` | zod schemas + JSON-schema snapshot exporter for `WireMessage` / `WireReply`. | zod | — |
 | `types.ts` | `LookupRequest`, `LookupResult`, `LookupError`, `Settings`, `PublicSettings`, `SelectionEvent`, `AnchorRect`, `HistoryEntry`. | — | — |
@@ -269,7 +270,8 @@ export interface PublicSettings {
 
 export interface SettingsStore {
   get(): Promise<PublicSettings>;
-  set(patch: Partial<PublicSettings>): Promise<void>;
+  // non-secret, user-editable fields only; hasKey is derived, apiKey is never set via this port
+  set(patch: Partial<Pick<PublicSettings, 'targetLang' | 'promptTemplate'>>): Promise<void>;
 }
 
 // Generic key-value used by cache + history
@@ -283,6 +285,8 @@ export interface Storage {
 // SW/Options-page-only full settings (NOT exposed via SettingsStore port)
 export interface Settings extends PublicSettings {
   apiKey: string;
+  cacheEnabled: boolean;   // default true; SW skips cache read+write when false
+  saveHistory: boolean;    // default true; SW skips history append when false
 }
 ```
 
@@ -302,7 +306,7 @@ Styles are loaded via Constructable Stylesheets (`adoptedStyleSheets`) — no in
 | Component | Owns |
 |---|---|
 | `manifest.json` | MV3, content scripts, side panel permission, host permissions, strict CSP. |
-| `sw.ts` | Composes `GeminiLookupClient` + `ChromeStorageStore` + `ChromeKvStore('cache')` + `ChromeKvStore('history')`. Hosts the message router. Holds a `Map<requestId, AbortController>` for cancellation. |
+| `sw.ts` | Composes `GeminiLookupClient` + `ChromeStorageStore` + `ChromeKvStore('cache')` + `ChromeKvStore('history')`. Hosts the message router. Holds a `Map<requestId, AbortController>` for cancellation. Serializes every `cache:index` / `history:index` read-modify-write through one in-SW write queue so concurrent lookups (all tabs share a single SW) can't clobber each other's index update — `chrome.storage` has no transactions. |
 | `content.ts` | Composition root for content side. Wires content adapters and calls `runLookupWorkflow(deps)`. |
 | `side-panel.html / .ts` | Hosts `<lookup-card>`. Subscribes to SW push messages when the side panel is open. |
 | `options.html / .ts` | Hosts `<settings-form>`. Reads/writes the full `Settings` (including `apiKey`) directly via `chrome.storage.local` — bypasses SW (extension context, same security boundary). |
@@ -368,7 +372,8 @@ export type WireMessage =
   | { type: 'lookup';         req: LookupRequest; requestId: string }
   | { type: 'lookup.cancel';  requestId: string }
   | { type: 'settings.get' }
-  | { type: 'settings.set';   patch: Partial<Settings> }     // apiKey accepted only from options page
+  // no `settings.set`: key + settings are written by the options page directly to
+  // chrome.storage.local (§5.4, §6.6); nothing is set over the wire.
   | { type: 'history.list';   limit?: number; cursor?: string }
   | { type: 'history.clear' }
   | { type: 'cache.clear' }
@@ -458,6 +463,8 @@ user            content.ts                              SW                      
 
 Two SW round-trips on first lookup per tab (settings.get, lookup). `MessageRelaySettingsStore` caches `PublicSettings` in tab memory and invalidates on `chrome.storage.onChanged` -> subsequent lookups make a single round-trip.
 
+The SW honors the `cacheEnabled` / `saveHistory` toggles (§5.2): when `cacheEnabled` is false it skips both `cache.get` and `cache.put`; when `saveHistory` is false it skips the `history.push`.
+
 ### 6.4 Flow 1b — Cache hit
 
 ```
@@ -546,9 +553,11 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 
 ```ts
 // core/src/cache-policy.ts
+// Cache key, not a security boundary -> a fast synchronous non-crypto hash keeps `core`
+// pure + browser-free (SubtleCrypto's digest() is async) at ~zero bundle cost.
 export function deriveCacheKey(req: { word: string; context: string; target: string }): string {
   const norm = `${req.word.trim().toLowerCase()}|${req.context.trim()}|${req.target}`;
-  return sha1HexShort(norm, 16);    // 16-char truncated SHA-1; 1000-cap LRU -> collision-safe
+  return fnv1a64Hex(norm);    // 16-char (64-bit) hex; 1000-cap LRU -> collision-safe
 }
 ```
 
@@ -574,7 +583,7 @@ export function deriveCacheKey(req: { word: string; context: string; target: str
 
 ### 7.3 Security
 
-**S1 — Key isolation.** API key lives in SW + options page only. Content-side `SettingsStore` adapter receives `PublicSettings` (no `apiKey`). Wire reply for `settings.get` always strips `apiKey`. Wire `settings.set` accepts an `apiKey` field only when `sender.url === chrome.runtime.getURL('options.html')`.
+**S1 — Key isolation.** API key lives in SW + options page only. Content-side `SettingsStore` adapter receives `PublicSettings` (no `apiKey`). Wire reply for `settings.get` always strips `apiKey`. The key is written **only** by the options page writing `chrome.storage.local` directly (§5.4, §6.6); it never travels over the wire, so there is no `settings.set` key-accept path to guard. All inbound messages remain gated by the `sender.id` check (S3).
 
 **S2 — Key in transit.** Header `X-Goog-Api-Key`. TLS enforced by browser; `connect-src` whitelists only the Gemini origin.
 
@@ -592,10 +601,11 @@ fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:
 
 **S3 — Sender check.** SW listener guards `sender.id === chrome.runtime.id`. No `externally_connectable` declared.
 
-**S4 — Cross-Site Scripting (XSS) on Gemini Markdown.** Gemini output is user-influenced (via custom prompt template). Pipeline: `markdown-it` (`html: false`) -> `DOMPurify` with allowlist (no raw HTML, no scripts, no event handlers, no `javascript:` URLs, no `data:` except `image/*`). Anchors auto-attribute `target="_blank" rel="noopener noreferrer"`; only `https:` schemes allowed.
+**S4 — Cross-Site Scripting (XSS) on Gemini Markdown.** Gemini output is user-influenced (via custom prompt template). Pipeline: a Markdown renderer with raw HTML disabled (`marked`, or `markdown-it` with `html:false`) -> `DOMPurify` with allowlist (no raw HTML, no scripts, no event handlers, no `javascript:` URLs, no `data:` except `image/*`). Anchors auto-attribute `target="_blank" rel="noopener noreferrer"`; only `https:` schemes allowed.
 
 **S5 — Strict CSP** (`manifest.json`, `extension_pages`):
 ```
+default-src 'none';
 script-src 'self';
 object-src 'none';
 connect-src https://generativelanguage.googleapis.com;
@@ -657,7 +667,7 @@ Page URL and title go to Gemini **only if** the user's custom prompt template re
 **P5 — User controls.**
 - "Save history" toggle (default on).
 - "Cache lookups" toggle (default on).
-- "Export history" -> JSON download.
+- "Export history" -> JSON download (composed client-side by paging `history.list`; no dedicated wire message).
 - "Clear cache" / "Clear history" / "Clear all data" buttons.
 
 **P6 — No telemetry.** No toggle. Stated in store listing.
@@ -768,13 +778,15 @@ No `sinon-chrome` dependency. Hand-rolled fakes per test.
 
 ### 8.7 Bundle size budgets (`size-limit`, gzipped)
 
+`content.js` and `side-panel.js` carry the Markdown render + sanitize path (`<lookup-card>` -> Markdown renderer + `DOMPurify`). `DOMPurify` (~16 KB gz) cannot move to the SW (no DOM there), so it is unavoidable content-side. Budgets below assume a light renderer (`marked` ~5 KB gz, or `snarkdown` ~1 KB gz) + `DOMPurify`; keeping `markdown-it` (~30 KB gz) instead means raising `content.js` / `side-panel.js` to ~70 KB / ~65 KB and forfeiting the "tiny content bundle" goal (Constraint 7).
+
 | Bundle | Budget |
 |---|---|
-| `extension-chrome/dist/content.js` | 25 KB |
+| `extension-chrome/dist/content.js` | 45 KB |
 | `extension-chrome/dist/sw.js` | 30 KB |
 | `extension-chrome/dist/options.js` | 40 KB |
-| `extension-chrome/dist/side-panel.js` | 20 KB |
-| `extension-safari/dist/content.js` | 25 KB |
+| `extension-chrome/dist/side-panel.js` | 40 KB |
+| `extension-safari/dist/content.js` | 45 KB |
 | `extension-safari/dist/sw.js` | 30 KB |
 | `extension-safari/dist/options.js` | 40 KB |
 
@@ -907,7 +919,7 @@ Output Markdown with sections in this exact order:
 Constraints:
 - Disambiguate the sense based on the sentence context.
 - Do not include any HTML.
-- Do not echo the user's API key or input verbatim more than once.
+- Do not repeat the user's input verbatim more than once.
 - Keep the response under 200 words.
 ```
 
@@ -919,7 +931,7 @@ Placeholders supported by `prompt-template.ts`: `{word}`, `{context}`, `{target_
 |---|---|
 | Hostile webpage reads API key from DOM or content-script memory | Key never enters content-script context (§7.3 S1). Storage isolated to extension origin. |
 | Hostile webpage injects fake `<lookup-trigger>` / `<lookup-card>` to phish | Web Components mounted in closed Shadow DOM with extension-origin URL. Residual risk; documented. |
-| Gemini response carries XSS payload (prompt-injection by attacker pasting hostile selection) | Markdown sanitized via `markdown-it` (`html:false`) + `DOMPurify` allowlist (§7.3 S4). |
+| Gemini response carries XSS payload (prompt-injection by attacker pasting hostile selection) | Markdown sanitized via a raw-HTML-disabled renderer + `DOMPurify` allowlist (§7.3 S4). |
 | Network MITM | TLS enforced by browser; `connect-src` restricts to Gemini origin only. |
 | Extension supply-chain (malicious update) | Both stores require signed updates. Source repo public + tagged releases. |
 | Local-device compromise reading `storage.local` | Out of scope. Settings provides "Clear all data" + a link to revoke the key in Google AI Studio. |

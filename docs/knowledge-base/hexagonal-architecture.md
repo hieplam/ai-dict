@@ -2,6 +2,11 @@
 
 Knowledge base note. Captured during brainstorming of the AI Dictionary browser extensions.
 
+> **Note:** the `LookupResult`, `SelectionEvent`, and `SettingsStore` shapes in the code
+> samples below are early illustrative sketches, **superseded by the final port definitions**
+> in `docs/superpowers/specs/2026-05-24-ai-dictionary-design.md` (§5.2 / §6.1). They remain
+> here only to teach the hex pattern, not as the current contract.
+
 ## What it is
 
 **Hexagonal Architecture** (also called **Ports and Adapters**) — Alistair Cockburn, 2005.
