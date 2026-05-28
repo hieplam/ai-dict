@@ -294,12 +294,14 @@ export interface Settings extends PublicSettings {
 
 | Tag | Responsibility | Events emitted |
 |---|---|---|
-| `<lookup-trigger>` | Anchored button next to selection. Closed Shadow DOM. | `lookup-click` |
+| `<lookup-trigger>` | Anchored button next to selection. Open Shadow DOM (see shadow-mode note below). | `lookup-click` |
 | `<lookup-card payload>` | Renders sanitized Markdown result + loading/error states. | `close`, `expand` |
 | `<bottom-sheet>` | Slide-up surface with drag-down close + scrim. Focus trap. ESC closes. | `dismiss` |
 | `<settings-form>` | API key (masked) + prompt template (textarea) + target language picker + history list + cache controls. | `save`, `clear-cache`, `clear-history`, `test-connection`, `export-history` |
 
 Styles are loaded via Constructable Stylesheets (`adoptedStyleSheets`) — no inline `<style>` blocks — so the strict Content-Security-Policy (CSP) (`style-src 'self'`) can be enforced.
+
+**Shadow-mode note.** All components use **open** Shadow DOM. Closed mode would hide the root from `@testing-library/dom` and `axe-core`, defeating the §8.1 component/a11y tier (those tools cannot reach into a closed root). Open vs. closed does not change isolation from *page script execution* — the page cannot inject into our root in either mode — it only lets the page *read* our `.shadowRoot`. We render no secrets there (the API key never reaches content scripts, S1), so readability is acceptable; the phishing residual risk (Appendix B) is identical for both modes since a hostile page can mint look-alike elements regardless.
 
 ### 5.4 `extension-chrome/`
 
@@ -541,13 +543,15 @@ user selects "beta"  -> content sends msg{lookup.cancel, requestId:A}
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   if (sender.id !== chrome.runtime.id) return false;          // defense-in-depth
   router(msg, sender)
-    .then(sendResponse)
+    .then(reply => { if (reply !== SUPPRESS) sendResponse(reply); })  // skip our-cancel
     .catch(e => sendResponse({ ok: false, type: msg.type, error: mapError(e) }));
   return true;                                                  // keep channel open
 });
 ```
 
 `router` is exposed by `buildRouter(deps)` in `sw.ts`. Tests inject fake `LookupClient` + `SettingsStore` + `Storage` to exercise the router pure-functionally.
+
+**Cancellation suppression.** When a `lookup.cancel` aborts an in-flight lookup, that lookup's fetch rejects with an `AbortError`. The router owns the `Map<requestId, AbortController>`, so it also tracks which `requestId`s it deliberately aborted: for an our-cancel abort it swallows the `AbortError` and resolves to the `SUPPRESS` sentinel, and the listener skips `sendResponse` (the canceled request's reply channel is never read — the newer request owns the UI). An abort *not* caused by an our-cancel — e.g. the 20 s timeout (§7.3 S11) — still rejects and maps to `NETWORK` per §6.9. Keeping this bookkeeping inside the router (co-located with the `AbortController` Map) keeps the listener generic and unit-testable.
 
 ### 6.11 Cache key derive
 
@@ -929,8 +933,8 @@ Placeholders supported by `prompt-template.ts`: `{word}`, `{context}`, `{target_
 
 | Threat | Mitigation |
 |---|---|
-| Hostile webpage reads API key from DOM or content-script memory | Key never enters content-script context (§7.3 S1). Storage isolated to extension origin. |
-| Hostile webpage injects fake `<lookup-trigger>` / `<lookup-card>` to phish | Web Components mounted in closed Shadow DOM with extension-origin URL. Residual risk; documented. |
+| Hostile webpage reads API key from DOM or content-script memory | Our content code never reads the key (it uses `MessageRelaySettingsStore`, which only ever receives `PublicSettings`); platform world-isolation keeps the page out of content-script memory; storage isolated to the extension origin (§7.3 S1). |
+| Hostile webpage injects fake `<lookup-trigger>` / `<lookup-card>` to phish | Web Components mounted in (open) Shadow DOM with extension-origin URL; the page cannot script-inject into our root. A hostile page can still mint look-alike elements regardless of shadow mode — residual risk, documented (see §5.3 shadow-mode note). |
 | Gemini response carries XSS payload (prompt-injection by attacker pasting hostile selection) | Markdown sanitized via a raw-HTML-disabled renderer + `DOMPurify` allowlist (§7.3 S4). |
 | Network MITM | TLS enforced by browser; `connect-src` restricts to Gemini origin only. |
 | Extension supply-chain (malicious update) | Both stores require signed updates. Source repo public + tagged releases. |
