@@ -711,14 +711,16 @@ Page URL and title go to Gemini **only if** the user's custom prompt template re
 | Tier | Scope | Tool | Where | Speed target |
 |---|---|---|---|---|
 | Unit (pure) | `core/` workflow, policies, prompt-template, error mapper | vitest (Node) | local + CI | <1 s |
-| Unit (adapters) | Each adapter with injected hand-rolled fakes (no `sinon-chrome`) | vitest + jsdom | local + CI | <3 s |
-| Component | `shared-ui/` Web Components + a11y | vitest + jsdom + `@testing-library/dom` + `axe-core` | local + CI | <5 s |
+| Unit (adapters) | Each adapter with injected hand-rolled fakes (no `sinon-chrome`) | vitest + happy-dom | local + CI | <3 s |
+| Component | `shared-ui/` Web Components + a11y | vitest + happy-dom + `@testing-library/dom` + `axe-core` | local + CI | <5 s |
 | Contract | Wire `WireMessage` / `WireReply` schemas | vitest + zod | local + CI | <1 s |
 | Wire schema drift | Regenerate `wire-schema.snapshot.json` and diff | custom `pnpm wire:check` | CI | <1 s |
 | End-to-End (E2E) Chrome | Real Chrome unpacked, Gemini intercepted via `page.route()` | Playwright | CI (ubuntu) + local | <60 s |
 | Manual (Safari iOS) | iOS Simulator on macOS dev box | `extension-safari/e2e/ios-simulator-checklist.md` | Pre-release | n/a |
 
 No automated E2E for Safari (Apple does not expose WebDriver for iOS Safari Web Extensions). Compensated by elevated adapter coverage + the mandatory iOS Simulator checklist on every release.
+
+**DOM test environment.** Component and DOM-touching adapter tests run under **happy-dom**, not jsdom: our Web Components style themselves via Constructable Stylesheets (`new CSSStyleSheet()` + `replaceSync()` + `adoptedStyleSheets`, required by the strict CSP in §7.3 S5), and jsdom does not implement `CSSStyleSheet.replaceSync()` ([jsdom#3766](https://github.com/jsdom/jsdom/issues/3766)) — a component would throw at construction. happy-dom supports constructable stylesheets. Any test that mounts a `shared-ui` component (including the `*-floating-trigger` adapters in §5.4/§5.5) therefore uses happy-dom. Note: `axe-core` under any Node DOM cannot evaluate `color-contrast` (no layout/computed color), so the WCAG-AA contrast requirement (§7.5) stays a manual/visual check; the automated a11y tier covers roles, ARIA, names, and structure.
 
 ### 8.2 Coverage gates (CI-enforced)
 
@@ -810,7 +812,7 @@ jobs:
   typecheck:         # tsc --noEmit across workspaces
   lint:              # eslint + prettier --check
   test-unit:         # vitest run --coverage (all packages)
-  test-component:    # shared-ui jsdom + axe-core
+  test-component:    # shared-ui happy-dom + axe-core
   test-contract:     # wire-schema tests
   wire-schema-check: # regen snapshot + diff
   e2e-chrome:        # Playwright; route()-mocked Gemini
