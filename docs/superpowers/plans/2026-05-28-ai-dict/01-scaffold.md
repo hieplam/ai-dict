@@ -149,9 +149,7 @@ Expected: registry resolves latest stable; `package.json.devDependencies` popula
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
-    "skipLibCheck": true,
-    "declaration": true,
-    "composite": true
+    "skipLibCheck": true
   }
 }
 ```
@@ -205,7 +203,8 @@ export default tseslint.config(
   {
     languageOptions: {
       parserOptions: {
-        projectService: true,
+        // allow root config TS files to type-check via an inferred default project
+        projectService: { allowDefaultProject: ['*.config.ts', '*.config.mts'] },
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -266,6 +265,8 @@ export default tseslint.config(
       ],
     },
   },
+  // JS config files (eslint.config.mjs etc.) have no type info — turn off type-checked rules
+  { files: ['**/*.{js,mjs,cjs}'], extends: [tseslint.configs.disableTypeChecked] },
   prettier,
 );
 ```
@@ -295,11 +296,11 @@ rm -rf packages/_probe
 
 ```bash
 mkdir -p packages/core/src packages/shared-ui/src
-printf 'export const x = 1;\n' > packages/shared-ui/src/dummy.ts
-printf "import { x } from '../../shared-ui/src/dummy';\nexport const y = x;\n" > packages/core/src/probe.ts
-pnpm exec eslint packages/core/src/probe.ts
+printf 'export const x = 1;\n' > packages/shared-ui/src/dummy.js
+printf "import { x } from '../../shared-ui/src/dummy.js';\nexport const y = x;\n" > packages/core/src/probe.js
+pnpm exec eslint packages/core/src/probe.js
 ```
-Expected: **FAIL** — `import-x/no-restricted-paths` reports core importing from shared-ui. Then clean up:
+Expected: **FAIL** — `import-x/no-restricted-paths` reports core importing from shared-ui. (Probe uses `.js` so the type-aware `projectService` is not required — `no-restricted-paths` is path-based and still fires.) Then clean up:
 ```bash
 rm -rf packages/core packages/shared-ui
 ```
