@@ -5,7 +5,7 @@ describe('manifest.json (S5 CSP + S8 permissions — exact)', () => {
   it('declares only storage + sidePanel; no scripting / externally_connectable (S8)', () => {
     expect(manifest.permissions).toEqual(['storage', 'sidePanel']);
     expect(manifest.host_permissions).toEqual(['<all_urls>', 'https://generativelanguage.googleapis.com/*']);
-    expect('scripting' in (manifest.permissions as unknown as string[])).toBe(false);
+    expect(manifest.permissions.includes('scripting')).toBe(false);
     expect('externally_connectable' in manifest).toBe(false);
   });
   it('extension_pages CSP matches §7.3 S5 exactly', () => {
@@ -15,6 +15,8 @@ describe('manifest.json (S5 CSP + S8 permissions — exact)', () => {
   });
   it('MV3 + statically registered content scripts (no scripting API)', () => {
     expect(manifest.manifest_version).toBe(3);
-    expect(manifest.content_scripts[0].matches).toEqual(['<all_urls>']);
+    const firstScript = manifest.content_scripts[0];
+    if (!firstScript) throw new Error('No content scripts defined in manifest');
+    expect(firstScript.matches).toEqual(['<all_urls>']);
   });
 });

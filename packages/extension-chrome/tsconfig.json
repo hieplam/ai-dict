@@ -3,8 +3,8 @@
   "compilerOptions": {
     "noEmit": true,
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
-    "types": ["chrome"],
+    "types": ["chrome", "node"],
     "resolveJsonModule": true
   },
-  "include": ["src", "test"]
+  "include": ["src", "test", "e2e", "playwright.config.ts"]
 }

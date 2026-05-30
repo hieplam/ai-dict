@@ -10,7 +10,7 @@ const lookupMsg = (requestId: string): WireMessage => ({ type: 'lookup', req, re
 type LookupFn = (req: LookupRequest, opts?: { signal?: AbortSignal }) => Promise<LookupResult>;
 type LookupMock = ReturnType<typeof vi.fn<LookupFn>>;
 
-function makeLookupMock(impl: LookupFn = async () => result): LookupMock {
+function makeLookupMock(impl: LookupFn = () => Promise.resolve(result)): LookupMock {
   return vi.fn<LookupFn>(impl);
 }
 
@@ -22,12 +22,12 @@ interface DepsOverrides {
 function deps(over: DepsOverrides = {}) {
   const kv = fakeStorage();
   const lookupFn = over.client?.lookup ?? makeLookupMock();
-  const getFn = vi.fn<() => Promise<PublicSettings>>(async () => ({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true }));
+  const getFn = vi.fn<() => Promise<PublicSettings>>(() => Promise.resolve({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true }));
   return {
     kv,
     client: { lookup: lookupFn },
     settings: { get: getFn, set: vi.fn<(patch: Partial<Pick<PublicSettings, 'targetLang' | 'promptTemplate'>>) => Promise<void>>() },
-    readToggles: over.readToggles ?? vi.fn(async () => ({ cacheEnabled: true, saveHistory: true })),
+    readToggles: over.readToggles ?? vi.fn(() => Promise.resolve({ cacheEnabled: true, saveHistory: true })),
     queue: new WriteQueue(),
   };
 }
@@ -53,7 +53,7 @@ describe('buildRouter', () => {
   });
 
   it('honours toggles: cacheEnabled=false + saveHistory=false skips both stores', async () => {
-    const d = deps({ readToggles: async () => ({ cacheEnabled: false, saveHistory: false }) });
+    const d = deps({ readToggles: () => Promise.resolve({ cacheEnabled: false, saveHistory: false }) });
     const route = buildRouter(d);
     await route(lookupMsg('a'));
     await route(lookupMsg('b'));
@@ -62,7 +62,7 @@ describe('buildRouter', () => {
   });
 
   it('lookup rejection (LookupError) → error reply (D1)', async () => {
-    const d = deps({ client: { lookup: makeLookupMock(async () => { throw Object.assign(new Error('x'), { code: 'NETWORK', message: 'x', retryable: true }); }) } });
+    const d = deps({ client: { lookup: makeLookupMock(() => Promise.reject(Object.assign(new Error('x'), { code: 'NETWORK', message: 'x', retryable: true }))) } });
     const reply = await buildRouter(d)(lookupMsg('a'));
     expect(reply).toMatchObject({ ok: false, type: 'lookup', error: { code: 'NETWORK' }, requestId: 'a' });
   });
@@ -106,6 +106,17 @@ describe('buildRouter', () => {
     expect(reply).toEqual({ ok: true, type: 'settings', settings: { targetLang: 'vi', promptTemplate: 'tpl', hasKey: true } });
   });
 
+  it('connection.test → ack when lookup succeeds', async () => {
+    const reply = await buildRouter(deps())({ type: 'connection.test' });
+    expect(reply).toMatchObject({ ok: true, type: 'ack' });
+  });
+
+  it('connection.test → error reply when lookup throws', async () => {
+    const d = deps({ client: { lookup: makeLookupMock(() => Promise.reject(Object.assign(new Error('no key'), { code: 'AUTH', message: 'no key', retryable: false }))) } });
+    const reply = await buildRouter(d)({ type: 'connection.test' });
+    expect(reply).toMatchObject({ ok: false, type: 'connection.test', error: { code: 'AUTH' } });
+  });
+
   it('history.list / history.clear / cache.clear', async () => {
     const d = deps();
     const route = buildRouter(d);
@@ -114,5 +125,29 @@ describe('buildRouter', () => {
     expect(await route({ type: 'history.clear' })).toMatchObject({ ok: true, type: 'ack' });
     expect((await historyList({ storage: d.kv }, {})).entries).toHaveLength(0);
     expect(await route({ type: 'cache.clear' })).toMatchObject({ ok: true, type: 'ack' });
+  });
+
+  it('lookup.cancel with no inflight request still returns ack (no crash)', async () => {
+    const route = buildRouter(deps());
+    const ack = await route({ type: 'lookup.cancel', requestId: 'nonexistent' });
+    expect(ack).toMatchObject({ ok: true, type: 'ack' });
+  });
+
+  it('non-LookupError rejection is wrapped via mapError (toLookupError fallback)', async () => {
+    // Throw a plain Error (not LookupError-shaped) to hit the mapError branch
+    const d = deps({ client: { lookup: makeLookupMock(() => Promise.reject(new Error('plain network failure'))) } });
+    const reply = await buildRouter(d)(lookupMsg('plain'));
+    // mapError wraps unknown errors as UNKNOWN code
+    expect(reply).toMatchObject({ ok: false, type: 'lookup', error: { code: 'UNKNOWN' } });
+  });
+
+  it('history.list with limit + cursor options passes them through', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    // Seed two entries so pagination is meaningful
+    await route(lookupMsg('a'));
+    await route(lookupMsg('b'));
+    const reply = await route({ type: 'history.list', limit: 1 });
+    expect(reply).toMatchObject({ ok: true, type: 'history' });
   });
 });

@@ -21,6 +21,9 @@ export class MessageRelaySettingsStore implements SettingsStore {
     throw new Error('settings.get failed');
   }
 
+  // The content side MUST NOT write settings over the wire. Settings are edited on the options page.
+  // Param is intentionally ignored — method exists only to satisfy the SettingsStore interface.
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   set(_patch: Partial<Pick<import('@ai-dict/core').PublicSettings, 'targetLang' | 'promptTemplate'>>): Promise<void> {
     return Promise.reject(new Error('Settings are edited on the options page, not over the content wire.'));
   }
