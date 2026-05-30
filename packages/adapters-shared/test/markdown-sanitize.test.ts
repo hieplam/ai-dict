@@ -37,4 +37,9 @@ describe('sanitizeMarkdown (S4)', () => {
     expect(html).toContain('target="_blank"');
     expect(html).toContain('rel="noopener noreferrer"');
   });
+
+  it('strips plain http:// links (https-only invariant, S4)', () => {
+    const html = sanitizeMarkdown('[insecure](http://example.com)');
+    expect(html).not.toContain('http://example.com');
+  });
 });
