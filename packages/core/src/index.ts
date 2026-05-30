@@ -4,3 +4,4 @@ export * from './default-template';
 export * from './prompt-template';
 export * from './cache-policy';
 export * from './history-policy';
+export * from './error-mapper';

@@ -1,0 +1,12 @@
+{
+  "candidates": [
+    {
+      "content": {
+        "parts": [{ "text": "## IPA\n/bæŋk/\n\n## Part of Speech\nnoun\n\n## Eng -> Eng\nThe sloping land beside a river.\n\n## Eng -> Vietnamese\nbờ sông\n\n## Example\nShe sat on the bank of the river. / Cô ấy ngồi trên bờ sông." }],
+        "role": "model"
+      },
+      "finishReason": "STOP"
+    }
+  ],
+  "usageMetadata": { "promptTokenCount": 80, "candidatesTokenCount": 60 }
+}
