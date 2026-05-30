@@ -69,10 +69,20 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ai-dict/shared-ui test # happy-dom + axe-core component tests
 
-  # wire-schema-check is the sole authoritative wire-drift gate (spec §8.5).
-  # It runs `pnpm wire:check` → scripts/wire-check.mjs → pnpm --filter @ai-dict/core test wire-schema.
-  # The former test-contract job ran the identical vitest filter directly, creating a duplicate gate
-  # with unclear ownership; it has been removed. wire-schema-check is the canonical gate.
+  test-contract: # wire-schema contract tests (spec §8.9, D1)
+    needs: install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ai-dict/core test wire-schema # wire validation/contract tests
+
+  # wire-schema-check runs `pnpm wire:check` → scripts/wire-check.mjs → pnpm --filter @ai-dict/core test wire-schema.
+  # test-contract (above) runs the same vitest filter directly and is kept as the canonical §8.9 job.
+  # wire-schema-check is an additional authoritative drift gate (spec §8.5).
   wire-schema-check:
     needs: install
     runs-on: ubuntu-latest

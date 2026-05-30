@@ -51,6 +51,13 @@ jobs:
         # ExportOptions.plist committed by Bundle 06; if signing creds are absent the
         # archive (.xcarchive) is still uploaded as the asset and signing happens in
         # the manual Transporter step.
+        #
+        # IMPORTANT: packages/extension-safari/xcode/ExportOptions.plist was not
+        # committed by Bundle 06. This step will hard-fail when the file is absent,
+        # so continue-on-error is set to true: the .xcarchive artifact is still
+        # uploaded and can be signed/exported manually via Xcode Organizer or
+        # Transporter. Once ExportOptions.plist is committed, remove continue-on-error.
+        continue-on-error: true
         run: |
           xcodebuild -exportArchive \
             -archivePath "$RUNNER_TEMP/AIDict.xcarchive" \
@@ -70,6 +77,7 @@ jobs:
     permissions:
       contents: write
       issues: write
+      actions: read # required by actions/download-artifact@v4 to fetch sibling-job artifacts
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0

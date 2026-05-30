@@ -17,6 +17,7 @@ Run on the tagged commit (`vX.Y.Z` on `main`) before publishing.
 ## Manual passes
 - [ ] iOS Simulator end-to-end pass complete (`packages/extension-safari/e2e/ios-simulator-checklist.md`, all 12 steps).
 - [ ] Chrome smoke: clean profile, set key, look up a word on Wikipedia, verify card + history + cache hit on repeat.
+  - **Note:** Chrome lookup e2e runs automatically in CI (`e2e-chrome` job) under `PLAYWRIGHT_RUN_LOOKUP_E2E=1` via `xvfb-run -a`; no manual step needed — verify the CI job is green before tagging. If the job fails, check that env var and the virtual display setup in `.github/workflows/ci.yml` (`e2e-chrome` job).
 
 ## Publish
 - [ ] Tag pushed; `release.yml` produced `dist-chrome.zip` + iOS `.ipa`/`.xcarchive`.
