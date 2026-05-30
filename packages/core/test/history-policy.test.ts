@@ -21,7 +21,7 @@ describe('history-policy', () => {
     for (const id of ['1', '2', '3']) await historyAppend({ storage: s }, entry(id));
     const page1 = await historyList({ storage: s }, { limit: 2 });
     expect(page1.entries.map((e) => e.id)).toEqual(['3', '2']);
-    const page2 = await historyList({ storage: s }, { limit: 2, cursor: page1.nextCursor });
+    const page2 = await historyList({ storage: s }, { limit: 2, ...(page1.nextCursor !== undefined ? { cursor: page1.nextCursor } : {}) });
     expect(page2.entries.map((e) => e.id)).toEqual(['1']);
     expect(page2.nextCursor).toBeUndefined();
   });
