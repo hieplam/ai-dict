@@ -37,7 +37,13 @@ type ValidType = typeof VALID_TYPES extends Set<infer T> ? T : never;
 // Whitelisted-field shapes returned by safeParse on success.
 // These mirror the WireMessage discriminated union in @ai-dict/core exactly.
 // req is reconstructed from whitelisted fields only — no index signature so no extra fields survive.
-type StrippedLookup = { type: 'lookup'; req: { word: string; context?: unknown }; requestId?: unknown };
+// All fields that GeminiLookupClient.lookup() reads must be preserved: word, context, url, title,
+// target, and promptTemplate.  Dropping any of them causes undefined to reach renderTemplate().
+type StrippedLookup = {
+  type: 'lookup';
+  req: { word: string; context?: unknown; url?: unknown; title?: unknown; target?: unknown; promptTemplate?: unknown };
+  requestId?: unknown;
+};
 type StrippedLookupCancel = { type: 'lookup.cancel'; requestId?: unknown };
 type StrippedHistoryList = { type: 'history.list'; limit?: unknown; cursor?: unknown };
 type StrippedSimple = { type: 'settings.get' | 'history.clear' | 'cache.clear' | 'connection.test' };
@@ -59,8 +65,20 @@ export const WireMessageSchema = {
       const req = m['req'];
       if (!isNonNullObject(req) || typeof req['word'] !== 'string') return { success: false };
       // Reconstruct req from whitelisted fields only — unknown extra fields are silently dropped.
-      const strippedReq: { word: string; context?: unknown } = { word: req['word'] };
+      // All fields that GeminiLookupClient.lookup() reads must be carried through.
+      const strippedReq: {
+        word: string;
+        context?: unknown;
+        url?: unknown;
+        title?: unknown;
+        target?: unknown;
+        promptTemplate?: unknown;
+      } = { word: req['word'] };
       if ('context' in req) strippedReq.context = req['context'];
+      if ('url' in req) strippedReq.url = req['url'];
+      if ('title' in req) strippedReq.title = req['title'];
+      if ('target' in req) strippedReq.target = req['target'];
+      if ('promptTemplate' in req) strippedReq.promptTemplate = req['promptTemplate'];
       const stripped: StrippedLookup = { type: 'lookup', req: strippedReq };
       if ('requestId' in m) stripped.requestId = m['requestId'];
       return { success: true, data: stripped };

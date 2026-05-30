@@ -11,7 +11,7 @@ describe('WireMessageSchema (lite-wire-schema shim)', () => {
   it('(a) lookup with injected extra field: success:true AND extra field stripped', () => {
     const result = WireMessageSchema.safeParse({
       type: 'lookup',
-      req: { word: 'hello', context: '', url: '', title: '', target: 'en', promptTemplate: '' },
+      req: { word: 'hello', context: 'ctx', url: 'https://example.com', title: 'Page', target: 'en', promptTemplate: 'tmpl {{word}}' },
       requestId: 'req-1',
       apiKey: 'AIza-evil',          // injected extra field
       __proto__: {},                // another unexpected field
@@ -21,6 +21,13 @@ describe('WireMessageSchema (lite-wire-schema shim)', () => {
     expect(result.data).not.toHaveProperty('apiKey');
     expect(result.data).not.toHaveProperty('__proto__');
     expect(result.data.type).toBe('lookup');
+    // All four GeminiLookupClient-required fields must survive field-stripping
+    if (result.data.type !== 'lookup') throw new Error('expected lookup type');
+    expect(result.data.req.url).toBe('https://example.com');
+    expect(result.data.req.title).toBe('Page');
+    expect(result.data.req.target).toBe('en');
+    expect(result.data.req.promptTemplate).toBe('tmpl {{word}}');
+    expect(result.data.req.context).toBe('ctx');
   });
 
   it('(a2) lookup with apiKey injected inside req: success:true AND req.apiKey is stripped', () => {

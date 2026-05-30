@@ -1,7 +1,10 @@
-// INTEGRATION NOTE — full Zod schema:
-// These tests exercise classifyInbound against the REAL WireMessageSchema (Zod).
-// In the production browser bundle, esbuild bundles the full implementation including zod.
-// Safari's size budget is more lenient for this use case.
+// INTEGRATION NOTE — real Zod schema in tests, lite shim in production:
+// These tests exercise classifyInbound against the REAL WireMessageSchema (Zod) because
+// vitest runs against source files directly, not the esbuild bundle, so the shim is never
+// applied here.  In the production browser bundle, esbuild's wire-schema-shim plugin
+// intercepts the ./wire-schema import from @ai-dict/core and substitutes the zero-import
+// lite-wire-schema.ts shim in ALL three bundles (sw.js, content.js, options.js) — zod is
+// never loaded in any production bundle.  See esbuild.config.mjs for the plugin definition.
 // The sender guard (S3) ensures same-origin-only messages reach this path,
 // limiting the attack surface to extension-internal contexts.
 
