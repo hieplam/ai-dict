@@ -112,12 +112,11 @@ describe('buildRouter', () => {
     // operation before any await, so handleCancel always finds the controller.
     let resolveToggles!: () => void;
     const togglesBlocked = new Promise<void>((r) => { resolveToggles = r; });
-    let cancelSent = false;
 
     const d = {
       kv: fakeStorage(),
       client: { lookup: makeLookupMock() },
-      settings: { get: vi.fn(async () => ({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true })), set: vi.fn() },
+      settings: { get: vi.fn(() => Promise.resolve({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true })), set: vi.fn() },
       readToggles: vi.fn(async () => {
         await togglesBlocked; // block until test sends the cancel
         return { cacheEnabled: false, saveHistory: false }; // disable cache to skip cacheGet
@@ -129,13 +128,12 @@ describe('buildRouter', () => {
 
     // readToggles is now blocked — send the cancel. With the old code (inflight.set after awaits)
     // inflight would be empty here and the cancel would be silently ignored.
+    // The `await` here proves the cancel ack was received before we unblock readToggles below.
     const ack = await route({ type: 'lookup.cancel', requestId: 'pre' });
     expect(ack).toMatchObject({ ok: true, type: 'ack' });
-    cancelSent = true;
 
     // Unblock readToggles — the result must be SUPPRESS, not a normal lookup reply
     resolveToggles();
-    expect(cancelSent).toBe(true); // sanity: confirm cancel was sent before unblocking
     expect(await p).toBe(SUPPRESS);
   });
 
