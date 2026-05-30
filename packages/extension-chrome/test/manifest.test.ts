@@ -21,8 +21,11 @@ describe('manifest.json (S5 CSP + S8 permissions — exact)', () => {
   });
   it('content_scripts has exactly two entries: MAIN-world elements script + isolated content script (Amendment A)', () => {
     expect(manifest.content_scripts).toHaveLength(2);
-    expect(manifest.content_scripts[0]).toMatchObject({ world: 'MAIN', js: ['content-elements.js'] });
-    expect(manifest.content_scripts[1]).toMatchObject({ js: ['content.js'] });
-    expect('world' in manifest.content_scripts[1]).toBe(false);
+    const script0 = manifest.content_scripts[0];
+    const script1 = manifest.content_scripts[1];
+    if (!script0 || !script1) throw new Error('Expected two content script entries in manifest');
+    expect(script0).toMatchObject({ world: 'MAIN', js: ['content-elements.js'] });
+    expect(script1).toMatchObject({ js: ['content.js'] });
+    expect('world' in script1).toBe(false);
   });
 });

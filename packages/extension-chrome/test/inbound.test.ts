@@ -18,6 +18,11 @@ describe('classifyInbound (S3 sender guard + wire-schema gate)', () => {
   it('ignores messages from a foreign sender id (S3 / D4)', () => {
     expect(classifyInbound(valid, 'evil-extension', 'my-id')).toEqual({ action: 'ignore' });
   });
+  // S3: web pages send messages with sender.id === undefined (no extension id).
+  // This is the most common real-world attacker path; the guard must reject it.
+  it('ignores messages with undefined sender id — web-page attacker path (S3)', () => {
+    expect(classifyInbound(valid, undefined, 'my-runtime-id')).toEqual({ action: 'ignore' });
+  });
   it('rejects malformed messages with a PARSE error reply', () => {
     const out = classifyInbound({ type: 'nope' }, 'my-id', 'my-id');
     expect(out).toMatchObject({ action: 'reject', reply: { ok: false, error: { code: 'PARSE' } } });

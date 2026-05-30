@@ -17,43 +17,22 @@ import { fileURLToPath } from 'node:url';
 // ---------------------------------------------------------------------------
 const coreSrcDir = resolve(dirname(fileURLToPath(import.meta.url)), '../core/src');
 
+// Absolute path to the real shim source — esbuild bundles this file instead of
+// the inline string so the shim is unit-testable and field-strips unknown keys.
+const liteWireSchemaPath = resolve(dirname(fileURLToPath(import.meta.url)), 'src/lite-wire-schema.ts');
+
 const wireSchemaShim = {
   name: 'wire-schema-shim',
   setup(build) {
     build.onResolve({ filter: /^\.\/wire-schema$/ }, (args) => {
       if (args.resolveDir === coreSrcDir) {
-        return { path: 'lite-wire-schema', namespace: 'wire-shim' };
+        // Redirect core's ./wire-schema import to our size-budget shim.
+        // The shim exports the same WireMessageSchema + wireJsonSchema surface
+        // but is dependency-free (no zod) and field-strips unknown keys on success.
+        return { path: liteWireSchemaPath };
       }
       return null;
     });
-    build.onLoad({ filter: /.*/, namespace: 'wire-shim' }, () => ({
-      // Lightweight type-discriminant: same behaviour as WireMessageSchema.safeParse()
-      // at the boundary (valid type string → route; anything else → reject).
-      //
-      // SECURITY NOTE: The full Zod WireMessageSchema validates payload shapes (e.g. req fields
-      // for 'lookup'); unit tests in inbound.test.ts run against the real Zod schema.
-      // This shim adds a structural guard for 'lookup': msg.req must be a non-null object with
-      // a string `word` field, so a malformed { type:'lookup' } (no req) cannot reach the router
-      // and crash the SW on req.word access. All other message types carry no payload that the
-      // router destructures unsafely.
-      contents: [
-        'const VALID = new Set([',
-        "  'lookup','lookup.cancel','settings.get',",
-        "  'history.list','history.clear','cache.clear','connection.test'",
-        ']);',
-        'export const WireMessageSchema = {',
-        '  safeParse(m) {',
-        '    if (m == null || typeof m !== "object" || !VALID.has(m.type)) return { success: false };',
-        '    // Structural guard for lookup: req must be an object with a string word field.',
-        '    // Prevents a malformed lookup message from crashing the SW on req.word access.',
-        '    if (m.type === "lookup" && (m.req == null || typeof m.req !== "object" || typeof m.req.word !== "string")) return { success: false };',
-        '    return { success: true, data: m };',
-        '  }',
-        '};',
-        'export function wireJsonSchema() { return {}; }',
-      ].join('\n'),
-      loader: 'js',
-    }));
   },
 };
 
