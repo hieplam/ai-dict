@@ -12,32 +12,34 @@ export class BottomSheet extends HTMLElement {
   private panel: HTMLElement | null = null;
 
   connectedCallback(): void {
-    if (this.shadowRoot) return;
-    const root = this.attachShadow({ mode: 'open' });
-    adoptStyles(root, CSS);
-    if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) this.setAttribute('reduced', '');
+    if (!this.shadowRoot) {
+      const root = this.attachShadow({ mode: 'open' });
+      adoptStyles(root, CSS);
+      if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) this.setAttribute('reduced', '');
 
-    const scrim = document.createElement('div');
-    scrim.className = 'scrim';
-    scrim.addEventListener('click', () => this.dismiss());
+      const scrim = document.createElement('div');
+      scrim.className = 'scrim';
+      scrim.addEventListener('click', () => this.dismiss());
 
-    const panel = document.createElement('div');
-    panel.className = 'panel';
-    panel.setAttribute('role', 'dialog');
-    panel.setAttribute('aria-modal', 'true');
-    panel.setAttribute('aria-labelledby', 'sheet-title');
-    panel.tabIndex = -1;
-    const title = document.createElement('h2');
-    title.id = 'sheet-title';
-    title.className = 'sr-only';
-    title.textContent = 'Dictionary lookup';
-    panel.append(title, document.createElement('slot'));
+      const panel = document.createElement('div');
+      panel.className = 'panel';
+      panel.setAttribute('role', 'dialog');
+      panel.setAttribute('aria-modal', 'true');
+      panel.setAttribute('aria-labelledby', 'sheet-title');
+      panel.tabIndex = -1;
+      const title = document.createElement('h2');
+      title.id = 'sheet-title';
+      title.className = 'sr-only';
+      title.textContent = 'Dictionary lookup';
+      panel.append(title, document.createElement('slot'));
 
-    root.append(scrim, panel);
-    this.panel = panel;
+      root.append(scrim, panel);
+      this.panel = panel;
+    }
+    // Always (re-)register the listener and capture focus on every connection.
     this.addEventListener('keydown', this.onKeydown);
     this.prevFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    panel.focus();
+    this.panel?.focus();
   }
 
   disconnectedCallback(): void {

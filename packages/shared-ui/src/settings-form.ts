@@ -44,6 +44,7 @@ const MARKUP = `<form>
 
 export class SettingsForm extends HTMLElement {
   private root!: ShadowRoot;
+  private _pendingValue: SettingsFormValue | null = null;
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -53,7 +54,9 @@ export class SettingsForm extends HTMLElement {
 
     this.q<HTMLButtonElement>('#reveal').addEventListener('click', () => {
       const key = this.q<HTMLInputElement>('#key');
+      const revealBtn = this.q<HTMLButtonElement>('#reveal');
       key.type = key.type === 'password' ? 'text' : 'password';
+      revealBtn.setAttribute('aria-label', key.type === 'text' ? 'Hide API key' : 'Reveal API key');
     });
     this.q<HTMLFormElement>('form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -63,6 +66,11 @@ export class SettingsForm extends HTMLElement {
     this.relay('#clear-cache', 'clear-cache');
     this.relay('#clear-history', 'clear-history');
     this.relay('#export', 'export-history');
+
+    if (this._pendingValue !== null) {
+      this.value = this._pendingValue;
+      this._pendingValue = null;
+    }
   }
 
   private q<T extends Element>(sel: string): T {
@@ -88,6 +96,11 @@ export class SettingsForm extends HTMLElement {
   }
 
   set value(v: SettingsFormValue) {
+    if (!this.shadowRoot) {
+      // Shadow not yet built — defer until connectedCallback flushes _pendingValue.
+      this._pendingValue = v;
+      return;
+    }
     this.q<HTMLInputElement>('#key').value = v.apiKey;
     this.q<HTMLSelectElement>('#target').value = v.targetLang;
     this.q<HTMLTextAreaElement>('#tpl').value = v.promptTemplate;

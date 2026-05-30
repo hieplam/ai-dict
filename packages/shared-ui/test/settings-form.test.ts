@@ -48,6 +48,35 @@ describe('<settings-form>', () => {
     expect(key.type).toBe('password');
   });
 
+  it('reveal button updates aria-label to reflect current state', () => {
+    const el = mountForm();
+    const revealBtn = el.shadowRoot!.querySelector<HTMLButtonElement>('#reveal')!;
+    expect(revealBtn.getAttribute('aria-label')).toBe('Reveal API key');
+    revealBtn.click(); // now revealed
+    expect(revealBtn.getAttribute('aria-label')).toBe('Hide API key');
+    revealBtn.click(); // back to hidden
+    expect(revealBtn.getAttribute('aria-label')).toBe('Reveal API key');
+  });
+
+  it('value setter before connect defers hydration until connectedCallback', () => {
+    const el = document.createElement('settings-form') as SettingsForm;
+    // Set value before appending to DOM (no shadowRoot yet) — must not throw
+    el.value = { apiKey: 'deferred-key', targetLang: 'es', promptTemplate: 'P', cacheEnabled: false, saveHistory: false };
+    document.body.append(el); // connectedCallback flushes pending value
+    expect(el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.value).toBe('deferred-key');
+    expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('es');
+  });
+
+  it('"save" event crosses shadow boundary (composed: true)', () => {
+    const el = mountForm();
+    const spy = vi.fn();
+    // Attach to an ancestor outside the shadow host — only receives if composed: true
+    document.body.addEventListener('save', spy);
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    document.body.removeEventListener('save', spy);
+    expect(spy).toHaveBeenCalledOnce();
+  });
+
   it('does not re-initialize shadow on second connectedCallback', () => {
     const el = mountForm();
     document.body.removeChild(el);

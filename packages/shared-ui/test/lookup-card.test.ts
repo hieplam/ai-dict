@@ -57,8 +57,30 @@ describe('<lookup-card>', () => {
     expect(el.shadowRoot!.querySelectorAll('[aria-live]').length).toBe(1);
   });
 
+  it('"close" event crosses shadow boundary (composed: true)', () => {
+    const el = mountCard();
+    const spy = vi.fn();
+    // Attach to an ancestor outside the shadow host — only receives if composed: true
+    document.body.addEventListener('close', spy);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('[data-act="close"]')!.click();
+    document.body.removeEventListener('close', spy);
+    expect(spy).toHaveBeenCalledOnce();
+  });
+
   it('has no axe violations (loading state)', async () => {
     const el = mountCard();
+    expect(await axeViolations(el)).toEqual([]);
+  });
+
+  it('has no axe violations (result state)', async () => {
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'sky', target: 'vi', safeHtml: '<p>the sky</p>' };
+    expect(await axeViolations(el)).toEqual([]);
+  });
+
+  it('has no axe violations (error state)', async () => {
+    const el = mountCard();
+    el.state = { kind: 'error', error: { code: 'NETWORK', message: 'fail', retryable: false } };
     expect(await axeViolations(el)).toEqual([]);
   });
 });

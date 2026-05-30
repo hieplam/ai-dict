@@ -26,6 +26,16 @@ describe('<lookup-trigger>', () => {
     expect(spy).toHaveBeenCalledOnce();
   });
 
+  it('"lookup-click" event crosses shadow boundary (composed: true)', () => {
+    const el = mount('lookup-trigger');
+    const spy = vi.fn();
+    // Attach to an ancestor outside the shadow host — only receives if composed: true
+    document.body.addEventListener('lookup-click', spy);
+    el.shadowRoot!.querySelector('button')!.click();
+    document.body.removeEventListener('lookup-click', spy);
+    expect(spy).toHaveBeenCalledOnce();
+  });
+
   it('has no axe violations', async () => {
     const el = mount('lookup-trigger');
     expect(await axeViolations(el)).toEqual([]);

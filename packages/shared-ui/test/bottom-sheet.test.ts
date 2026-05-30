@@ -83,11 +83,31 @@ describe('<bottom-sheet>', () => {
     expect(el.shadowRoot!.querySelectorAll('[role="dialog"]').length).toBe(1);
   });
 
+  it('Escape still dismisses after remove+reappend cycle', () => {
+    const el = mountSheet();
+    document.body.removeChild(el);
+    document.body.append(el); // re-connection — listener must be re-registered
+    const spy = vi.fn();
+    el.addEventListener('dismiss', spy);
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(spy).toHaveBeenCalledOnce();
+  });
+
   it('handles missing matchMedia gracefully (no reduced attr)', () => {
     vi.stubGlobal('matchMedia', undefined);
     const el = mountSheet();
     expect(el.hasAttribute('reduced')).toBe(false);
     vi.unstubAllGlobals();
+  });
+
+  it('"dismiss" event crosses shadow boundary (composed: true)', () => {
+    const el = mountSheet();
+    const spy = vi.fn();
+    // Attach to an ancestor outside the shadow host — only receives if composed: true
+    document.body.addEventListener('dismiss', spy);
+    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    document.body.removeEventListener('dismiss', spy);
+    expect(spy).toHaveBeenCalledOnce();
   });
 
   it('has no axe violations', async () => {
