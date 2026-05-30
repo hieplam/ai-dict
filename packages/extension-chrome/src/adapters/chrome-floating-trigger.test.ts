@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { ChromeFloatingTrigger } from '../src/adapters/chrome-floating-trigger';
+import { ChromeFloatingTrigger } from './chrome-floating-trigger';
 import '@ai-dict/shared-ui/lookup-trigger';
 
 describe('ChromeFloatingTrigger (TriggerUI via <lookup-trigger>)', () => {

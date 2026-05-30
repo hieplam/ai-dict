@@ -1,15 +1,15 @@
 import { describe, it, expect, vi } from 'vitest';
-import { ChromeKvStore } from '../src/adapters/chrome-kv-store';
+import { ChromeKvStore } from './chrome-kv-store';
 
 function fakeArea(seed: Record<string, string> = {}) {
   const store = new Map<string, string>(Object.entries(seed));
   return {
-    get: vi.fn(async (key: string | null) => {
-      if (key === null) return Object.fromEntries(store);
-      return store.has(key) ? { [key]: store.get(key) } : {};
+    get: vi.fn((key: string | null) => {
+      if (key === null) return Promise.resolve(Object.fromEntries(store));
+      return Promise.resolve(store.has(key) ? { [key]: store.get(key) } : {});
     }),
-    set: vi.fn(async (obj: Record<string, string>) => { for (const [k, v] of Object.entries(obj)) store.set(k, v); }),
-    remove: vi.fn(async (key: string) => { store.delete(key); }),
+    set: vi.fn((obj: Record<string, string>) => { for (const [k, v] of Object.entries(obj)) store.set(k, v); return Promise.resolve(); }),
+    remove: vi.fn((key: string) => { store.delete(key); return Promise.resolve(); }),
     _store: store,
   };
 }
