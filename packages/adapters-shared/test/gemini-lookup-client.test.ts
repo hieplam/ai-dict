@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { GeminiLookupClient, type FetchLike, type ResponseLike } from '../src/gemini-lookup-client';
 import { isLookupError, type LookupRequest } from '@ai-dict/core';
 
@@ -39,6 +39,11 @@ const abortableHang: FetchLike = (_url, init) => new Promise((_resolve, reject) 
 });
 
 describe('GeminiLookupClient', () => {
+  // Restore any vi.stubGlobal calls after each test so a stub never leaks into the next
+  // test — even if an assertion throws mid-test before an inline cleanup could run.
+  // vitest.config.ts also sets `unstubGlobals: true` as a belt-and-suspenders guard.
+  afterEach(() => { vi.unstubAllGlobals(); });
+
   it('success → LookupResult with model + rendered prompt + X-Goog-Api-Key header', async () => {
     let captured: { url: string; init: Parameters<FetchLike>[1] } | null = null;
     const c = client((url, init) => { captured = { url, init }; return Promise.resolve(res({ ok: true, status: 200, body: okBody })); });
@@ -65,7 +70,8 @@ describe('GeminiLookupClient', () => {
     const c = client(fetchSpy);
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'NETWORK', retryable: true });
     expect(fetchSpy).not.toHaveBeenCalled();
-    vi.unstubAllGlobals();
+    // Cleanup is handled by the afterEach above (and vitest.config.ts unstubGlobals: true),
+    // so no inline vi.unstubAllGlobals() is needed here.
   });
 
   it('HTTP 400 INVALID_ARGUMENT → INVALID_KEY', async () => {
@@ -136,11 +142,31 @@ describe('GeminiLookupClient', () => {
   });
 
   it('aborting an IN-FLIGHT our-signal (after fetch starts) also propagates raw (§6.8)', async () => {
+    // Use a coordination latch so the abort fires ONLY after the fetch Promise constructor
+    // has run and the abort-event listener is registered — regardless of how many async
+    // hops precede the fetch call (e.g. if getApiKey ever becomes a real Promise).
+    // Without the latch, a single `await Promise.resolve()` could expire before the fetch
+    // Promise is constructed, causing ac.abort() to hit the pre-aborted fast-path instead
+    // of the event-listener path this test is meant to exercise.
+    let signalFetchEntered!: () => void;
+    const fetchEntered = new Promise<void>((resolve) => { signalFetchEntered = resolve; });
+
+    const latchedHang: FetchLike = (_url, init) => new Promise((_resolve, reject) => {
+      // Signal the outer test that we are now inside the fetch Promise constructor and
+      // the abort listener is about to be registered — so ac.abort() is safe to call.
+      signalFetchEntered();
+      const reason: unknown = init.signal.reason;
+      const err = reason instanceof Error ? reason : new DOMException('aborted', 'AbortError');
+      const fail = (): void => reject(err);
+      if (init.signal.aborted) { fail(); return; }
+      init.signal.addEventListener('abort', fail, { once: true });
+    });
+
     const ac = new AbortController();
-    const c = client(abortableHang);
+    const c = client(latchedHang);
     const p = c.lookup(req, { signal: ac.signal });
-    await Promise.resolve();   // let lookup get past getApiKey + register its abort listener, then suspend at fetch
-    ac.abort();                // fires the listener path (not the pre-aborted path)
+    await fetchEntered;  // guaranteed: the event listener is now registered inside the fetch
+    ac.abort();          // fires the listener path (not the pre-aborted path)
     const err = await p.catch((e: unknown) => e);
     expect(isLookupError(err)).toBe(false);
     expect((err as DOMException).name).toBe('AbortError');

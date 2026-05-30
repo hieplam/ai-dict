@@ -5,6 +5,7 @@ export default defineConfig({
     name: 'adapters-shared',
     environment: 'happy-dom',
     include: ['test/**/*.test.ts'],
+    unstubGlobals: true,
     coverage: {
       provider: 'v8',
       include: ['src/**'],
