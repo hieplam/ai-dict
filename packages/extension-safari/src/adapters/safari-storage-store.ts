@@ -1,7 +1,5 @@
 import { DEFAULT_TEMPLATE, type SettingsStore, type PublicSettings, type Settings } from '@ai-dict/core';
-import type { Browser } from 'webextension-polyfill';
-
-type StorageAreaLike = Pick<Browser.Storage.StorageArea, 'get' | 'set' | 'remove'>;
+import type { StorageAreaLike } from './safari-kv-store';
 
 const DEFAULT_TARGET = 'vi';
 function defaults(): Settings {

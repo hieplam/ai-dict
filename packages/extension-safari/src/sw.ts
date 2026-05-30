@@ -1,4 +1,5 @@
 import { mapError, DEFAULT_TEMPLATE, type Settings } from '@ai-dict/core';
+import type { Runtime } from 'webextension-polyfill';
 // Import directly (not via the barrel) to avoid pulling in DOM-heavy shared-ui into the SW bundle
 import { GeminiLookupClient } from '@ai-dict/adapters-shared/gemini-lookup-client';
 import { buildRouter, WriteQueue, SUPPRESS } from './router';
@@ -20,12 +21,13 @@ const router = buildRouter({
   queue: new WriteQueue(),
 });
 
-browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+// Use the async listener form (returns Promise<unknown>) so the channel stays open for
+// router replies. When action is 'ignore', resolve undefined (no reply).
+browser.runtime.onMessage.addListener((msg: unknown, sender: Runtime.MessageSender): Promise<unknown> => {
   const decision = classifyInbound(msg, sender.id, browser.runtime.id);
-  if (decision.action === 'ignore') return false;
-  if (decision.action === 'reject') { sendResponse(decision.reply); return true; }
-  router(decision.msg)
-    .then((reply) => { if (reply !== SUPPRESS) sendResponse(reply); })
-    .catch((e: unknown) => sendResponse({ ok: false, type: decision.msg.type, error: mapError({ kind: 'thrown', error: e }) }));
-  return true; // async sendResponse → keep channel open (SUPPRESS leaves it open, never replies)
+  if (decision.action === 'ignore') return Promise.resolve(undefined);
+  if (decision.action === 'reject') return Promise.resolve(decision.reply);
+  return router(decision.msg)
+    .then((reply) => (reply !== SUPPRESS ? reply : undefined))
+    .catch((e: unknown) => ({ ok: false, type: decision.msg.type, error: mapError({ kind: 'thrown', error: e }) }));
 });
