@@ -1,10 +1,10 @@
 ---
 bundle: "07"
 title: ci-release
-status: AVAILABLE
+status: DONE
 locked_by: ""
 locked_at: ""
-done_at: ""
+done_at: "2026-05-30T16:50:18Z"
 prereqs: ["05", "06"]
 owns_files:
   - .github/workflows/ci.yml
