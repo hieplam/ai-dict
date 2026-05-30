@@ -48,7 +48,9 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
   const teardown = deps.selection.onSelection((e) => {
     deps.trigger.show(e.anchor, () => {
       deps.trigger.hide();
-      void runLookup(e);
+      void runLookup(e).catch((err) =>
+        deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
+      );
     });
   });
 

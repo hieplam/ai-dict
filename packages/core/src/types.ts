@@ -50,12 +50,6 @@ export interface PublicSettings {
   hasKey: boolean;
 }
 
-export interface Settings extends PublicSettings {
-  apiKey: string;
-  cacheEnabled: boolean;
-  saveHistory: boolean;
-}
-
 export function isLookupError(e: unknown): e is LookupError {
   return (
     typeof e === 'object' && e !== null &&

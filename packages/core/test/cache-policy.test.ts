@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { fnv1a64Hex, deriveCacheKey, cacheGet, cachePut } from '../src/cache-policy';
+import { fnv1a64Hex, deriveCacheKey, cacheGet, cachePut, cacheClear } from '../src/cache-policy';
 import type { Storage, LookupResult } from '../src';
 
 function memStorage(): Storage {
@@ -40,6 +40,18 @@ describe('cache-policy', () => {
     await cachePut(deps, { word: 'c', context: '', target: 'vi' }, result('c'));
     expect(await cacheGet(deps, { word: 'b', context: '', target: 'vi' })).toBeNull();
     expect(await cacheGet(deps, { word: 'a', context: '', target: 'vi' })).not.toBeNull();
+  });
+
+  it('cacheClear removes all cache entries and the index key', async () => {
+    const s = memStorage();
+    const deps = { storage: s };
+    await cachePut(deps, { word: 'a', context: '', target: 'vi' }, result('a'));
+    await cachePut(deps, { word: 'b', context: '', target: 'vi' }, result('b'));
+    await cacheClear(deps);
+    expect(await cacheGet(deps, { word: 'a', context: '', target: 'vi' })).toBeNull();
+    expect(await cacheGet(deps, { word: 'b', context: '', target: 'vi' })).toBeNull();
+    // index key must also be gone
+    expect(await s.getItem('cache:index')).toBeNull();
   });
 
   it('evicts at the default cap of 1000 (D4 gate: regression guard on DEFAULT_CAP)', async () => {

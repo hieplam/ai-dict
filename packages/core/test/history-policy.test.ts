@@ -32,6 +32,16 @@ describe('history-policy', () => {
     expect(entries.map((e) => e.id)).toEqual(['3', '2']);
     expect(await s.getItem('history:1')).toBeNull();
   });
+  it('stale cursor (evicted id) returns empty page without error', async () => {
+    // Append 3 entries with cap=2: id='1' is evicted (oldest beyond cap).
+    // historyList with cursor='1' must fall back gracefully → empty entries, no nextCursor.
+    const s = memStorage();
+    for (const id of ['1', '2', '3']) await historyAppend({ storage: s, cap: 2 }, entry(id));
+    const page = await historyList({ storage: s }, { cursor: '1' });
+    expect(page.entries).toEqual([]);
+    expect(page.nextCursor).toBeUndefined();
+  });
+
   it('clear removes all', async () => {
     const s = memStorage();
     await historyAppend({ storage: s }, entry('1'));

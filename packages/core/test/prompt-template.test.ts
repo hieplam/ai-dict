@@ -18,4 +18,10 @@ describe('renderTemplate', () => {
   it('leaves unknown placeholders untouched', () => {
     expect(renderTemplate('{nope}', vars)).toBe('{nope}');
   });
+  it('leaves supported placeholder intact when its key is absent from vars (supported-but-absent boundary)', () => {
+    // {url} is a supported name but is not present in the vars object.
+    // The fallback `value ?? match` must preserve the literal placeholder, not inject undefined/empty.
+    const result = renderTemplate('{url}', { word: 'x', context: '', target_lang: 'vi' });
+    expect(result).toBe('{url}');
+  });
 });

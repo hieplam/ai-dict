@@ -33,6 +33,44 @@ describe('wire-schema', () => {
     expect('apiKey' in (ok.data as object)).toBe(false);
   });
 
+  // Each remaining WireMessage discriminant arm must be parseable
+  it('accepts lookup.cancel message', () => {
+    expect(WireMessageSchema.safeParse({ type: 'lookup.cancel', requestId: 'r2' }).success).toBe(true);
+  });
+  it('accepts settings.get message', () => {
+    expect(WireMessageSchema.safeParse({ type: 'settings.get' }).success).toBe(true);
+  });
+  it('accepts history.list message (no options)', () => {
+    expect(WireMessageSchema.safeParse({ type: 'history.list' }).success).toBe(true);
+  });
+  it('accepts history.list message (with limit and cursor)', () => {
+    expect(WireMessageSchema.safeParse({ type: 'history.list', limit: 10, cursor: 'abc' }).success).toBe(true);
+  });
+  it('accepts history.clear message', () => {
+    expect(WireMessageSchema.safeParse({ type: 'history.clear' }).success).toBe(true);
+  });
+  it('accepts cache.clear message', () => {
+    expect(WireMessageSchema.safeParse({ type: 'cache.clear' }).success).toBe(true);
+  });
+  it('accepts connection.test message', () => {
+    expect(WireMessageSchema.safeParse({ type: 'connection.test' }).success).toBe(true);
+  });
+
+  // Rejection test: lookup message missing required field
+  it('rejects a lookup message missing requestId', () => {
+    expect(WireMessageSchema.safeParse({
+      type: 'lookup',
+      req: { word: 'a', context: 'b', url: '', title: '', target: 'vi', promptTemplate: 't' },
+      // requestId intentionally omitted
+    }).success).toBe(false);
+  });
+  it('rejects a lookup message with a malformed req (missing word)', () => {
+    expect(WireMessageSchema.safeParse({
+      type: 'lookup', requestId: 'r1',
+      req: { context: 'b', url: '', title: '', target: 'vi', promptTemplate: 't' },
+    }).success).toBe(false);
+  });
+
   it('JSON-schema snapshot is stable (spec §8.5)', async () => {
     await expect(JSON.stringify(wireJsonSchema(), null, 2)).toMatchFileSnapshot('../wire-schema.snapshot.json');
   });

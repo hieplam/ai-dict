@@ -44,6 +44,13 @@ describe('runLookupWorkflow', () => {
     await vi.waitFor(() => expect(h.renderer.lastError?.code).toBe('RATE_LIMIT'));
   });
 
+  it('maps a plain Error thrown by client (not LookupError-shaped) to UNKNOWN via toLookupError fallback', async () => {
+    const h = harness({ impl: () => Promise.reject(new Error('unexpected network blip')) });
+    h.selection.emit(sel); h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.lastError?.code).toBe('UNKNOWN'));
+    expect(h.renderer.lastError?.message).toContain('unexpected network blip');
+  });
+
   it('cancels the in-flight lookup when a newer one starts (spec §6.8)', async () => {
     const signals: AbortSignal[] = [];
     const h = harness({ impl: (_req, opts) => new Promise((resolve) => { if (opts?.signal) signals.push(opts.signal); setTimeout(() => resolve(okResult), 5); }) });
