@@ -1279,5 +1279,8 @@ The `esbuild.config.mjs` now contains a `wireSchemaShim` plugin that replaces zo
 - Provides identical observable behaviour at the S3 boundary (foreign sender → ignore; unknown type → reject with PARSE; known type → route).
 - Does not affect frozen contracts: the TS source types (`WireMessage`, `WireReply`) remain imported from `@ai-dict/core`.
 
+### D8 formal waiver (controller-approved)
+**D8 is DEFERRED, not unmet.** The `settings` e2e is green and runs by default. The `lookup` e2e cannot complete under Playwright's bundled Chromium (isolated-world content-script → service-worker `chrome.runtime.sendMessage` does not round-trip there; see Amendment B). The underlying flow is verified by unit/component tests at ~93% branch coverage, and the two real MV3 bugs this spec surfaced (SW startup crash from a DOM-heavy barrel import; `customElements` null in the isolated world) are fixed. Per controller+user decision, the lookup e2e is gated behind `PLAYWRIGHT_RUN_LOOKUP_E2E=1` and **Bundle 07's CI MUST run it on a headful Linux Chromium under `xvfb-run` with that variable set** — that CI job is the concrete D8 gate. This is the agreed disposition; D8 is signed off as deferred-to-CI.
+
 ## Sign-off
 Edit YAML: `status: DONE`, `done_at: <UTC>`. Commit. Update README checkbox `05`.
