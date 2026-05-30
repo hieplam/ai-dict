@@ -1,10 +1,10 @@
 ---
 bundle: "04"
 title: adapters-shared
-status: AVAILABLE
+status: DONE
 locked_by: ""
 locked_at: ""
-done_at: ""
+done_at: "2026-05-30T09:10:31Z"
 prereqs: ["02", "03"]
 owns_files:
   - packages/adapters-shared/package.json
