@@ -1,10 +1,10 @@
 ---
 bundle: "06"
 title: extension-safari
-status: AVAILABLE
+status: DONE
 locked_by: ""
 locked_at: ""
-done_at: ""
+done_at: "2026-05-30T15:18:11Z"
 prereqs: ["02", "03", "04"]
 owns_files:
   - packages/extension-safari/package.json
