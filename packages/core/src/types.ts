@@ -56,3 +56,16 @@ export function isLookupError(e: unknown): e is LookupError {
     'code' in e && 'message' in e && 'retryable' in e
   );
 }
+
+/**
+ * Full settings including the secret API key.
+ *
+ * Holds the secret apiKey — trusted contexts only (options page / storage adapter).
+ * Never assign a Settings value to a wire/reply field; SettingsStore.get() returns
+ * PublicSettings. S1.
+ */
+export interface Settings extends PublicSettings {
+  apiKey: string;
+  cacheEnabled: boolean;
+  saveHistory: boolean;
+}

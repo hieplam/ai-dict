@@ -44,6 +44,18 @@ describe('mapError (spec §6.9)', () => {
   it('unmapped HTTP status (e.g. 418) → UNKNOWN', () => {
     expect(mapError({ kind: 'http', status: 418 }).code).toBe('UNKNOWN');
   });
+
+  // FIX 2: absent-field contract — retryAfterSec must be ABSENT (not undefined) when no Retry-After
+  it('HTTP 429 without retryAfterSec → RATE_LIMIT and retryAfterSec field is ABSENT', () => {
+    const e = mapError({ kind: 'http', status: 429 });
+    expect(e.code).toBe('RATE_LIMIT');
+    expect('retryAfterSec' in e).toBe(false);
+  });
+
+  // FIX 3: geminiStatus-only RATE_LIMIT path (status 200 + RESOURCE_EXHAUSTED)
+  it('geminiStatus RESOURCE_EXHAUSTED → RATE_LIMIT even when HTTP status is 200', () => {
+    expect(mapError({ kind: 'http', status: 200, geminiStatus: 'RESOURCE_EXHAUSTED' }).code).toBe('RATE_LIMIT');
+  });
 });
 
 // Helper: read a fixture file and parse JSON (or return raw string for non-JSON)

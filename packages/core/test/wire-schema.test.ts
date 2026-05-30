@@ -71,6 +71,38 @@ describe('wire-schema', () => {
     }).success).toBe(false);
   });
 
+  // FIX 4a: WireReply error arm — valid error reply must parse successfully
+  it('accepts a valid error reply (ok:false with RATE_LIMIT error)', () => {
+    const result = WireReplySchema.safeParse({
+      ok: false,
+      type: 'lookup',
+      error: { code: 'RATE_LIMIT', message: 'x', retryable: true },
+      requestId: 'r1',
+    });
+    expect(result.success).toBe(true);
+  });
+
+  // FIX 4b: WireReply error arm — malformed error body must be rejected
+  it('rejects an error reply with invalid error.code (not in enum)', () => {
+    const result = WireReplySchema.safeParse({
+      ok: false,
+      type: 'lookup',
+      error: { code: 'BOGUS_CODE', message: 'x', retryable: true },
+      requestId: 'r1',
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects an error reply missing error.retryable', () => {
+    const result = WireReplySchema.safeParse({
+      ok: false,
+      type: 'lookup',
+      error: { code: 'RATE_LIMIT', message: 'x' },
+      requestId: 'r1',
+    });
+    expect(result.success).toBe(false);
+  });
+
   it('JSON-schema snapshot is stable (spec §8.5)', async () => {
     await expect(JSON.stringify(wireJsonSchema(), null, 2)).toMatchFileSnapshot('../wire-schema.snapshot.json');
   });
