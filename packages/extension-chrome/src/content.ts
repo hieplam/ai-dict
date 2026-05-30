@@ -1,7 +1,6 @@
 import { runLookupWorkflow } from '@ai-dict/core';            // NOT @ai-dict/core/workflow (no such subpath)
-import '@ai-dict/shared-ui/lookup-trigger';
-import '@ai-dict/shared-ui/lookup-card';
-import '@ai-dict/shared-ui/bottom-sheet';
+// Custom elements are defined by content-elements.ts (world:MAIN) — see manifest.json.
+// Do NOT re-import them here; the page's registry is shared between worlds via the DOM.
 import { InlineBottomSheetRenderer } from '@ai-dict/adapters-shared';
 import { DomSelectionSource } from './adapters/dom-selection-source';
 import { ChromeFloatingTrigger } from './adapters/chrome-floating-trigger';

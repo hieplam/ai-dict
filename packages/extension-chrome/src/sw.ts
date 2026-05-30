@@ -1,5 +1,6 @@
 import { mapError, DEFAULT_TEMPLATE, type Settings } from '@ai-dict/core';
-import { GeminiLookupClient } from '@ai-dict/adapters-shared';
+// Import directly (not via the barrel) to avoid pulling in DOM-heavy shared-ui into the SW bundle
+import { GeminiLookupClient } from '@ai-dict/adapters-shared/gemini-lookup-client';
 import { buildRouter, WriteQueue, SUPPRESS } from './router';
 import { classifyInbound } from './inbound';
 import { ChromeKvStore } from './adapters/chrome-kv-store';
