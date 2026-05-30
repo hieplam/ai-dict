@@ -6,3 +6,5 @@ coverage/
 *.ipa
 *.xcarchive
 .vitest/
+playwright-report/
+test-results/
