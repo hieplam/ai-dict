@@ -1,0 +1,20 @@
+{
+  "name": "@ai-dict/shared-ui",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./lookup-trigger": "./src/lookup-trigger.ts",
+    "./lookup-card": "./src/lookup-card.ts",
+    "./bottom-sheet": "./src/bottom-sheet.ts",
+    "./settings-form": "./src/settings-form.ts"
+  },
+  "scripts": { "typecheck": "tsc --noEmit", "test": "vitest run" },
+  "dependencies": { "@ai-dict/core": "workspace:*" },
+  "devDependencies": {
+    "happy-dom": "^15.0.0",
+    "@testing-library/dom": "^10.0.0",
+    "axe-core": "^4.10.0"
+  }
+}
