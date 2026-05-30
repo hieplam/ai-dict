@@ -10,7 +10,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
 
   constructor(
     private readonly host: HTMLElement,
-    private readonly sanitize: (md: string) => string = sanitizeMarkdown,
+    private readonly sanitize: (md: string) => SafeHtml = sanitizeMarkdown,
   ) {}
 
   private ensureCard(): LookupCard {
@@ -31,9 +31,9 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   renderLoading(): void { this.setState({ kind: 'loading' }); }
 
   renderResult(r: LookupResult): void {
-    // `CardState.safeHtml` is the branded `SafeHtml` type from shared-ui (Bundle 03): the cast here is
-    // the single authorised trust boundary — DOMPurify output (S4) is, by definition, safe HTML.
-    this.setState({ kind: 'result', safeHtml: this.sanitize(r.markdown) as SafeHtml, word: r.word, target: r.target });
+    // `sanitize` already returns `SafeHtml` (the trust boundary lives in sanitizeMarkdown, S4).
+    // No cast needed here — the DI param type `(md: string) => SafeHtml` guarantees it.
+    this.setState({ kind: 'result', safeHtml: this.sanitize(r.markdown), word: r.word, target: r.target });
   }
 
   renderError(e: LookupError): void { this.setState({ kind: 'error', error: e }); }

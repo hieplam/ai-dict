@@ -1,5 +1,6 @@
 import { Marked } from 'marked';
 import DOMPurify from 'dompurify';
+import type { SafeHtml } from '@ai-dict/shared-ui/lookup-card';
 
 // Spec S4: "markdown renderer with raw HTML DISABLED".
 // Strip any literal HTML from the markdown source before lexing — this is the
@@ -47,15 +48,19 @@ const ALLOWED_TAGS = [
 const ALLOWED_ATTR = ['href', 'target', 'rel'];
 const HTTPS_ONLY = /^https:\/\//i; // anchors: https only (no javascript:, data:, mailto:, relative)
 
-export function sanitizeMarkdown(md: string): string {
+export function sanitizeMarkdown(md: string): SafeHtml {
   ensureHook();
   // markedNoHtml converts markdown → HTML with raw HTML stripped from the source.
   // DOMPurify then enforces the allowlist (strips javascript: links, event attrs, etc.).
   // `async: false` guarantees a synchronous string.
   const rawHtml = markedNoHtml.parse(md, { async: false });
+  // This `as SafeHtml` cast is the ONE authorised SafeHtml trust boundary (S4).
+  // DOMPurify output is, by definition, safe HTML — the ALLOWED_TAGS/ALLOWED_ATTR/
+  // ALLOWED_URI_REGEXP config above enforces the allowlist. No other file may cast
+  // a plain string to SafeHtml; produce it only through this function.
   return DOMPurify.sanitize(rawHtml, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
     ALLOWED_URI_REGEXP: HTTPS_ONLY,
-  });
+  }) as SafeHtml;
 }

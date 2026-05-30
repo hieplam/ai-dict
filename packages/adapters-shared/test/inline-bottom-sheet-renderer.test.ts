@@ -1,6 +1,7 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { InlineBottomSheetRenderer } from '../src/inline-bottom-sheet-renderer';
 import type { LookupResult, LookupError } from '@ai-dict/core';
+import type { SafeHtml } from '@ai-dict/shared-ui/lookup-card';
 
 const result: LookupResult = { markdown: '**def** <script>alert(1)</script>', word: 'bank', target: 'vi', model: 'gemini-2.5-flash', fromCache: false, fetchedAt: 1 };
 const error: LookupError = { code: 'NETWORK', message: 'Network failed.', retryable: true };
@@ -11,6 +12,9 @@ function card(host: HTMLElement): HTMLElement & { state: unknown } {
 }
 
 describe('InlineBottomSheetRenderer', () => {
+  // Clear accumulated host <div>s between tests so DOM state does not leak.
+  afterEach(() => { document.body.replaceChildren(); });
+
   it('renderLoading mounts a bottom-sheet + lookup-card in loading state', () => {
     const h = host();
     new InlineBottomSheetRenderer(h).renderLoading();
@@ -40,7 +44,9 @@ describe('InlineBottomSheetRenderer', () => {
 
   it('uses an injected sanitizer when provided (DI seam)', () => {
     const h = host();
-    const r = new InlineBottomSheetRenderer(h, (md) => `SAFE:${md}`);
+    // Cast the literal to SafeHtml — this stub stands in for the real sanitizer in tests;
+    // only the real sanitizeMarkdown (DOMPurify output) is the authorised trust boundary (S4).
+    const r = new InlineBottomSheetRenderer(h, (md) => (`SAFE:${md}`) as SafeHtml);
     r.renderResult(result);
     expect((card(h).state as { safeHtml: string }).safeHtml).toBe(`SAFE:${result.markdown}`);
   });

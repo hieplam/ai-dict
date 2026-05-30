@@ -87,7 +87,11 @@ export class GeminiLookupClient implements LookupClient {
 
       return { markdown: text, word: req.word, target: req.target, model: 'gemini-2.5-flash', fromCache: false, fetchedAt: Date.now() };
     } catch (err) {
-      if (opts?.signal?.aborted) throw err;                 // our-cancel: propagate raw, caller decides (D3)
+      // Guard: caller-cancel propagates raw (D3) ONLY when the error is NOT already a mapped
+      // LookupError. If signal aborted during res.json() in the !res.ok branch, `err` is already
+      // mapped; re-throwing it raw would look like a raw abort to the SW router (bundles 05/06),
+      // preventing it from distinguishing "user-cancelled (suppress)" vs "server error (show)".
+      if (opts?.signal?.aborted && !isThrownLookupError(err)) throw err;
       if (timedOut) rejectWith(mapError({ kind: 'timeout' }));
       if (isThrownLookupError(err)) throw err;              // already-mapped LookupError from rejectWith above
       rejectWith(mapError({ kind: 'offline' }));            // generic fetch throw / TypeError → NETWORK

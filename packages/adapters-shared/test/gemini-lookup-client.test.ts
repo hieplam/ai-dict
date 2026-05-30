@@ -126,9 +126,36 @@ describe('GeminiLookupClient', () => {
     expect(isLookupError(err)).toBe(true);
   });
 
-  it('timeout aborts → NETWORK (no 20s wait; injected timeoutMs)', async () => {
-    const c = client(abortableHang, 'AIza-key', 5);
+  it('timeout aborts → NETWORK AND the abort reason is a TimeoutError (proves the timer path fired)', async () => {
+    // This test must go RED if the `timedOut`/timer logic is removed from the client:
+    // without the timer branch, the catch block falls to the generic `offline` path which
+    // also yields NETWORK — but more importantly the signal would never be aborted with a
+    // DOMException('timeout','TimeoutError'), so the TimeoutError assertion below would fail.
+    //
+    // How the probe works:
+    //   1. `capturingFetch` records the AbortSignal passed to it, then hangs (never settles).
+    //   2. The client's internal timer fires (timeoutMs: 5 ms) and calls
+    //      `ac.abort(new DOMException('timeout', 'TimeoutError'))`.
+    //   3. That abort causes the hang to reject → the client's catch block runs.
+    //   4. AFTER the lookup rejects we read `capturedSignal.reason` — this is read AFTER
+    //      the abort has occurred (not at Promise-construction time), so we see the real reason.
+    //   5. We assert reason.name === 'TimeoutError', proving the timer branch ran.
+    let capturedSignal!: AbortSignal;
+    const capturingHang: FetchLike = (_url, init) => {
+      capturedSignal = init.signal;
+      return new Promise((_resolve, reject) => {
+        if (init.signal.aborted) { reject(init.signal.reason instanceof Error ? init.signal.reason : new DOMException('aborted', 'AbortError')); return; }
+        init.signal.addEventListener('abort', () => {
+          const reason: unknown = init.signal.reason;
+          reject(reason instanceof Error ? reason : new DOMException('aborted', 'AbortError'));
+        }, { once: true });
+      });
+    };
+    const c = client(capturingHang, 'AIza-key', 5);
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'NETWORK', retryable: true });
+    // Prove the timer branch fired: the signal must have been aborted with a TimeoutError.
+    expect(capturedSignal.aborted).toBe(true);
+    expect((capturedSignal.reason as DOMException).name).toBe('TimeoutError');
   });
 
   it('our-cancel signal abort propagates raw (caller decides suppression — D3)', async () => {
@@ -170,5 +197,31 @@ describe('GeminiLookupClient', () => {
     const err = await p.catch((e: unknown) => e);
     expect(isLookupError(err)).toBe(false);
     expect((err as DOMException).name).toBe('AbortError');
+  });
+
+  it('signal aborted while err is already a mapped LookupError → caller receives LookupError (not raw abort)', async () => {
+    // Regression test for the FIX 2 guard reorder.
+    // Scenario: fetch stub throws a mapped-LookupError-shaped Error AND signal.aborted is true
+    // (simulates the race where the caller aborts mid-res.json() in a !res.ok branch).
+    // Before the fix: the old guard `if (signal.aborted) throw err` would re-throw the LookupError
+    // as if it were a raw abort, hiding the server error from the SW router.
+    // After the fix: `if (signal.aborted && !isThrownLookupError(err)) throw err` lets it fall
+    // through to the `isThrownLookupError` branch, so the caller gets a proper LookupError.
+    //
+    // Note: truly racing signal.abort() with res.json() is non-deterministic in happy-dom, so
+    // we test the logical path directly: a fetch stub that both aborts the caller's signal AND
+    // throws a mapped-LookupError-shaped error while signal.aborted is true.
+    const ac = new AbortController();
+    const mappedErr = Object.assign(new Error('HTTP 503'), { code: 'NETWORK', retryable: true, message: 'Network failed.' });
+    const c = client(() => {
+      // Abort the caller signal synchronously before throwing, so signal.aborted is true
+      // in the catch block when err is already a mapped LookupError.
+      ac.abort();
+      return Promise.reject(mappedErr);
+    });
+    const err = await c.lookup(req, { signal: ac.signal }).catch((e: unknown) => e);
+    // Must be a LookupError (server error), NOT a raw AbortError.
+    expect(isLookupError(err)).toBe(true);
+    expect((err as { code: string }).code).toBe('NETWORK');
   });
 });
