@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { MessageRelayLookupClient } from '../src/adapters/message-relay-lookup-client';
+import { MessageRelayLookupClient } from './message-relay-lookup-client';
 import { isLookupError, type LookupResult } from '@ai-dict/core';
 
 const okResult: LookupResult = { markdown: '#', word: 'bank', target: 'vi', model: 'gemini-2.5-flash', fromCache: false, fetchedAt: 1 };

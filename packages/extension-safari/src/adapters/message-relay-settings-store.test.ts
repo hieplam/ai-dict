@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { MessageRelaySettingsStore } from '../src/adapters/message-relay-settings-store';
+import { MessageRelaySettingsStore } from './message-relay-settings-store';
 
 const pub = { targetLang: 'vi', promptTemplate: 'tpl', hasKey: true };
 

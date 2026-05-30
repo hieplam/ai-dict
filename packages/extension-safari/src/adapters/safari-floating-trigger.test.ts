@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { SafariFloatingTrigger } from '../src/adapters/safari-floating-trigger';
+import { SafariFloatingTrigger } from './safari-floating-trigger';
 import '@ai-dict/shared-ui/lookup-trigger';
 
 describe('SafariFloatingTrigger (TriggerUI via <lookup-trigger>)', () => {

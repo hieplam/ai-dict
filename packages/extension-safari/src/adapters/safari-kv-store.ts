@@ -25,7 +25,7 @@ export class SafariKvStore implements Storage {
     await this.area.remove(key);
   }
   async keys(prefix?: string): Promise<string[]> {
-    const all = (await this.area.get(null)) as Record<string, unknown>;
+    const all = await this.area.get(null);
     const ks = Object.keys(all);
     return prefix ? ks.filter((k) => k.startsWith(prefix)) : ks;
   }

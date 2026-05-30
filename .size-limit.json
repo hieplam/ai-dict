@@ -23,5 +23,20 @@
     "name": "chrome side-panel.js",
     "path": "packages/extension-chrome/dist/side-panel.js",
     "limit": "40 kB"
+  },
+  {
+    "name": "safari sw.js",
+    "path": "packages/extension-safari/dist/sw.js",
+    "limit": "30 kB"
+  },
+  {
+    "name": "safari content.js",
+    "path": "packages/extension-safari/dist/content.js",
+    "limit": "45 kB"
+  },
+  {
+    "name": "safari options.js",
+    "path": "packages/extension-safari/dist/options.js",
+    "limit": "40 kB"
   }
 ]

@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
-import { SafariStorageStore } from '../src/adapters/safari-storage-store';
+import { SafariStorageStore } from './safari-storage-store';
 import { DEFAULT_TEMPLATE } from '@ai-dict/core';
 
 function fakeArea(seed?: unknown) {
   let stored = seed;
   return {
-    get: vi.fn(async () => (stored === undefined ? {} : { settings: stored })),
-    set: vi.fn(async (obj: { settings: unknown }) => { stored = obj.settings; }),
-    remove: vi.fn(),
+    get: vi.fn((): Promise<Record<string, unknown>> => Promise.resolve(stored === undefined ? {} : { settings: stored })),
+    set: vi.fn((obj: { settings: unknown }): Promise<void> => { stored = obj.settings; return Promise.resolve(); }),
+    remove: vi.fn((): Promise<void> => Promise.resolve()),
     _peek: () => stored,
   };
 }
