@@ -1,10 +1,10 @@
 ---
 bundle: "02"
 title: core
-status: AVAILABLE
+status: DONE
 locked_by: ""
 locked_at: ""
-done_at: ""
+done_at: "2026-05-30T07:23:05Z"
 prereqs: ["01"]
 owns_files:
   - packages/core/package.json
