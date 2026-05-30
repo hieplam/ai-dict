@@ -138,8 +138,8 @@ jobs:
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ai-dict/extension-chrome build
-      - run: pnpm --filter @ai-dict/extension-chrome exec npx playwright install --with-deps chromium
-      - run: xvfb-run -a pnpm --filter @ai-dict/extension-chrome exec npx playwright test
+      - run: pnpm --filter @ai-dict/extension-chrome exec playwright install --with-deps chromium
+      - run: xvfb-run -a pnpm --filter @ai-dict/extension-chrome exec playwright test
       - if: failure()
         uses: actions/upload-artifact@v4
         with:

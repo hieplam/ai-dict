@@ -10,11 +10,6 @@
     "limit": "45 kB"
   },
   {
-    "name": "chrome content-elements.js",
-    "path": "packages/extension-chrome/dist/content-elements.js",
-    "limit": "45 kB"
-  },
-  {
     "name": "chrome options.js",
     "path": "packages/extension-chrome/dist/options.js",
     "limit": "40 kB"
