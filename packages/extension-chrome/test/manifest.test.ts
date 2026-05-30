@@ -19,4 +19,10 @@ describe('manifest.json (S5 CSP + S8 permissions — exact)', () => {
     if (!firstScript) throw new Error('No content scripts defined in manifest');
     expect(firstScript.matches).toEqual(['<all_urls>']);
   });
+  it('content_scripts has exactly two entries: MAIN-world elements script + isolated content script (Amendment A)', () => {
+    expect(manifest.content_scripts).toHaveLength(2);
+    expect(manifest.content_scripts[0]).toMatchObject({ world: 'MAIN', js: ['content-elements.js'] });
+    expect(manifest.content_scripts[1]).toMatchObject({ js: ['content.js'] });
+    expect('world' in manifest.content_scripts[1]).toBe(false);
+  });
 });

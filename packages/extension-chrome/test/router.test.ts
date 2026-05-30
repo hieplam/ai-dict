@@ -67,6 +67,24 @@ describe('buildRouter', () => {
     expect(reply).toMatchObject({ ok: false, type: 'lookup', error: { code: 'NETWORK' }, requestId: 'a' });
   });
 
+  it('lookup NO_KEY → error reply with code NO_KEY (D1 — missing-key scenario)', async () => {
+    const d = deps({
+      client: {
+        lookup: makeLookupMock(() =>
+          Promise.reject(
+            Object.assign(new Error('Add your Gemini API key in Settings.'), {
+              code: 'NO_KEY',
+              message: 'Add your Gemini API key in Settings.',
+              retryable: false,
+            }),
+          ),
+        ),
+      },
+    });
+    const reply = await buildRouter(d)(lookupMsg('no-key'));
+    expect(reply).toMatchObject({ ok: false, type: 'lookup', error: { code: 'NO_KEY' }, requestId: 'no-key' });
+  });
+
   it('cancellation suppresses the aborted lookup reply (D5)', async () => {
     let started!: () => void;
     const startedP = new Promise<void>((r) => { started = r; });

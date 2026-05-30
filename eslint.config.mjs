@@ -5,7 +5,7 @@ import importX from 'eslint-plugin-import-x';
 import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/coverage/**', '**/*.snapshot.json', '**/playwright-report/**', '**/test-results/**', '**/e2e/**', 'packages/*/playwright.config.ts'] },
+  { ignores: ['**/dist/**', '**/coverage/**', '**/*.snapshot.json', '**/playwright-report/**', '**/test-results/**', '**/e2e/**', 'packages/*/playwright.config.ts', '.claude/**'] },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
