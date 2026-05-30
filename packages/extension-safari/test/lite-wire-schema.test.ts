@@ -23,6 +23,22 @@ describe('WireMessageSchema (lite-wire-schema shim)', () => {
     expect(result.data.type).toBe('lookup');
   });
 
+  it('(a2) lookup with apiKey injected inside req: success:true AND req.apiKey is stripped', () => {
+    const result = WireMessageSchema.safeParse({
+      type: 'lookup',
+      req: { word: 'hello', apiKey: 'AIza-secret', context: 'some context' },
+      requestId: 'req-2',
+    });
+    expect(result.success).toBe(true);
+    if (!result.success) return;
+    // Narrow to the lookup variant before accessing req
+    if (result.data.type !== 'lookup') throw new Error('expected lookup type');
+    // req must NOT carry the injected apiKey — only whitelisted fields survive
+    expect(result.data.req).not.toHaveProperty('apiKey');
+    expect(result.data.req.word).toBe('hello');
+    expect((result.data.req as { context?: unknown }).context).toBe('some context');
+  });
+
   it('(b1) malformed lookup — missing req entirely → success:false', () => {
     expect(WireMessageSchema.safeParse({ type: 'lookup' }).success).toBe(false);
   });

@@ -13,5 +13,5 @@ runLookupWorkflow({
   trigger: new SafariFloatingTrigger(),
   renderer: new InlineBottomSheetRenderer(document.body),  // the only surface on iOS
   client: new MessageRelayLookupClient(browser.runtime),
-  settings: new MessageRelaySettingsStore(browser.runtime),
+  settings: new MessageRelaySettingsStore(browser.runtime, (cb) => browser.storage.onChanged.addListener(cb)),
 });

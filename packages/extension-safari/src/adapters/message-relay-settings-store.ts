@@ -6,7 +6,7 @@ export class MessageRelaySettingsStore implements SettingsStore {
 
   constructor(
     private readonly runtime: RuntimeLike,
-    subscribe: (invalidate: () => void) => void = (cb) => browser.storage.onChanged.addListener(cb),
+    subscribe: (invalidate: () => void) => void,
   ) {
     subscribe(() => { this.cache = null; });
   }

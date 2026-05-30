@@ -36,7 +36,8 @@ type ValidType = typeof VALID_TYPES extends Set<infer T> ? T : never;
 
 // Whitelisted-field shapes returned by safeParse on success.
 // These mirror the WireMessage discriminated union in @ai-dict/core exactly.
-type StrippedLookup = { type: 'lookup'; req: { word: string; [k: string]: unknown }; requestId?: unknown };
+// req is reconstructed from whitelisted fields only — no index signature so no extra fields survive.
+type StrippedLookup = { type: 'lookup'; req: { word: string; context?: unknown }; requestId?: unknown };
 type StrippedLookupCancel = { type: 'lookup.cancel'; requestId?: unknown };
 type StrippedHistoryList = { type: 'history.list'; limit?: unknown; cursor?: unknown };
 type StrippedSimple = { type: 'settings.get' | 'history.clear' | 'cache.clear' | 'connection.test' };
@@ -57,9 +58,10 @@ export const WireMessageSchema = {
     if (type === 'lookup') {
       const req = m['req'];
       if (!isNonNullObject(req) || typeof req['word'] !== 'string') return { success: false };
-      // At this point req['word'] is confirmed string; assert the narrowed type.
-      const narrowedReq = req as { word: string; [k: string]: unknown };
-      const stripped: StrippedLookup = { type: 'lookup', req: narrowedReq };
+      // Reconstruct req from whitelisted fields only — unknown extra fields are silently dropped.
+      const strippedReq: { word: string; context?: unknown } = { word: req['word'] };
+      if ('context' in req) strippedReq.context = req['context'];
+      const stripped: StrippedLookup = { type: 'lookup', req: strippedReq };
       if ('requestId' in m) stripped.requestId = m['requestId'];
       return { success: true, data: stripped };
     }
