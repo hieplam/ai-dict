@@ -1,6 +1,7 @@
 import { test, expect, chromium, type BrowserContext } from '@playwright/test';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { E2E_HEADLESS } from '../playwright.config';
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist');
 
@@ -8,11 +9,11 @@ let ctx: BrowserContext;
 let extId: string;
 
 test.beforeAll(async () => {
-  // Extensions with MV3 service workers require headless:false — Playwright's headless mode
-  // does not support extension service worker registration (known limitation). This is expected;
-  // Bundle 07 CI wires this job to xvfb-run. Locally, it runs in non-headless mode.
+  // Headless mode is controlled by PLAYWRIGHT_HEADLESS=1 env var (set by CI under xvfb-run).
+  // Locally defaults to headless:false because Playwright's bundled Chromium does not support
+  // MV3 extension service worker registration in the default headless mode.
   ctx = await chromium.launchPersistentContext('', {
-    headless: false,
+    headless: E2E_HEADLESS,
     args: [
       `--disable-extensions-except=${dist}`,
       `--load-extension=${dist}`,
