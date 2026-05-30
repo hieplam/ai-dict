@@ -49,4 +49,19 @@ describe('MessageRelayLookupClient', () => {
     expect(sent).toContainEqual({ type: 'lookup', req, requestId: 'id-9' });
     expect(sent).toContainEqual({ type: 'lookup.cancel', requestId: 'id-9' });
   });
+
+  // FIX 7: exercise the default genId (crypto.randomUUID) — the constructor's second
+  // parameter is optional; when omitted, the default arrow function is exercised.
+  it('uses the default genId (crypto.randomUUID) when no genId is supplied', async () => {
+    const sendMessage = vi.fn(() => Promise.resolve({ ok: true, type: 'lookup', result: okResult }));
+    const c = new MessageRelayLookupClient({ sendMessage });
+    const result = await c.lookup(req);
+    expect(result).toEqual(okResult);
+    // A UUID-shaped requestId was generated internally and passed to sendMessage
+    expect(sendMessage).toHaveBeenCalledTimes(1);
+    const calls = sendMessage.mock.calls as Array<Array<{ requestId: string }>>;
+    const msg = calls[0]?.[0];
+    expect(typeof msg?.requestId).toBe('string');
+    expect((msg?.requestId ?? '').length).toBeGreaterThan(0);
+  });
 });
