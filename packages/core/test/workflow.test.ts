@@ -53,4 +53,29 @@ describe('runLookupWorkflow', () => {
     expect(signals[0]!.aborted).toBe(true);
     expect(signals[1]!.aborted).toBe(false);
   });
+
+  it('teardown() aborts an in-flight lookup, closes renderer, hides trigger, and stops future events', async () => {
+    let capturedSignal: AbortSignal | undefined;
+    // Never resolves — simulates a pending request
+    const h = harness({
+      impl: (_req, opts) => new Promise<LookupResult>(() => { capturedSignal = opts?.signal; }),
+    });
+    h.selection.emit(sel);
+    h.trigger.click();
+    // Wait until the in-flight lookup has registered its signal
+    await vi.waitFor(() => expect(capturedSignal).toBeDefined());
+
+    const hiddenBefore = h.trigger.hidden;
+    h.teardown();
+
+    // (a) AbortSignal must be aborted
+    expect(capturedSignal!.aborted).toBe(true);
+    // (b) renderer.close() must have been called
+    expect(h.renderer.calls).toContain('close');
+    // (c) trigger.hide() must have been called at least once more
+    expect(h.trigger.hidden).toBeGreaterThan(hiddenBefore);
+    // (d) selection events after teardown must not fire the trigger again
+    h.selection.emit(sel);
+    expect(h.trigger.shown).toBeNull();
+  });
 });

@@ -41,4 +41,18 @@ describe('cache-policy', () => {
     expect(await cacheGet(deps, { word: 'b', context: '', target: 'vi' })).toBeNull();
     expect(await cacheGet(deps, { word: 'a', context: '', target: 'vi' })).not.toBeNull();
   });
+
+  it('evicts at the default cap of 1000 (D4 gate: regression guard on DEFAULT_CAP)', async () => {
+    // Uses the default cap — no explicit cap dep — so any change to DEFAULT_CAP is detected.
+    const s = memStorage();
+    const deps = { storage: s }; // cap defaults to 1000 inside cachePut
+    // Insert 1001 items: the first item inserted is the oldest and must be evicted.
+    for (let i = 0; i < 1001; i++) {
+      await cachePut(deps, { word: String(i), context: '', target: 'vi' }, result(String(i)));
+    }
+    // Item 0 was inserted first and is the LRU — it must no longer be retrievable.
+    expect(await cacheGet(deps, { word: '0', context: '', target: 'vi' })).toBeNull();
+    // Item 1000 (the 1001st) must still be present.
+    expect(await cacheGet(deps, { word: '1000', context: '', target: 'vi' })).not.toBeNull();
+  }, 10000); // allow up to 10 s for 1001 async storage operations
 });
