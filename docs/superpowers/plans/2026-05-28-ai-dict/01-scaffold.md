@@ -125,9 +125,12 @@ Note: `wire:check`, `size`, `release:bump` point at scripts/config owned by Bund
 pnpm add -Dw typescript vitest @vitest/coverage-v8 \
   eslint @eslint/js typescript-eslint \
   eslint-plugin-import-x eslint-import-resolver-typescript \
-  eslint-config-prettier prettier
+  eslint-config-prettier prettier \
+  size-limit @size-limit/file
 ```
 Expected: registry resolves latest stable; `package.json.devDependencies` populated; `pnpm-lock.yaml` written.
+
+> `size-limit` + `@size-limit/file` back the frozen `size` script (Step 4); they live here with the other root-script tooling because the `size` *script name* is owned by this bundle while the `.size-limit.json` *config* is owned by Bundle 07. (`wire:check` and `release:bump` need no extra dep — Bundle 07 implements them with plain `node`.)
 
 - [ ] **Step 6: Create `tsconfig.base.json` (strict, DOM-free)**
 
