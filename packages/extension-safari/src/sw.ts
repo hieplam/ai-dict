@@ -1,5 +1,4 @@
 import { mapError, DEFAULT_TEMPLATE, type Settings } from '@ai-dict/core';
-import type { Runtime } from 'webextension-polyfill';
 // Import directly (not via the barrel) to avoid pulling in DOM-heavy shared-ui into the SW bundle
 import { GeminiLookupClient } from '@ai-dict/adapters-shared/gemini-lookup-client';
 import { buildRouter, WriteQueue, SUPPRESS } from './router';
@@ -21,13 +20,18 @@ const router = buildRouter({
   queue: new WriteQueue(),
 });
 
-// Use the async listener form (returns Promise<unknown>) so the channel stays open for
-// router replies. When action is 'ignore', resolve undefined (no reply).
-browser.runtime.onMessage.addListener((msg: unknown, sender: Runtime.MessageSender): Promise<unknown> => {
+// Uses the sendResponse + return true idiom (the WebExtensions runtime.onMessage contract Safari implements).
+// SUPPRESS leaves channel open, never replies — return true keeps it open without calling sendResponse.
+// The cast is required because @types/webextension-polyfill's OnMessageListenerCallback only allows
+// literal `true` as return type, but the WebExtensions spec permits `false` to synchronously close
+// the channel (ignore path). The runtime behavior is correct; the types are overly strict here.
+type OnMsgListener = (msg: unknown, sender: { id?: string }, sendResponse: (r: unknown) => void) => boolean;
+(browser.runtime.onMessage.addListener as (fn: OnMsgListener) => void)((msg, sender, sendResponse) => {
   const decision = classifyInbound(msg, sender.id, browser.runtime.id);
-  if (decision.action === 'ignore') return Promise.resolve(undefined);
-  if (decision.action === 'reject') return Promise.resolve(decision.reply);
-  return router(decision.msg)
-    .then((reply) => (reply !== SUPPRESS ? reply : undefined))
-    .catch((e: unknown) => ({ ok: false, type: decision.msg.type, error: mapError({ kind: 'thrown', error: e }) }));
+  if (decision.action === 'ignore') return false;
+  if (decision.action === 'reject') { sendResponse(decision.reply); return true; }
+  router(decision.msg)
+    .then((reply) => { if (reply !== SUPPRESS) sendResponse(reply); })
+    .catch((e: unknown) => sendResponse({ ok: false, type: decision.msg.type, error: mapError({ kind: 'thrown', error: e }) }));
+  return true; // async sendResponse → keep channel open (SUPPRESS leaves it open, never replies)
 });
