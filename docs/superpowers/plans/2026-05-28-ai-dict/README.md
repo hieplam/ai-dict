@@ -74,7 +74,7 @@ A subagent that changes any identifier below MUST update every dependent bundle'
 | `runLookupWorkflow(deps)` orchestrator signature (spec §5.6) | 02 `core/src/workflow.ts` | 05, 06 composition roots |
 | `deriveCacheKey(req)` + `fnv1a64Hex` (spec §6.11) | 02 `core/src/cache-policy.ts` | 05, 06 (SW cache) |
 | `mapError(...)` Gemini→`LookupError.code` table (spec §6.9) | 02 (error mapper) | 04 (gemini client), 05, 06 (SW) |
-| Web Component tags + events: `<lookup-trigger>` (`lookup-click`), `<lookup-card payload>` (`close`,`expand`), `<bottom-sheet>` (`dismiss`), `<settings-form>` (`save`,`clear-cache`,`clear-history`,`test-connection`,`export-history`) (spec §5.3) | 03 `shared-ui` | 04 (renderer), 05, 06 |
+| Web Component tags + events: `<lookup-trigger>` (`lookup-click`), `<lookup-card state>` (`close`,`expand`), `<bottom-sheet>` (`dismiss`), `<settings-form>` (`save`,`clear-cache`,`clear-history`,`test-connection`,`export-history`) (spec §5.3) | 03 `shared-ui` | 04 (renderer), 05, 06 |
 | Default prompt template + supported placeholders `{word}`,`{context}`,`{target_lang}`,`{source_lang}`,`{url}`,`{title}` (spec Appendix A) | 02 `core/src/default-template.ts` + `prompt-template.ts` | 05, 06 (options page) |
 | Root `package.json` script names: `test`, `lint`, `typecheck`, `build`, `wire:check`, `size`, `release:bump` | 01 | 07 (CI jobs invoke them) |
 | `tsconfig.base.json` compiler flags (`strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`); eslint hex `no-restricted-paths` rules (spec §8.3, §8.6) | 01 | every package extends/obeys; 07 lint job |

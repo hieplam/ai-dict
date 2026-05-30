@@ -67,14 +67,48 @@ describe('<settings-form>', () => {
     expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('es');
   });
 
+  it('four action events cross shadow boundary (composed: true)', () => {
+    const el = mountForm();
+    const actionMap = [
+      ['clear-cache', '#clear-cache'],
+      ['clear-history', '#clear-history'],
+      ['test-connection', '#test'],
+      ['export-history', '#export'],
+    ] as const;
+    const captured: Map<string, CustomEvent> = new Map();
+    const handlers: Map<string, EventListener> = new Map();
+
+    for (const [name] of actionMap) {
+      const h: EventListener = (e) => { captured.set(name, e as CustomEvent); };
+      handlers.set(name, h);
+      document.body.addEventListener(name, h);
+    }
+
+    for (const [, sel] of actionMap) {
+      el.shadowRoot!.querySelector<HTMLButtonElement>(sel)!.click();
+    }
+
+    for (const [name] of actionMap) {
+      document.body.removeEventListener(name, handlers.get(name)!);
+      const evt = captured.get(name);
+      expect(evt, `${name} must reach document.body`).toBeDefined();
+      expect(evt!.composed, `${name} must be composed:true`).toBe(true);
+    }
+  });
+
   it('"save" event crosses shadow boundary (composed: true)', () => {
     const el = mountForm();
-    const spy = vi.fn();
-    // Attach to an ancestor outside the shadow host — only receives if composed: true
-    document.body.addEventListener('save', spy);
+    let capturedEvent: CustomEvent | null = null;
+    const handler: EventListener = (e) => { capturedEvent = e as CustomEvent; };
+    // Trigger submit on the shadow-internal <form>; composed:true on the
+    // custom 'save' event is what allows it to reach this ancestor listener.
+    document.body.addEventListener('save', handler);
     el.shadowRoot!.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    document.body.removeEventListener('save', spy);
-    expect(spy).toHaveBeenCalledOnce();
+    document.body.removeEventListener('save', handler);
+    expect(capturedEvent).not.toBeNull();
+    // Verify the dispatched custom event carries composed:true so a change to
+    // {composed:false} in the implementation would make this assertion red.
+    expect(capturedEvent!.composed).toBe(true);
   });
 
   it('does not re-initialize shadow on second connectedCallback', () => {

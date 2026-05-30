@@ -1,9 +1,21 @@
 import type { LookupError } from '@ai-dict/core';
 import { adoptStyles } from './styles/adopt';
 
+/**
+ * A branded string type that marks HTML which has already passed the
+ * sanitization pipeline (DOMPurify allowlist in adapters-shared, S4).
+ * Never cast raw API content to SafeHtml — only the sanitizer may do so.
+ */
+export type SafeHtml = string & { readonly __brand: 'SafeHtml' };
+
+/**
+ * The three states the lookup card can display.
+ * When kind === 'result', `safeHtml` MUST be the output of the sanitization
+ * pipeline — never pass raw API content directly.
+ */
 export type CardState =
   | { kind: 'loading' }
-  | { kind: 'result'; safeHtml: string; word: string; target: string }
+  | { kind: 'result'; safeHtml: SafeHtml; word: string; target: string }
   | { kind: 'error'; error: LookupError };
 
 const CSS = `:host{display:block;font:14px/1.5 system-ui;color:#202124}

@@ -102,12 +102,20 @@ describe('<bottom-sheet>', () => {
 
   it('"dismiss" event crosses shadow boundary (composed: true)', () => {
     const el = mountSheet();
-    const spy = vi.fn();
-    // Attach to an ancestor outside the shadow host — only receives if composed: true
-    document.body.addEventListener('dismiss', spy);
-    el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    document.body.removeEventListener('dismiss', spy);
-    expect(spy).toHaveBeenCalledOnce();
+    let capturedEvent: CustomEvent | null = null;
+    const handler = (e: Event): void => { capturedEvent = e as CustomEvent; };
+    // Trigger dismiss via a click on the shadow-internal scrim element.
+    // The scrim is inside the shadow root, so only composed:true events can
+    // propagate past the shadow boundary and reach this ancestor listener.
+    document.body.addEventListener('dismiss', handler);
+    el.shadowRoot!.querySelector('.scrim')!.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, composed: true }),
+    );
+    document.body.removeEventListener('dismiss', handler);
+    expect(capturedEvent).not.toBeNull();
+    // The dispatched custom event must carry composed:true — changing the
+    // dispatch to {composed:false} would make this assertion red.
+    expect(capturedEvent!.composed).toBe(true);
   });
 
   it('has no axe violations', async () => {

@@ -32,7 +32,7 @@ Verify prereq `02-core.md` is `DONE`. Flip YAML → LOCKED, commit `[03] lock`, 
 
 ## Outputs (frozen contracts — tags + events)
 - `<lookup-trigger>` → emits `lookup-click`; `role="button"`, `aria-label`, keyboard-activatable, focus ring.
-- `<lookup-card payload>` → emits `close`, `expand`; renders sanitized-Markdown result + loading + error states; semantic headings (H2/H3), `aria-live="polite"`. (Sanitization pipeline itself lives in 04; the card accepts already-safe content / a render hook.)
+- `<lookup-card state>` → emits `close`, `expand`; renders sanitized-Markdown result + loading + error states; semantic headings (H2/H3), `aria-live="polite"`. (Sanitization pipeline itself lives in 04; the card accepts already-safe content via the `state` setter. The input property is named `state` — not `payload` as an earlier draft named it.)
 - `<bottom-sheet>` → emits `dismiss`; `role="dialog"`, `aria-modal`, `aria-labelledby`, focus trap, ESC closes, restores focus, respects `prefers-reduced-motion`.
 - `<settings-form>` → emits `save`, `clear-cache`, `clear-history`, `test-connection`, `export-history`; password input + reveal for key, target-lang picker, prompt textarea, history list, cache controls; labels + `aria-describedby`.
 - All styles via `adoptedStyleSheets`; no inline `<style>` anywhere.

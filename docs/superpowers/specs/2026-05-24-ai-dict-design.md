@@ -139,7 +139,7 @@ ai-dict/
 │   ├── shared-ui/                       # Presentational Web Components only.
 │   │   ├── src/
 │   │   │   ├── lookup-trigger.ts        # <lookup-trigger>
-│   │   │   ├── lookup-card.ts           # <lookup-card payload>
+│   │   │   ├── lookup-card.ts           # <lookup-card state>
 │   │   │   ├── bottom-sheet.ts          # <bottom-sheet>
 │   │   │   └── settings-form.ts         # <settings-form>
 │   │   └── test/
@@ -295,7 +295,7 @@ export interface Settings extends PublicSettings {
 | Tag | Responsibility | Events emitted |
 |---|---|---|
 | `<lookup-trigger>` | Anchored button next to selection. Open Shadow DOM (see shadow-mode note below). | `lookup-click` |
-| `<lookup-card payload>` | Renders sanitized Markdown result + loading/error states. | `close`, `expand` |
+| `<lookup-card state>` | Renders sanitized Markdown result + loading/error states. Input property is `state` (a `CardState` union: loading / result / error). | `close`, `expand` |
 | `<bottom-sheet>` | Slide-up surface with drag-down close + scrim. Focus trap. ESC closes. | `dismiss` |
 | `<settings-form>` | API key (masked) + prompt template (textarea) + target language picker + history list + cache controls. | `save`, `clear-cache`, `clear-history`, `test-connection`, `export-history` |
 
@@ -460,7 +460,7 @@ user            content.ts                              SW                      
  |               |                                        | cache.put + history.push |
  |               | <─── reply{ok,type:lookup,result,id}───|                          |
  |               | renderer.renderResult(result)          |                          |
- |               |   <lookup-card payload=...> renders    |                          |
+ |               |   <lookup-card state=...> renders      |                          |
 ```
 
 Two SW round-trips on first lookup per tab (settings.get, lookup). `MessageRelaySettingsStore` caches `PublicSettings` in tab memory and invalidates on `chrome.storage.onChanged` -> subsequent lookups make a single round-trip.

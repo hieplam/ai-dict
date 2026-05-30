@@ -1,7 +1,10 @@
 import { describe, it, expect, vi } from 'vitest';
 import { axeViolations } from './a11y';
-import { LookupCard } from '../src/lookup-card';
+import { LookupCard, type SafeHtml } from '../src/lookup-card';
 import '../src/lookup-card';
+
+/** Cast a trusted literal to SafeHtml for test fixtures only. */
+const safe = (html: string) => html as SafeHtml;
 
 function mountCard(): LookupCard {
   const el = document.createElement('lookup-card') as LookupCard;
@@ -19,7 +22,7 @@ describe('<lookup-card>', () => {
 
   it('renders a result with a heading and the pre-sanitized body', () => {
     const el = mountCard();
-    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: '<p>money place</p>' };
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>money place</p>') };
     const root = el.shadowRoot!;
     expect(root.querySelector('h2')!.textContent).toBe('bank');
     expect(root.querySelector('[aria-live]')!.innerHTML).toContain('money place');
@@ -44,7 +47,7 @@ describe('<lookup-card>', () => {
   it('state setter before connect is a no-op render (no shadowRoot crash)', () => {
     // Set state before appending to DOM: region is null, render should be skipped
     const el = document.createElement('lookup-card') as LookupCard;
-    el.state = { kind: 'result', word: 'test', target: 'vi', safeHtml: '<p>hi</p>' };
+    el.state = { kind: 'result', word: 'test', target: 'vi', safeHtml: safe('<p>hi</p>') };
     // Now connect — should render the pre-set state
     document.body.append(el);
     expect(el.shadowRoot!.querySelector('h2')!.textContent).toBe('test');
@@ -59,12 +62,19 @@ describe('<lookup-card>', () => {
 
   it('"close" event crosses shadow boundary (composed: true)', () => {
     const el = mountCard();
-    const spy = vi.fn();
-    // Attach to an ancestor outside the shadow host — only receives if composed: true
-    document.body.addEventListener('close', spy);
-    el.shadowRoot!.querySelector<HTMLButtonElement>('[data-act="close"]')!.click();
-    document.body.removeEventListener('close', spy);
-    expect(spy).toHaveBeenCalledOnce();
+    let capturedEvent: CustomEvent | null = null;
+    const handler = (e: Event): void => { capturedEvent = e as CustomEvent; };
+    // Trigger the click from inside the shadow root; composed:true on the
+    // custom event is what allows it to reach this ancestor listener.
+    document.body.addEventListener('close', handler);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('[data-act="close"]')!.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, composed: true }),
+    );
+    document.body.removeEventListener('close', handler);
+    expect(capturedEvent).not.toBeNull();
+    // Verify the dispatched custom event carries composed:true so a change to
+    // {composed:false} in the implementation would make this assertion red.
+    expect(capturedEvent!.composed).toBe(true);
   });
 
   it('has no axe violations (loading state)', async () => {
@@ -74,7 +84,7 @@ describe('<lookup-card>', () => {
 
   it('has no axe violations (result state)', async () => {
     const el = mountCard();
-    el.state = { kind: 'result', word: 'sky', target: 'vi', safeHtml: '<p>the sky</p>' };
+    el.state = { kind: 'result', word: 'sky', target: 'vi', safeHtml: safe('<p>the sky</p>') };
     expect(await axeViolations(el)).toEqual([]);
   });
 

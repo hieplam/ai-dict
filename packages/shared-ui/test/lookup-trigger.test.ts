@@ -28,12 +28,17 @@ describe('<lookup-trigger>', () => {
 
   it('"lookup-click" event crosses shadow boundary (composed: true)', () => {
     const el = mount('lookup-trigger');
-    const spy = vi.fn();
-    // Attach to an ancestor outside the shadow host — only receives if composed: true
-    document.body.addEventListener('lookup-click', spy);
-    el.shadowRoot!.querySelector('button')!.click();
-    document.body.removeEventListener('lookup-click', spy);
-    expect(spy).toHaveBeenCalledOnce();
+    let capturedEvent: CustomEvent | null = null;
+    const handler = (e: Event): void => { capturedEvent = e as CustomEvent; };
+    // Dispatch the triggering click from inside the shadow root so only a
+    // composed:true custom event can reach this ancestor listener.
+    document.body.addEventListener('lookup-click', handler);
+    el.shadowRoot!.querySelector('button')!.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+    document.body.removeEventListener('lookup-click', handler);
+    expect(capturedEvent).not.toBeNull();
+    // The custom event itself must carry composed:true — asserting this means
+    // changing the dispatch to {composed:false} would make the test red.
+    expect(capturedEvent!.composed).toBe(true);
   });
 
   it('has no axe violations', async () => {
