@@ -1,10 +1,10 @@
 ---
 bundle: "03"
 title: shared-ui
-status: AVAILABLE
+status: DONE
 locked_by: ""
 locked_at: ""
-done_at: ""
+done_at: "2026-05-30T08:19:22Z"
 prereqs: ["02"]
 owns_files:
   - packages/shared-ui/package.json
