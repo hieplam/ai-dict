@@ -75,5 +75,21 @@ export default tseslint.config(
   },
   // JS config files (eslint.config.mjs etc.) have no type info — turn off type-checked rules
   { files: ['**/*.{js,mjs,cjs}'], extends: [tseslint.configs.disableTypeChecked] },
+  // Node-runtime scripts: declare Node globals so process/console/URL etc. are defined.
+  // Scoped to scripts/ and esbuild configs — does NOT affect browser/extension source.
+  {
+    files: ['scripts/**/*.mjs', '**/esbuild.config.mjs'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        console: 'readonly',
+        URL: 'readonly',
+        URLSearchParams: 'readonly',
+        Buffer: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+      },
+    },
+  },
   prettier,
 );

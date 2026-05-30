@@ -38,7 +38,7 @@ for (const rel of [
 const pbx = findFirst(resolve(root, 'packages/extension-safari/xcode'), /\.pbxproj$/);
 if (pbx) {
   const text = readFileSync(pbx, 'utf8');
-  const from = (text.match(/MARKETING_VERSION = ([^;]+);/) ?? [, '(none)'])[1];
+  const from = (text.match(/MARKETING_VERSION = ([^;]+);/) ?? [undefined, '(none)'])[1];
   const next = text.replace(/MARKETING_VERSION = [^;]+;/g, `MARKETING_VERSION = ${version};`);
   edits.push({ file: pbx, from, next });
 } else {
