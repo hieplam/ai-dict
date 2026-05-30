@@ -1,10 +1,10 @@
 ---
 bundle: "01"
 title: scaffold
-status: AVAILABLE          # AVAILABLE | LOCKED | DONE | BLOCKED
+status: DONE               # AVAILABLE | LOCKED | DONE | BLOCKED
 locked_by: ""
 locked_at: ""
-done_at: ""
+done_at: "2026-05-30T06:57:16Z"
 prereqs: []
 owns_files:
   - pnpm-workspace.yaml
