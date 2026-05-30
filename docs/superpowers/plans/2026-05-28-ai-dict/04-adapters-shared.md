@@ -578,7 +578,7 @@ Run → FAIL.
 
 ```ts
 import type { ResultRenderer, LookupResult, LookupError } from '@ai-dict/core';
-import type { CardState, LookupCard } from '@ai-dict/shared-ui/lookup-card';
+import type { CardState, LookupCard, SafeHtml } from '@ai-dict/shared-ui/lookup-card';
 import '@ai-dict/shared-ui/bottom-sheet';
 import '@ai-dict/shared-ui/lookup-card';
 import { sanitizeMarkdown } from './markdown-sanitize';
@@ -610,7 +610,9 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   renderLoading(): void { this.setState({ kind: 'loading' }); }
 
   renderResult(r: LookupResult): void {
-    this.setState({ kind: 'result', safeHtml: this.sanitize(r.markdown), word: r.word, target: r.target });
+    // `CardState.safeHtml` is the branded `SafeHtml` type from shared-ui (Bundle 03): the cast here is
+    // the single authorised trust boundary — DOMPurify output (S4) is, by definition, safe HTML.
+    this.setState({ kind: 'result', safeHtml: this.sanitize(r.markdown) as SafeHtml, word: r.word, target: r.target });
   }
 
   renderError(e: LookupError): void { this.setState({ kind: 'error', error: e }); }

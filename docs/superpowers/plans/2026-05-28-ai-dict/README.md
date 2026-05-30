@@ -42,7 +42,7 @@ A bundle may only be filled with TDD code (`writing-plans`) once all its prereqs
 
 - [x] 01 — scaffold          → `01-scaffold.md`          — prereqs: none
 - [x] 02 — core              → `02-core.md`              — prereqs: 01
-- [ ] 03 — shared-ui         → `03-shared-ui.md`         — prereqs: 02
+- [x] 03 — shared-ui         → `03-shared-ui.md`         — prereqs: 02
 - [ ] 04 — adapters-shared   → `04-adapters-shared.md`   — prereqs: 02, 03
 - [ ] 05 — extension-chrome  → `05-extension-chrome.md`  — prereqs: 02, 03, 04
 - [ ] 06 — extension-safari  → `06-extension-safari.md`  — prereqs: 02, 03, 04
