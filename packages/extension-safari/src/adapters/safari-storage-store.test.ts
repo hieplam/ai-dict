@@ -1,6 +1,8 @@
 import { describe, it, expect, vi } from 'vitest';
 import { SafariStorageStore } from './safari-storage-store';
 import { DEFAULT_TEMPLATE } from '@ai-dict/core';
+import { buildRouter, WriteQueue } from '../router';
+import { fakeStorage } from '@ai-dict/core/test/fakes';
 
 function fakeArea(seed?: unknown) {
   let stored = seed;
@@ -42,5 +44,40 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
       saveHistory: true,
       promptTemplate: 'custom',
     });
+  });
+});
+
+// FIX 4 (D3 / S1 wire proof): Wire a REAL SafariStorageStore (seeded WITH an apiKey) as
+// the router's settings dep and assert the settings.get wire reply has NO apiKey field.
+// This proves strip happens at the real storage layer and survives the full router path.
+// Placed here (src/adapters/) not in test/ to respect the hex zone rule that blocks
+// test/ from importing src/adapters/ directly.
+describe('SafariStorageStore + buildRouter — S1 wire-layer proof (D3)', () => {
+  it('settings.get reply contains NO apiKey even when storage holds one (real store, no fake)', async () => {
+    // Seed the fake StorageArea with a full Settings object including apiKey
+    let stored: unknown = { targetLang: 'en', promptTemplate: 'tmpl', apiKey: 'AIza-secret', cacheEnabled: true, saveHistory: true, hasKey: true };
+    const area = {
+      get: vi.fn((): Promise<Record<string, unknown>> => Promise.resolve({ settings: stored })),
+      set: vi.fn((items: Record<string, unknown>): Promise<void> => { stored = items['settings']; return Promise.resolve(); }),
+      remove: vi.fn((): Promise<void> => Promise.resolve()),
+    };
+    const realSettings = new SafariStorageStore(area);
+    const route = buildRouter({
+      kv: fakeStorage(),
+      client: { lookup: vi.fn() as never },
+      settings: realSettings,
+      readToggles: vi.fn(() => Promise.resolve({ cacheEnabled: true, saveHistory: true })),
+      queue: new WriteQueue(),
+    });
+    const reply = await route({ type: 'settings.get' });
+    expect(reply).toMatchObject({ ok: true, type: 'settings' });
+    if (typeof reply !== 'object' || reply === null || !('settings' in reply)) throw new Error('Expected settings reply');
+    const settings = (reply as { settings: Record<string, unknown> }).settings;
+    // The wire reply MUST NOT expose apiKey
+    expect('apiKey' in settings).toBe(false);
+    // The known PublicSettings fields must be present and correct
+    expect(settings['targetLang']).toBe('en');
+    expect(settings['promptTemplate']).toBe('tmpl');
+    expect(settings['hasKey']).toBe(true);
   });
 });

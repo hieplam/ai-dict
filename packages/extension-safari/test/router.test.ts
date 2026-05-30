@@ -201,4 +201,5 @@ describe('buildRouter', () => {
     const reply = await route({ type: 'history.list', limit: 1 });
     expect(reply).toMatchObject({ ok: true, type: 'history' });
   });
+
 });
