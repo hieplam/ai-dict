@@ -4,7 +4,7 @@ import manifest from '../src/manifest.json';
 describe('manifest.json (S5 CSP + S8 Safari permissions — exact)', () => {
   it('declares only storage; NO sidePanel / scripting / externally_connectable (S8)', () => {
     expect(manifest.permissions).toEqual(['storage']);
-    expect(manifest.host_permissions).toEqual(['<all_urls>', 'https://generativelanguage.googleapis.com/*']);
+    expect(manifest.host_permissions).toEqual(['<all_urls>']);
     expect(manifest.permissions.includes('sidePanel')).toBe(false);
     expect(manifest.permissions.includes('scripting')).toBe(false);
     expect('side_panel' in manifest).toBe(false);

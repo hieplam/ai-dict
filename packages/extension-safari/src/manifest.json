@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "description": "Stay-in-page dictionary lookup powered by your own Gemini API key.",
   "permissions": ["storage"],
-  "host_permissions": ["<all_urls>", "https://generativelanguage.googleapis.com/*"],
+  "host_permissions": ["<all_urls>"],
   "browser_specific_settings": {
     "safari": { "strict_min_version": "16.4" }
   },
