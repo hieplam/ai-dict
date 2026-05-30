@@ -1,3 +1,14 @@
+// INTEGRATION NOTE — shim vs. full Zod schema:
+// These tests exercise classifyInbound against the REAL WireMessageSchema (Zod).
+// In the production browser bundle, esbuild's wire-schema-shim plugin replaces
+// WireMessageSchema with a lightweight Set.has check (see esbuild.config.mjs).
+// The shim adds a structural guard for 'lookup' (req must be a non-null object with
+// a string `word` field) to prevent a malformed message from crashing the SW on
+// req.word access. All other message types carry no payload the router destructures.
+// Accepted risk: non-lookup payload fields (e.g. requestId type) are not validated
+// by the shim. The sender guard (S3) ensures same-origin-only messages reach this
+// path, limiting the attack surface to extension-internal contexts.
+
 import { describe, it, expect } from 'vitest';
 import { classifyInbound } from '../src/inbound';
 

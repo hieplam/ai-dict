@@ -34,17 +34,26 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
 
   async function handleLookup(msg: Extract<WireMessage, { type: 'lookup' }>): Promise<RouterReply> {
     const { req, requestId } = msg;
-    const { cacheEnabled, saveHistory } = await deps.readToggles();
-    const keyReq = { word: req.word, context: req.context, target: req.target };
-
-    if (cacheEnabled) {
-      const hit = await cacheGet({ storage: deps.kv }, keyReq);
-      if (hit) return { ok: true, type: 'lookup', result: { ...hit, fromCache: true }, requestId };
-    }
-
+    // Register the controller synchronously (before any await) so a lookup.cancel that arrives
+    // during readToggles or cacheGet is guaranteed to find the entry in inflight and add the
+    // requestId to cancelled. Without this, a cancel during the pre-inflight window is silently
+    // ignored and the result is returned to the caller instead of being suppressed (§6.10 / D5).
     const controller = new AbortController();
     inflight.set(requestId, controller);
+
     try {
+      const { cacheEnabled, saveHistory } = await deps.readToggles();
+      const keyReq = { word: req.word, context: req.context, target: req.target };
+
+      if (cacheEnabled) {
+        const hit = await cacheGet({ storage: deps.kv }, keyReq);
+        if (hit) return { ok: true, type: 'lookup', result: { ...hit, fromCache: true }, requestId };
+      }
+
+      // A cancel that arrived during readToggles/cacheGet will have found requestId in inflight,
+      // added it to cancelled, and called controller.abort(). Check here before calling client.
+      if (cancelled.has(requestId)) return SUPPRESS;
+
       const result = await deps.client.lookup(req, { signal: controller.signal });
       if (cacheEnabled) await deps.queue.run(() => cachePut({ storage: deps.kv }, keyReq, result));
       if (saveHistory) {

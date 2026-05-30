@@ -104,6 +104,41 @@ describe('buildRouter', () => {
     expect(await p).toBe(SUPPRESS);
   });
 
+  it('cancel during readToggles phase (pre-inflight window) still suppresses the reply (D5)', async () => {
+    // Regression test for the async window bug: inflight.set was previously placed AFTER
+    // readToggles + cacheGet awaits, so a cancel arriving during those awaits would find
+    // nothing in inflight and not add requestId to cancelled — the lookup result would be
+    // returned normally instead of being suppressed. Now inflight.set is the first sync
+    // operation before any await, so handleCancel always finds the controller.
+    let resolveToggles!: () => void;
+    const togglesBlocked = new Promise<void>((r) => { resolveToggles = r; });
+    let cancelSent = false;
+
+    const d = {
+      kv: fakeStorage(),
+      client: { lookup: makeLookupMock() },
+      settings: { get: vi.fn(async () => ({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true })), set: vi.fn() },
+      readToggles: vi.fn(async () => {
+        await togglesBlocked; // block until test sends the cancel
+        return { cacheEnabled: false, saveHistory: false }; // disable cache to skip cacheGet
+      }),
+      queue: new WriteQueue(),
+    };
+    const route = buildRouter(d);
+    const p = route(lookupMsg('pre'));
+
+    // readToggles is now blocked — send the cancel. With the old code (inflight.set after awaits)
+    // inflight would be empty here and the cancel would be silently ignored.
+    const ack = await route({ type: 'lookup.cancel', requestId: 'pre' });
+    expect(ack).toMatchObject({ ok: true, type: 'ack' });
+    cancelSent = true;
+
+    // Unblock readToggles — the result must be SUPPRESS, not a normal lookup reply
+    resolveToggles();
+    expect(cancelSent).toBe(true); // sanity: confirm cancel was sent before unblocking
+    expect(await p).toBe(SUPPRESS);
+  });
+
   it('serializes concurrent index writes — no lost history update (D6)', async () => {
     const d = deps();
     const route = buildRouter(d);

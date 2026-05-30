@@ -29,6 +29,13 @@ const wireSchemaShim = {
     build.onLoad({ filter: /.*/, namespace: 'wire-shim' }, () => ({
       // Lightweight type-discriminant: same behaviour as WireMessageSchema.safeParse()
       // at the boundary (valid type string → route; anything else → reject).
+      //
+      // SECURITY NOTE: The full Zod WireMessageSchema validates payload shapes (e.g. req fields
+      // for 'lookup'); unit tests in inbound.test.ts run against the real Zod schema.
+      // This shim adds a structural guard for 'lookup': msg.req must be a non-null object with
+      // a string `word` field, so a malformed { type:'lookup' } (no req) cannot reach the router
+      // and crash the SW on req.word access. All other message types carry no payload that the
+      // router destructures unsafely.
       contents: [
         'const VALID = new Set([',
         "  'lookup','lookup.cancel','settings.get',",
@@ -36,9 +43,11 @@ const wireSchemaShim = {
         ']);',
         'export const WireMessageSchema = {',
         '  safeParse(m) {',
-        '    return (m != null && typeof m === "object" && VALID.has(m.type))',
-        '      ? { success: true, data: m }',
-        '      : { success: false };',
+        '    if (m == null || typeof m !== "object" || !VALID.has(m.type)) return { success: false };',
+        '    // Structural guard for lookup: req must be an object with a string word field.',
+        '    // Prevents a malformed lookup message from crashing the SW on req.word access.',
+        '    if (m.type === "lookup" && (m.req == null || typeof m.req !== "object" || typeof m.req.word !== "string")) return { success: false };',
+        '    return { success: true, data: m };',
         '  }',
         '};',
         'export function wireJsonSchema() { return {}; }',
