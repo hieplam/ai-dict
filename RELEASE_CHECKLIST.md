@@ -6,6 +6,7 @@ Run on the tagged commit (`vX.Y.Z` on `main`) before publishing.
 - [ ] All CI green on the commit to be tagged.
 - [ ] `wire-schema.snapshot.json` matches generated (`pnpm wire:check` clean).
 - [ ] Bundle sizes within budget (`pnpm size`).
+- [ ] `pnpm audit --audit-level=high` clean (no high/critical advisories).
 - [ ] `gitleaks` clean (no secrets in history).
 - [ ] `release:bump X.Y.Z` ran: root `package.json` version + both manifests + Xcode `MARKETING_VERSION` all equal the tag.
 - [ ] Manifest permissions match §7.3 S8 exactly — **chrome**: `permissions:["storage","sidePanel"]`, `host_permissions:["<all_urls>","https://generativelanguage.googleapis.com/*"]`; **safari**: `permissions:["storage"]` (no `sidePanel`), same `host_permissions`; **both**: no `scripting`, no `externally_connectable`.

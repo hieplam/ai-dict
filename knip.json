@@ -1,0 +1,39 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "ignoreExportsUsedInFile": true,
+  "workspaces": {
+    ".": {
+      "entry": ["scripts/*.mjs"],
+      "project": ["scripts/*.mjs"]
+    },
+    "packages/core": {
+      "project": ["src/**/*.ts", "test/**/*.ts"]
+    },
+    "packages/adapters-shared": {
+      "project": ["src/**/*.ts", "test/**/*.ts"]
+    },
+    "packages/shared-ui": {
+      "project": ["src/**/*.ts", "test/**/*.ts"]
+    },
+    "packages/extension-chrome": {
+      "entry": [
+        "src/sw.ts",
+        "src/content.ts",
+        "src/content-elements.ts",
+        "src/options.ts",
+        "src/side-panel.ts",
+        "src/manifest.json"
+      ],
+      "project": ["src/**/*.ts", "test/**/*.ts"]
+    },
+    "packages/extension-safari": {
+      "entry": [
+        "src/sw.ts",
+        "src/content.ts",
+        "src/options.ts",
+        "src/manifest.json"
+      ],
+      "project": ["src/**/*.ts", "test/**/*.ts"]
+    }
+  }
+}

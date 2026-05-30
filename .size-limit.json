@@ -2,36 +2,43 @@
   {
     "name": "chrome sw.js",
     "path": "packages/extension-chrome/dist/sw.js",
-    "limit": "30 kB"
+    "limit": "30 kB",
+    "gzip": true
   },
   {
     "name": "chrome content.js",
     "path": "packages/extension-chrome/dist/content.js",
-    "limit": "45 kB"
+    "limit": "45 kB",
+    "gzip": true
   },
   {
     "name": "chrome options.js",
     "path": "packages/extension-chrome/dist/options.js",
-    "limit": "40 kB"
+    "limit": "40 kB",
+    "gzip": true
   },
   {
     "name": "chrome side-panel.js",
     "path": "packages/extension-chrome/dist/side-panel.js",
-    "limit": "40 kB"
+    "limit": "40 kB",
+    "gzip": true
   },
   {
     "name": "safari sw.js",
     "path": "packages/extension-safari/dist/sw.js",
-    "limit": "30 kB"
+    "limit": "30 kB",
+    "gzip": true
   },
   {
     "name": "safari content.js",
     "path": "packages/extension-safari/dist/content.js",
-    "limit": "45 kB"
+    "limit": "45 kB",
+    "gzip": true
   },
   {
     "name": "safari options.js",
     "path": "packages/extension-safari/dist/options.js",
-    "limit": "40 kB"
+    "limit": "40 kB",
+    "gzip": true
   }
 ]

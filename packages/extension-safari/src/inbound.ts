@@ -5,7 +5,7 @@ export type Inbound =
   | { action: 'reject'; reply: WireReply }
   | { action: 'route'; msg: WireMessage };
 
-// Pure: testable without the browser global. S3 sender guard + schema gate at the boundary.
+// Pure: testable without the extension's messaging runtime. S3 sender guard + S8.5 schema gate at the boundary.
 export function classifyInbound(msg: unknown, senderId: string | undefined, runtimeId: string): Inbound {
   if (senderId !== runtimeId) return { action: 'ignore' };
   const parsed = WireMessageSchema.safeParse(msg);

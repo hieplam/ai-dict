@@ -94,7 +94,7 @@ jobs:
       - name: open "Upload to stores" follow-up issue
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REF_NAME: ${{ github.ref_name }}
         run: |
-          gh issue create \
-            --title "Upload ${{ github.ref_name }} to stores" \
-            --body $'Manual MVP store submission for **${{ github.ref_name }}**:\n\n- [ ] Chrome Web Store: drag-drop `dist-chrome.zip`.\n- [ ] App Store Connect: upload the signed `.ipa` via Transporter/Xcode Organizer.\n\nAssets: see the GitHub Release for this tag.'
+          body=$(printf 'Manual MVP store submission for **%s**:\n\n- [ ] Chrome Web Store: drag-drop `dist-chrome.zip`.\n- [ ] App Store Connect: upload the signed `.ipa` via Transporter/Xcode Organizer.\n\nAssets: see the GitHub Release for this tag.' "$REF_NAME")
+          gh issue create --title "Upload $REF_NAME to stores" --body "$body"

@@ -14,7 +14,6 @@
   "dependencies": { "@ai-dict/core": "workspace:*" },
   "devDependencies": {
     "happy-dom": "^15.0.0",
-    "@testing-library/dom": "^10.0.0",
     "axe-core": "^4.10.0"
   }
 }
