@@ -12,9 +12,9 @@ function res(init: Partial<ResponseLike> & { body?: unknown; ok: boolean; status
     ok: init.ok,
     status: init.status,
     headers: { get: (n: string) => (n.toLowerCase() === 'retry-after' ? init.retryAfter ?? null : null) },
-    json: async () => {
-      if (init.body === '__throw__') throw new SyntaxError('bad json');
-      return init.body;
+    json: () => {
+      if (init.body === '__throw__') return Promise.reject(new SyntaxError('bad json'));
+      return Promise.resolve(init.body);
     },
   };
 }
@@ -29,7 +29,11 @@ function client(fetchImpl: FetchLike, key = 'AIza-key', timeoutMs?: number) {
 // A fetch that only settles when its signal aborts — mirrors real fetch by rejecting
 // immediately if the signal is ALREADY aborted at call time (otherwise it would hang).
 const abortableHang: FetchLike = (_url, init) => new Promise((_resolve, reject) => {
-  const fail = (): void => reject(init.signal.reason ?? new DOMException('aborted', 'AbortError'));
+  // Always reject with a proper Error subclass (DOMException extends Error) — satisfies
+  // @typescript-eslint/prefer-promise-reject-errors.
+  const reason: unknown = init.signal.reason;
+  const err = reason instanceof Error ? reason : new DOMException('aborted', 'AbortError');
+  const fail = (): void => reject(err);
   if (init.signal.aborted) { fail(); return; }
   init.signal.addEventListener('abort', fail, { once: true });
 });
@@ -37,7 +41,7 @@ const abortableHang: FetchLike = (_url, init) => new Promise((_resolve, reject) 
 describe('GeminiLookupClient', () => {
   it('success → LookupResult with model + rendered prompt + X-Goog-Api-Key header', async () => {
     let captured: { url: string; init: Parameters<FetchLike>[1] } | null = null;
-    const c = client(async (url, init) => { captured = { url, init }; return res({ ok: true, status: 200, body: okBody }); });
+    const c = client((url, init) => { captured = { url, init }; return Promise.resolve(res({ ok: true, status: 200, body: okBody })); });
     const out = await c.lookup(req);
     expect(out).toMatchObject({ markdown: '# def', word: 'bank', target: 'vi', model: 'gemini-2.5-flash', fromCache: false });
     expect(typeof out.fetchedAt).toBe('number');
@@ -49,68 +53,68 @@ describe('GeminiLookupClient', () => {
   });
 
   it('empty key → NO_KEY (defensive; not retryable), no fetch', async () => {
-    const fetchSpy = vi.fn();
-    const c = client(fetchSpy as unknown as FetchLike, '');
+    const fetchSpy: FetchLike = vi.fn();
+    const c = client(fetchSpy, '');
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'NO_KEY', retryable: false });
     expect(fetchSpy).not.toHaveBeenCalled();
   });
 
   it('navigator.onLine === false → NETWORK, no fetch', async () => {
     vi.stubGlobal('navigator', { onLine: false });
-    const fetchSpy = vi.fn();
-    const c = client(fetchSpy as unknown as FetchLike);
+    const fetchSpy: FetchLike = vi.fn();
+    const c = client(fetchSpy);
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'NETWORK', retryable: true });
     expect(fetchSpy).not.toHaveBeenCalled();
     vi.unstubAllGlobals();
   });
 
   it('HTTP 400 INVALID_ARGUMENT → INVALID_KEY', async () => {
-    const c = client(async () => res({ ok: false, status: 400, body: { error: { status: 'INVALID_ARGUMENT' } } }));
+    const c = client(() => Promise.resolve(res({ ok: false, status: 400, body: { error: { status: 'INVALID_ARGUMENT' } } })));
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'INVALID_KEY', retryable: false });
   });
 
   it('HTTP 403 → INVALID_KEY', async () => {
-    const c = client(async () => res({ ok: false, status: 403, body: { error: { status: 'PERMISSION_DENIED' } } }));
+    const c = client(() => Promise.resolve(res({ ok: false, status: 403, body: { error: { status: 'PERMISSION_DENIED' } } })));
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'INVALID_KEY' });
   });
 
   it('HTTP 429 → RATE_LIMIT with retryAfterSec from header', async () => {
-    const c = client(async () => res({ ok: false, status: 429, retryAfter: '30', body: { error: { status: 'RESOURCE_EXHAUSTED' } } }));
+    const c = client(() => Promise.resolve(res({ ok: false, status: 429, retryAfter: '30', body: { error: { status: 'RESOURCE_EXHAUSTED' } } })));
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'RATE_LIMIT', retryable: true, retryAfterSec: 30 });
   });
 
   it('HTTP 5xx → NETWORK', async () => {
-    const c = client(async () => res({ ok: false, status: 503, body: {} }));
+    const c = client(() => Promise.resolve(res({ ok: false, status: 503, body: {} })));
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'NETWORK', retryable: true });
   });
 
   it('error body that is not JSON still maps by status', async () => {
-    const c = client(async () => res({ ok: false, status: 401, body: '__throw__' }));
+    const c = client(() => Promise.resolve(res({ ok: false, status: 401, body: '__throw__' })));
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'INVALID_KEY' });
   });
 
   it('HTTP 200 but unparsable body → PARSE', async () => {
-    const c = client(async () => res({ ok: true, status: 200, body: '__throw__' }));
+    const c = client(() => Promise.resolve(res({ ok: true, status: 200, body: '__throw__' })));
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'PARSE', retryable: false });
   });
 
   it('HTTP 200 missing candidates → PARSE', async () => {
-    const c = client(async () => res({ ok: true, status: 200, body: { candidates: [] } }));
+    const c = client(() => Promise.resolve(res({ ok: true, status: 200, body: { candidates: [] } })));
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'PARSE' });
   });
 
   it('HTTP 200 empty-string candidate text → PARSE (covers the length===0 branch)', async () => {
-    const c = client(async () => res({ ok: true, status: 200, body: { candidates: [{ content: { parts: [{ text: '' }] } }] } }));
+    const c = client(() => Promise.resolve(res({ ok: true, status: 200, body: { candidates: [{ content: { parts: [{ text: '' }] } }] } })));
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'PARSE', retryable: false });
   });
 
   it('generic fetch throw (TypeError) → NETWORK', async () => {
-    const c = client(async () => { throw new TypeError('Failed to fetch'); });
+    const c = client(() => Promise.reject(new TypeError('Failed to fetch')));
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'NETWORK', retryable: true });
   });
 
   it('thrown LookupError is an Error instance (only-throw-error) yet isLookupError-shaped', async () => {
-    const c = client(async () => res({ ok: false, status: 503, body: {} }));
+    const c = client(() => Promise.resolve(res({ ok: false, status: 503, body: {} })));
     const err = await c.lookup(req).catch((e: unknown) => e);
     expect(err).toBeInstanceOf(Error);
     expect(isLookupError(err)).toBe(true);
