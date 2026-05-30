@@ -12,6 +12,7 @@ Run on the tagged commit (`vX.Y.Z` on `main`) before publishing.
 - [ ] Default prompt template reviewed — no inadvertent `{url}` / `{title}` placeholders (data minimization, §7.2 / Appendix A).
 - [ ] CHANGELOG entry written for this version.
 - [ ] Privacy disclosures updated if data flows changed.
+- [ ] Xcode project current: `pnpm --filter @ai-dict/extension-safari xcode:sync` run and committed `xcode/` tree reflects latest `dist/` (release.yml `build-safari-ios` depends on this).
 
 ## Manual passes
 - [ ] iOS Simulator end-to-end pass complete (`packages/extension-safari/e2e/ios-simulator-checklist.md`, all 12 steps).

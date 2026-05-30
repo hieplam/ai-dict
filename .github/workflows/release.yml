@@ -3,30 +3,31 @@ on:
   push:
     tags: ['v*']
 
+# Build jobs only need read access. The github-release job overrides to write.
 permissions:
-  contents: write # create the GitHub Release + open the follow-up issue
+  contents: read
 
 jobs:
   build-chrome:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ai-dict/extension-chrome build
       - name: zip unpacked dist -> dist-chrome.zip
         run: cd packages/extension-chrome/dist && zip -r "$GITHUB_WORKSPACE/dist-chrome.zip" .
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with: { name: dist-chrome, path: dist-chrome.zip, retention-days: 7 }
 
   build-safari-ios:
     runs-on: macos-latest # required for Xcode
     steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with: { node-version-file: .nvmrc, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @ai-dict/extension-safari build
@@ -55,7 +56,7 @@ jobs:
             -archivePath "$RUNNER_TEMP/AIDict.xcarchive" \
             -exportPath "$RUNNER_TEMP/export" \
             -exportOptionsPlist packages/extension-safari/xcode/ExportOptions.plist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: dist-safari-ios
           path: |
@@ -70,11 +71,11 @@ jobs:
       contents: write
       issues: write
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
         with: { path: artifacts }
       - name: create GitHub Release with both assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@3bb12739c298aeb8a4eeaf626c5b8d85266b0e65 # v2.6.2
         with:
           tag_name: ${{ github.ref_name }}
           generate_release_notes: true # notes from CHANGELOG/commits
