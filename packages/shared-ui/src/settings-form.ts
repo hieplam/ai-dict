@@ -6,6 +6,9 @@ export interface SettingsFormValue {
   promptTemplate: string;
   cacheEnabled: boolean;
   saveHistory: boolean;
+  // NOTE: `hasKey` is intentionally absent — it is a derived field computed by
+  // the storage adapter as `Boolean(apiKey)` on read and is never emitted by
+  // the form's 'save' event.
 }
 
 const CSS = `:host{display:block;font:14px/1.5 system-ui;color:#202124}

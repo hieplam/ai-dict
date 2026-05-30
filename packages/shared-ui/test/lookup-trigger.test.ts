@@ -15,7 +15,10 @@ describe('<lookup-trigger>', () => {
     expect(root.adoptedStyleSheets.length).toBe(1); // happy-dom constructable-stylesheet smoke check
     const btn = root.querySelector('button')!;
     expect(btn.getAttribute('aria-label')).toBeTruthy();
-    expect(btn.getAttribute('role')).toBe('button');
+    // A native <button> already carries the implicit ARIA role 'button'.
+    // Setting role="button" explicitly violates the First Rule of ARIA and can
+    // cause screen readers to announce "button button" — assert it is absent.
+    expect(btn.getAttribute('role')).toBeNull();
   });
 
   it('emits a composed "lookup-click" on activation', () => {

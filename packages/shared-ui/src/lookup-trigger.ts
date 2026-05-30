@@ -11,7 +11,9 @@ export class LookupTrigger extends HTMLElement {
     adoptStyles(root, CSS);
     const btn = document.createElement('button');
     btn.type = 'button';
-    btn.setAttribute('role', 'button');
+    // NOTE: no role="button" — a native <button> already carries the implicit
+    // ARIA role 'button'; setting it explicitly violates the First Rule of ARIA
+    // and can cause screen readers to announce "button button".
     btn.setAttribute('aria-label', 'Look up selected text');
     btn.textContent = 'Define';
     btn.addEventListener('click', () => {

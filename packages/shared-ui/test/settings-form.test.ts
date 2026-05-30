@@ -31,13 +31,20 @@ describe('<settings-form>', () => {
   it('emits the four action events', () => {
     const el = mountForm();
     const events = ['clear-cache', 'clear-history', 'test-connection', 'export-history'] as const;
-    const spies = Object.fromEntries(events.map((n) => [n, vi.fn()]));
+    const captured = new Map<string, Event>();
+    const spies = Object.fromEntries(
+      events.map((n) => [n, vi.fn((e: Event) => { captured.set(n, e); })]),
+    );
     for (const n of events) el.addEventListener(n, spies[n]!);
     el.shadowRoot!.querySelector<HTMLButtonElement>('#clear-cache')!.click();
     el.shadowRoot!.querySelector<HTMLButtonElement>('#clear-history')!.click();
     el.shadowRoot!.querySelector<HTMLButtonElement>('#test')!.click();
     el.shadowRoot!.querySelector<HTMLButtonElement>('#export')!.click();
-    for (const n of events) expect(spies[n]!).toHaveBeenCalledOnce();
+    for (const n of events) {
+      expect(spies[n]!).toHaveBeenCalledOnce();
+      // Assert the frozen cross-bundle event-name contract.
+      expect(captured.get(n)!.type).toBe(n);
+    }
   });
 
   it('reveal toggles back to password on second click', () => {
