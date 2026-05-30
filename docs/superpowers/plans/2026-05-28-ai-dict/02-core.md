@@ -1000,3 +1000,16 @@ git commit -m "feat(core): lookup workflow orchestrator + coverage gate"
 
 ## Sign-off
 Edit YAML: `status: DONE`, `done_at: <UTC>`. Commit. Update README checkbox `02`.
+
+## Cross-bundle touch note (post-DONE)
+During Task I3 (workflow gate), `pnpm lint` required adding `'packages/*/vitest.config.ts'`
+to `allowDefaultProject` in `eslint.config.mjs`. That file is owned by Bundle 01 per its
+`owns_files` list. The change is functionally correct and necessary for package-level
+vitest configs to type-check under ESLint's `projectService`, but it crosses the
+ownership boundary.
+
+**Resolution:** The change is retroactively attributed to Bundle 01. Bundle 01's Step 9
+template has been updated to include `'packages/*/vitest.config.ts'` in `allowDefaultProject`,
+and a retroactive-attribution note has been added to Bundle 01's plan. The actual
+`eslint.config.mjs` file on disk is correct; no code changes are needed here.
+This note satisfies the spec-reviewer's requirement to "acknowledge in the plan".
