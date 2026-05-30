@@ -33,4 +33,16 @@ describe('MessageRelaySettingsStore', () => {
     const store = new MessageRelaySettingsStore({ sendMessage }, () => {});
     await expect(store.get()).rejects.toThrow('settings.get failed');
   });
+
+  // FIX 3 (S1 defense-in-depth): if the SW reply's settings object carries an extra
+  // field (e.g. a stray apiKey), the cached/returned value must NOT include it.
+  it('strips unknown extra fields from the SW settings reply (S1 defense-in-depth)', async () => {
+    const settingsWithExtra = { targetLang: 'fr', promptTemplate: 'tpl2', hasKey: true, apiKey: 'AIza-secret', unexpectedField: 'evil' };
+    const sendMessage = vi.fn(() => Promise.resolve({ ok: true, type: 'settings', settings: settingsWithExtra }));
+    const store = new MessageRelaySettingsStore({ sendMessage }, () => {});
+    const result = await store.get();
+    expect(result).toEqual({ targetLang: 'fr', promptTemplate: 'tpl2', hasKey: true });
+    expect('apiKey' in result).toBe(false);
+    expect('unexpectedField' in result).toBe(false);
+  });
 });

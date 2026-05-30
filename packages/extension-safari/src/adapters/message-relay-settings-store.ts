@@ -15,8 +15,16 @@ export class MessageRelaySettingsStore implements SettingsStore {
     if (this.cache) return this.cache;
     const reply = (await this.runtime.sendMessage({ type: 'settings.get' })) as WireReply;
     if (reply.ok && reply.type === 'settings') {
-      this.cache = reply.settings;
-      return reply.settings;
+      // Cache ONLY the known PublicSettings fields — never the raw reply object.
+      // This guarantees the content side never retains an unexpected field (e.g. a
+      // stray apiKey) regardless of what the SW sends over the wire.
+      const stripped: PublicSettings = {
+        targetLang: reply.settings.targetLang,
+        promptTemplate: reply.settings.promptTemplate,
+        hasKey: reply.settings.hasKey,
+      };
+      this.cache = stripped;
+      return stripped;
     }
     throw new Error('settings.get failed');
   }
