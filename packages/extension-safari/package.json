@@ -1,0 +1,22 @@
+{
+  "name": "@ai-dict/extension-safari",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "node esbuild.config.mjs",
+    "xcode:sync": "bash xcode/sync-dist.sh"
+  },
+  "dependencies": {
+    "@ai-dict/core": "workspace:*",
+    "@ai-dict/shared-ui": "workspace:*",
+    "@ai-dict/adapters-shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/webextension-polyfill": "^0.12.0",
+    "esbuild": "^0.24.0",
+    "happy-dom": "^15.0.0"
+  }
+}

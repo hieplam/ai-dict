@@ -102,6 +102,28 @@ importers:
         specifier: ^15.0.0
         version: 15.11.7
 
+  packages/extension-safari:
+    dependencies:
+      '@ai-dict/adapters-shared':
+        specifier: workspace:*
+        version: link:../adapters-shared
+      '@ai-dict/core':
+        specifier: workspace:*
+        version: link:../core
+      '@ai-dict/shared-ui':
+        specifier: workspace:*
+        version: link:../shared-ui
+    devDependencies:
+      '@types/webextension-polyfill':
+        specifier: ^0.12.0
+        version: 0.12.5
+      esbuild:
+        specifier: ^0.24.0
+        version: 0.24.2
+      happy-dom:
+        specifier: ^15.0.0
+        version: 15.11.7
+
   packages/shared-ui:
     dependencies:
       '@ai-dict/core':
@@ -537,6 +559,9 @@ packages:
 
   '@types/trusted-types@2.0.7':
     resolution: {integrity: sha512-ScaPdn1dQczgbl0QFTeTOmVHFULt394XJgOQNoyVhZ6r2vLnMLJfBPd53SB52T/3G36VI1/g2MZaX0cwDuXsfw==}
+
+  '@types/webextension-polyfill@0.12.5':
+    resolution: {integrity: sha512-uKSAv6LgcVdINmxXMKBuVIcg/2m5JZugoZO8x20g7j2bXJkPIl/lVGQcDlbV+aXAiTyXT2RA5U5mI4IGCDMQeg==}
 
   '@typescript-eslint/eslint-plugin@8.60.0':
     resolution: {integrity: sha512-QYb/sa74/s7OKMbACMjrYnGspj9Hs5YI5aaffSL65UfeBUzVzBJfVo3oWSpbzPurvm7yaCCo2Lk7lVj610HqKw==}
@@ -1758,6 +1783,8 @@ snapshots:
 
   '@types/trusted-types@2.0.7':
     optional: true
+
+  '@types/webextension-polyfill@0.12.5': {}
 
   '@typescript-eslint/eslint-plugin@8.60.0(@typescript-eslint/parser@8.60.0(eslint@10.4.1)(typescript@6.0.3))(eslint@10.4.1)(typescript@6.0.3)':
     dependencies:
