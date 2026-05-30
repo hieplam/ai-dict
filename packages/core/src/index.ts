@@ -6,3 +6,4 @@ export * from './cache-policy';
 export * from './history-policy';
 export * from './error-mapper';
 export * from './wire-schema';
+export * from './workflow';

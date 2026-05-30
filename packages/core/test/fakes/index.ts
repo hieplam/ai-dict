@@ -35,16 +35,19 @@ export class FakeLookupClient implements LookupClient {
 
 export class FakeSettingsStore implements SettingsStore {
   constructor(public value: PublicSettings) {}
-  async get() { return this.value; }
-  async set(patch: Partial<Pick<PublicSettings, 'targetLang' | 'promptTemplate'>>) { Object.assign(this.value, patch); }
+  get(): Promise<PublicSettings> { return Promise.resolve(this.value); }
+  set(patch: Partial<Pick<PublicSettings, 'targetLang' | 'promptTemplate'>>): Promise<void> {
+    Object.assign(this.value, patch);
+    return Promise.resolve();
+  }
 }
 
 export function fakeStorage(): Storage {
   const m = new Map<string, string>();
   return {
-    getItem: async (k) => m.get(k) ?? null,
-    setItem: async (k, v) => void m.set(k, v),
-    removeItem: async (k) => void m.delete(k),
-    keys: async (p) => [...m.keys()].filter((k) => !p || k.startsWith(p)),
+    getItem: (k) => Promise.resolve(m.get(k) ?? null),
+    setItem: (k, v) => { m.set(k, v); return Promise.resolve(); },
+    removeItem: (k) => { m.delete(k); return Promise.resolve(); },
+    keys: (p) => Promise.resolve([...m.keys()].filter((k) => !p || k.startsWith(p))),
   };
 }

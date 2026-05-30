@@ -10,7 +10,7 @@ export type ErrorInput =
 
 function sanitize(msg: string): string {
   return msg
-    .replace(/AIza[0-9A-Za-z_\-]+/g, '[redacted]') // scrub Google API-key shaped tokens
+    .replace(/AIza[0-9A-Za-z_-]+/g, '[redacted]') // scrub Google API-key shaped tokens
     .slice(0, 200);
 }
 

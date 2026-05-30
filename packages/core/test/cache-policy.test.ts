@@ -5,10 +5,10 @@ import type { Storage, LookupResult } from '../src';
 function memStorage(): Storage {
   const m = new Map<string, string>();
   return {
-    getItem: async (k) => m.get(k) ?? null,
-    setItem: async (k, v) => void m.set(k, v),
-    removeItem: async (k) => void m.delete(k),
-    keys: async (p) => [...m.keys()].filter((k) => !p || k.startsWith(p)),
+    getItem: (k) => Promise.resolve(m.get(k) ?? null),
+    setItem: (k, v) => { m.set(k, v); return Promise.resolve(); },
+    removeItem: (k) => { m.delete(k); return Promise.resolve(); },
+    keys: (p) => Promise.resolve([...m.keys()].filter((k) => !p || k.startsWith(p))),
   };
 }
 const result = (word: string): LookupResult => ({ markdown: '#', word, target: 'vi', model: 'gemini-2.5-flash', fromCache: false, fetchedAt: 1 });

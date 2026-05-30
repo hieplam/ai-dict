@@ -12,7 +12,7 @@ export default tseslint.config(
     languageOptions: {
       parserOptions: {
         // allow root config TS files to type-check via an inferred default project
-        projectService: { allowDefaultProject: ['*.config.ts', '*.config.mts'] },
+        projectService: { allowDefaultProject: ['*.config.ts', '*.config.mts', 'packages/*/vitest.config.ts'] },
         tsconfigRootDir: import.meta.dirname,
       },
     },
