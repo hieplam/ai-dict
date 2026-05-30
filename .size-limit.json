@@ -1,0 +1,22 @@
+[
+  {
+    "name": "chrome sw.js",
+    "path": "packages/extension-chrome/dist/sw.js",
+    "limit": "30 kB"
+  },
+  {
+    "name": "chrome content.js",
+    "path": "packages/extension-chrome/dist/content.js",
+    "limit": "45 kB"
+  },
+  {
+    "name": "chrome options.js",
+    "path": "packages/extension-chrome/dist/options.js",
+    "limit": "40 kB"
+  },
+  {
+    "name": "chrome side-panel.js",
+    "path": "packages/extension-chrome/dist/side-panel.js",
+    "limit": "40 kB"
+  }
+]

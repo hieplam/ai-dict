@@ -6,5 +6,5 @@
     "types": ["chrome", "node"],
     "resolveJsonModule": true
   },
-  "include": ["src", "test", "e2e", "playwright.config.ts"]
+  "include": ["src", "test"]
 }
