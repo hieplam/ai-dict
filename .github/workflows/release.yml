@@ -1,0 +1,91 @@
+name: Release
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write # create the GitHub Release + open the follow-up issue
+
+jobs:
+  build-chrome:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ai-dict/extension-chrome build
+      - name: zip unpacked dist -> dist-chrome.zip
+        run: cd packages/extension-chrome/dist && zip -r "$GITHUB_WORKSPACE/dist-chrome.zip" .
+      - uses: actions/upload-artifact@v4
+        with: { name: dist-chrome, path: dist-chrome.zip, retention-days: 7 }
+
+  build-safari-ios:
+    runs-on: macos-latest # required for Xcode
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with: { node-version-file: .nvmrc, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @ai-dict/extension-safari build
+      - run: pnpm --filter @ai-dict/extension-safari xcode:sync # copies dist/ into Xcode Resources (Bundle 06 A1)
+      # VERIFY AT EXECUTION: project path, scheme name, and ExportOptions.plist are
+      # produced by Bundle 06's safari-web-extension-converter output — confirm the
+      # exact names in the committed xcode/ tree before relying on these.
+      - name: archive iOS target (iOS app target only — no macOS)
+        run: |
+          xcodebuild \
+            -project "$(ls -d packages/extension-safari/xcode/*.xcodeproj | head -1)" \
+            -scheme "AI Dictionary" \
+            -configuration Release \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/AIDict.xcarchive" \
+            archive
+      - name: export .ipa
+        # NOTE (surfaced): a *store-signed* .ipa needs an Apple distribution cert +
+        # provisioning profile supplied via repo secrets. Those are NOT in MVP scope,
+        # so store upload stays manual (§8.10). At MVP this step exports with the
+        # ExportOptions.plist committed by Bundle 06; if signing creds are absent the
+        # archive (.xcarchive) is still uploaded as the asset and signing happens in
+        # the manual Transporter step.
+        run: |
+          xcodebuild -exportArchive \
+            -archivePath "$RUNNER_TEMP/AIDict.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist packages/extension-safari/xcode/ExportOptions.plist
+      - uses: actions/upload-artifact@v4
+        with:
+          name: dist-safari-ios
+          path: |
+            ${{ runner.temp }}/export/*.ipa
+            ${{ runner.temp }}/AIDict.xcarchive
+          retention-days: 7
+
+  github-release:
+    needs: [build-chrome, build-safari-ios]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { path: artifacts }
+      - name: create GitHub Release with both assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          generate_release_notes: true # notes from CHANGELOG/commits
+          files: |
+            artifacts/dist-chrome/dist-chrome.zip
+            artifacts/dist-safari-ios/*.ipa
+            artifacts/dist-safari-ios/*.xcarchive
+      - name: open "Upload to stores" follow-up issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue create \
+            --title "Upload ${{ github.ref_name }} to stores" \
+            --body $'Manual MVP store submission for **${{ github.ref_name }}**:\n\n- [ ] Chrome Web Store: drag-drop `dist-chrome.zip`.\n- [ ] App Store Connect: upload the signed `.ipa` via Transporter/Xcode Organizer.\n\nAssets: see the GitHub Release for this tag.'
