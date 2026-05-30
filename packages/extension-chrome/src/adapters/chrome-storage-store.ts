@@ -1,6 +1,5 @@
 import { DEFAULT_TEMPLATE, type SettingsStore, type PublicSettings, type Settings } from '@ai-dict/core';
-
-type StorageAreaLike = Pick<chrome.storage.StorageArea, 'get' | 'set' | 'remove'>;
+import type { StorageAreaLike } from './chrome-kv-store';
 
 const DEFAULT_TARGET = 'vi';
 function defaults(): Settings {

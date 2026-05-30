@@ -3,7 +3,14 @@ import { mapError } from '@ai-dict/core';
 
 export interface RuntimeLike { sendMessage(message: unknown): Promise<unknown>; }
 
-function rejectWith(e: LookupError): never { throw Object.assign(new Error(e.message), e); }
+function rejectWith(e: LookupError): never {
+  const err = new Error(e.message);
+  (err as unknown as Record<string, unknown>)['code'] = e.code;
+  (err as unknown as Record<string, unknown>)['message'] = e.message;
+  (err as unknown as Record<string, unknown>)['retryable'] = e.retryable;
+  if (e.retryAfterSec !== undefined) (err as unknown as Record<string, unknown>)['retryAfterSec'] = e.retryAfterSec;
+  throw err;
+}
 
 export class MessageRelayLookupClient implements LookupClient {
   constructor(
@@ -22,7 +29,7 @@ export class MessageRelayLookupClient implements LookupClient {
     }
     const reply = (await this.runtime.sendMessage({ type: 'lookup', req, requestId })) as WireReply;
     if (reply.ok && reply.type === 'lookup') return reply.result;
-    if (!reply.ok) rejectWith(reply.error);
+    if (!reply.ok) rejectWith(reply.error as LookupError);
     rejectWith(mapError({ kind: 'parse' })); // unexpected reply shape
   }
 }

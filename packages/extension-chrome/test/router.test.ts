@@ -1,21 +1,34 @@
 import { describe, it, expect, vi } from 'vitest';
 import { buildRouter, WriteQueue, SUPPRESS } from '../src/router';
 import { fakeStorage } from '@ai-dict/core/test/fakes';
-import { historyList, type LookupResult, type WireMessage } from '@ai-dict/core';
+import { historyList, type LookupResult, type WireMessage, type LookupRequest, type PublicSettings } from '@ai-dict/core';
 
 const result: LookupResult = { markdown: '#', word: 'bank', target: 'vi', model: 'gemini-2.5-flash', fromCache: false, fetchedAt: 7 };
 const req = { word: 'bank', context: 'river bank', url: '', title: '', target: 'vi', promptTemplate: 'tpl' };
 const lookupMsg = (requestId: string): WireMessage => ({ type: 'lookup', req, requestId });
 
-function deps(over: Partial<Parameters<typeof buildRouter>[0]> = {}) {
+type LookupFn = (req: LookupRequest, opts?: { signal?: AbortSignal }) => Promise<LookupResult>;
+type LookupMock = ReturnType<typeof vi.fn<LookupFn>>;
+
+function makeLookupMock(impl: LookupFn = async () => result): LookupMock {
+  return vi.fn<LookupFn>(impl);
+}
+
+interface DepsOverrides {
+  client?: { lookup: LookupMock };
+  readToggles?: () => Promise<{ cacheEnabled: boolean; saveHistory: boolean }>;
+}
+
+function deps(over: DepsOverrides = {}) {
   const kv = fakeStorage();
+  const lookupFn = over.client?.lookup ?? makeLookupMock();
+  const getFn = vi.fn<() => Promise<PublicSettings>>(async () => ({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true }));
   return {
     kv,
-    client: { lookup: vi.fn(async () => result) },
-    settings: { get: vi.fn(async () => ({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true })), set: vi.fn() },
-    readToggles: vi.fn(async () => ({ cacheEnabled: true, saveHistory: true })),
+    client: { lookup: lookupFn },
+    settings: { get: getFn, set: vi.fn<(patch: Partial<Pick<PublicSettings, 'targetLang' | 'promptTemplate'>>) => Promise<void>>() },
+    readToggles: over.readToggles ?? vi.fn(async () => ({ cacheEnabled: true, saveHistory: true })),
     queue: new WriteQueue(),
-    ...over,
   };
 }
 
@@ -40,7 +53,7 @@ describe('buildRouter', () => {
   });
 
   it('honours toggles: cacheEnabled=false + saveHistory=false skips both stores', async () => {
-    const d = deps({ readToggles: vi.fn(async () => ({ cacheEnabled: false, saveHistory: false })) });
+    const d = deps({ readToggles: async () => ({ cacheEnabled: false, saveHistory: false }) });
     const route = buildRouter(d);
     await route(lookupMsg('a'));
     await route(lookupMsg('b'));
@@ -49,7 +62,7 @@ describe('buildRouter', () => {
   });
 
   it('lookup rejection (LookupError) → error reply (D1)', async () => {
-    const d = deps({ client: { lookup: vi.fn(async () => { throw Object.assign(new Error('x'), { code: 'NETWORK', message: 'x', retryable: true }); }) } });
+    const d = deps({ client: { lookup: makeLookupMock(async () => { throw Object.assign(new Error('x'), { code: 'NETWORK', message: 'x', retryable: true }); }) } });
     const reply = await buildRouter(d)(lookupMsg('a'));
     expect(reply).toMatchObject({ ok: false, type: 'lookup', error: { code: 'NETWORK' }, requestId: 'a' });
   });
@@ -58,7 +71,7 @@ describe('buildRouter', () => {
     let started!: () => void;
     const startedP = new Promise<void>((r) => { started = r; });
     const d = deps({
-      client: { lookup: vi.fn((_req, opts?: { signal?: AbortSignal }) => {
+      client: { lookup: makeLookupMock((_req, opts) => {
         started();                                  // fires after handleLookup's inflight.set, just before await
         return new Promise((_res, rej) => {
           opts?.signal?.addEventListener('abort', () => rej(new DOMException('aborted', 'AbortError')));

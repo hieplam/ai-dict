@@ -1,6 +1,13 @@
 import type { Storage } from '@ai-dict/core';
 
-type StorageAreaLike = Pick<chrome.storage.StorageArea, 'get' | 'set' | 'remove'>;
+// Minimal surface of chrome.storage.StorageArea needed by this adapter.
+// Using a custom interface instead of Pick<chrome.storage.StorageArea, ...>
+// so that hand-rolled test fakes can satisfy it without the overloaded chrome types.
+export interface StorageAreaLike {
+  get(key: string | null): Promise<Record<string, unknown>>;
+  set(items: Record<string, unknown>): Promise<void>;
+  remove(key: string): Promise<void>;
+}
 
 // Thin Storage over chrome.storage.local. NO adapter-side prefix: core's cache-/history-policy
 // own the `cache:` / `history:` namespaces themselves (§02), so a single instance backs both.

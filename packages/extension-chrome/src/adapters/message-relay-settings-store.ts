@@ -21,7 +21,7 @@ export class MessageRelaySettingsStore implements SettingsStore {
     throw new Error('settings.get failed');
   }
 
-  set(): Promise<void> {
+  set(_patch: Partial<Pick<import('@ai-dict/core').PublicSettings, 'targetLang' | 'promptTemplate'>>): Promise<void> {
     return Promise.reject(new Error('Settings are edited on the options page, not over the content wire.'));
   }
 }
