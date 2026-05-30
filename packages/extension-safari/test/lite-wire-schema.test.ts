@@ -3,7 +3,7 @@
 // Importing from ../src/lite-wire-schema is fine — the hex zone rule only blocks
 // test/ → src/adapters imports, not general src/ imports.
 import { describe, it, expect } from 'vitest';
-import { WireMessageSchema } from '../src/lite-wire-schema';
+import { WireMessageSchema, wireJsonSchema } from '../src/lite-wire-schema';
 
 describe('WireMessageSchema (lite-wire-schema shim)', () => {
   // ── FIX 1 field-stripping ──────────────────────────────────────────────────
@@ -111,5 +111,10 @@ describe('WireMessageSchema (lite-wire-schema shim)', () => {
 
   it('(d) connection.test → success:true', () => {
     expect(WireMessageSchema.safeParse({ type: 'connection.test' }).success).toBe(true);
+  });
+
+  // ── FIX 1: wireJsonSchema stub coverage ────────────────────────────────────
+  it('wireJsonSchema() returns an empty object (SW bundle stub — real schema lives in core)', () => {
+    expect(wireJsonSchema()).toEqual({});
   });
 });
