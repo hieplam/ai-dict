@@ -14,6 +14,7 @@ owns_files:
   - packages/extension-chrome/playwright.config.ts
   - packages/extension-chrome/src/manifest.json
   - packages/extension-chrome/src/sw.ts
+  - packages/extension-chrome/src/inbound.ts
   - packages/extension-chrome/src/router.ts
   - packages/extension-chrome/src/content.ts
   - packages/extension-chrome/src/side-panel.html
@@ -124,14 +125,14 @@ export default defineConfig({
     include: ['test/**/*.test.ts'],
     coverage: {
       provider: 'v8',
-      include: ['src/adapters/**', 'src/router.ts', 'src/sw.ts'],
-      exclude: ['src/content.ts', 'src/options.ts', 'src/side-panel.ts'],
+      include: ['src/adapters/**', 'src/router.ts', 'src/inbound.ts'],
+      exclude: ['src/content.ts', 'src/options.ts', 'src/side-panel.ts', 'src/sw.ts'],
       thresholds: { lines: 80, functions: 80, branches: 80, statements: 80 },
     },
   },
 });
 ```
-> Coverage scopes to the unit-testable layer (adapters + router + the SW's pure `classifyInbound`). Composition roots (`content/options/side-panel.ts`) are wiring-only and verified by e2e, so they're excluded from the gate (§8.1: e2e is their safety net).
+> Coverage scopes to the unit-testable layer (adapters + router + the pure boundary classifier `inbound.ts`). `sw.ts` is import-time browser wiring (constructs adapters over `chrome.storage.local`, registers `onMessage`) — it can't be imported under happy-dom without a `chrome` global, so the pure `classifyInbound` lives in `src/inbound.ts` (Task F) and `sw.ts` joins the composition roots in the exclude list (verified by e2e — §8.1).
 
 - [ ] **A4: `packages/extension-chrome/src/manifest.json`** (MV3 — §7.3 S5 CSP + S8 permissions, **verbatim**)
 
@@ -919,15 +920,17 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
 
 Run → PASS. Commit `feat(extension-chrome): SW router + write queue (cancellation suppression, toggles)`.
 
-### Task F — SW listener (sender guard + schema validation)
+### Task F — Inbound classifier (pure) + SW listener wiring
 
-**Files:** `src/sw.ts`, `test/sw.test.ts`.
+**Files:** `src/inbound.ts` (pure, tested), `src/sw.ts` (import-time wiring, excluded from coverage), `test/inbound.test.ts`.
 
-- [ ] **F1: Failing test** `test/sw.test.ts` (pure `classifyInbound` — **[S3]** sender guard + schema gate, no chrome global)
+> **Why two files:** the **S3 sender guard + wire-schema gate** is pure and must be unit-tested, but `sw.ts` constructs adapters over `chrome.storage.local` and registers `onMessage` at module top-level — importing it under happy-dom (no `chrome` global) throws. So the pure logic lives in `src/inbound.ts`; `sw.ts` imports it for the chrome wiring. (Bundle 06 has the same split with `browser.*`.)
+
+- [ ] **F1: Failing test** `test/inbound.test.ts` (pure `classifyInbound` — **[S3]** sender guard + schema gate, no chrome global)
 
 ```ts
 import { describe, it, expect } from 'vitest';
-import { classifyInbound } from '../src/sw';
+import { classifyInbound } from '../src/inbound';
 
 const valid = { type: 'settings.get' };
 
@@ -945,17 +948,10 @@ describe('classifyInbound (S3 sender guard + wire-schema gate)', () => {
 });
 ```
 
-- [ ] **F2: Implement** `src/sw.ts` (testable `classifyInbound` + the chrome wiring that uses it)
+- [ ] **F2: Implement** `src/inbound.ts` (pure — imports only from `@ai-dict/core`)
 
 ```ts
-import {
-  WireMessageSchema, mapError, DEFAULT_TEMPLATE,
-  type WireMessage, type WireReply, type Settings,
-} from '@ai-dict/core';
-import { GeminiLookupClient } from '@ai-dict/adapters-shared';
-import { buildRouter, WriteQueue, SUPPRESS } from './router';
-import { ChromeKvStore } from './adapters/chrome-kv-store';
-import { ChromeStorageStore } from './adapters/chrome-storage-store';
+import { WireMessageSchema, mapError, type WireMessage, type WireReply } from '@ai-dict/core';
 
 export type Inbound =
   | { action: 'ignore' }
@@ -972,6 +968,18 @@ export function classifyInbound(msg: unknown, senderId: string | undefined, runt
   }
   return { action: 'route', msg: parsed.data };
 }
+```
+Run → PASS.
+
+- [ ] **F3: Implement** `src/sw.ts` (import-time chrome wiring; uses `classifyInbound`; excluded from the coverage gate, verified by e2e)
+
+```ts
+import { mapError, DEFAULT_TEMPLATE, type Settings } from '@ai-dict/core';
+import { GeminiLookupClient } from '@ai-dict/adapters-shared';
+import { buildRouter, WriteQueue, SUPPRESS } from './router';
+import { classifyInbound } from './inbound';
+import { ChromeKvStore } from './adapters/chrome-kv-store';
+import { ChromeStorageStore } from './adapters/chrome-storage-store';
 
 const DEFAULT_TARGET = 'vi';
 async function readFullSettings(): Promise<Settings> {
@@ -1000,9 +1008,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
 // Side panel: open only via toolbar click (§6.5); never the primary surface.
 chrome.sidePanel?.setPanelBehavior?.({ openPanelOnActionClick: true }).catch(() => undefined);
 ```
-> `GeminiLookupClient`'s `fetch` slice is wrapped (`(u,i)=>fetch(u,i)`) so the global `fetch` is captured at the boundary, keeping the client's injected-fetch contract intact. `getApiKey` reads the key directly from `chrome.storage.local` (S1: key never crosses the wire). The `console.warn` logs only `{kind}` — never key/selection/url (§7.2).
+> `GeminiLookupClient`'s `fetch` slice is wrapped (`(u,i)=>fetch(u,i)`) so the global `fetch` is captured at the boundary, keeping the client's injected-fetch contract intact. `getApiKey` reads the key directly from `chrome.storage.local` (S1: key never crosses the wire). The `console.warn` (in `inbound.ts`) logs only `{kind}` — never key/selection/url (§7.2).
 
-Run → PASS. Commit `feat(extension-chrome): SW message listener (sender guard + schema gate)`.
+Run → PASS. Commit `feat(extension-chrome): inbound classifier (S3 guard) + SW listener wiring`.
 
 ### Task G — Composition roots (content / options / side-panel)
 
@@ -1194,7 +1202,7 @@ Run: `pnpm --filter @ai-dict/extension-chrome build && pnpm --filter @ai-dict/ex
 - [ ] **J1: Coverage + typecheck + lint + size**
 
 ```bash
-pnpm --filter @ai-dict/extension-chrome test --coverage   # ≥80% on adapters + router + sw.classifyInbound
+pnpm --filter @ai-dict/extension-chrome test --coverage   # ≥80% on adapters + router + inbound.classifyInbound
 pnpm --filter @ai-dict/extension-chrome typecheck
 pnpm lint                                                  # hex: ext/test ⇏ src/adapters; adapters injected
 pnpm --filter @ai-dict/extension-chrome build && pnpm size # within §8.7 budgets
