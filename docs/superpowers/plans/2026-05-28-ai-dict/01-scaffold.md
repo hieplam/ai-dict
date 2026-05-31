@@ -339,11 +339,3 @@ git commit -m "feat(scaffold): pnpm workspace, strict tsconfig, hex eslint zones
 
 ## Sign-off
 Edit YAML: `status: DONE`, `done_at: <UTC>`. Commit. Update README status board checkbox `01`.
-
-## Retroactive attribution (post-DONE)
-During Bundle 02 execution, `eslint.config.mjs` required a one-line addition to `allowDefaultProject`:
-`'packages/*/vitest.config.ts'` was added so per-package `vitest.config.ts` files
-type-check correctly under `projectService`. This pattern belongs to Bundle 01's
-`eslint.config.mjs` ownership — Bundle 02 discovered the gap and the change is
-retroactively credited here. The Step 9 template above has been updated to include
-this pattern so future re-runs of Bundle 01 produce the correct config from the start.
