@@ -3,8 +3,14 @@ import type { Storage, HistoryEntry } from './index';
 const INDEX_KEY = 'history:index';
 const DEFAULT_CAP = 500;
 
-export interface HistoryDeps { storage: Storage; cap?: number; }
-export interface HistoryPage { entries: HistoryEntry[]; nextCursor?: string; }
+export interface HistoryDeps {
+  storage: Storage;
+  cap?: number;
+}
+export interface HistoryPage {
+  entries: HistoryEntry[];
+  nextCursor?: string;
+}
 
 async function readIndex(s: Storage): Promise<string[]> {
   const raw = await s.getItem(INDEX_KEY);
@@ -22,7 +28,10 @@ export async function historyAppend(deps: HistoryDeps, e: HistoryEntry): Promise
   await deps.storage.setItem(INDEX_KEY, JSON.stringify(idx));
 }
 
-export async function historyList(deps: HistoryDeps, opts: { limit?: number; cursor?: string }): Promise<HistoryPage> {
+export async function historyList(
+  deps: HistoryDeps,
+  opts: { limit?: number; cursor?: string },
+): Promise<HistoryPage> {
   const idx = await readIndex(deps.storage); // newest-first
   const start = opts.cursor ? idx.indexOf(opts.cursor) : 0;
   const from = start < 0 ? idx.length : start;

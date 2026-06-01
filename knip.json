@@ -27,12 +27,7 @@
       "project": ["src/**/*.ts", "test/**/*.ts"]
     },
     "packages/extension-safari": {
-      "entry": [
-        "src/sw.ts",
-        "src/content.ts",
-        "src/options.ts",
-        "src/manifest.json"
-      ],
+      "entry": ["src/sw.ts", "src/content.ts", "src/options.ts", "src/manifest.json"],
       "project": ["src/**/*.ts", "test/**/*.ts"]
     }
   }

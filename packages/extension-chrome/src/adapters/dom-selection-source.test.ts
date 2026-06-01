@@ -14,7 +14,13 @@ describe('extractSentence (sentence-boundary detection: . ! ?)', () => {
 });
 
 describe('DomSelectionSource (event wiring)', () => {
-  const ev: SelectionEvent = { text: 'bank', sentence: 'the bank.', anchor: { x: 1, y: 2, w: 3, h: 4 }, url: 'u', title: 't' };
+  const ev: SelectionEvent = {
+    text: 'bank',
+    sentence: 'the bank.',
+    anchor: { x: 1, y: 2, w: 3, h: 4 },
+    url: 'u',
+    title: 't',
+  };
   it('invokes the callback on mouseup when the reader yields a selection, and tears down', () => {
     const read = vi.fn<() => SelectionEvent | null>(() => ev);
     const src = new DomSelectionSource(document, read);

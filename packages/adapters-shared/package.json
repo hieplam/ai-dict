@@ -9,12 +9,17 @@
     "./inline-bottom-sheet-renderer": "./src/inline-bottom-sheet-renderer.ts",
     "./markdown-sanitize": "./src/markdown-sanitize.ts"
   },
-  "scripts": { "typecheck": "tsc --noEmit", "test": "vitest run" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
   "dependencies": {
     "@ai-dict/core": "workspace:*",
     "@ai-dict/shared-ui": "workspace:*",
     "marked": "^14.0.0",
     "dompurify": "^3.2.0"
   },
-  "devDependencies": { "happy-dom": "^15.0.0" }
+  "devDependencies": {
+    "happy-dom": "^15.0.0"
+  }
 }

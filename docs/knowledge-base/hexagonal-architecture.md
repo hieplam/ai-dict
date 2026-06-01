@@ -11,13 +11,13 @@ Knowledge base note. Captured during brainstorming of the AI Dictionary browser 
 
 **Hexagonal Architecture** (also called **Ports and Adapters**) — Alistair Cockburn, 2005.
 
-Idea: put domain logic at the center, isolate it from the outside world. Outside world plugs in via interfaces. Drawn as a hexagon because there are many sides; each side is a *port*; no single "front" or "back". The only distinction is **inside vs outside**.
+Idea: put domain logic at the center, isolate it from the outside world. Outside world plugs in via interfaces. Drawn as a hexagon because there are many sides; each side is a _port_; no single "front" or "back". The only distinction is **inside vs outside**.
 
 ## Vocabulary
 
 ### Port
 
-An interface **declared by the domain**, in domain terms. Says *what* the domain needs from outside, not *how* outside does it.
+An interface **declared by the domain**, in domain terms. Says _what_ the domain needs from outside, not _how_ outside does it.
 
 - Example port: `LookupClient.lookup(req): Promise<LookupResult>`
 - Domain says: "I need a thing that takes a `LookupRequest` and gives back a `LookupResult`." Domain doesn't know whether Gemini, OpenAI, or a fake file is behind it.
@@ -59,10 +59,10 @@ Domain never imports an adapter. The **composition root** (e.g. `content.ts` in 
 ```ts
 runLookupWorkflow({
   selection: new DomSelectionSource(),
-  trigger:   new ChromeFloatingTrigger(),
-  renderer:  new SidePanelRenderer(),
-  client:    new MessageRelayClient(),
-  settings:  new ChromeStorageStore(),
+  trigger: new ChromeFloatingTrigger(),
+  renderer: new SidePanelRenderer(),
+  client: new MessageRelayClient(),
+  settings: new ChromeStorageStore(),
 });
 ```
 
@@ -74,37 +74,69 @@ The workflow accepts ports as plain function arguments. In tests, pass **Fake ad
 // core/workflow.test.ts (vitest, runs in plain Node)
 import { runLookupWorkflow } from './workflow';
 import type {
-  SelectionSource, TriggerUI, ResultRenderer, LookupClient, SettingsStore,
-  LookupRequest, LookupResult, Settings, LookupError, SelectionEvent,
+  SelectionSource,
+  TriggerUI,
+  ResultRenderer,
+  LookupClient,
+  SettingsStore,
+  LookupRequest,
+  LookupResult,
+  Settings,
+  LookupError,
+  SelectionEvent,
 } from './ports';
 
 class FakeSelection implements SelectionSource {
   private cb!: (e: SelectionEvent) => void;
-  onSelection(cb: (e: SelectionEvent) => void) { this.cb = cb; return () => {}; }
+  onSelection(cb: (e: SelectionEvent) => void) {
+    this.cb = cb;
+    return () => {};
+  }
   emit(text: string, sentence: string) {
     this.cb({ text, sentence, url: 'https://x.test', anchor: { x: 0, y: 0, w: 0, h: 0 } });
   }
 }
 
 class FakeTrigger implements TriggerUI {
-  shown = false; lastOnClick?: () => void;
-  show(_a: any, onClick: () => void) { this.shown = true; this.lastOnClick = onClick; }
-  hide() { this.shown = false; }
+  shown = false;
+  lastOnClick?: () => void;
+  show(_a: any, onClick: () => void) {
+    this.shown = true;
+    this.lastOnClick = onClick;
+  }
+  hide() {
+    this.shown = false;
+  }
 }
 
 class FakeRenderer implements ResultRenderer {
-  events: string[] = []; lastResult?: LookupResult; lastError?: LookupError;
-  renderLoading() { this.events.push('loading'); }
-  renderResult(r: LookupResult) { this.events.push('result'); this.lastResult = r; }
-  renderError(e: LookupError) { this.events.push('error'); this.lastError = e; }
-  close() { this.events.push('close'); }
+  events: string[] = [];
+  lastResult?: LookupResult;
+  lastError?: LookupError;
+  renderLoading() {
+    this.events.push('loading');
+  }
+  renderResult(r: LookupResult) {
+    this.events.push('result');
+    this.lastResult = r;
+  }
+  renderError(e: LookupError) {
+    this.events.push('error');
+    this.lastError = e;
+  }
+  close() {
+    this.events.push('close');
+  }
 }
 
 class FakeClient implements LookupClient {
   calls: LookupRequest[] = [];
   next: LookupResult | Error = {
-    definitionEn: 'sloping land beside a river', translationVi: 'bờ sông',
-    ipa: '/bæŋk/', pos: 'noun', examples: [],
+    definitionEn: 'sloping land beside a river',
+    translationVi: 'bờ sông',
+    ipa: '/bæŋk/',
+    pos: 'noun',
+    examples: [],
   };
   async lookup(req: LookupRequest) {
     this.calls.push(req);
@@ -115,8 +147,12 @@ class FakeClient implements LookupClient {
 
 class FakeSettings implements SettingsStore {
   state: Settings = { targetLang: 'vi', promptTemplate: 'define {word} given context: {context}' };
-  async get() { return this.state; }
-  async set(p: Partial<Settings>) { this.state = { ...this.state, ...p }; }
+  async get() {
+    return this.state;
+  }
+  async set(p: Partial<Settings>) {
+    this.state = { ...this.state, ...p };
+  }
 }
 
 test('happy path: select -> bubble -> click -> Gemini -> result rendered', async () => {
@@ -131,7 +167,7 @@ test('happy path: select -> bubble -> click -> Gemini -> result rendered', async
   selection.emit('bank', 'I walked along the bank watching the river flow.');
   expect(trigger.shown).toBe(true);
 
-  await trigger.lastOnClick!();   // simulate user clicking bubble
+  await trigger.lastOnClick!(); // simulate user clicking bubble
 
   expect(trigger.shown).toBe(false);
   expect(renderer.events).toEqual(['loading', 'result']);
@@ -163,12 +199,12 @@ Runs in plain Node. Milliseconds. No browser launch.
 
 ## Why side effects are easy to test under hex
 
-| Side effect in code | Without hex (direct call) | With hex (behind port) |
-|---|---|---|
-| `fetch(gemini)` | Need real Hypertext Transfer Protocol (HTTP) or `vi.mock('node-fetch')` global stub. Fragile. | Pass `FakeLookupClient`. Inspect `.calls` array. |
-| `chrome.storage.local.set` | Need jest-chrome mock or jsdom + chrome shim. | Pass `FakeSettingsStore`. Inspect `.state`. |
-| DOM mutation (`document.body.appendChild`) | Need jsdom. Selectors flake. | Pass `FakeTrigger`. Check `.shown` + `.lastOnClick`. |
-| `chrome.sidePanel.open` | Need Manifest V3 (MV3) polyfill in test env. | Pass `FakeRenderer`. Check `.events`. |
+| Side effect in code                        | Without hex (direct call)                                                                     | With hex (behind port)                               |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| `fetch(gemini)`                            | Need real Hypertext Transfer Protocol (HTTP) or `vi.mock('node-fetch')` global stub. Fragile. | Pass `FakeLookupClient`. Inspect `.calls` array.     |
+| `chrome.storage.local.set`                 | Need jest-chrome mock or jsdom + chrome shim.                                                 | Pass `FakeSettingsStore`. Inspect `.state`.          |
+| DOM mutation (`document.body.appendChild`) | Need jsdom. Selectors flake.                                                                  | Pass `FakeTrigger`. Check `.shown` + `.lastOnClick`. |
+| `chrome.sidePanel.open`                    | Need Manifest V3 (MV3) polyfill in test env.                                                  | Pass `FakeRenderer`. Check `.events`.                |
 
 Pattern: every side effect is reached **only** through a port. Port = seam. Seam = substitute point. Each fake = small spy that records arguments and replays scripted results.
 

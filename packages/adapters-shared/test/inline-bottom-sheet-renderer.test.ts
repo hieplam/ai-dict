@@ -3,17 +3,30 @@ import { InlineBottomSheetRenderer } from '../src/inline-bottom-sheet-renderer';
 import type { LookupResult, LookupError } from '@ai-dict/core';
 import type { SafeHtml } from '@ai-dict/shared-ui/lookup-card';
 
-const result: LookupResult = { markdown: '**def** <script>alert(1)</script>', word: 'bank', target: 'vi', model: 'gemini-2.5-flash', fromCache: false, fetchedAt: 1 };
+const result: LookupResult = {
+  markdown: '**def** <script>alert(1)</script>',
+  word: 'bank',
+  target: 'vi',
+  model: 'gemini-2.5-flash',
+  fromCache: false,
+  fetchedAt: 1,
+};
 const error: LookupError = { code: 'NETWORK', message: 'Network failed.', retryable: true };
 
-function host(): HTMLElement { const h = document.createElement('div'); document.body.append(h); return h; }
+function host(): HTMLElement {
+  const h = document.createElement('div');
+  document.body.append(h);
+  return h;
+}
 function card(host: HTMLElement): HTMLElement {
   return host.querySelector('bottom-sheet > lookup-card') as HTMLElement;
 }
 
 describe('InlineBottomSheetRenderer', () => {
   // Clear accumulated host <div>s between tests so DOM state does not leak.
-  afterEach(() => { document.body.replaceChildren(); });
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
 
   // These assertions deliberately read the card's LIGHT DOM, not a `.state` property.
   // The renderer runs in a content-script isolated world where the card's `.state`
@@ -48,7 +61,7 @@ describe('InlineBottomSheetRenderer', () => {
     const h = host();
     // Cast the literal to SafeHtml — this stub stands in for the real sanitizer in tests;
     // only the real sanitizeMarkdown (DOMPurify output) is the authorised trust boundary (S4).
-    const r = new InlineBottomSheetRenderer(h, (md) => (`SAFE:${md}`) as SafeHtml);
+    const r = new InlineBottomSheetRenderer(h, (md) => `SAFE:${md}` as SafeHtml);
     r.renderResult(result);
     expect(card(h).innerHTML).toContain(`SAFE:${result.markdown}`);
   });
@@ -61,14 +74,17 @@ describe('InlineBottomSheetRenderer', () => {
   it('reuses a single sheet across state transitions', () => {
     const h = host();
     const r = new InlineBottomSheetRenderer(h);
-    r.renderLoading(); r.renderResult(result); r.renderError(error);
+    r.renderLoading();
+    r.renderResult(result);
+    r.renderError(error);
     expect(h.querySelectorAll('bottom-sheet').length).toBe(1);
   });
 
   it('close removes the sheet from the host', () => {
     const h = host();
     const r = new InlineBottomSheetRenderer(h);
-    r.renderLoading(); r.close();
+    r.renderLoading();
+    r.close();
     expect(h.querySelector('bottom-sheet')).toBeNull();
   });
 

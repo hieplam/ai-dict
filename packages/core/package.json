@@ -11,6 +11,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
-  "dependencies": { "zod": "^4.0.0" },
-  "devDependencies": { "@types/node": "^20.11.0" }
+  "dependencies": {
+    "zod": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0"
+  }
 }

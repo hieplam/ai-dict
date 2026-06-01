@@ -36,10 +36,16 @@ type ValidType = typeof VALID_TYPES extends Set<infer T> ? T : never;
 
 // Whitelisted-field shapes returned by safeParse on success.
 // These mirror the WireMessage discriminated union in @ai-dict/core exactly.
-type StrippedLookup = { type: 'lookup'; req: { word: string; [k: string]: unknown }; requestId?: unknown };
+type StrippedLookup = {
+  type: 'lookup';
+  req: { word: string; [k: string]: unknown };
+  requestId?: unknown;
+};
 type StrippedLookupCancel = { type: 'lookup.cancel'; requestId?: unknown };
 type StrippedHistoryList = { type: 'history.list'; limit?: unknown; cursor?: unknown };
-type StrippedSimple = { type: 'settings.get' | 'history.clear' | 'cache.clear' | 'connection.test' };
+type StrippedSimple = {
+  type: 'settings.get' | 'history.clear' | 'cache.clear' | 'connection.test';
+};
 
 type StrippedMessage = StrippedLookup | StrippedLookupCancel | StrippedHistoryList | StrippedSimple;
 

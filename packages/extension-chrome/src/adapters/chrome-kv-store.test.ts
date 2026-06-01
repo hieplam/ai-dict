@@ -8,8 +8,14 @@ function fakeArea(seed: Record<string, string> = {}) {
       if (key === null) return Promise.resolve(Object.fromEntries(store));
       return Promise.resolve(store.has(key) ? { [key]: store.get(key) } : {});
     }),
-    set: vi.fn((obj: Record<string, string>) => { for (const [k, v] of Object.entries(obj)) store.set(k, v); return Promise.resolve(); }),
-    remove: vi.fn((key: string) => { store.delete(key); return Promise.resolve(); }),
+    set: vi.fn((obj: Record<string, string>) => {
+      for (const [k, v] of Object.entries(obj)) store.set(k, v);
+      return Promise.resolve();
+    }),
+    remove: vi.fn((key: string) => {
+      store.delete(key);
+      return Promise.resolve();
+    }),
     _store: store,
   };
 }
@@ -26,7 +32,9 @@ describe('ChromeKvStore (Storage over chrome.storage.local; no adapter prefix)',
   });
 
   it('keys(prefix) returns FULL keys (so core cacheClear/historyClear can removeItem them)', async () => {
-    const kv = new ChromeKvStore(fakeArea({ 'cache:index': '[]', 'cache:ab': '{}', 'history:index': '[]', settings: '{}' }));
+    const kv = new ChromeKvStore(
+      fakeArea({ 'cache:index': '[]', 'cache:ab': '{}', 'history:index': '[]', settings: '{}' }),
+    );
     expect((await kv.keys('cache:')).sort()).toEqual(['cache:ab', 'cache:index']);
     expect(await kv.keys('history:')).toEqual(['history:index']);
     expect((await kv.keys()).length).toBe(4);

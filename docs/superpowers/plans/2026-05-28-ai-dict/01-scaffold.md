@@ -1,20 +1,20 @@
 ---
-bundle: "01"
+bundle: '01'
 title: scaffold
-status: DONE               # AVAILABLE | LOCKED | DONE | BLOCKED
-locked_by: ""
-locked_at: ""
-done_at: "2026-05-30T06:57:16Z"
+status: DONE # AVAILABLE | LOCKED | DONE | BLOCKED
+locked_by: ''
+locked_at: ''
+done_at: '2026-05-30T06:57:16Z'
 prereqs: []
 owns_files:
   - pnpm-workspace.yaml
   - package.json
   - pnpm-lock.yaml
   - tsconfig.base.json
-  - eslint.config.mjs            # ESLint 9 flat config (typescript-eslint + import-x zones)
+  - eslint.config.mjs # ESLint 9 flat config (typescript-eslint + import-x zones)
   - .prettierrc.json
   - .prettierignore
-  - vitest.config.ts             # root: test.projects (vitest.workspace.* is deprecated since 3.2)
+  - vitest.config.ts # root: test.projects (vitest.workspace.* is deprecated since 3.2)
   - .gitignore
   - .nvmrc
   - .npmrc
@@ -25,12 +25,15 @@ owns_files:
 **Purpose:** Establish the pnpm-workspace monorepo root: package resolution, shared TS config, hex layering lint rules, formatting, the workspace-wide vitest runner, and the canonical root `package.json` scripts that every other bundle and CI depend on. No package source code — only root-level config.
 
 ## Lock protocol
+
 Prereqs: none → immediately lockable. Flip YAML `status: AVAILABLE → LOCKED`, set `locked_by` + `locked_at` (UTC ISO8601), commit atomically (`git commit -m "[01] lock"`), `git pull --rebase`. If another lock for 01 already landed, abort. Execute.
 
 ## Inputs
+
 - The spec only. Greenfield repo (currently just `README.md` + `docs/`).
 
 ## Outputs
+
 - `pnpm-workspace.yaml` globbing `packages/*`.
 - Root `package.json` with `engines.node` `>=20.11.0 <21`, exact `packageManager: pnpm@<installed 9.x>`, and the **frozen script-name contract**: `test`, `lint`, `typecheck`, `build`, `wire:check`, `size`, `release:bump` (+ helpers `format`, `format:check`).
 - `tsconfig.base.json` with `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes` (spec §8.6). **DOM-free `lib`** (packages needing DOM add it in their own tsconfig — keeps `core` pure by default).
@@ -39,6 +42,7 @@ Prereqs: none → immediately lockable. Flip YAML `status: AVAILABLE → LOCKED`
 - `pnpm install` produces a committed `pnpm-lock.yaml`.
 
 ## Definition of Done
+
 - D1: `pnpm install` completes; `pnpm-lock.yaml` committed.
 - D2: `pnpm typecheck`, `pnpm test`, `pnpm lint` all exit 0 with **zero packages** present (no-op) — proving scripts are wired and safe before any package exists.
 - D3: `tsconfig.base.json` enables the three strict flags from §8.6; a probe snippet violating `noUncheckedIndexedAccess` fails `tsc` (then removed).
@@ -57,22 +61,26 @@ corepack enable
 node --version          # expect v20.11.x – v20.x (must satisfy >=20.11.0 <21)
 pnpm --version          # note the exact 9.x.y for packageManager below
 ```
+
 Expected: node in range; pnpm 9.x.y printed. Record the pnpm version string.
 
 - [ ] **Step 2: Create `.nvmrc`, `.npmrc`, `.gitignore`**
 
 `.nvmrc`:
+
 ```
 20
 ```
 
 `.npmrc`:
+
 ```
 engine-strict=true
 shamefully-hoist=false
 ```
 
 `.gitignore`:
+
 ```
 node_modules/
 dist/
@@ -94,6 +102,7 @@ packages:
 - [ ] **Step 4: Create root `package.json` (frozen script contract)**
 
 Replace `pnpm@9.0.0` with the exact version from Step 1.
+
 ```json
 {
   "name": "ai-dict",
@@ -117,6 +126,7 @@ Replace `pnpm@9.0.0` with the exact version from Step 1.
   "devDependencies": {}
 }
 ```
+
 Note: `wire:check`, `size`, `release:bump` point at scripts/config owned by Bundle 07; the **names** are the frozen contract here. They are not exercised by D2.
 
 - [ ] **Step 5: Install the root toolchain (fills devDependencies + lockfile)**
@@ -128,9 +138,10 @@ pnpm add -Dw typescript vitest @vitest/coverage-v8 \
   eslint-config-prettier prettier \
   size-limit @size-limit/file
 ```
+
 Expected: registry resolves latest stable; `package.json.devDependencies` populated; `pnpm-lock.yaml` written.
 
-> `size-limit` + `@size-limit/file` back the frozen `size` script (Step 4); they live here with the other root-script tooling because the `size` *script name* is owned by this bundle while the `.size-limit.json` *config* is owned by Bundle 07. (`wire:check` and `release:bump` need no extra dep — Bundle 07 implements them with plain `node`.)
+> `size-limit` + `@size-limit/file` back the frozen `size` script (Step 4); they live here with the other root-script tooling because the `size` _script name_ is owned by this bundle while the `.size-limit.json` _config_ is owned by Bundle 07. (`wire:check` and `release:bump` need no extra dep — Bundle 07 implements them with plain `node`.)
 
 - [ ] **Step 6: Create `tsconfig.base.json` (strict, DOM-free)**
 
@@ -173,6 +184,7 @@ export default defineConfig({
 - [ ] **Step 8: Create Prettier config**
 
 `.prettierrc.json`:
+
 ```json
 {
   "singleQuote": true,
@@ -183,6 +195,7 @@ export default defineConfig({
 ```
 
 `.prettierignore`:
+
 ```
 dist/
 coverage/
@@ -209,7 +222,9 @@ export default tseslint.config(
         // allow root config TS files AND per-package vitest configs to type-check
         // via an inferred default project (packages/*/vitest.config.ts is needed so
         // package-level vitest configs resolve types correctly under projectService)
-        projectService: { allowDefaultProject: ['*.config.ts', '*.config.mts', 'packages/*/vitest.config.ts'] },
+        projectService: {
+          allowDefaultProject: ['*.config.ts', '*.config.mts', 'packages/*/vitest.config.ts'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },
@@ -282,6 +297,7 @@ export default tseslint.config(
 pnpm install --frozen-lockfile
 pnpm typecheck && pnpm test && pnpm lint
 ```
+
 Expected: all exit 0. `pnpm test` (vitest) reports "No test files found" but exits 0; `pnpm typecheck`/`build` no-op via `--if-present`; `eslint .` finds no violations.
 
 - [ ] **Step 11: Probe the strict TS flags (D3), then remove**
@@ -292,7 +308,9 @@ printf '{"extends":"../../tsconfig.base.json","compilerOptions":{"noEmit":true},
 printf 'export const f = (a: string[]) => a[0].length;\n' > packages/_probe/src/probe.ts   # a[0] is string | undefined under noUncheckedIndexedAccess
 npx tsc -p packages/_probe/tsconfig.json
 ```
+
 Expected: **FAIL** — `'a[0]' is possibly 'undefined'`. Then delete the probe:
+
 ```bash
 rm -rf packages/_probe
 ```
@@ -305,7 +323,9 @@ printf 'export const x = 1;\n' > packages/shared-ui/src/dummy.js
 printf "import { x } from '../../shared-ui/src/dummy.js';\nexport const y = x;\n" > packages/core/src/probe.js
 pnpm exec eslint packages/core/src/probe.js
 ```
+
 Expected: **FAIL** — `import-x/no-restricted-paths` reports core importing from shared-ui. (Probe uses `.js` so the type-aware `projectService` is not required — `no-restricted-paths` is path-based and still fires.) Then clean up:
+
 ```bash
 rm -rf packages/core packages/shared-ui
 ```
@@ -320,16 +340,19 @@ git commit -m "feat(scaffold): pnpm workspace, strict tsconfig, hex eslint zones
 ```
 
 ## Verify (correctness)
+
 - `pnpm install --frozen-lockfile` → success (Step 10).
 - `pnpm typecheck && pnpm test && pnpm lint` → exit 0 on empty workspace (Step 10).
 - Strict-flag probe fails `tsc` (Step 11). Hex-zone probe fails eslint (Step 12).
 
 ## Validate (sanity / no scope drift)
-- `git diff --stat` touches only files in `owns_files` (root config). **No surviving `packages/**`** — both probes deleted.
+
+- `git diff --stat` touches only files in `owns_files` (root config). **No surviving `packages/**`\*\* — both probes deleted.
 - No source code, no extension manifests, no CI yaml (those belong to 02–07).
 - Script names match the README contracts table exactly (no rename).
 
 ## Self-audit (run BEFORE sign-off)
+
 - [ ] D1–D6 all met and evidenced by command output?
 - [ ] Both probes (`packages/_probe`, `packages/core`, `packages/shared-ui`) removed — `git status` clean of them?
 - [ ] Seven contract scripts present and correctly named?
@@ -338,4 +361,5 @@ git commit -m "feat(scaffold): pnpm workspace, strict tsconfig, hex eslint zones
 - [ ] `packageManager` pinned to the actual installed pnpm 9.x?
 
 ## Sign-off
+
 Edit YAML: `status: DONE`, `done_at: <UTC>`. Commit. Update README status board checkbox `01`.

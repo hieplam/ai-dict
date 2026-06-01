@@ -58,7 +58,9 @@ describe('SafariFloatingTrigger (TriggerUI via <lookup-trigger>)', () => {
     const trigger = new SafariFloatingTrigger(host);
     trigger.show({ x: 0, y: 0, w: 1, h: 1 }, vi.fn());
     trigger.hide();
-    expect(() => outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }))).not.toThrow();
+    expect(() =>
+      outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true })),
+    ).not.toThrow();
     trigger.show({ x: 0, y: 0, w: 1, h: 1 }, vi.fn());
     const btn = host.querySelector('lookup-trigger')!.shadowRoot!.querySelector('button')!;
     btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }));

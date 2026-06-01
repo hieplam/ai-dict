@@ -1,7 +1,19 @@
 import {
-  mapError, isLookupError, cacheGet, cachePut, cacheClear, historyAppend, historyList, historyClear,
-  type WireMessage, type WireReply, type LookupError, type LookupClient, type SettingsStore,
-  type Storage, type HistoryEntry,
+  mapError,
+  isLookupError,
+  cacheGet,
+  cachePut,
+  cacheClear,
+  historyAppend,
+  historyList,
+  historyClear,
+  type WireMessage,
+  type WireReply,
+  type LookupError,
+  type LookupClient,
+  type SettingsStore,
+  type Storage,
+  type HistoryEntry,
 } from '@ai-dict/core';
 
 export const SUPPRESS = Symbol('suppress');
@@ -11,15 +23,18 @@ export class WriteQueue {
   private tail: Promise<unknown> = Promise.resolve();
   run<T>(task: () => Promise<T>): Promise<T> {
     const result = this.tail.then(task, task);
-    this.tail = result.then(() => undefined, () => undefined);
+    this.tail = result.then(
+      () => undefined,
+      () => undefined,
+    );
     return result;
   }
 }
 
 export interface RouterDeps {
   client: LookupClient;
-  settings: SettingsStore;                                  // returns PublicSettings (key stripped)
-  kv: Storage;                                              // single store; core owns cache:/history: prefixes
+  settings: SettingsStore; // returns PublicSettings (key stripped)
+  kv: Storage; // single store; core owns cache:/history: prefixes
   readToggles: () => Promise<{ cacheEnabled: boolean; saveHistory: boolean }>;
   queue: WriteQueue;
 }
@@ -47,7 +62,8 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
 
       if (cacheEnabled) {
         const hit = await cacheGet({ storage: deps.kv }, keyReq);
-        if (hit) return { ok: true, type: 'lookup', result: { ...hit, fromCache: true }, requestId };
+        if (hit)
+          return { ok: true, type: 'lookup', result: { ...hit, fromCache: true }, requestId };
       }
 
       // A cancel that arrived during readToggles/cacheGet will have found requestId in inflight,
@@ -57,12 +73,18 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       const result = await deps.client.lookup(req, { signal: controller.signal });
       if (cacheEnabled) await deps.queue.run(() => cachePut({ storage: deps.kv }, keyReq, result));
       if (saveHistory) {
-        const entry: HistoryEntry = { id: crypto.randomUUID(), word: req.word, context: req.context, result, createdAt: result.fetchedAt };
+        const entry: HistoryEntry = {
+          id: crypto.randomUUID(),
+          word: req.word,
+          context: req.context,
+          result,
+          createdAt: result.fetchedAt,
+        };
         await deps.queue.run(() => historyAppend({ storage: deps.kv }, entry));
       }
       return { ok: true, type: 'lookup', result, requestId };
     } catch (err) {
-      if (cancelled.has(requestId)) return SUPPRESS;           // our-cancel: reply channel abandoned (§6.10)
+      if (cancelled.has(requestId)) return SUPPRESS; // our-cancel: reply channel abandoned (§6.10)
       return { ok: false, type: 'lookup', error: toLookupError(err), requestId };
     } finally {
       inflight.delete(requestId);
@@ -72,11 +94,16 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
 
   function handleCancel(msg: Extract<WireMessage, { type: 'lookup.cancel' }>): RouterReply {
     const c = inflight.get(msg.requestId);
-    if (c) { cancelled.add(msg.requestId); c.abort(); }
+    if (c) {
+      cancelled.add(msg.requestId);
+      c.abort();
+    }
     return { ok: true, type: 'ack' };
   }
 
-  async function handleHistoryList(msg: Extract<WireMessage, { type: 'history.list' }>): Promise<RouterReply> {
+  async function handleHistoryList(
+    msg: Extract<WireMessage, { type: 'history.list' }>,
+  ): Promise<RouterReply> {
     const opts: { limit?: number; cursor?: string } = {};
     if (msg.limit !== undefined) opts.limit = msg.limit;
     if (msg.cursor !== undefined) opts.cursor = msg.cursor;
@@ -89,7 +116,14 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
   async function handleConnectionTest(): Promise<RouterReply> {
     try {
       const s = await deps.settings.get();
-      await deps.client.lookup({ word: 'test', context: 'connection test', url: '', title: '', target: s.targetLang, promptTemplate: s.promptTemplate });
+      await deps.client.lookup({
+        word: 'test',
+        context: 'connection test',
+        url: '',
+        title: '',
+        target: s.targetLang,
+        promptTemplate: s.promptTemplate,
+      });
       return { ok: true, type: 'ack' };
     } catch (err) {
       return { ok: false, type: 'connection.test', error: toLookupError(err) };
@@ -98,13 +132,22 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
 
   return async (msg: WireMessage): Promise<RouterReply> => {
     switch (msg.type) {
-      case 'lookup':         return handleLookup(msg);
-      case 'lookup.cancel':  return handleCancel(msg);
-      case 'settings.get':   return { ok: true, type: 'settings', settings: await deps.settings.get() };
-      case 'history.list':   return handleHistoryList(msg);
-      case 'history.clear':  await historyClear({ storage: deps.kv }); return { ok: true, type: 'ack' };
-      case 'cache.clear':    await cacheClear({ storage: deps.kv });   return { ok: true, type: 'ack' };
-      case 'connection.test':return handleConnectionTest();
+      case 'lookup':
+        return handleLookup(msg);
+      case 'lookup.cancel':
+        return handleCancel(msg);
+      case 'settings.get':
+        return { ok: true, type: 'settings', settings: await deps.settings.get() };
+      case 'history.list':
+        return handleHistoryList(msg);
+      case 'history.clear':
+        await historyClear({ storage: deps.kv });
+        return { ok: true, type: 'ack' };
+      case 'cache.clear':
+        await cacheClear({ storage: deps.kv });
+        return { ok: true, type: 'ack' };
+      case 'connection.test':
+        return handleConnectionTest();
     }
   };
 }

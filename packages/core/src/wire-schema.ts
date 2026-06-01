@@ -9,42 +9,82 @@ const LookupErrorSchema = z.strictObject({
 });
 
 const LookupRequestSchema = z.strictObject({
-  word: z.string(), context: z.string(), url: z.string(), title: z.string(),
-  target: z.string(), promptTemplate: z.string(),
+  word: z.string(),
+  context: z.string(),
+  url: z.string(),
+  title: z.string(),
+  target: z.string(),
+  promptTemplate: z.string(),
 });
 
 const LookupResultSchema = z.strictObject({
-  markdown: z.string(), word: z.string(), target: z.string(),
-  model: z.literal('gemini-2.5-flash'), fromCache: z.boolean(), fetchedAt: z.number(),
+  markdown: z.string(),
+  word: z.string(),
+  target: z.string(),
+  model: z.literal('gemini-2.5-flash'),
+  fromCache: z.boolean(),
+  fetchedAt: z.number(),
 });
 
 const PublicSettingsSchema = z.strictObject({
-  targetLang: z.string(), promptTemplate: z.string(), hasKey: z.boolean(),
+  targetLang: z.string(),
+  promptTemplate: z.string(),
+  hasKey: z.boolean(),
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]
 
 const HistoryEntrySchema = z.strictObject({
-  id: z.string(), word: z.string(), context: z.string(),
-  result: LookupResultSchema, createdAt: z.number(),
+  id: z.string(),
+  word: z.string(),
+  context: z.string(),
+  result: LookupResultSchema,
+  createdAt: z.number(),
 });
 
 export const WireMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('lookup'), req: LookupRequestSchema, requestId: z.string() }),
   z.object({ type: z.literal('lookup.cancel'), requestId: z.string() }),
   z.object({ type: z.literal('settings.get') }),
-  z.object({ type: z.literal('history.list'), limit: z.number().optional(), cursor: z.string().optional() }),
+  z.object({
+    type: z.literal('history.list'),
+    limit: z.number().optional(),
+    cursor: z.string().optional(),
+  }),
   z.object({ type: z.literal('history.clear') }),
   z.object({ type: z.literal('cache.clear') }),
   z.object({ type: z.literal('connection.test') }),
 ]);
 
-const MessageTypeEnum = z.enum(['lookup', 'lookup.cancel', 'settings.get', 'history.list', 'history.clear', 'cache.clear', 'connection.test']);
+const MessageTypeEnum = z.enum([
+  'lookup',
+  'lookup.cancel',
+  'settings.get',
+  'history.list',
+  'history.clear',
+  'cache.clear',
+  'connection.test',
+]);
 
 export const WireReplySchema = z.union([
-  z.object({ ok: z.literal(true), type: z.literal('lookup'), result: LookupResultSchema, requestId: z.string() }),
+  z.object({
+    ok: z.literal(true),
+    type: z.literal('lookup'),
+    result: LookupResultSchema,
+    requestId: z.string(),
+  }),
   z.object({ ok: z.literal(true), type: z.literal('settings'), settings: PublicSettingsSchema }),
-  z.object({ ok: z.literal(true), type: z.literal('history'), entries: z.array(HistoryEntrySchema), nextCursor: z.string().optional() }),
+  z.object({
+    ok: z.literal(true),
+    type: z.literal('history'),
+    entries: z.array(HistoryEntrySchema),
+    nextCursor: z.string().optional(),
+  }),
   z.object({ ok: z.literal(true), type: z.literal('ack') }),
-  z.object({ ok: z.literal(false), type: MessageTypeEnum, error: LookupErrorSchema, requestId: z.string().optional() }),
+  z.object({
+    ok: z.literal(false),
+    type: MessageTypeEnum,
+    error: LookupErrorSchema,
+    requestId: z.string().optional(),
+  }),
 ]);
 
 export type WireMessage = z.infer<typeof WireMessageSchema>;

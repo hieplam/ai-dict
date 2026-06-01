@@ -6,12 +6,25 @@ function memStorage(): Storage {
   const m = new Map<string, string>();
   return {
     getItem: (k) => Promise.resolve(m.get(k) ?? null),
-    setItem: (k, v) => { m.set(k, v); return Promise.resolve(); },
-    removeItem: (k) => { m.delete(k); return Promise.resolve(); },
+    setItem: (k, v) => {
+      m.set(k, v);
+      return Promise.resolve();
+    },
+    removeItem: (k) => {
+      m.delete(k);
+      return Promise.resolve();
+    },
     keys: (p) => Promise.resolve([...m.keys()].filter((k) => !p || k.startsWith(p))),
   };
 }
-const result = (word: string): LookupResult => ({ markdown: '#', word, target: 'vi', model: 'gemini-2.5-flash', fromCache: false, fetchedAt: 1 });
+const result = (word: string): LookupResult => ({
+  markdown: '#',
+  word,
+  target: 'vi',
+  model: 'gemini-2.5-flash',
+  fromCache: false,
+  fetchedAt: 1,
+});
 
 describe('cache-policy', () => {
   it('fnv1a64Hex is deterministic 16-char hex', () => {
@@ -33,7 +46,14 @@ describe('cache-policy', () => {
   });
   it('evicts least-recently-used beyond cap', async () => {
     const s = memStorage();
-    const deps = { storage: s, cap: 2, now: (() => { let t = 0; return () => ++t; })() };
+    const deps = {
+      storage: s,
+      cap: 2,
+      now: (() => {
+        let t = 0;
+        return () => ++t;
+      })(),
+    };
     await cachePut(deps, { word: 'a', context: '', target: 'vi' }, result('a'));
     await cachePut(deps, { word: 'b', context: '', target: 'vi' }, result('b'));
     await cacheGet(deps, { word: 'a', context: '', target: 'vi' }); // touch a → b is LRU

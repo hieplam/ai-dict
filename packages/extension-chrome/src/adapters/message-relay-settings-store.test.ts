@@ -16,7 +16,9 @@ describe('MessageRelaySettingsStore', () => {
   it('invalidates the cache when storage changes (next get re-fetches)', async () => {
     const sendMessage = vi.fn(() => Promise.resolve({ ok: true, type: 'settings', settings: pub }));
     let fire = () => {};
-    const store = new MessageRelaySettingsStore({ sendMessage }, (cb) => { fire = cb; });
+    const store = new MessageRelaySettingsStore({ sendMessage }, (cb) => {
+      fire = cb;
+    });
     await store.get();
     fire();
     await store.get();
@@ -29,7 +31,9 @@ describe('MessageRelaySettingsStore', () => {
   });
 
   it('get() throws when the SW replies with an unexpected reply (not ok + not settings)', async () => {
-    const sendMessage = vi.fn(() => Promise.resolve({ ok: false, type: 'lookup', error: { code: 'PARSE' } }));
+    const sendMessage = vi.fn(() =>
+      Promise.resolve({ ok: false, type: 'lookup', error: { code: 'PARSE' } }),
+    );
     const store = new MessageRelaySettingsStore({ sendMessage }, () => {});
     await expect(store.get()).rejects.toThrow('settings.get failed');
   });

@@ -1,11 +1,11 @@
 ---
-bundle: "07"
+bundle: '07'
 title: ci-release
 status: DONE
-locked_by: ""
-locked_at: ""
-done_at: "2026-05-30T16:50:18Z"
-prereqs: ["05", "06"]
+locked_by: ''
+locked_at: ''
+done_at: '2026-05-30T16:50:18Z'
+prereqs: ['05', '06']
 owns_files:
   - .github/workflows/ci.yml
   - .github/workflows/release.yml
@@ -21,13 +21,16 @@ owns_files:
 **Purpose:** Wire the GitHub Actions CI pipeline (typecheck, lint, unit/component/contract tests, wire-schema drift, Playwright e2e-chrome, builds, size budgets, coverage gates, gitleaks, dep-audit), the tag-driven release workflow (Chrome zip on ubuntu + Safari `.ipa` via xcodebuild on macOS), the `size-limit` budgets, the version-bump script, and the release checklist. Invokes the frozen root `package.json` scripts from Bundle 01 — does not edit them.
 
 ## Lock protocol
+
 Verify prereqs `05` AND `06` are `DONE` (CI must be able to build/test both extensions). Flip YAML → LOCKED, commit `[07] lock`, rebase, abort on race. Execute.
 
 ## Inputs
+
 - Bundles 01–06 DONE: all packages build/test/lint/size cleanly; root scripts (`test`,`lint`,`typecheck`,`build`,`wire:check`,`size`,`release:bump`) exist; both extensions emit `dist/`; Xcode project present.
 - Spec §8.6 (static analysis), §8.7 (budgets), §8.9 (CI jobs), §8.10 (release flow + RELEASE_CHECKLIST + iOS checklist).
 
 ## Outputs
+
 - `.github/workflows/ci.yml`: jobs `install`, `typecheck`, `lint`, `test-unit`, `test-component`, `test-contract`, `wire-schema-check`, `e2e-chrome` (ubuntu, `needs:[install,lint]`, uploads traces/screenshots on failure, 7-day retention), `build-chrome`, `build-safari` (web-ext code on ubuntu; Xcode deferred), `size-check`, `coverage-gate`, `secret-scan` (gitleaks), `dep-audit` (`pnpm audit --audit-level=high`, informational PR / blocking nightly). `pnpm install --frozen-lockfile`. Branch protection note documented.
 - `.github/workflows/release.yml`: `on: push tags v*`; `build-chrome` (ubuntu → `dist-chrome.zip`), `build-safari-ios` (macos-latest → xcodebuild archive iOS target → `.ipa`), `github-release` (needs both, notes from CHANGELOG, opens "Upload to stores" follow-up issue).
 - `.size-limit.json`: budgets per §8.7 for chrome + safari bundles.
@@ -37,6 +40,7 @@ Verify prereqs `05` AND `06` are `DONE` (CI must be able to build/test both exte
 - `renovate.json` (scheduled).
 
 ## Definition of Done
+
 - D1: `ci.yml` defines every §8.9 job with the stated `needs`/runners; YAML lints (`actionlint`/parse) clean.
 - D2: All CI jobs invoke **only** the frozen root scripts (no root `package.json` edits by this bundle).
 - D3: `release.yml` is tag-triggered, builds Chrome zip on ubuntu + iOS `.ipa` on macos-latest (iOS target only), creates a GitHub Release with both assets.
@@ -47,12 +51,14 @@ Verify prereqs `05` AND `06` are `DONE` (CI must be able to build/test both exte
 - D8: Coverage-gate job enforces per-package thresholds (§8.2) and fails on under-coverage.
 
 ## Implementation steps
+
 > Internal order: config files first (`.size-limit.json`, `scripts/wire-check.mjs`, `scripts/release-bump.mjs`) so the workflows have something to call → `ci.yml` → `release.yml` → `renovate.json` → `RELEASE_CHECKLIST.md` → local validation. This bundle **only** wires `.github/**`, `scripts/**`, and the four leaf config/doc files; it invokes the frozen root scripts (`typecheck`, `lint`, `test`, `build`, `wire:check`, `size`, `release:bump`) and per-package `test`/`build` via `pnpm --filter`. It does **not** edit root `package.json` or anything under `packages/**`.
 >
 > **Frozen script names (Bundle 01, do not re-implement):** `typecheck`=`pnpm -r --if-present typecheck`, `test`=`vitest run`, `lint`=`eslint .`, `build`=`pnpm -r --if-present build`, `wire:check`=`node scripts/wire-check.mjs`, `size`=`size-limit`, `release:bump`=`node scripts/release-bump.mjs`.
 >
-> **⚠ Upstream prerequisite (surface before executing).** The frozen `size` script is the bare binary `size-limit`, and `wire:check`/`release:bump` are plain `node` (no `tsx`). Bundle 07 owns no `package.json`, so it **cannot** add tool dependencies. Two facts must already hold (both are Bundle 01's root-toolchain responsibility, since Bundle 01 owns the script *names* + root devDeps):
-> 1. Root devDependencies include **`size-limit`** and **`@size-limit/file`** (so `pnpm size` resolves). *Wired in Bundle 01 Step 5's install list — alongside `eslint`/`vitest`/`prettier` for the other frozen scripts. If executing 07 before that landed, stop and request the amendment rather than editing root `package.json` here.*
+> **⚠ Upstream prerequisite (surface before executing).** The frozen `size` script is the bare binary `size-limit`, and `wire:check`/`release:bump` are plain `node` (no `tsx`). Bundle 07 owns no `package.json`, so it **cannot** add tool dependencies. Two facts must already hold (both are Bundle 01's root-toolchain responsibility, since Bundle 01 owns the script _names_ + root devDeps):
+>
+> 1. Root devDependencies include **`size-limit`** and **`@size-limit/file`** (so `pnpm size` resolves). _Wired in Bundle 01 Step 5's install list — alongside `eslint`/`vitest`/`prettier` for the other frozen scripts. If executing 07 before that landed, stop and request the amendment rather than editing root `package.json` here._
 > 2. `wire-check.mjs` needs **no** new dependency: core ships **`.ts` source with no build step** (Bundle 02 `exports: { ".": "./src/index.ts" }`), and Node 20 cannot import `.ts`, so we cannot `import` core's compiled `wireJsonSchema()`. Instead `wire:check` re-runs core's own snapshot test (which regenerates `wireJsonSchema()` and diffs the committed snapshot) — zero new deps, build-free.
 >
 > If fact (1) is not yet true when 07 is executed, **stop and request the one-line Bundle 01 amendment** rather than editing root `package.json` from here (that would breach D2 / the no-root-edit contract).
@@ -63,13 +69,33 @@ Verify prereqs `05` AND `06` are `DONE` (CI must be able to build/test both exte
 
 ```json
 [
-  { "name": "chrome content.js",    "path": "packages/extension-chrome/dist/content.js",    "limit": "45 KB" },
-  { "name": "chrome sw.js",         "path": "packages/extension-chrome/dist/sw.js",         "limit": "30 KB" },
-  { "name": "chrome options.js",    "path": "packages/extension-chrome/dist/options.js",    "limit": "40 KB" },
-  { "name": "chrome side-panel.js", "path": "packages/extension-chrome/dist/side-panel.js", "limit": "40 KB" },
-  { "name": "safari content.js",    "path": "packages/extension-safari/dist/content.js",    "limit": "45 KB" },
-  { "name": "safari sw.js",         "path": "packages/extension-safari/dist/sw.js",          "limit": "30 KB" },
-  { "name": "safari options.js",    "path": "packages/extension-safari/dist/options.js",     "limit": "40 KB" }
+  {
+    "name": "chrome content.js",
+    "path": "packages/extension-chrome/dist/content.js",
+    "limit": "45 KB"
+  },
+  { "name": "chrome sw.js", "path": "packages/extension-chrome/dist/sw.js", "limit": "30 KB" },
+  {
+    "name": "chrome options.js",
+    "path": "packages/extension-chrome/dist/options.js",
+    "limit": "40 KB"
+  },
+  {
+    "name": "chrome side-panel.js",
+    "path": "packages/extension-chrome/dist/side-panel.js",
+    "limit": "40 KB"
+  },
+  {
+    "name": "safari content.js",
+    "path": "packages/extension-safari/dist/content.js",
+    "limit": "45 KB"
+  },
+  { "name": "safari sw.js", "path": "packages/extension-safari/dist/sw.js", "limit": "30 KB" },
+  {
+    "name": "safari options.js",
+    "path": "packages/extension-safari/dist/options.js",
+    "limit": "40 KB"
+  }
 ]
 ```
 
@@ -98,7 +124,9 @@ const res = spawnSync(
 
 if (res.status !== 0) {
   console.error('\nwire:check FAILED — wire-schema.snapshot.json is out of date or invalid.');
-  console.error('If the schema changed intentionally: pnpm --filter @ai-dict/core test wire-schema -u, then commit.');
+  console.error(
+    'If the schema changed intentionally: pnpm --filter @ai-dict/core test wire-schema -u, then commit.',
+  );
   process.exit(res.status ?? 1);
 }
 console.log('wire:check OK — wire schema matches the committed snapshot.');
@@ -110,7 +138,7 @@ console.log('wire:check OK — wire schema matches the committed snapshot.');
 
 Updates **root `package.json` `version`** + **both manifests** + **Xcode `MARKETING_VERSION`** (iOS target only — Bundle 06 generates no macOS target). Pure `node` (no deps): JSON round-trip for manifests/package.json, regex for `.pbxproj`. `--dry-run` prints planned edits and writes nothing.
 
-> Editing root `package.json` *at release time* is this script's job (D6 / §8.10) and is **not** a Bundle-07 source edit — Bundle 07's own commit diff never touches `package.json`.
+> Editing root `package.json` _at release time_ is this script's job (D6 / §8.10) and is **not** a Bundle-07 source edit — Bundle 07's own commit diff never touches `package.json`.
 
 ```js
 #!/usr/bin/env node
@@ -137,7 +165,11 @@ const edits = [];
 // 1) root package.json (spread preserves key order; version stays in place)
 const pkgPath = resolve(root, 'package.json');
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
-edits.push({ file: pkgPath, from: pkg.version, next: JSON.stringify({ ...pkg, version }, null, 2) + '\n' });
+edits.push({
+  file: pkgPath,
+  from: pkg.version,
+  next: JSON.stringify({ ...pkg, version }, null, 2) + '\n',
+});
 
 // 2) both extension manifests
 for (const rel of [
@@ -157,7 +189,9 @@ if (pbx) {
   const next = text.replace(/MARKETING_VERSION = [^;]+;/g, `MARKETING_VERSION = ${version};`);
   edits.push({ file: pbx, from, next });
 } else {
-  console.warn('warning: no .pbxproj under packages/extension-safari/xcode — skipping MARKETING_VERSION');
+  console.warn(
+    'warning: no .pbxproj under packages/extension-safari/xcode — skipping MARKETING_VERSION',
+  );
 }
 
 for (const e of edits) {
@@ -175,7 +209,11 @@ function findFirst(dir, re) {
       else if (!hit && re.test(name)) hit = full;
     }
   };
-  try { walk(dir); } catch { /* xcode/ may not exist in early bundles */ }
+  try {
+    walk(dir);
+  } catch {
+    /* xcode/ may not exist in early bundles */
+  }
   return hit;
 }
 ```
@@ -477,6 +515,7 @@ jobs:
 Run on the tagged commit (`vX.Y.Z` on `main`) before publishing.
 
 ## Pre-tag
+
 - [ ] All CI green on the commit to be tagged.
 - [ ] `wire-schema.snapshot.json` matches generated (`pnpm wire:check` clean).
 - [ ] Bundle sizes within budget (`pnpm size`).
@@ -488,15 +527,18 @@ Run on the tagged commit (`vX.Y.Z` on `main`) before publishing.
 - [ ] Privacy disclosures updated if data flows changed.
 
 ## Manual passes
+
 - [ ] iOS Simulator end-to-end pass complete (`packages/extension-safari/e2e/ios-simulator-checklist.md`, all 12 steps).
 - [ ] Chrome smoke: clean profile, set key, look up a word on Wikipedia, verify card + history + cache hit on repeat.
 
 ## Publish
+
 - [ ] Tag pushed; `release.yml` produced `dist-chrome.zip` + iOS `.ipa`/`.xcarchive`.
 - [ ] GitHub Release created with both assets + notes.
 - [ ] Store-listing screenshots + copy current.
 
 ## Store submission (manual at MVP)
+
 - [ ] Chrome Web Store: drag-drop `dist-chrome.zip`.
 - [ ] App Store Connect: upload signed `.ipa` via Transporter; enters App Review.
 - [ ] Close the auto-opened "Upload to stores" issue when done.
@@ -526,17 +568,20 @@ for f in src/router.ts src/inbound.ts src/adapters/dom-selection-source.ts; do
 ```
 
 ## Verify (correctness)
+
 - Run: `pnpm wire:check` → clean.
 - Run: `pnpm size` → within all §8.7 budgets (requires 05/06 `dist/`).
 - Run: `pnpm release:bump 0.0.1 --dry-run` (or equivalent) → consistent version edits.
 - Lint workflows (`actionlint`).
 
 ## Validate (sanity / no scope drift)
-- `git diff --stat` touches only `.github/**`, `scripts/**`, `.size-limit.json`, `RELEASE_CHECKLIST.md`, `renovate.json` — **no `packages/**` and no root `package.json` edits**.
+
+- `git diff --stat` touches only `.github/**`, `scripts/**`, `.size-limit.json`, `RELEASE_CHECKLIST.md`, `renovate.json` — **no `packages/**`and no root`package.json` edits\*\*.
 - CI references only existing frozen script names.
 - Release builds iOS target only (no macOS), Chrome zip only (no store auto-upload at MVP).
 
 ## Self-audit (run BEFORE sign-off)
+
 - [ ] D1–D8 met with evidence?
 - [ ] Root `package.json` untouched (script-name contract respected)?
 - [ ] All §8.9 jobs present with correct runners/needs?
@@ -546,4 +591,5 @@ for f in src/router.ts src/inbound.ts src/adapters/dom-selection-source.ts; do
 - [ ] Only owned files changed?
 
 ## Sign-off
+
 Edit YAML: `status: DONE`, `done_at: <UTC>`. Commit. Update README checkbox `07`. Plan complete — all bundles DONE.

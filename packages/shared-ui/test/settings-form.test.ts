@@ -20,12 +20,28 @@ describe('<settings-form>', () => {
 
   it('emits "save" with the collected form value', () => {
     const el = mountForm();
-    el.value = { apiKey: '', targetLang: 'vi', promptTemplate: 'T', cacheEnabled: true, saveHistory: true };
+    el.value = {
+      apiKey: '',
+      targetLang: 'vi',
+      promptTemplate: 'T',
+      cacheEnabled: true,
+      saveHistory: true,
+    };
     let captured: SettingsFormValue | undefined;
-    el.addEventListener('save', (e) => { captured = (e as CustomEvent<SettingsFormValue>).detail; });
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
     el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.value = 'AIza-test';
-    el.shadowRoot!.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    expect(captured).toMatchObject({ apiKey: 'AIza-test', targetLang: 'vi', promptTemplate: 'T', cacheEnabled: true, saveHistory: true });
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(captured).toMatchObject({
+      apiKey: 'AIza-test',
+      targetLang: 'vi',
+      promptTemplate: 'T',
+      cacheEnabled: true,
+      saveHistory: true,
+    });
   });
 
   it('emits the four action events', () => {
@@ -33,7 +49,12 @@ describe('<settings-form>', () => {
     const events = ['clear-cache', 'clear-history', 'test-connection', 'export-history'] as const;
     const captured = new Map<string, Event>();
     const spies = Object.fromEntries(
-      events.map((n) => [n, vi.fn((e: Event) => { captured.set(n, e); })]),
+      events.map((n) => [
+        n,
+        vi.fn((e: Event) => {
+          captured.set(n, e);
+        }),
+      ]),
     );
     for (const n of events) el.addEventListener(n, spies[n]!);
     el.shadowRoot!.querySelector<HTMLButtonElement>('#clear-cache')!.click();
@@ -68,7 +89,13 @@ describe('<settings-form>', () => {
   it('value setter before connect defers hydration until connectedCallback', () => {
     const el = document.createElement('settings-form') as SettingsForm;
     // Set value before appending to DOM (no shadowRoot yet) — must not throw
-    el.value = { apiKey: 'deferred-key', targetLang: 'es', promptTemplate: 'P', cacheEnabled: false, saveHistory: false };
+    el.value = {
+      apiKey: 'deferred-key',
+      targetLang: 'es',
+      promptTemplate: 'P',
+      cacheEnabled: false,
+      saveHistory: false,
+    };
     document.body.append(el); // connectedCallback flushes pending value
     expect(el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.value).toBe('deferred-key');
     expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('es');
@@ -86,7 +113,9 @@ describe('<settings-form>', () => {
     const handlers: Map<string, EventListener> = new Map();
 
     for (const [name] of actionMap) {
-      const h: EventListener = (e) => { captured.set(name, e as CustomEvent); };
+      const h: EventListener = (e) => {
+        captured.set(name, e as CustomEvent);
+      };
       handlers.set(name, h);
       document.body.addEventListener(name, h);
     }
@@ -106,11 +135,15 @@ describe('<settings-form>', () => {
   it('"save" event crosses shadow boundary (composed: true)', () => {
     const el = mountForm();
     let capturedEvent: CustomEvent | null = null;
-    const handler: EventListener = (e) => { capturedEvent = e as CustomEvent; };
+    const handler: EventListener = (e) => {
+      capturedEvent = e as CustomEvent;
+    };
     // Trigger submit on the shadow-internal <form>; composed:true on the
     // custom 'save' event is what allows it to reach this ancestor listener.
     document.body.addEventListener('save', handler);
-    el.shadowRoot!.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
     document.body.removeEventListener('save', handler);
     expect(capturedEvent).not.toBeNull();
     // Verify the dispatched custom event carries composed:true so a change to

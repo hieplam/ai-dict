@@ -1,11 +1,11 @@
 ---
-bundle: "03"
+bundle: '03'
 title: shared-ui
 status: DONE
-locked_by: ""
-locked_at: ""
-done_at: "2026-05-30T08:19:22Z"
-prereqs: ["02"]
+locked_by: ''
+locked_at: ''
+done_at: '2026-05-30T08:19:22Z'
+prereqs: ['02']
 owns_files:
   - packages/shared-ui/package.json
   - packages/shared-ui/tsconfig.json
@@ -24,13 +24,16 @@ owns_files:
 **Purpose:** The four framework-free Web Components rendered in **open** Shadow DOM with Constructable Stylesheets (`adoptedStyleSheets`, no inline `<style>` — CSP `style-src 'self'`). Presentational only: emit events, hold no business logic, import core **types only**. Accessibility (§7.5) is first-class.
 
 ## Lock protocol
+
 Verify prereq `02-core.md` is `DONE`. Flip YAML → LOCKED, commit `[03] lock`, rebase, abort on race. Execute.
 
 ## Inputs
+
 - Bundle 02 DONE: domain types (`LookupResult`, `LookupError`, `PublicSettings`, `HistoryEntry`) imported **as types**.
 - Spec §5.3 (component table + events + shadow-mode note), §7.5 (a11y), §7.3 S5 (CSP / adoptedStyleSheets).
 
 ## Outputs (frozen contracts — tags + events)
+
 - `<lookup-trigger>` → emits `lookup-click`; `role="button"`, `aria-label`, keyboard-activatable, focus ring.
 - `<lookup-card state>` → emits `close`, `expand`; renders sanitized-Markdown result + loading + error states; semantic headings (H2/H3), `aria-live="polite"`. (Sanitization pipeline itself lives in 04; the card accepts already-safe content via the `state` setter. The input property is named `state` — not `payload` as an earlier draft named it.)
 - `<bottom-sheet>` → emits `dismiss`; `role="dialog"`, `aria-modal`, `aria-labelledby`, focus trap, ESC closes, restores focus, respects `prefers-reduced-motion`.
@@ -38,6 +41,7 @@ Verify prereq `02-core.md` is `DONE`. Flip YAML → LOCKED, commit `[03] lock`, 
 - All styles via `adoptedStyleSheets`; no inline `<style>` anywhere.
 
 ## Definition of Done
+
 - D1: All four components register as custom elements and render in happy-dom (constructable stylesheets supported; jsdom is not used — see spec §8.1 note).
 - D2: Each documented event fires with the correct `detail` shape and name (exact names from §5.3).
 - D3: Open Shadow DOM used (testable by `@testing-library/dom` reaching `shadowRoot`); no closed roots.
@@ -79,6 +83,7 @@ Verify prereq `02-core.md` is `DONE`. Flip YAML → LOCKED, commit `[03] lock`, 
   }
 }
 ```
+
 Then `pnpm install`. Note: `@ai-dict/core` is used for **types only** (enforced by the §8.3 ESLint rule from Bundle 01).
 
 - [ ] **A2: `packages/shared-ui/tsconfig.json`** (DOM lib required here — components touch `HTMLElement`, `CSSStyleSheet`, `ShadowRoot`)
@@ -131,7 +136,7 @@ export * from './settings-form';
 
 - [ ] **A6: `packages/shared-ui/test/a11y.ts`** (shared axe runner)
 
-Components are tested in isolation, not as a full page — so the axe run must exclude document-structure **best-practice** rules (`region`, `landmark-one-main`, `page-has-heading-one`), which otherwise flag every isolated component. Restricting to WCAG A/AA tags excludes them. `color-contrast` can't be computed in a Node DOM, so axe reports it as *incomplete*, not a violation.
+Components are tested in isolation, not as a full page — so the axe run must exclude document-structure **best-practice** rules (`region`, `landmark-one-main`, `page-has-heading-one`), which otherwise flag every isolated component. Restricting to WCAG A/AA tags excludes them. `color-contrast` can't be computed in a Node DOM, so axe reports it as _incomplete_, not a violation.
 
 ```ts
 import axe, { type Result } from 'axe-core';
@@ -147,6 +152,7 @@ export async function axeViolations(el: Element): Promise<Result[]> {
 - [ ] **A7: Typecheck + commit**
 
 Run: `pnpm --filter @ai-dict/shared-ui typecheck` → PASS.
+
 ```bash
 git add packages/shared-ui/package.json packages/shared-ui/tsconfig.json packages/shared-ui/vitest.config.ts packages/shared-ui/src/styles/adopt.ts packages/shared-ui/src/index.ts packages/shared-ui/test/a11y.ts pnpm-lock.yaml
 git commit -m "feat(shared-ui): package setup + adoptedStyleSheets + axe helper"
@@ -193,6 +199,7 @@ describe('<lookup-trigger>', () => {
   });
 });
 ```
+
 Run → FAIL (module not found).
 
 - [ ] **B2: Implement** `packages/shared-ui/src/lookup-trigger.ts`
@@ -223,6 +230,7 @@ export class LookupTrigger extends HTMLElement {
 
 if (!customElements.get('lookup-trigger')) customElements.define('lookup-trigger', LookupTrigger);
 ```
+
 (A native `<button>` is keyboard-activatable: Enter/Space fire `click`, so the single click handler covers keyboard.) Run → PASS. Commit `feat(shared-ui): <lookup-trigger>`.
 
 ### Task C — `<bottom-sheet>`
@@ -256,7 +264,9 @@ describe('<bottom-sheet>', () => {
     const spy = vi.fn();
     el.addEventListener('dismiss', spy);
     el.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
-    el.shadowRoot!.querySelector('.scrim')!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    el.shadowRoot!.querySelector('.scrim')!.dispatchEvent(
+      new MouseEvent('click', { bubbles: true }),
+    );
     expect(spy).toHaveBeenCalledTimes(2);
   });
 
@@ -291,6 +301,7 @@ describe('<bottom-sheet>', () => {
   });
 });
 ```
+
 Run → FAIL.
 
 - [ ] **C2: Implement** `packages/shared-ui/src/bottom-sheet.ts`
@@ -313,7 +324,8 @@ export class BottomSheet extends HTMLElement {
     if (this.shadowRoot) return;
     const root = this.attachShadow({ mode: 'open' });
     adoptStyles(root, CSS);
-    if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) this.setAttribute('reduced', '');
+    if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+      this.setAttribute('reduced', '');
 
     const scrim = document.createElement('div');
     scrim.className = 'scrim';
@@ -344,23 +356,38 @@ export class BottomSheet extends HTMLElement {
   }
 
   private onKeydown = (e: KeyboardEvent): void => {
-    if (e.key === 'Escape') { e.preventDefault(); this.dismiss(); return; }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this.dismiss();
+      return;
+    }
     if (e.key === 'Tab') this.trapFocus(e);
   };
 
   private focusables(): HTMLElement[] {
     const sel = 'a[href],button,input,textarea,select,[tabindex]:not([tabindex="-1"])';
-    return [...this.querySelectorAll<HTMLElement>(sel)].filter((el) => !el.hasAttribute('disabled'));
+    return [...this.querySelectorAll<HTMLElement>(sel)].filter(
+      (el) => !el.hasAttribute('disabled'),
+    );
   }
 
   private trapFocus(e: KeyboardEvent): void {
     const f = this.focusables();
-    if (f.length === 0) { e.preventDefault(); this.panel?.focus(); return; }
+    if (f.length === 0) {
+      e.preventDefault();
+      this.panel?.focus();
+      return;
+    }
     const first = f[0]!;
     const last = f[f.length - 1]!;
     const active = document.activeElement;
-    if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+    if (e.shiftKey && active === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
   }
 
   dismiss(): void {
@@ -370,6 +397,7 @@ export class BottomSheet extends HTMLElement {
 
 if (!customElements.get('bottom-sheet')) customElements.define('bottom-sheet', BottomSheet);
 ```
+
 Run → PASS. Commit `feat(shared-ui): <bottom-sheet> (dialog + focus trap + ESC)`.
 
 ### Task D — `<lookup-card>`
@@ -408,14 +436,19 @@ describe('<lookup-card>', () => {
 
   it('renders an error message', () => {
     const el = mountCard();
-    el.state = { kind: 'error', error: { code: 'NETWORK', message: 'Network failed.', retryable: true } };
+    el.state = {
+      kind: 'error',
+      error: { code: 'NETWORK', message: 'Network failed.', retryable: true },
+    };
     expect(el.shadowRoot!.querySelector('.err')!.textContent).toBe('Network failed.');
   });
 
   it('emits "close" and "expand"', () => {
     const el = mountCard();
-    const close = vi.fn(); const expand = vi.fn();
-    el.addEventListener('close', close); el.addEventListener('expand', expand);
+    const close = vi.fn();
+    const expand = vi.fn();
+    el.addEventListener('close', close);
+    el.addEventListener('expand', expand);
     el.shadowRoot!.querySelector<HTMLButtonElement>('[data-act="close"]')!.click();
     el.shadowRoot!.querySelector<HTMLButtonElement>('[data-act="expand"]')!.click();
     expect(close).toHaveBeenCalledOnce();
@@ -428,6 +461,7 @@ describe('<lookup-card>', () => {
   });
 });
 ```
+
 Run → FAIL.
 
 - [ ] **D2: Implement** `packages/shared-ui/src/lookup-card.ts`
@@ -475,7 +509,9 @@ export class LookupCard extends HTMLElement {
     b.dataset['act'] = act;
     b.setAttribute('aria-label', label);
     b.textContent = label;
-    b.addEventListener('click', () => this.dispatchEvent(new CustomEvent(act, { bubbles: true, composed: true })));
+    b.addEventListener('click', () =>
+      this.dispatchEvent(new CustomEvent(act, { bubbles: true, composed: true })),
+    );
     return b;
   }
 
@@ -483,21 +519,30 @@ export class LookupCard extends HTMLElement {
     this._state = s;
     if (this.region) this.render();
   }
-  get state(): CardState { return this._state; }
+  get state(): CardState {
+    return this._state;
+  }
 
   private render(): void {
     const region = this.region;
     if (!region) return;
     region.replaceChildren();
     const s = this._state;
-    if (s.kind === 'loading') { region.textContent = 'Looking up…'; return; }
+    if (s.kind === 'loading') {
+      region.textContent = 'Looking up…';
+      return;
+    }
     if (s.kind === 'error') {
-      const h = document.createElement('h2'); h.textContent = 'Lookup failed';
-      const p = document.createElement('p'); p.className = 'err'; p.textContent = s.error.message;
+      const h = document.createElement('h2');
+      h.textContent = 'Lookup failed';
+      const p = document.createElement('p');
+      p.className = 'err';
+      p.textContent = s.error.message;
       region.append(h, p);
       return;
     }
-    const h = document.createElement('h2'); h.textContent = s.word;
+    const h = document.createElement('h2');
+    h.textContent = s.word;
     const body = document.createElement('div');
     body.innerHTML = s.safeHtml; // trusted: sanitized upstream by adapters-shared (S4)
     region.append(h, body);
@@ -506,6 +551,7 @@ export class LookupCard extends HTMLElement {
 
 if (!customElements.get('lookup-card')) customElements.define('lookup-card', LookupCard);
 ```
+
 Run → PASS. Commit `feat(shared-ui): <lookup-card>`.
 
 ### Task E — `<settings-form>`
@@ -537,12 +583,28 @@ describe('<settings-form>', () => {
 
   it('emits "save" with the collected form value', () => {
     const el = mountForm();
-    el.value = { apiKey: '', targetLang: 'vi', promptTemplate: 'T', cacheEnabled: true, saveHistory: true };
+    el.value = {
+      apiKey: '',
+      targetLang: 'vi',
+      promptTemplate: 'T',
+      cacheEnabled: true,
+      saveHistory: true,
+    };
     const spy = vi.fn();
     el.addEventListener('save', (e) => spy((e as CustomEvent<SettingsFormValue>).detail));
     el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.value = 'AIza-test';
-    el.shadowRoot!.querySelector('form')!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
-    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ apiKey: 'AIza-test', targetLang: 'vi', promptTemplate: 'T', cacheEnabled: true, saveHistory: true }));
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(spy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        apiKey: 'AIza-test',
+        targetLang: 'vi',
+        promptTemplate: 'T',
+        cacheEnabled: true,
+        saveHistory: true,
+      }),
+    );
   });
 
   it('emits the four action events', () => {
@@ -563,6 +625,7 @@ describe('<settings-form>', () => {
   });
 });
 ```
+
 Run → FAIL.
 
 - [ ] **E2: Implement** `packages/shared-ui/src/settings-form.ts`
@@ -627,7 +690,13 @@ export class SettingsForm extends HTMLElement {
     });
     this.q<HTMLFormElement>('form').addEventListener('submit', (e) => {
       e.preventDefault();
-      this.dispatchEvent(new CustomEvent<SettingsFormValue>('save', { detail: this.collect(), bubbles: true, composed: true }));
+      this.dispatchEvent(
+        new CustomEvent<SettingsFormValue>('save', {
+          detail: this.collect(),
+          bubbles: true,
+          composed: true,
+        }),
+      );
     });
     this.relay('#test', 'test-connection');
     this.relay('#clear-cache', 'clear-cache');
@@ -668,6 +737,7 @@ export class SettingsForm extends HTMLElement {
 
 if (!customElements.get('settings-form')) customElements.define('settings-form', SettingsForm);
 ```
+
 Note: the `value` setter requires the form connected (shadow built); the options page appends the element before hydrating. Run → PASS. Commit `feat(shared-ui): <settings-form>`.
 
 ### Task F — Full-suite gate
@@ -676,21 +746,25 @@ Note: the `value` setter requires the form connected (shadow built); the options
 
 Run: `pnpm --filter @ai-dict/shared-ui test --coverage` → all PASS, coverage ≥ 75%, axe violations empty for each component.
 Run: `pnpm --filter @ai-dict/shared-ui typecheck` + `pnpm lint` → clean (core imported as **types only**; no inline `<style>`).
+
 ```bash
 git add packages/shared-ui
 git commit -m "test(shared-ui): coverage + a11y gate"
 ```
 
 ## Verify (correctness)
+
 - Run: `pnpm --filter @ai-dict/shared-ui test --coverage` (vitest + happy-dom + @testing-library/dom + axe-core) → pass, ≥ 75%.
 
 ## Validate (sanity / no scope drift)
+
 - `pnpm --filter @ai-dict/shared-ui typecheck` + `pnpm lint` clean (type-only core import).
 - `git diff --stat` only `packages/shared-ui/**`.
 - No business logic (no fetch, no storage, no workflow) inside components.
 - No inline `<style>` blocks present.
 
 ## Self-audit (run BEFORE sign-off)
+
 - [ ] D1–D8 met with evidence?
 - [ ] Tag names + event names match §5.3 / README contracts exactly?
 - [ ] Open Shadow DOM (not closed) confirmed?
@@ -700,4 +774,5 @@ git commit -m "test(shared-ui): coverage + a11y gate"
 - [ ] Only `packages/shared-ui/**` changed?
 
 ## Sign-off
+
 Edit YAML: `status: DONE`, `done_at: <UTC>`. Commit. Update README checkbox `03`.

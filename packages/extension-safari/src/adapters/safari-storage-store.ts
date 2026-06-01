@@ -1,9 +1,21 @@
-import { DEFAULT_TEMPLATE, type SettingsStore, type PublicSettings, type Settings } from '@ai-dict/core';
+import {
+  DEFAULT_TEMPLATE,
+  type SettingsStore,
+  type PublicSettings,
+  type Settings,
+} from '@ai-dict/core';
 import type { StorageAreaLike } from './safari-kv-store';
 
 const DEFAULT_TARGET = 'vi';
 function defaults(): Settings {
-  return { targetLang: DEFAULT_TARGET, promptTemplate: DEFAULT_TEMPLATE, hasKey: false, apiKey: '', cacheEnabled: true, saveHistory: true };
+  return {
+    targetLang: DEFAULT_TARGET,
+    promptTemplate: DEFAULT_TEMPLATE,
+    hasKey: false,
+    apiKey: '',
+    cacheEnabled: true,
+    saveHistory: true,
+  };
 }
 
 export class SafariStorageStore implements SettingsStore {

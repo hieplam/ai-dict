@@ -20,18 +20,33 @@ export function mapError(input: ErrorInput): LookupError {
       return { code: 'NO_KEY', message: 'Add your Gemini API key in Settings.', retryable: false };
     case 'offline':
     case 'timeout':
-      return { code: 'NETWORK', message: 'Network failed. Check connection and retry.', retryable: true };
+      return {
+        code: 'NETWORK',
+        message: 'Network failed. Check connection and retry.',
+        retryable: true,
+      };
     case 'parse':
       return { code: 'PARSE', message: 'Gemini returned unexpected output.', retryable: false };
     case 'http': {
       const { status, geminiStatus, retryAfterSec } = input;
       if (status === 400 && geminiStatus === 'INVALID_ARGUMENT')
         return { code: 'INVALID_KEY', message: 'Google rejected the API key.', retryable: false };
-      if (status === 401 || status === 403 || geminiStatus === 'UNAUTHENTICATED' || geminiStatus === 'PERMISSION_DENIED')
+      if (
+        status === 401 ||
+        status === 403 ||
+        geminiStatus === 'UNAUTHENTICATED' ||
+        geminiStatus === 'PERMISSION_DENIED'
+      )
         return { code: 'INVALID_KEY', message: 'Google rejected the API key.', retryable: false };
       if (status === 429 || geminiStatus === 'RESOURCE_EXHAUSTED')
-        return { code: 'RATE_LIMIT', message: 'Hit Gemini rate limit.', retryable: true, ...(retryAfterSec !== undefined ? { retryAfterSec } : {}) };
-      if (status >= 500) return { code: 'NETWORK', message: 'Gemini server error. Retry.', retryable: true };
+        return {
+          code: 'RATE_LIMIT',
+          message: 'Hit Gemini rate limit.',
+          retryable: true,
+          ...(retryAfterSec !== undefined ? { retryAfterSec } : {}),
+        };
+      if (status >= 500)
+        return { code: 'NETWORK', message: 'Gemini server error. Retry.', retryable: true };
       return { code: 'UNKNOWN', message: sanitize(`HTTP ${status}`), retryable: false };
     }
     case 'thrown': {

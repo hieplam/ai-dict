@@ -12,7 +12,7 @@ const dryRun = args.includes('--dry-run');
 const version = args.find((a) => !a.startsWith('-'));
 
 if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
-  console.error('usage: pnpm release:bump <major.minor.patch> [--dry-run]');
+  console.error('usage: bun run release:bump <major.minor.patch> [--dry-run]');
   process.exit(1);
 }
 
@@ -22,7 +22,11 @@ const edits = [];
 // 1) root package.json (spread preserves key order; version stays in place)
 const pkgPath = resolve(root, 'package.json');
 const pkg = JSON.parse(readFileSync(pkgPath, 'utf8'));
-edits.push({ file: pkgPath, from: pkg.version, next: JSON.stringify({ ...pkg, version }, null, 2) + '\n' });
+edits.push({
+  file: pkgPath,
+  from: pkg.version,
+  next: JSON.stringify({ ...pkg, version }, null, 2) + '\n',
+});
 
 // 2) both extension manifests
 for (const rel of [
@@ -42,7 +46,9 @@ if (pbx) {
   const next = text.replace(/MARKETING_VERSION = [^;]+;/g, `MARKETING_VERSION = ${version};`);
   edits.push({ file: pbx, from, next });
 } else {
-  console.warn('warning: no .pbxproj under packages/extension-safari/xcode — skipping MARKETING_VERSION');
+  console.warn(
+    'warning: no .pbxproj under packages/extension-safari/xcode — skipping MARKETING_VERSION',
+  );
 }
 
 for (const e of edits) {
@@ -60,6 +66,10 @@ function findFirst(dir, re) {
       else if (!hit && re.test(name)) hit = full;
     }
   };
-  try { walk(dir); } catch { /* xcode/ may not exist in early bundles */ }
+  try {
+    walk(dir);
+  } catch {
+    /* xcode/ may not exist in early bundles */
+  }
   return hit;
 }

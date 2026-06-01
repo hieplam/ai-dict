@@ -4,9 +4,33 @@ import type { Storage, HistoryEntry } from '../src';
 
 function memStorage(): Storage {
   const m = new Map<string, string>();
-  return { getItem: (k) => Promise.resolve(m.get(k) ?? null), setItem: (k, v) => { m.set(k, v); return Promise.resolve(); }, removeItem: (k) => { m.delete(k); return Promise.resolve(); }, keys: (p) => Promise.resolve([...m.keys()].filter((k) => !p || k.startsWith(p))) };
+  return {
+    getItem: (k) => Promise.resolve(m.get(k) ?? null),
+    setItem: (k, v) => {
+      m.set(k, v);
+      return Promise.resolve();
+    },
+    removeItem: (k) => {
+      m.delete(k);
+      return Promise.resolve();
+    },
+    keys: (p) => Promise.resolve([...m.keys()].filter((k) => !p || k.startsWith(p))),
+  };
 }
-const entry = (id: string): HistoryEntry => ({ id, word: id, context: '', createdAt: Number(id), result: { markdown: '', word: id, target: 'vi', model: 'gemini-2.5-flash', fromCache: false, fetchedAt: 0 } });
+const entry = (id: string): HistoryEntry => ({
+  id,
+  word: id,
+  context: '',
+  createdAt: Number(id),
+  result: {
+    markdown: '',
+    word: id,
+    target: 'vi',
+    model: 'gemini-2.5-flash',
+    fromCache: false,
+    fetchedAt: 0,
+  },
+});
 
 describe('history-policy', () => {
   it('lists newest-first', async () => {
@@ -21,7 +45,10 @@ describe('history-policy', () => {
     for (const id of ['1', '2', '3']) await historyAppend({ storage: s }, entry(id));
     const page1 = await historyList({ storage: s }, { limit: 2 });
     expect(page1.entries.map((e) => e.id)).toEqual(['3', '2']);
-    const page2 = await historyList({ storage: s }, { limit: 2, ...(page1.nextCursor !== undefined ? { cursor: page1.nextCursor } : {}) });
+    const page2 = await historyList(
+      { storage: s },
+      { limit: 2, ...(page1.nextCursor !== undefined ? { cursor: page1.nextCursor } : {}) },
+    );
     expect(page2.entries.map((e) => e.id)).toEqual(['1']);
     expect(page2.nextCursor).toBeUndefined();
   });

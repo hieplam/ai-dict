@@ -6,7 +6,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build": "node esbuild.config.mjs",
+    "build": "bun esbuild.config.mjs",
     "e2e": "playwright test"
   },
   "dependencies": {

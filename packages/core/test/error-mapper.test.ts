@@ -8,24 +8,33 @@ describe('mapError (spec §6.9)', () => {
     expect(mapError({ kind: 'no-key' })).toMatchObject({ code: 'NO_KEY', retryable: false });
   });
   it('HTTP 400 INVALID_ARGUMENT → INVALID_KEY', () => {
-    expect(mapError({ kind: 'http', status: 400, geminiStatus: 'INVALID_ARGUMENT' }).code).toBe('INVALID_KEY');
+    expect(mapError({ kind: 'http', status: 400, geminiStatus: 'INVALID_ARGUMENT' }).code).toBe(
+      'INVALID_KEY',
+    );
   });
   it('HTTP 401/403 → INVALID_KEY', () => {
     expect(mapError({ kind: 'http', status: 401 }).code).toBe('INVALID_KEY');
     expect(mapError({ kind: 'http', status: 403 }).code).toBe('INVALID_KEY');
   });
   it('geminiStatus UNAUTHENTICATED → INVALID_KEY regardless of HTTP status (e.g. 200)', () => {
-    expect(mapError({ kind: 'http', status: 200, geminiStatus: 'UNAUTHENTICATED' }).code).toBe('INVALID_KEY');
+    expect(mapError({ kind: 'http', status: 200, geminiStatus: 'UNAUTHENTICATED' }).code).toBe(
+      'INVALID_KEY',
+    );
   });
   it('geminiStatus PERMISSION_DENIED → INVALID_KEY regardless of HTTP status (e.g. 200)', () => {
-    expect(mapError({ kind: 'http', status: 200, geminiStatus: 'PERMISSION_DENIED' }).code).toBe('INVALID_KEY');
+    expect(mapError({ kind: 'http', status: 200, geminiStatus: 'PERMISSION_DENIED' }).code).toBe(
+      'INVALID_KEY',
+    );
   });
   it('HTTP 429 → RATE_LIMIT, retryable, carries retryAfterSec', () => {
     const e = mapError({ kind: 'http', status: 429, retryAfterSec: 30 });
     expect(e).toMatchObject({ code: 'RATE_LIMIT', retryable: true, retryAfterSec: 30 });
   });
   it('HTTP 5xx / offline / timeout → NETWORK, retryable', () => {
-    expect(mapError({ kind: 'http', status: 503 })).toMatchObject({ code: 'NETWORK', retryable: true });
+    expect(mapError({ kind: 'http', status: 503 })).toMatchObject({
+      code: 'NETWORK',
+      retryable: true,
+    });
     expect(mapError({ kind: 'offline' }).code).toBe('NETWORK');
     expect(mapError({ kind: 'timeout' }).code).toBe('NETWORK');
   });
@@ -54,7 +63,9 @@ describe('mapError (spec §6.9)', () => {
 
   // FIX 3: geminiStatus-only RATE_LIMIT path (status 200 + RESOURCE_EXHAUSTED)
   it('geminiStatus RESOURCE_EXHAUSTED → RATE_LIMIT even when HTTP status is 200', () => {
-    expect(mapError({ kind: 'http', status: 200, geminiStatus: 'RESOURCE_EXHAUSTED' }).code).toBe('RATE_LIMIT');
+    expect(mapError({ kind: 'http', status: 200, geminiStatus: 'RESOURCE_EXHAUSTED' }).code).toBe(
+      'RATE_LIMIT',
+    );
   });
 });
 
@@ -62,14 +73,20 @@ describe('mapError (spec §6.9)', () => {
 function fixture(name: string): string {
   return readFileSync(resolve(__dirname, 'fixtures/gemini-responses', name), 'utf-8');
 }
-interface GeminiErrorBody { error: { status: string; code: number; message: string } }
+interface GeminiErrorBody {
+  error: { status: string; code: number; message: string };
+}
 
 describe('mapError — fixture-driven (validates fixture content matches mapper assumptions)', () => {
   it('invalid-key-400.json: status=INVALID_ARGUMENT, code=400 → INVALID_KEY', () => {
     const body = JSON.parse(fixture('invalid-key-400.json')) as GeminiErrorBody;
     expect(body.error.code).toBe(400);
     expect(body.error.status).toBe('INVALID_ARGUMENT');
-    const result = mapError({ kind: 'http', status: body.error.code, geminiStatus: body.error.status });
+    const result = mapError({
+      kind: 'http',
+      status: body.error.code,
+      geminiStatus: body.error.status,
+    });
     expect(result.code).toBe('INVALID_KEY');
     expect(result.retryable).toBe(false);
   });
@@ -78,7 +95,11 @@ describe('mapError — fixture-driven (validates fixture content matches mapper 
     const body = JSON.parse(fixture('invalid-key-403.json')) as GeminiErrorBody;
     expect(body.error.code).toBe(403);
     expect(body.error.status).toBe('PERMISSION_DENIED');
-    const result = mapError({ kind: 'http', status: body.error.code, geminiStatus: body.error.status });
+    const result = mapError({
+      kind: 'http',
+      status: body.error.code,
+      geminiStatus: body.error.status,
+    });
     expect(result.code).toBe('INVALID_KEY');
     expect(result.retryable).toBe(false);
   });
@@ -87,7 +108,11 @@ describe('mapError — fixture-driven (validates fixture content matches mapper 
     const body = JSON.parse(fixture('rate-limit-429.json')) as GeminiErrorBody;
     expect(body.error.code).toBe(429);
     expect(body.error.status).toBe('RESOURCE_EXHAUSTED');
-    const result = mapError({ kind: 'http', status: body.error.code, geminiStatus: body.error.status });
+    const result = mapError({
+      kind: 'http',
+      status: body.error.code,
+      geminiStatus: body.error.status,
+    });
     expect(result.code).toBe('RATE_LIMIT');
     expect(result.retryable).toBe(true);
   });
@@ -95,7 +120,11 @@ describe('mapError — fixture-driven (validates fixture content matches mapper 
   it('server-5xx.json: status=INTERNAL, code=500 → NETWORK', () => {
     const body = JSON.parse(fixture('server-5xx.json')) as GeminiErrorBody;
     expect(body.error.code).toBe(500);
-    const result = mapError({ kind: 'http', status: body.error.code, geminiStatus: body.error.status });
+    const result = mapError({
+      kind: 'http',
+      status: body.error.code,
+      geminiStatus: body.error.status,
+    });
     expect(result.code).toBe('NETWORK');
     expect(result.retryable).toBe(true);
   });

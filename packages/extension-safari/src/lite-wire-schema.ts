@@ -41,12 +41,21 @@ type ValidType = typeof VALID_TYPES extends Set<infer T> ? T : never;
 // target, and promptTemplate.  Dropping any of them causes undefined to reach renderTemplate().
 type StrippedLookup = {
   type: 'lookup';
-  req: { word: string; context?: unknown; url?: unknown; title?: unknown; target?: unknown; promptTemplate?: unknown };
+  req: {
+    word: string;
+    context?: unknown;
+    url?: unknown;
+    title?: unknown;
+    target?: unknown;
+    promptTemplate?: unknown;
+  };
   requestId?: unknown;
 };
 type StrippedLookupCancel = { type: 'lookup.cancel'; requestId?: unknown };
 type StrippedHistoryList = { type: 'history.list'; limit?: unknown; cursor?: unknown };
-type StrippedSimple = { type: 'settings.get' | 'history.clear' | 'cache.clear' | 'connection.test' };
+type StrippedSimple = {
+  type: 'settings.get' | 'history.clear' | 'cache.clear' | 'connection.test';
+};
 
 type StrippedMessage = StrippedLookup | StrippedLookupCancel | StrippedHistoryList | StrippedSimple;
 

@@ -1,5 +1,10 @@
 import type { ResultRenderer, LookupResult, LookupError } from '@ai-dict/core';
-import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '@ai-dict/shared-ui/lookup-card';
+import {
+  renderCardState,
+  type CardState,
+  type LookupCard,
+  type SafeHtml,
+} from '@ai-dict/shared-ui/lookup-card';
 import '@ai-dict/shared-ui/bottom-sheet';
 import '@ai-dict/shared-ui/lookup-card';
 import { sanitizeMarkdown } from './markdown-sanitize';
@@ -35,15 +40,24 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.ensureCard().replaceChildren(...renderCardState(state));
   }
 
-  renderLoading(): void { this.setState({ kind: 'loading' }); }
+  renderLoading(): void {
+    this.setState({ kind: 'loading' });
+  }
 
   renderResult(r: LookupResult): void {
     // `sanitize` already returns `SafeHtml` (the trust boundary lives in sanitizeMarkdown, S4).
     // No cast needed here — the DI param type `(md: string) => SafeHtml` guarantees it.
-    this.setState({ kind: 'result', safeHtml: this.sanitize(r.markdown), word: r.word, target: r.target });
+    this.setState({
+      kind: 'result',
+      safeHtml: this.sanitize(r.markdown),
+      word: r.word,
+      target: r.target,
+    });
   }
 
-  renderError(e: LookupError): void { this.setState({ kind: 'error', error: e }); }
+  renderError(e: LookupError): void {
+    this.setState({ kind: 'error', error: e });
+  }
 
   close(): void {
     this.sheet?.remove();

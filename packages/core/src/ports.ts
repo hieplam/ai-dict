@@ -1,5 +1,10 @@
 import type {
-  AnchorRect, SelectionEvent, LookupRequest, LookupResult, LookupError, PublicSettings,
+  AnchorRect,
+  SelectionEvent,
+  LookupRequest,
+  LookupResult,
+  LookupError,
+  PublicSettings,
 } from './types';
 
 export interface SelectionSource {

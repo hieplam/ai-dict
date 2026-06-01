@@ -1,11 +1,11 @@
 ---
-bundle: "04"
+bundle: '04'
 title: adapters-shared
 status: DONE
-locked_by: ""
-locked_at: ""
-done_at: "2026-05-30T09:10:31Z"
-prereqs: ["02", "03"]
+locked_by: ''
+locked_at: ''
+done_at: '2026-05-30T09:10:31Z'
+prereqs: ['02', '03']
 owns_files:
   - packages/adapters-shared/package.json
   - packages/adapters-shared/tsconfig.json
@@ -22,25 +22,29 @@ owns_files:
 **Purpose:** Concrete port implementations with no platform/browser-extension API: `GeminiLookupClient` (impl `LookupClient` via global `fetch`, with 20s timeout, error mapping, `navigator.onLine` short-circuit) and `InlineBottomSheetRenderer` (impl `ResultRenderer` by composing shared-ui `<bottom-sheet>` + `<lookup-card>`, feeding **sanitized** Markdown through the raw-HTML-disabled renderer + DOMPurify allowlist).
 
 ## Lock protocol
+
 Verify prereqs `02-core.md` AND `03-shared-ui.md` are both `DONE`. Flip YAML → LOCKED, commit `[04] lock`, rebase, abort on race. Execute.
 
 ## Inputs
+
 - Bundle 02 DONE: `LookupClient`, `ResultRenderer` ports; `LookupRequest/Result/Error` types; `mapError`.
 - Bundle 03 DONE: `<bottom-sheet>`, `<lookup-card>` components + their events.
 - Spec §5.1, §6.9 (error map), §7.3 S2 (fetch shape), S4 (sanitize), S11 (timeout/onLine), §8.7 (bundle budget context).
 
 ## Outputs (frozen contracts)
+
 - `GeminiLookupClient implements LookupClient`: POST to `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent`, header `X-Goog-Api-Key`; honors `opts.signal`; 20s `AbortController` timeout; `navigator.onLine === false` → `NETWORK` before fetch; maps responses via core `mapError`. Constructor-injected `fetch` slice (testable, no `sinon`).
 - `markdown-sanitize.ts`: Markdown renderer with raw HTML disabled (`marked`/`snarkdown`, `html:false`) → DOMPurify allowlist (no raw HTML/scripts/event-handlers/`javascript:`; `data:` only `image/*`); anchors forced `target="_blank" rel="noopener noreferrer"`, `https:` only.
 - `InlineBottomSheetRenderer implements ResultRenderer`: `renderLoading/renderResult/renderError/close` mounting `<bottom-sheet>` + `<lookup-card>` with sanitized content; constructor takes a host element.
 
 ## Definition of Done
+
 - D1: `GeminiLookupClient.lookup` returns a `LookupResult` for the success fixture; sets `model: 'gemini-2.5-flash'`.
 - D2: Each §6.9 error condition (injected via fake fetch / fixtures) maps to the correct `LookupError.code` + `retryable`.
 - D3: 20s timeout aborts and maps to `NETWORK`; an our-cancel `signal` abort propagates (caller decides suppression); `navigator.onLine===false` short-circuits to `NETWORK` without calling fetch.
 - D4: **[S4 security]** `markdown-sanitize` strips `<script>`, inline event handlers, `javascript:` URLs, and disallowed `data:` URIs; the prompt-injection fixture renders inert (no executable payload). Asserted by test.
 - D5: `InlineBottomSheetRenderer` drives the loading→result→error→close lifecycle, mounting shared-ui components with sanitized markdown only.
-- D6: No extension/platform API imported (lint hex rule: adapters-shared ⇏ extension-*); `fetch` is injected, not globally assumed in tests.
+- D6: No extension/platform API imported (lint hex rule: adapters-shared ⇏ extension-\*); `fetch` is injected, not globally assumed in tests.
 - D7: Coverage ≥ 90% (spec §8.2).
 
 ## Implementation steps
@@ -75,6 +79,7 @@ Verify prereqs `02-core.md` AND `03-shared-ui.md` are both `DONE`. Flip YAML →
   "devDependencies": { "happy-dom": "^15.0.0" }
 }
 ```
+
 Then `pnpm install`. Notes: `marked` ships its own types; `dompurify` ≥3.2 bundles types (no `@types/dompurify`). `@ai-dict/core` is imported for **values** (`mapError`, `renderTemplate`) + types; `@ai-dict/shared-ui` for the `<bottom-sheet>`/`<lookup-card>` registrations + the `LookupCard` type. Hex rule from Bundle 01 allows adapters→core and adapters→shared-ui; only adapters⇏extension-\* is forbidden.
 
 - [ ] **A2: `packages/adapters-shared/tsconfig.json`** (DOM lib: renderer touches `HTMLElement`/`document`; client uses `DOMException`/`AbortController`)
@@ -117,6 +122,7 @@ export * from './inline-bottom-sheet-renderer';
 - [ ] **A5: Typecheck + commit**
 
 Run: `pnpm --filter @ai-dict/adapters-shared typecheck` → PASS (no errors; `index.ts` re-exports resolve once Tasks B–D land — create stubs or fill in order; commit at A only the package files if you prefer an incremental commit).
+
 ```bash
 git add packages/adapters-shared/package.json packages/adapters-shared/tsconfig.json packages/adapters-shared/vitest.config.ts pnpm-lock.yaml
 git commit -m "feat(adapters-shared): package setup (happy-dom, marked, dompurify)"
@@ -170,6 +176,7 @@ describe('sanitizeMarkdown (S4)', () => {
   });
 });
 ```
+
 Run → FAIL (module not found).
 
 - [ ] **B2: Implement** `packages/adapters-shared/src/markdown-sanitize.ts`
@@ -193,8 +200,24 @@ function ensureHook(): void {
 }
 
 const ALLOWED_TAGS = [
-  'p', 'br', 'strong', 'em', 'b', 'i', 'code', 'pre',
-  'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'blockquote', 'a', 'span',
+  'p',
+  'br',
+  'strong',
+  'em',
+  'b',
+  'i',
+  'code',
+  'pre',
+  'ul',
+  'ol',
+  'li',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'blockquote',
+  'a',
+  'span',
 ];
 const ALLOWED_ATTR = ['href', 'target', 'rel'];
 const HTTPS_ONLY = /^https:\/\//i; // anchors: https only (no javascript:, data:, mailto:, relative)
@@ -211,6 +234,7 @@ export function sanitizeMarkdown(md: string): string {
   });
 }
 ```
+
 Run → PASS. Commit `feat(adapters-shared): markdown sanitize (marked + DOMPurify allowlist)`.
 
 > **S4 note:** the allowlist omits `img`, so the spec's "`data:` only `image/*`" carve-out is moot — all `data:`/`javascript:` URIs are rejected by `ALLOWED_URI_REGEXP` (https-only). Stricter than the spec floor; safe.
@@ -227,15 +251,28 @@ import { GeminiLookupClient, type FetchLike, type ResponseLike } from '../src/ge
 import { isLookupError, type LookupRequest } from '@ai-dict/core';
 
 const req: LookupRequest = {
-  word: 'bank', context: 'river bank', url: 'https://x', title: 'T',
-  target: 'vi', promptTemplate: 'Define {word} in {target_lang}: {context}',
+  word: 'bank',
+  context: 'river bank',
+  url: 'https://x',
+  title: 'T',
+  target: 'vi',
+  promptTemplate: 'Define {word} in {target_lang}: {context}',
 };
 
-function res(init: Partial<ResponseLike> & { body?: unknown; ok: boolean; status: number; retryAfter?: string }): ResponseLike {
+function res(
+  init: Partial<ResponseLike> & {
+    body?: unknown;
+    ok: boolean;
+    status: number;
+    retryAfter?: string;
+  },
+): ResponseLike {
   return {
     ok: init.ok,
     status: init.status,
-    headers: { get: (n: string) => (n.toLowerCase() === 'retry-after' ? init.retryAfter ?? null : null) },
+    headers: {
+      get: (n: string) => (n.toLowerCase() === 'retry-after' ? (init.retryAfter ?? null) : null),
+    },
     json: async () => {
       if (init.body === '__throw__') throw new SyntaxError('bad json');
       return init.body;
@@ -247,29 +284,49 @@ const okBody = { candidates: [{ content: { parts: [{ text: '# def' }] } }] };
 function client(fetchImpl: FetchLike, key = 'AIza-key', timeoutMs?: number) {
   // Omit timeoutMs by default so the production DEFAULT_TIMEOUT_MS path is exercised;
   // the timeout test passes an explicit small value to hit the provided branch.
-  return new GeminiLookupClient({ fetch: fetchImpl, getApiKey: () => key, ...(timeoutMs !== undefined ? { timeoutMs } : {}) });
+  return new GeminiLookupClient({
+    fetch: fetchImpl,
+    getApiKey: () => key,
+    ...(timeoutMs !== undefined ? { timeoutMs } : {}),
+  });
 }
 
 // A fetch that only settles when its signal aborts — mirrors real fetch by rejecting
 // immediately if the signal is ALREADY aborted at call time (otherwise it would hang).
-const abortableHang: FetchLike = (_url, init) => new Promise((_resolve, reject) => {
-  const fail = (): void => reject(init.signal.reason ?? new DOMException('aborted', 'AbortError'));
-  if (init.signal.aborted) { fail(); return; }
-  init.signal.addEventListener('abort', fail, { once: true });
-});
+const abortableHang: FetchLike = (_url, init) =>
+  new Promise((_resolve, reject) => {
+    const fail = (): void =>
+      reject(init.signal.reason ?? new DOMException('aborted', 'AbortError'));
+    if (init.signal.aborted) {
+      fail();
+      return;
+    }
+    init.signal.addEventListener('abort', fail, { once: true });
+  });
 
 describe('GeminiLookupClient', () => {
   it('success → LookupResult with model + rendered prompt + X-Goog-Api-Key header', async () => {
     let captured: { url: string; init: Parameters<FetchLike>[1] } | null = null;
-    const c = client(async (url, init) => { captured = { url, init }; return res({ ok: true, status: 200, body: okBody }); });
+    const c = client(async (url, init) => {
+      captured = { url, init };
+      return res({ ok: true, status: 200, body: okBody });
+    });
     const out = await c.lookup(req);
-    expect(out).toMatchObject({ markdown: '# def', word: 'bank', target: 'vi', model: 'gemini-2.5-flash', fromCache: false });
+    expect(out).toMatchObject({
+      markdown: '# def',
+      word: 'bank',
+      target: 'vi',
+      model: 'gemini-2.5-flash',
+      fromCache: false,
+    });
     expect(typeof out.fetchedAt).toBe('number');
     expect(captured!.url).toContain('gemini-2.5-flash:generateContent');
     expect(captured!.init.headers['X-Goog-Api-Key']).toBe('AIza-key');
     expect(captured!.init.headers['Content-Type']).toBe('application/json');
     // prompt rendered from template (data-minimization: only placeholders present)
-    expect(JSON.parse(captured!.init.body)).toMatchObject({ contents: [{ parts: [{ text: 'Define bank in vi: river bank' }] }] });
+    expect(JSON.parse(captured!.init.body)).toMatchObject({
+      contents: [{ parts: [{ text: 'Define bank in vi: river bank' }] }],
+    });
   });
 
   it('empty key → NO_KEY (defensive; not retryable), no fetch', async () => {
@@ -289,18 +346,33 @@ describe('GeminiLookupClient', () => {
   });
 
   it('HTTP 400 INVALID_ARGUMENT → INVALID_KEY', async () => {
-    const c = client(async () => res({ ok: false, status: 400, body: { error: { status: 'INVALID_ARGUMENT' } } }));
+    const c = client(async () =>
+      res({ ok: false, status: 400, body: { error: { status: 'INVALID_ARGUMENT' } } }),
+    );
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'INVALID_KEY', retryable: false });
   });
 
   it('HTTP 403 → INVALID_KEY', async () => {
-    const c = client(async () => res({ ok: false, status: 403, body: { error: { status: 'PERMISSION_DENIED' } } }));
+    const c = client(async () =>
+      res({ ok: false, status: 403, body: { error: { status: 'PERMISSION_DENIED' } } }),
+    );
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'INVALID_KEY' });
   });
 
   it('HTTP 429 → RATE_LIMIT with retryAfterSec from header', async () => {
-    const c = client(async () => res({ ok: false, status: 429, retryAfter: '30', body: { error: { status: 'RESOURCE_EXHAUSTED' } } }));
-    await expect(c.lookup(req)).rejects.toMatchObject({ code: 'RATE_LIMIT', retryable: true, retryAfterSec: 30 });
+    const c = client(async () =>
+      res({
+        ok: false,
+        status: 429,
+        retryAfter: '30',
+        body: { error: { status: 'RESOURCE_EXHAUSTED' } },
+      }),
+    );
+    await expect(c.lookup(req)).rejects.toMatchObject({
+      code: 'RATE_LIMIT',
+      retryable: true,
+      retryAfterSec: 30,
+    });
   });
 
   it('HTTP 5xx → NETWORK', async () => {
@@ -324,12 +396,20 @@ describe('GeminiLookupClient', () => {
   });
 
   it('HTTP 200 empty-string candidate text → PARSE (covers the length===0 branch)', async () => {
-    const c = client(async () => res({ ok: true, status: 200, body: { candidates: [{ content: { parts: [{ text: '' }] } }] } }));
+    const c = client(async () =>
+      res({
+        ok: true,
+        status: 200,
+        body: { candidates: [{ content: { parts: [{ text: '' }] } }] },
+      }),
+    );
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'PARSE', retryable: false });
   });
 
   it('generic fetch throw (TypeError) → NETWORK', async () => {
-    const c = client(async () => { throw new TypeError('Failed to fetch'); });
+    const c = client(async () => {
+      throw new TypeError('Failed to fetch');
+    });
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'NETWORK', retryable: true });
   });
 
@@ -351,7 +431,7 @@ describe('GeminiLookupClient', () => {
     const p = c.lookup(req, { signal: ac.signal });
     ac.abort(); // pre-empts before fetch is reached; abortableHang rejects on the already-aborted signal
     const err = await p.catch((e: unknown) => e);
-    expect(isLookupError(err)).toBe(false);             // NOT mapped — propagated for the caller
+    expect(isLookupError(err)).toBe(false); // NOT mapped — propagated for the caller
     expect((err as DOMException).name).toBe('AbortError');
   });
 
@@ -359,25 +439,31 @@ describe('GeminiLookupClient', () => {
     const ac = new AbortController();
     const c = client(abortableHang);
     const p = c.lookup(req, { signal: ac.signal });
-    await Promise.resolve();   // let lookup get past getApiKey + register its abort listener, then suspend at fetch
-    ac.abort();                // fires the listener path (not the pre-aborted path)
+    await Promise.resolve(); // let lookup get past getApiKey + register its abort listener, then suspend at fetch
+    ac.abort(); // fires the listener path (not the pre-aborted path)
     const err = await p.catch((e: unknown) => e);
     expect(isLookupError(err)).toBe(false);
     expect((err as DOMException).name).toBe('AbortError');
   });
 });
 ```
+
 Run → FAIL.
 
 - [ ] **C2: Implement** `packages/adapters-shared/src/gemini-lookup-client.ts`
 
 ```ts
 import {
-  mapError, renderTemplate,
-  type LookupClient, type LookupRequest, type LookupResult, type LookupError,
+  mapError,
+  renderTemplate,
+  type LookupClient,
+  type LookupRequest,
+  type LookupResult,
+  type LookupError,
 } from '@ai-dict/core';
 
-const ENDPOINT = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const ENDPOINT =
+  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 const DEFAULT_TIMEOUT_MS = 20000;
 
 export interface FetchInit {
@@ -400,8 +486,12 @@ export interface GeminiDeps {
   timeoutMs?: number;
 }
 
-interface GeminiOkBody { candidates?: { content?: { parts?: { text?: string }[] } }[]; }
-interface GeminiErrBody { error?: { status?: string }; }
+interface GeminiOkBody {
+  candidates?: { content?: { parts?: { text?: string }[] } }[];
+}
+interface GeminiErrBody {
+  error?: { status?: string };
+}
 
 // Throw an Error instance (satisfies `@typescript-eslint/only-throw-error`) that also
 // carries the LookupError fields, so core's `isLookupError` recognizes it downstream.
@@ -420,7 +510,11 @@ export class GeminiLookupClient implements LookupClient {
     if (navigator.onLine === false) rejectWith(mapError({ kind: 'offline' }));
 
     const prompt = renderTemplate(req.promptTemplate, {
-      word: req.word, context: req.context, target_lang: req.target, url: req.url, title: req.title,
+      word: req.word,
+      context: req.context,
+      target_lang: req.target,
+      url: req.url,
+      title: req.title,
     });
     const body = JSON.stringify({ contents: [{ role: 'user', parts: [{ text: prompt }] }] });
 
@@ -432,7 +526,10 @@ export class GeminiLookupClient implements LookupClient {
     }
     let timedOut = false;
     const timeout = this.deps.timeoutMs ?? DEFAULT_TIMEOUT_MS;
-    const timer = setTimeout(() => { timedOut = true; ac.abort(new DOMException('timeout', 'TimeoutError')); }, timeout);
+    const timer = setTimeout(() => {
+      timedOut = true;
+      ac.abort(new DOMException('timeout', 'TimeoutError'));
+    }, timeout);
 
     try {
       const res = await this.deps.fetch(ENDPOINT, {
@@ -444,27 +541,47 @@ export class GeminiLookupClient implements LookupClient {
 
       if (!res.ok) {
         let geminiStatus: string | undefined;
-        try { geminiStatus = (await res.json() as GeminiErrBody).error?.status; } catch { /* non-JSON body: map by status alone */ }
+        try {
+          geminiStatus = ((await res.json()) as GeminiErrBody).error?.status;
+        } catch {
+          /* non-JSON body: map by status alone */
+        }
         const ra = res.headers.get('retry-after');
         const retryAfterSec = ra !== null ? Number(ra) : NaN;
         // Build imperatively (exactOptionalPropertyTypes): only attach optional keys when present.
-        const httpInput: { kind: 'http'; status: number; geminiStatus?: string; retryAfterSec?: number } = { kind: 'http', status: res.status };
+        const httpInput: {
+          kind: 'http';
+          status: number;
+          geminiStatus?: string;
+          retryAfterSec?: number;
+        } = { kind: 'http', status: res.status };
         if (geminiStatus !== undefined) httpInput.geminiStatus = geminiStatus;
         if (!Number.isNaN(retryAfterSec)) httpInput.retryAfterSec = retryAfterSec;
         rejectWith(mapError(httpInput));
       }
 
       let parsed: GeminiOkBody;
-      try { parsed = await res.json() as GeminiOkBody; } catch { rejectWith(mapError({ kind: 'parse' })); }
+      try {
+        parsed = (await res.json()) as GeminiOkBody;
+      } catch {
+        rejectWith(mapError({ kind: 'parse' }));
+      }
       const text = parsed.candidates?.[0]?.content?.parts?.[0]?.text;
       if (typeof text !== 'string' || text.length === 0) rejectWith(mapError({ kind: 'parse' }));
 
-      return { markdown: text, word: req.word, target: req.target, model: 'gemini-2.5-flash', fromCache: false, fetchedAt: Date.now() };
+      return {
+        markdown: text,
+        word: req.word,
+        target: req.target,
+        model: 'gemini-2.5-flash',
+        fromCache: false,
+        fetchedAt: Date.now(),
+      };
     } catch (err) {
-      if (opts?.signal?.aborted) throw err;                 // our-cancel: propagate raw, caller decides (D3)
+      if (opts?.signal?.aborted) throw err; // our-cancel: propagate raw, caller decides (D3)
       if (timedOut) rejectWith(mapError({ kind: 'timeout' }));
-      if (isThrownLookupError(err)) throw err;              // already-mapped LookupError from rejectWith above
-      rejectWith(mapError({ kind: 'offline' }));            // generic fetch throw / TypeError → NETWORK
+      if (isThrownLookupError(err)) throw err; // already-mapped LookupError from rejectWith above
+      rejectWith(mapError({ kind: 'offline' })); // generic fetch throw / TypeError → NETWORK
     } finally {
       clearTimeout(timer);
       if (opts?.signal) opts.signal.removeEventListener('abort', onAbort);
@@ -476,9 +593,10 @@ function isThrownLookupError(e: unknown): boolean {
   return e instanceof Error && 'code' in e && 'retryable' in e;
 }
 ```
+
 Run → PASS.
 
-> **Why `isThrownLookupError` re-throw guard:** the `!res.ok` and PARSE branches call `rejectWith` (which throws) *inside* the `try`. Without the guard, the surrounding `catch` would catch that already-mapped `LookupError` and re-map it to `NETWORK`. The guard re-throws it untouched. The `opts.signal.aborted` check precedes it so an our-cancel still propagates raw.
+> **Why `isThrownLookupError` re-throw guard:** the `!res.ok` and PARSE branches call `rejectWith` (which throws) _inside_ the `try`. Without the guard, the surrounding `catch` would catch that already-mapped `LookupError` and re-map it to `NETWORK`. The guard re-throws it untouched. The `opts.signal.aborted` check precedes it so an our-cancel still propagates raw.
 
 Commit `feat(adapters-shared): GeminiLookupClient (fetch, timeout, error map)`.
 
@@ -493,10 +611,21 @@ import { describe, it, expect } from 'vitest';
 import { InlineBottomSheetRenderer } from '../src/inline-bottom-sheet-renderer';
 import type { LookupResult, LookupError } from '@ai-dict/core';
 
-const result: LookupResult = { markdown: '**def** <script>alert(1)</script>', word: 'bank', target: 'vi', model: 'gemini-2.5-flash', fromCache: false, fetchedAt: 1 };
+const result: LookupResult = {
+  markdown: '**def** <script>alert(1)</script>',
+  word: 'bank',
+  target: 'vi',
+  model: 'gemini-2.5-flash',
+  fromCache: false,
+  fetchedAt: 1,
+};
 const error: LookupError = { code: 'NETWORK', message: 'Network failed.', retryable: true };
 
-function host(): HTMLElement { const h = document.createElement('div'); document.body.append(h); return h; }
+function host(): HTMLElement {
+  const h = document.createElement('div');
+  document.body.append(h);
+  return h;
+}
 function card(host: HTMLElement): HTMLElement & { state: unknown } {
   return host.querySelector('bottom-sheet > lookup-card') as HTMLElement & { state: unknown };
 }
@@ -544,14 +673,17 @@ describe('InlineBottomSheetRenderer', () => {
   it('reuses a single sheet across state transitions', () => {
     const h = host();
     const r = new InlineBottomSheetRenderer(h);
-    r.renderLoading(); r.renderResult(result); r.renderError(error);
+    r.renderLoading();
+    r.renderResult(result);
+    r.renderError(error);
     expect(h.querySelectorAll('bottom-sheet').length).toBe(1);
   });
 
   it('close removes the sheet from the host', () => {
     const h = host();
     const r = new InlineBottomSheetRenderer(h);
-    r.renderLoading(); r.close();
+    r.renderLoading();
+    r.close();
     expect(h.querySelector('bottom-sheet')).toBeNull();
   });
 
@@ -572,6 +704,7 @@ describe('InlineBottomSheetRenderer', () => {
   });
 });
 ```
+
 Run → FAIL.
 
 - [ ] **D2: Implement** `packages/adapters-shared/src/inline-bottom-sheet-renderer.ts`
@@ -605,17 +738,28 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     return card;
   }
 
-  private setState(state: CardState): void { this.ensureCard().state = state; }
+  private setState(state: CardState): void {
+    this.ensureCard().state = state;
+  }
 
-  renderLoading(): void { this.setState({ kind: 'loading' }); }
+  renderLoading(): void {
+    this.setState({ kind: 'loading' });
+  }
 
   renderResult(r: LookupResult): void {
     // `CardState.safeHtml` is the branded `SafeHtml` type from shared-ui (Bundle 03): the cast here is
     // the single authorised trust boundary — DOMPurify output (S4) is, by definition, safe HTML.
-    this.setState({ kind: 'result', safeHtml: this.sanitize(r.markdown) as SafeHtml, word: r.word, target: r.target });
+    this.setState({
+      kind: 'result',
+      safeHtml: this.sanitize(r.markdown) as SafeHtml,
+      word: r.word,
+      target: r.target,
+    });
   }
 
-  renderError(e: LookupError): void { this.setState({ kind: 'error', error: e }); }
+  renderError(e: LookupError): void {
+    this.setState({ kind: 'error', error: e });
+  }
 
   close(): void {
     this.sheet?.remove();
@@ -624,6 +768,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   }
 }
 ```
+
 Run → PASS. Commit `feat(adapters-shared): InlineBottomSheetRenderer (compose shared-ui + sanitize)`.
 
 > **Note:** the renderer wires `dismiss`/`close` events to its own `close()` so user-driven teardown and the workflow's `renderer.close()` converge on one cleanup path; `expand` is a side-panel concern owned by the Chrome extension (Bundle 05), not here.
@@ -634,21 +779,25 @@ Run → PASS. Commit `feat(adapters-shared): InlineBottomSheetRenderer (compose 
 
 Run: `pnpm --filter @ai-dict/adapters-shared test --coverage` → all PASS, coverage ≥ 90%.
 Run: `pnpm --filter @ai-dict/adapters-shared typecheck` + `pnpm lint` → clean (no `chrome.*`/`browser.*`; hex rule: adapters ⇏ extension-\*).
+
 ```bash
 git add packages/adapters-shared
 git commit -m "test(adapters-shared): coverage gate (client + sanitize + renderer)"
 ```
 
 ## Verify (correctness)
+
 - Run: `pnpm --filter @ai-dict/adapters-shared test --coverage` → pass, ≥ 90%.
 
 ## Validate (sanity / no scope drift)
+
 - `pnpm --filter @ai-dict/adapters-shared typecheck` + `pnpm lint` clean.
 - `git diff --stat` only `packages/adapters-shared/**`.
 - No `chrome.*` / `browser.*` references (those are extension-only).
 - API key never logged; error messages sanitized (no key value).
 
 ## Self-audit (run BEFORE sign-off)
+
 - [ ] D1–D7 met with evidence?
 - [ ] [S4] All XSS vectors in the prompt-injection fixture neutralized?
 - [ ] Error map matches §6.9 exactly (reuses core `mapError`, no fork)?
@@ -657,4 +806,5 @@ git commit -m "test(adapters-shared): coverage gate (client + sanitize + rendere
 - [ ] Only `packages/adapters-shared/**` changed?
 
 ## Sign-off
+
 Edit YAML: `status: DONE`, `done_at: <UTC>`. Commit. Update README checkbox `04`.

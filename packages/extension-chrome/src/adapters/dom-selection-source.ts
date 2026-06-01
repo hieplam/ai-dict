@@ -21,17 +21,31 @@ function defaultReader(): SelectionEvent | null {
   const full = range.startContainer.textContent ?? text;
   const r = range.getBoundingClientRect();
   const anchor: AnchorRect = { x: r.x, y: r.y, w: r.width, h: r.height };
-  return { text, sentence: extractSentence(full, range.startOffset, range.endOffset), anchor, url: location.href, title: document.title };
+  return {
+    text,
+    sentence: extractSentence(full, range.startOffset, range.endOffset),
+    anchor,
+    url: location.href,
+    title: document.title,
+  };
 }
 
 type DocEvents = Pick<Document, 'addEventListener' | 'removeEventListener'>;
 
 export class DomSelectionSource implements SelectionSource {
-  constructor(private readonly doc: DocEvents, private readonly read: () => SelectionEvent | null = defaultReader) {}
+  constructor(
+    private readonly doc: DocEvents,
+    private readonly read: () => SelectionEvent | null = defaultReader,
+  ) {}
 
   onSelection(cb: (e: SelectionEvent) => void): () => void {
-    const handler = (): void => { const e = this.read(); if (e) cb(e); };
+    const handler = (): void => {
+      const e = this.read();
+      if (e) cb(e);
+    };
     for (const t of ['mouseup', 'touchend'] as const) this.doc.addEventListener(t, handler);
-    return () => { for (const t of ['mouseup', 'touchend'] as const) this.doc.removeEventListener(t, handler); };
+    return () => {
+      for (const t of ['mouseup', 'touchend'] as const) this.doc.removeEventListener(t, handler);
+    };
   }
 }

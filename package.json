@@ -3,21 +3,22 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "engines": {
-    "node": ">=20.11.0 <21"
-  },
-  "packageManager": "pnpm@9.15.4",
+  "workspaces": [
+    "packages/*"
+  ],
   "scripts": {
-    "typecheck": "pnpm -r --if-present typecheck",
+    "typecheck": "bun run --filter '*' typecheck",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "build": "pnpm -r --if-present build",
-    "wire:check": "node scripts/wire-check.mjs",
+    "build:chrome": "bun run --filter '@ai-dict/extension-chrome' build",
+    "build:safari": "bun run --filter '@ai-dict/extension-safari' build",
+    "e2e:chrome": "bun run --filter '@ai-dict/extension-chrome' e2e",
+    "wire:check": "bun scripts/wire-check.mjs",
     "size": "size-limit",
-    "release:bump": "node scripts/release-bump.mjs"
+    "release:bump": "bun scripts/release-bump.mjs"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

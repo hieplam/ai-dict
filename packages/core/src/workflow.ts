@@ -1,6 +1,12 @@
 import type {
-  SelectionSource, TriggerUI, ResultRenderer, LookupClient, SettingsStore,
-  SelectionEvent, LookupRequest, LookupError,
+  SelectionSource,
+  TriggerUI,
+  ResultRenderer,
+  LookupClient,
+  SettingsStore,
+  SelectionEvent,
+  LookupRequest,
+  LookupError,
 } from './index';
 import { isLookupError } from './types';
 import { mapError } from './error-mapper';
@@ -32,8 +38,12 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
     }
     deps.renderer.renderLoading();
     const req: LookupRequest = {
-      word: e.text, context: e.sentence, url: e.url, title: e.title,
-      target: settings.targetLang, promptTemplate: settings.promptTemplate,
+      word: e.text,
+      context: e.sentence,
+      url: e.url,
+      title: e.title,
+      target: settings.targetLang,
+      promptTemplate: settings.promptTemplate,
     };
     try {
       const result = await deps.client.lookup(req, { signal: controller.signal });
