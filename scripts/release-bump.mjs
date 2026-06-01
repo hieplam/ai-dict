@@ -12,7 +12,7 @@ const dryRun = args.includes('--dry-run');
 const version = args.find((a) => !a.startsWith('-'));
 
 if (!version || !/^\d+\.\d+\.\d+$/.test(version)) {
-  console.error('usage: pnpm release:bump <major.minor.patch> [--dry-run]');
+  console.error('usage: bun run release:bump <major.minor.patch> [--dry-run]');
   process.exit(1);
 }
 
