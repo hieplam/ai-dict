@@ -5,16 +5,16 @@ Run on the tagged commit (`vX.Y.Z` on `main`) before publishing.
 ## Pre-tag
 
 - [ ] All CI green on the commit to be tagged.
-- [ ] `wire-schema.snapshot.json` matches generated (`pnpm wire:check` clean).
-- [ ] Bundle sizes within budget (`pnpm size`).
-- [ ] `pnpm audit --audit-level=high` clean (no high/critical advisories).
+- [ ] `wire-schema.snapshot.json` matches generated (`bun run wire:check` clean).
+- [ ] Bundle sizes within budget (`bun run size`).
+- [ ] `bun audit --audit-level=high` clean (no high/critical advisories).
 - [ ] `gitleaks` clean (no secrets in history).
 - [ ] `release:bump X.Y.Z` ran: root `package.json` version + both manifests + Xcode `MARKETING_VERSION` all equal the tag.
 - [ ] Manifest permissions match §7.3 S8 exactly — **chrome**: `permissions:["storage","sidePanel"]`, `host_permissions:["<all_urls>","https://generativelanguage.googleapis.com/*"]`; **safari**: `permissions:["storage"]` (no `sidePanel`), same `host_permissions`; **both**: no `scripting`, no `externally_connectable`.
 - [ ] Default prompt template reviewed — no inadvertent `{url}` / `{title}` placeholders (data minimization, §7.2 / Appendix A).
 - [ ] CHANGELOG entry written for this version.
 - [ ] Privacy disclosures updated if data flows changed.
-- [ ] Xcode project current: `pnpm --filter @ai-dict/extension-safari xcode:sync` run and committed `xcode/` tree reflects latest `dist/` (release.yml `build-safari-ios` depends on this).
+- [ ] Xcode project current: `bun run --filter @ai-dict/extension-safari xcode:sync` run and committed `xcode/` tree reflects latest `dist/` (release.yml `build-safari-ios` depends on this).
 
 ## Manual passes
 
