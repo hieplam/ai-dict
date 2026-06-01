@@ -6,13 +6,13 @@ in an in-page card / side panel.
 
 It's a **bun workspace monorepo**:
 
-| Package | Role |
-| --- | --- |
-| `packages/core` | Pure domain logic (lookup workflow, prompt/cache/history policies, wire schema). No DOM, no browser APIs. |
-| `packages/shared-ui` | Framework-free Web Components (`<lookup-card>`, `<bottom-sheet>`, `<settings-form>`, …). |
-| `packages/adapters-shared` | Gemini client + markdown sanitization shared by both extensions. |
-| `packages/extension-chrome` | Chrome MV3 extension (service worker, content scripts, options, side panel). |
-| `packages/extension-safari` | Safari/iOS MV3 extension + Xcode wrapper. |
+| Package                     | Role                                                                                                      |
+| --------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `packages/core`             | Pure domain logic (lookup workflow, prompt/cache/history policies, wire schema). No DOM, no browser APIs. |
+| `packages/shared-ui`        | Framework-free Web Components (`<lookup-card>`, `<bottom-sheet>`, `<settings-form>`, …).                  |
+| `packages/adapters-shared`  | Gemini client + markdown sanitization shared by both extensions.                                          |
+| `packages/extension-chrome` | Chrome MV3 extension (service worker, content scripts, options, side panel).                              |
+| `packages/extension-safari` | Safari/iOS MV3 extension + Xcode wrapper.                                                                 |
 
 ## Prerequisites
 
@@ -33,15 +33,15 @@ bun install
 
 All commands run from the repo root.
 
-| Command | What it does |
-| --- | --- |
-| `bun run test` | Run the full test suite once (vitest). |
-| `bun run test:watch` | Re-run tests on change (TDD loop). |
-| `bun run typecheck` | Type-check every package (`tsc --noEmit`). |
-| `bun run lint` | Lint with ESLint. |
-| `bun run format` | Auto-format with Prettier. |
-| `bun run format:check` | Verify formatting (CI gate). |
-| `bun run size` | Check built bundles against the size budgets. |
+| Command                | What it does                                  |
+| ---------------------- | --------------------------------------------- |
+| `bun run test`         | Run the full test suite once (vitest).        |
+| `bun run test:watch`   | Re-run tests on change (TDD loop).            |
+| `bun run typecheck`    | Type-check every package (`tsc --noEmit`).    |
+| `bun run lint`         | Lint with ESLint.                             |
+| `bun run format`       | Auto-format with Prettier.                    |
+| `bun run format:check` | Verify formatting (CI gate).                  |
+| `bun run size`         | Check built bundles against the size budgets. |
 
 Run a script in a single package with `--filter`, e.g. only the core tests:
 
