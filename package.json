@@ -14,6 +14,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build": "bun run --filter '@ai-dict/extension-*' build",
+    "e2e:chrome": "bun run --filter '@ai-dict/extension-chrome' e2e",
     "wire:check": "bun scripts/wire-check.mjs",
     "size": "size-limit",
     "release:bump": "bun scripts/release-bump.mjs"

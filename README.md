@@ -33,15 +33,16 @@ bun install
 
 All commands run from the repo root.
 
-| Command                | What it does                                  |
-| ---------------------- | --------------------------------------------- |
-| `bun run test`         | Run the full test suite once (vitest).        |
-| `bun run test:watch`   | Re-run tests on change (TDD loop).            |
-| `bun run typecheck`    | Type-check every package (`tsc --noEmit`).    |
-| `bun run lint`         | Lint with ESLint.                             |
-| `bun run format`       | Auto-format with Prettier.                    |
-| `bun run format:check` | Verify formatting (CI gate).                  |
-| `bun run size`         | Check built bundles against the size budgets. |
+| Command                | What it does                                            |
+| ---------------------- | ------------------------------------------------------- |
+| `bun run test`         | Run the full test suite once (vitest).                  |
+| `bun run test:watch`   | Re-run tests on change (TDD loop).                      |
+| `bun run typecheck`    | Type-check every package (`tsc --noEmit`).              |
+| `bun run lint`         | Lint with ESLint.                                       |
+| `bun run format`       | Auto-format with Prettier.                              |
+| `bun run format:check` | Verify formatting (CI gate).                            |
+| `bun run size`         | Check built bundles against the size budgets.           |
+| `bun run e2e:chrome`   | Run the Chrome extension end-to-end tests (Playwright). |
 
 Run a script in a single package with `--filter`, e.g. only the core tests:
 
