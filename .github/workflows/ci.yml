@@ -183,6 +183,9 @@ jobs:
 
   secret-scan: # gitleaks on PR + nightly (§8.6)
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read # gitleaks-action lists PR commits via GET /pulls/{n}/commits — 403s "Resource not accessible by integration" without this
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:

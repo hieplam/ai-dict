@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { MessageRelayLookupClient } from './message-relay-lookup-client';
+import { MessageRelayLookupClient, randomId } from './message-relay-lookup-client';
 import { isLookupError, type LookupResult } from '@ai-dict/core';
 
 const okResult: LookupResult = { markdown: '#', word: 'bank', target: 'vi', model: 'gemini-2.5-flash', fromCache: false, fetchedAt: 1 };
@@ -36,6 +36,17 @@ describe('MessageRelayLookupClient', () => {
     expect(err).toBeInstanceOf(Error);
     expect(isLookupError(err)).toBe(true);
     expect((err as { code: string }).code).toBe('PARSE');
+  });
+
+  it('default genId (randomId) makes a v4 UUID via getRandomValues — works without a secure context', async () => {
+    // Regression: the previous default `crypto.randomUUID()` is undefined on plain http:// pages
+    // (non-secure context) and threw "is not a function", failing every lookup there. randomId
+    // uses crypto.getRandomValues, which is available everywhere.
+    const sendMessage = vi.fn(() => Promise.resolve({ ok: true, type: 'lookup', result: okResult, requestId: 'x' }));
+    await new MessageRelayLookupClient({ sendMessage }).lookup(req); // exercises the DEFAULT genId
+    const calls = sendMessage.mock.calls as Array<Array<{ requestId: string }>>;
+    expect(calls[0]?.[0]?.requestId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+    expect(randomId()).not.toBe(randomId()); // unique each call
   });
 
   it('on signal abort, sends a lookup.cancel for the same requestId', async () => {

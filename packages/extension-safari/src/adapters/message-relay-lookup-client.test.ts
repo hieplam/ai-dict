@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { MessageRelayLookupClient } from './message-relay-lookup-client';
+import { MessageRelayLookupClient, randomId } from './message-relay-lookup-client';
 import { isLookupError, type LookupResult } from '@ai-dict/core';
 
 const okResult: LookupResult = { markdown: '#', word: 'bank', target: 'vi', model: 'gemini-2.5-flash', fromCache: false, fetchedAt: 1 };
@@ -50,18 +50,22 @@ describe('MessageRelayLookupClient', () => {
     expect(sent).toContainEqual({ type: 'lookup.cancel', requestId: 'id-9' });
   });
 
-  // FIX 7: exercise the default genId (crypto.randomUUID) — the constructor's second
-  // parameter is optional; when omitted, the default arrow function is exercised.
-  it('uses the default genId (crypto.randomUUID) when no genId is supplied', async () => {
+  // Exercise the default genId (randomId) — the constructor's second parameter is optional.
+  // randomId builds a v4 UUID from crypto.getRandomValues, which (unlike crypto.randomUUID)
+  // is available in non-secure contexts, so content scripts on plain http:// pages still work.
+  it('uses the default genId (randomId) when no genId is supplied', async () => {
     const sendMessage = vi.fn(() => Promise.resolve({ ok: true, type: 'lookup', result: okResult }));
     const c = new MessageRelayLookupClient({ sendMessage });
     const result = await c.lookup(req);
     expect(result).toEqual(okResult);
-    // A UUID-shaped requestId was generated internally and passed to sendMessage
     expect(sendMessage).toHaveBeenCalledTimes(1);
     const calls = sendMessage.mock.calls as Array<Array<{ requestId: string }>>;
     const msg = calls[0]?.[0];
-    expect(typeof msg?.requestId).toBe('string');
-    expect((msg?.requestId ?? '').length).toBeGreaterThan(0);
+    expect(msg?.requestId).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  });
+
+  it('randomId produces unique v4 UUIDs', () => {
+    expect(randomId()).not.toBe(randomId());
+    expect(randomId()).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   });
 });
