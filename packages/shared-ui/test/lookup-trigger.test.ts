@@ -21,6 +21,18 @@ describe('<lookup-trigger>', () => {
     expect(btn.getAttribute('role')).toBeNull();
   });
 
+  it('the "Define" button declares an explicit text color (stays visible on dark-theme pages)', () => {
+    // Regression: the button previously set background:#fff but no `color`. With
+    // :host{all:initial} the text fell back to the system `canvastext` colour, which
+    // resolves to (near-)white on a dark-theme page → an invisible "Define" on a white
+    // box. Pinning an explicit colour makes it theme-independent.
+    const el = mount('lookup-trigger');
+    const rules = [...el.shadowRoot!.adoptedStyleSheets[0]!.cssRules] as CSSStyleRule[];
+    const buttonRule = rules.find((r) => r.selectorText === 'button');
+    expect(buttonRule).toBeTruthy();
+    expect(buttonRule!.style.color).not.toBe('');
+  });
+
   it('emits a composed "lookup-click" on activation', () => {
     const el = mount('lookup-trigger');
     const spy = vi.fn();

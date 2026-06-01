@@ -1,5 +1,5 @@
 import type { ResultRenderer, LookupResult, LookupError } from '@ai-dict/core';
-import type { CardState, LookupCard, SafeHtml } from '@ai-dict/shared-ui/lookup-card';
+import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '@ai-dict/shared-ui/lookup-card';
 import '@ai-dict/shared-ui/bottom-sheet';
 import '@ai-dict/shared-ui/lookup-card';
 import { sanitizeMarkdown } from './markdown-sanitize';
@@ -26,7 +26,14 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     return card;
   }
 
-  private setState(state: CardState): void { this.ensureCard().state = state; }
+  private setState(state: CardState): void {
+    // Write the card's content straight into its LIGHT DOM (projected via the card's <slot>),
+    // NOT via the `.state` property. This renderer runs in a Chrome MV3 content-script
+    // isolated world; the LookupCard class lives in the page's MAIN world, so a JS property
+    // write (`card.state = …`) never reaches it (Chromium 390807) and the card would stay
+    // stuck on "Looking up…". Shared-DOM mutations like replaceChildren do cross the boundary.
+    this.ensureCard().replaceChildren(...renderCardState(state));
+  }
 
   renderLoading(): void { this.setState({ kind: 'loading' }); }
 

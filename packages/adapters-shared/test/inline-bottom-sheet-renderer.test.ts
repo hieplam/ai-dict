@@ -7,39 +7,41 @@ const result: LookupResult = { markdown: '**def** <script>alert(1)</script>', wo
 const error: LookupError = { code: 'NETWORK', message: 'Network failed.', retryable: true };
 
 function host(): HTMLElement { const h = document.createElement('div'); document.body.append(h); return h; }
-function card(host: HTMLElement): HTMLElement & { state: unknown } {
-  return host.querySelector('bottom-sheet > lookup-card') as HTMLElement & { state: unknown };
+function card(host: HTMLElement): HTMLElement {
+  return host.querySelector('bottom-sheet > lookup-card') as HTMLElement;
 }
 
 describe('InlineBottomSheetRenderer', () => {
   // Clear accumulated host <div>s between tests so DOM state does not leak.
   afterEach(() => { document.body.replaceChildren(); });
 
-  it('renderLoading mounts a bottom-sheet + lookup-card in loading state', () => {
+  // These assertions deliberately read the card's LIGHT DOM, not a `.state` property.
+  // The renderer runs in a content-script isolated world where the card's `.state`
+  // setter is unreachable (the class lives in the page MAIN world); driving the card
+  // over the shared DOM is the whole point of the fix, so the tests verify that path.
+  it('renderLoading mounts a bottom-sheet + lookup-card showing the loading text', () => {
     const h = host();
     new InlineBottomSheetRenderer(h).renderLoading();
     const c = card(h);
     expect(c).not.toBeNull();
-    expect(c.state).toMatchObject({ kind: 'loading' });
+    expect(c.textContent).toContain('Looking up');
   });
 
-  it('renderResult feeds SANITIZED html (no <script>) to the card', () => {
+  it('renderResult feeds SANITIZED html (no <script>) into the card light DOM', () => {
     const h = host();
     const r = new InlineBottomSheetRenderer(h);
     r.renderResult(result);
     const c = card(h);
-    expect((c.state as { kind: string; safeHtml: string; word: string }).kind).toBe('result');
-    const html = (c.state as { safeHtml: string }).safeHtml;
-    expect(html).toContain('<strong>def</strong>');
-    expect(html).not.toContain('<script');
-    expect(c.shadowRoot!.querySelector('h2')!.textContent).toBe('bank');
+    expect(c.querySelector('h2')!.textContent).toBe('bank');
+    expect(c.innerHTML).toContain('<strong>def</strong>');
+    expect(c.innerHTML).not.toContain('<script');
   });
 
-  it('renderError sets the card error state', () => {
+  it('renderError shows the error message in the card light DOM', () => {
     const h = host();
     const r = new InlineBottomSheetRenderer(h);
     r.renderError(error);
-    expect((card(h).state as { kind: string; error: LookupError }).error.code).toBe('NETWORK');
+    expect(card(h).querySelector('.err')!.textContent).toBe('Network failed.');
   });
 
   it('uses an injected sanitizer when provided (DI seam)', () => {
@@ -48,7 +50,7 @@ describe('InlineBottomSheetRenderer', () => {
     // only the real sanitizeMarkdown (DOMPurify output) is the authorised trust boundary (S4).
     const r = new InlineBottomSheetRenderer(h, (md) => (`SAFE:${md}`) as SafeHtml);
     r.renderResult(result);
-    expect((card(h).state as { safeHtml: string }).safeHtml).toBe(`SAFE:${result.markdown}`);
+    expect(card(h).innerHTML).toContain(`SAFE:${result.markdown}`);
   });
 
   it('close() before any render is a no-op', () => {
