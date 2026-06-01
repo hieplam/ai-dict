@@ -1,1 +1,7 @@
-{"error":{"status":"PERMISSION_DENIED","message":"The caller does not have permission.","code":403}}
+{
+  "error": {
+    "status": "PERMISSION_DENIED",
+    "message": "The caller does not have permission.",
+    "code": 403
+  }
+}

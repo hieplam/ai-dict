@@ -10,8 +10,13 @@
     "./bottom-sheet": "./src/bottom-sheet.ts",
     "./settings-form": "./src/settings-form.ts"
   },
-  "scripts": { "typecheck": "tsc --noEmit", "test": "vitest run" },
-  "dependencies": { "@ai-dict/core": "workspace:*" },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@ai-dict/core": "workspace:*"
+  },
   "devDependencies": {
     "happy-dom": "^15.0.0",
     "axe-core": "^4.10.0"

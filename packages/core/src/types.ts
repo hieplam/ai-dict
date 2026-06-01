@@ -1,4 +1,9 @@
-export interface AnchorRect { x: number; y: number; w: number; h: number; }
+export interface AnchorRect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
 
 export interface SelectionEvent {
   text: string;
@@ -27,7 +32,12 @@ export interface LookupResult {
 }
 
 export type LookupErrorCode =
-  | 'NO_KEY' | 'INVALID_KEY' | 'RATE_LIMIT' | 'NETWORK' | 'PARSE' | 'UNKNOWN';
+  | 'NO_KEY'
+  | 'INVALID_KEY'
+  | 'RATE_LIMIT'
+  | 'NETWORK'
+  | 'PARSE'
+  | 'UNKNOWN';
 
 export interface LookupError {
   code: LookupErrorCode;
@@ -51,10 +61,7 @@ export interface PublicSettings {
 }
 
 export function isLookupError(e: unknown): e is LookupError {
-  return (
-    typeof e === 'object' && e !== null &&
-    'code' in e && 'message' in e && 'retryable' in e
-  );
+  return typeof e === 'object' && e !== null && 'code' in e && 'message' in e && 'retryable' in e;
 }
 
 /**

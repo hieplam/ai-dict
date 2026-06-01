@@ -1,11 +1,11 @@
 ---
-bundle: "06"
+bundle: '06'
 title: extension-safari
 status: DONE
-locked_by: ""
-locked_at: ""
-done_at: "2026-05-30T15:18:11Z"
-prereqs: ["02", "03", "04"]
+locked_by: ''
+locked_at: ''
+done_at: '2026-05-30T15:18:11Z'
+prereqs: ['02', '03', '04']
 owns_files:
   - packages/extension-safari/package.json
   - packages/extension-safari/tsconfig.json
@@ -30,13 +30,16 @@ owns_files:
 **Purpose:** Mirror of the Chrome extension for Safari iOS, using `browser.storage.local`, no `sidePanel` (inline `<bottom-sheet>` is the only surface), Safari `browser_specific_settings`. Includes the **iOS-app-only** Xcode wrapper that loads `dist/`, and the mandatory manual iOS Simulator checklist (no automated E2E — Apple exposes no WebDriver for iOS Safari Web Extensions, so adapter coverage is elevated to compensate).
 
 ## Lock protocol
+
 Verify prereqs `02`, `03`, `04` all `DONE`. Flip YAML → LOCKED, commit `[06] lock`, rebase, abort on race. Execute. (May run in parallel with Bundle 05 — disjoint files.)
 
 ## Inputs
+
 - Bundles 02/03/04 DONE (same shared contracts as Chrome).
-- Spec §5.5 (Safari differences), §6.* flows (shared), §7.3 S1/S3/S6/S8, §8.1 (manual iOS tier), §8.2 (90% coverage — no e2e net), §8.10 (ios checklist outline).
+- Spec §5.5 (Safari differences), §6.\* flows (shared), §7.3 S1/S3/S6/S8, §8.1 (manual iOS tier), §8.2 (90% coverage — no e2e net), §8.10 (ios checklist outline).
 
 ## Outputs
+
 - `manifest.json`: no `sidePanel`; `permissions:["storage"]`; `host_permissions:["<all_urls>","https://generativelanguage.googleapis.com/*"]`; `browser_specific_settings`; strict CSP.
 - `sw.ts` + `buildRouter(deps)`, `content.ts` composition root — Safari analogues of the Chrome flows (no side-panel mirror).
 - Adapters: `dom-selection-source`, `safari-floating-trigger`, `safari-storage-store`, `safari-kv-store`, `message-relay-lookup-client`, `message-relay-settings-store` (over `browser.storage.local`).
@@ -46,6 +49,7 @@ Verify prereqs `02`, `03`, `04` all `DONE`. Flip YAML → LOCKED, commit `[06] l
 - `esbuild.config.mjs` → `dist/` (web-ext code; loadable unpacked / syncable into Xcode).
 
 ## Definition of Done
+
 - D1: `buildRouter(deps)` unit-tested with fakes: lookup happy path, cache hit, NO_KEY, cancellation suppression, toggles.
 - D2: Each adapter unit-tested with hand-rolled fakes over a `browser.storage.local`-like slice (constructor injection); `ext/test ⇏ sibling adapters` honored.
 - D3: **[S1]** content side receives `PublicSettings` only; key never crosses the wire; SW strips key on `settings.get`.
@@ -61,11 +65,12 @@ Verify prereqs `02`, `03`, `04` all `DONE`. Flip YAML → LOCKED, commit `[06] l
 > Internal dependency order: package setup + manifest → storage adapters → relay adapters → DOM adapters → router (`buildRouter`) → SW listener (sender guard) → composition roots (content/options) → esbuild build → Xcode wrapper + sync script → iOS Simulator checklist → coverage gate. Run filtered: `pnpm --filter @ai-dict/extension-safari test`. All unit/adapter tests run under **happy-dom**; router/listener tests are pure (no `browser` global — every browser slice is constructor-injected per §8.4).
 >
 > **Platform facts (verified — do not "fix" back):**
-> 1. **`browser.*` is native on Safari.** Safari Web Extensions implement the promise-based `browser` namespace natively; the `webextension-polyfill` *runtime* is a Chrome shim and is **not** bundled here (keeps us inside the §8.7 size budgets, S7). We depend only on `@types/webextension-polyfill` (dev) for the `Browser` type and declare the native global in `src/global.d.ts`.
-> 2. **`browser_specific_settings.safari`** accepts `strict_min_version` / `strict_max_version` (strings). We pin `strict_min_version: "16.4"` (spec §8.6 compat: Safari iOS 16.4+).
-> 3. **No `sidePanel`.** iOS Safari has no side-panel API — the inline `<bottom-sheet>` is the *only* surface (spec decision #2 / §5.5). There is no `ChromeSidePanelMirror` analogue and no `side_panel.html`; the content renderer is the bare `InlineBottomSheetRenderer`.
 >
-> **Shared-code note (duplication is deliberate).** `src/router.ts` (`buildRouter`/`WriteQueue`/`SUPPRESS`), `src/adapters/dom-selection-source.ts`, and the two relay adapters are **platform-agnostic** — byte-for-byte identical to Bundle 05's, except the storage/relay *defaults* reference `browser.*` instead of `chrome.*` (the injected slices are typed against `Browser.*`). They are reproduced here (not imported from `extension-chrome`) because the two extensions are independent leaf packages — **06 must not depend on 05**, and 06's prereqs are only 02/03/04. Bundle 07 adds a CI guard diffing the two `router.ts` copies. *If a third consumer ever appears, hoist the router + DOM selection source into a shared package; today two copies beat a premature abstraction or a cross-leaf dependency.*
+> 1. **`browser.*` is native on Safari.** Safari Web Extensions implement the promise-based `browser` namespace natively; the `webextension-polyfill` _runtime_ is a Chrome shim and is **not** bundled here (keeps us inside the §8.7 size budgets, S7). We depend only on `@types/webextension-polyfill` (dev) for the `Browser` type and declare the native global in `src/global.d.ts`.
+> 2. **`browser_specific_settings.safari`** accepts `strict_min_version` / `strict_max_version` (strings). We pin `strict_min_version: "16.4"` (spec §8.6 compat: Safari iOS 16.4+).
+> 3. **No `sidePanel`.** iOS Safari has no side-panel API — the inline `<bottom-sheet>` is the _only_ surface (spec decision #2 / §5.5). There is no `ChromeSidePanelMirror` analogue and no `side_panel.html`; the content renderer is the bare `InlineBottomSheetRenderer`.
+>
+> **Shared-code note (duplication is deliberate).** `src/router.ts` (`buildRouter`/`WriteQueue`/`SUPPRESS`), `src/adapters/dom-selection-source.ts`, and the two relay adapters are **platform-agnostic** — byte-for-byte identical to Bundle 05's, except the storage/relay _defaults_ reference `browser.*` instead of `chrome.*` (the injected slices are typed against `Browser.*`). They are reproduced here (not imported from `extension-chrome`) because the two extensions are independent leaf packages — **06 must not depend on 05**, and 06's prereqs are only 02/03/04. Bundle 07 adds a CI guard diffing the two `router.ts` copies. _If a third consumer ever appears, hoist the router + DOM selection source into a shared package; today two copies beat a premature abstraction or a cross-leaf dependency._
 
 ### Task A — Package setup + manifest (CSP/permissions/`browser_specific_settings` early)
 
@@ -97,6 +102,7 @@ Verify prereqs `02`, `03`, `04` all `DONE`. Flip YAML → LOCKED, commit `[06] l
   }
 }
 ```
+
 Then `pnpm install`.
 
 - [ ] **A2: `packages/extension-safari/src/global.d.ts`** (type the native `browser` global without bundling the polyfill)
@@ -125,6 +131,7 @@ export {};
   "include": ["src", "test"]
 }
 ```
+
 > No `types` array → all installed `@types/*` (incl. `webextension-polyfill`, `happy-dom`'s ambient globals via vitest) resolve normally; `global.d.ts` is picked up through `include`.
 
 - [ ] **A4: `packages/extension-safari/vitest.config.ts`** (happy-dom + **90%** gate — §8.2, elevated because there is no e2e net)
@@ -146,6 +153,7 @@ export default defineConfig({
   },
 });
 ```
+
 > The testable layer is `adapters + router + inbound` (the pure boundary classifier). `sw.ts` is **import-time browser wiring** (constructs adapters over `browser.storage.local`, registers `onMessage`) — it cannot be imported under happy-dom without a `browser` global, so the pure `classifyInbound` lives in its own `src/inbound.ts` (Task F) and `sw.ts` joins the composition roots in the exclude list. On Safari those wiring files' only verification is the **manual iOS Simulator checklist** (§8.10), so the unit threshold on the testable layer is raised to 90% to compensate (spec §8.2).
 
 - [ ] **A5: `packages/extension-safari/src/manifest.json`** (MV3 — §7.3 S8 Safari list + S5 CSP + `browser_specific_settings`, **verbatim**)
@@ -172,6 +180,7 @@ export default defineConfig({
   }
 }
 ```
+
 > Differences from Chrome's manifest: **`permissions: ["storage"]`** only (no `sidePanel` — S8), **no `side_panel` key**, **`browser_specific_settings.safari` added**. Still no `"scripting"` (content scripts statically registered — S8) and no `"externally_connectable"` (S3). `version` is rewritten by Bundle 07's `release:bump` (which also updates the Xcode `MARKETING_VERSION`).
 
 - [ ] **A6: `esbuild.config.mjs`** (3 entry points → `dist/`; copy manifest + options.html — no side-panel)
@@ -181,15 +190,37 @@ import * as esbuild from 'esbuild';
 import { mkdir, copyFile } from 'node:fs/promises';
 
 await mkdir('dist', { recursive: true });
-const common = { bundle: true, minify: true, sourcemap: false, target: ['safari16'], logLevel: 'info' };
+const common = {
+  bundle: true,
+  minify: true,
+  sourcemap: false,
+  target: ['safari16'],
+  logLevel: 'info',
+};
 
-await esbuild.build({ ...common, entryPoints: ['src/sw.ts'],      outfile: 'dist/sw.js',      format: 'esm' });
-await esbuild.build({ ...common, entryPoints: ['src/content.ts'], outfile: 'dist/content.js', format: 'iife' });
-await esbuild.build({ ...common, entryPoints: ['src/options.ts'], outfile: 'dist/options.js', format: 'esm' });
+await esbuild.build({
+  ...common,
+  entryPoints: ['src/sw.ts'],
+  outfile: 'dist/sw.js',
+  format: 'esm',
+});
+await esbuild.build({
+  ...common,
+  entryPoints: ['src/content.ts'],
+  outfile: 'dist/content.js',
+  format: 'iife',
+});
+await esbuild.build({
+  ...common,
+  entryPoints: ['src/options.ts'],
+  outfile: 'dist/options.js',
+  format: 'esm',
+});
 
 await copyFile('src/manifest.json', 'dist/manifest.json');
-await copyFile('src/options.html',  'dist/options.html');
+await copyFile('src/options.html', 'dist/options.html');
 ```
+
 > `content.js` is `iife` (content scripts are not ES modules); `target: 'safari16'` matches the 16.4 floor. The native `browser` global is referenced, never imported — esbuild leaves it as a free global (correct for Safari).
 
 - [ ] **A7: typecheck (fails until sources land) + incremental commit of config**
@@ -218,8 +249,12 @@ function fakeArea(seed: Record<string, string> = {}) {
       if (key === null || key === undefined) return Object.fromEntries(store);
       return store.has(key) ? { [key]: store.get(key) } : {};
     }),
-    set: vi.fn(async (obj: Record<string, string>) => { for (const [k, v] of Object.entries(obj)) store.set(k, v); }),
-    remove: vi.fn(async (key: string) => { store.delete(key); }),
+    set: vi.fn(async (obj: Record<string, string>) => {
+      for (const [k, v] of Object.entries(obj)) store.set(k, v);
+    }),
+    remove: vi.fn(async (key: string) => {
+      store.delete(key);
+    }),
   };
 }
 
@@ -235,7 +270,9 @@ describe('SafariKvStore (Storage over browser.storage.local; no adapter prefix)'
   });
 
   it('keys(prefix) returns FULL keys (so core cacheClear/historyClear can removeItem them)', async () => {
-    const kv = new SafariKvStore(fakeArea({ 'cache:index': '[]', 'cache:ab': '{}', 'history:index': '[]', settings: '{}' }));
+    const kv = new SafariKvStore(
+      fakeArea({ 'cache:index': '[]', 'cache:ab': '{}', 'history:index': '[]', settings: '{}' }),
+    );
     expect((await kv.keys('cache:')).sort()).toEqual(['cache:ab', 'cache:index']);
     expect(await kv.keys('history:')).toEqual(['history:index']);
     expect((await kv.keys()).length).toBe(4);
@@ -273,6 +310,7 @@ export class SafariKvStore implements Storage {
   }
 }
 ```
+
 Run → PASS.
 
 - [ ] **B3: Failing test** `test/safari-storage-store.test.ts` (**[S1]** `get()` strips `apiKey`; `set()` merges non-secret fields) — same assertions as 05 B3, `SafariStorageStore` substituted.
@@ -286,7 +324,9 @@ function fakeArea(seed?: unknown) {
   let stored = seed;
   return {
     get: vi.fn(async () => (stored === undefined ? {} : { settings: stored })),
-    set: vi.fn(async (obj: { settings: unknown }) => { stored = obj.settings; }),
+    set: vi.fn(async (obj: { settings: unknown }) => {
+      stored = obj.settings;
+    }),
     remove: vi.fn(),
     _peek: () => stored,
   };
@@ -294,7 +334,14 @@ function fakeArea(seed?: unknown) {
 
 describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
   it('get() returns PublicSettings only — apiKey is never exposed', async () => {
-    const area = fakeArea({ targetLang: 'vi', promptTemplate: 'tpl', apiKey: 'AIza-secret', cacheEnabled: true, saveHistory: true, hasKey: true });
+    const area = fakeArea({
+      targetLang: 'vi',
+      promptTemplate: 'tpl',
+      apiKey: 'AIza-secret',
+      cacheEnabled: true,
+      saveHistory: true,
+      hasKey: true,
+    });
     const pub = await new SafariStorageStore(area).get();
     expect(pub).toEqual({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true });
     expect('apiKey' in pub).toBe(false);
@@ -306,9 +353,20 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
   });
 
   it('set() merges only targetLang/promptTemplate, preserving apiKey + toggles', async () => {
-    const area = fakeArea({ targetLang: 'vi', promptTemplate: 'old', apiKey: 'AIza', cacheEnabled: false, saveHistory: true, hasKey: true });
+    const area = fakeArea({
+      targetLang: 'vi',
+      promptTemplate: 'old',
+      apiKey: 'AIza',
+      cacheEnabled: false,
+      saveHistory: true,
+      hasKey: true,
+    });
     await new SafariStorageStore(area).set({ promptTemplate: 'new' });
-    expect(area._peek()).toMatchObject({ promptTemplate: 'new', apiKey: 'AIza', cacheEnabled: false });
+    expect(area._peek()).toMatchObject({
+      promptTemplate: 'new',
+      apiKey: 'AIza',
+      cacheEnabled: false,
+    });
   });
 });
 ```
@@ -316,14 +374,26 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
 - [ ] **B4: Implement** `src/adapters/safari-storage-store.ts` (identical body to 05 B4 with the `Browser` slice type)
 
 ```ts
-import { DEFAULT_TEMPLATE, type SettingsStore, type PublicSettings, type Settings } from '@ai-dict/core';
+import {
+  DEFAULT_TEMPLATE,
+  type SettingsStore,
+  type PublicSettings,
+  type Settings,
+} from '@ai-dict/core';
 import type { Browser } from 'webextension-polyfill';
 
 type StorageAreaLike = Pick<Browser.Storage.StorageArea, 'get' | 'set' | 'remove'>;
 
 const DEFAULT_TARGET = 'vi';
 function defaults(): Settings {
-  return { targetLang: DEFAULT_TARGET, promptTemplate: DEFAULT_TEMPLATE, hasKey: false, apiKey: '', cacheEnabled: true, saveHistory: true };
+  return {
+    targetLang: DEFAULT_TARGET,
+    promptTemplate: DEFAULT_TEMPLATE,
+    hasKey: false,
+    apiKey: '',
+    cacheEnabled: true,
+    saveHistory: true,
+  };
 }
 
 export class SafariStorageStore implements SettingsStore {
@@ -349,6 +419,7 @@ export class SafariStorageStore implements SettingsStore {
   }
 }
 ```
+
 Run → PASS. Commit `feat(extension-safari): storage adapters (kv + settings, S1 strip)`.
 
 ### Task C — Relay adapters (content side; **[S1]** key never crosses the wire)
@@ -362,12 +433,22 @@ Run → PASS. Commit `feat(extension-safari): storage adapters (kv + settings, S
 - [ ] **C2: Implement** `src/adapters/message-relay-lookup-client.ts` (verbatim from 05 C2)
 
 ```ts
-import type { LookupClient, LookupRequest, LookupResult, WireReply, LookupError } from '@ai-dict/core';
+import type {
+  LookupClient,
+  LookupRequest,
+  LookupResult,
+  WireReply,
+  LookupError,
+} from '@ai-dict/core';
 import { mapError } from '@ai-dict/core';
 
-export interface RuntimeLike { sendMessage(message: unknown): Promise<unknown>; }
+export interface RuntimeLike {
+  sendMessage(message: unknown): Promise<unknown>;
+}
 
-function rejectWith(e: LookupError): never { throw Object.assign(new Error(e.message), e); }
+function rejectWith(e: LookupError): never {
+  throw Object.assign(new Error(e.message), e);
+}
 
 export class MessageRelayLookupClient implements LookupClient {
   constructor(
@@ -380,7 +461,9 @@ export class MessageRelayLookupClient implements LookupClient {
     if (opts?.signal) {
       opts.signal.addEventListener(
         'abort',
-        () => { void this.runtime.sendMessage({ type: 'lookup.cancel', requestId }); },
+        () => {
+          void this.runtime.sendMessage({ type: 'lookup.cancel', requestId });
+        },
         { once: true },
       );
     }
@@ -391,6 +474,7 @@ export class MessageRelayLookupClient implements LookupClient {
   }
 }
 ```
+
 Run → PASS.
 
 - [ ] **C3: Failing test** `test/message-relay-settings-store.test.ts` — same three cases as 05 C3 (caches `PublicSettings`; invalidates on storage change; `set()` rejects). Copy verbatim from 05 C3.
@@ -408,7 +492,9 @@ export class MessageRelaySettingsStore implements SettingsStore {
     private readonly runtime: RuntimeLike,
     subscribe: (invalidate: () => void) => void = (cb) => browser.storage.onChanged.addListener(cb),
   ) {
-    subscribe(() => { this.cache = null; });
+    subscribe(() => {
+      this.cache = null;
+    });
   }
 
   async get(): Promise<PublicSettings> {
@@ -422,10 +508,13 @@ export class MessageRelaySettingsStore implements SettingsStore {
   }
 
   set(): Promise<void> {
-    return Promise.reject(new Error('Settings are edited on the options page, not over the content wire.'));
+    return Promise.reject(
+      new Error('Settings are edited on the options page, not over the content wire.'),
+    );
   }
 }
 ```
+
 Run → PASS. Commit `feat(extension-safari): content relay adapters (lookup + settings)`.
 
 ### Task D — DOM adapters (`DomSelectionSource`, `SafariFloatingTrigger`)
@@ -500,6 +589,7 @@ export class SafariFloatingTrigger implements TriggerUI {
   }
 }
 ```
+
 Run → PASS. Commit `feat(extension-safari): DOM adapters (selection, trigger)`.
 
 ### Task E — Router (`WriteQueue` + `buildRouter`)
@@ -552,16 +642,24 @@ export type Inbound =
   | { action: 'route'; msg: WireMessage };
 
 // Pure: testable without the browser global. S3 sender guard + schema gate at the boundary.
-export function classifyInbound(msg: unknown, senderId: string | undefined, runtimeId: string): Inbound {
+export function classifyInbound(
+  msg: unknown,
+  senderId: string | undefined,
+  runtimeId: string,
+): Inbound {
   if (senderId !== runtimeId) return { action: 'ignore' };
   const parsed = WireMessageSchema.safeParse(msg);
   if (!parsed.success) {
     console.warn({ kind: 'wire-schema-mismatch' });
-    return { action: 'reject', reply: { ok: false, type: 'lookup', error: mapError({ kind: 'parse' }) } };
+    return {
+      action: 'reject',
+      reply: { ok: false, type: 'lookup', error: mapError({ kind: 'parse' }) },
+    };
   }
   return { action: 'route', msg: parsed.data };
 }
 ```
+
 Run → PASS.
 
 - [ ] **F3: Implement** `src/sw.ts` (import-time wiring; uses `classifyInbound`; excluded from the coverage gate, verified by the iOS checklist)
@@ -577,27 +675,54 @@ import { SafariStorageStore } from './adapters/safari-storage-store';
 const DEFAULT_TARGET = 'vi';
 async function readFullSettings(): Promise<Settings> {
   const { settings } = (await browser.storage.local.get('settings')) as { settings?: Settings };
-  return settings ?? { targetLang: DEFAULT_TARGET, promptTemplate: DEFAULT_TEMPLATE, hasKey: false, apiKey: '', cacheEnabled: true, saveHistory: true };
+  return (
+    settings ?? {
+      targetLang: DEFAULT_TARGET,
+      promptTemplate: DEFAULT_TEMPLATE,
+      hasKey: false,
+      apiKey: '',
+      cacheEnabled: true,
+      saveHistory: true,
+    }
+  );
 }
 
 const router = buildRouter({
-  client: new GeminiLookupClient({ fetch: (u, i) => fetch(u, i), getApiKey: async () => (await readFullSettings()).apiKey }),
+  client: new GeminiLookupClient({
+    fetch: (u, i) => fetch(u, i),
+    getApiKey: async () => (await readFullSettings()).apiKey,
+  }),
   settings: new SafariStorageStore(browser.storage.local),
   kv: new SafariKvStore(browser.storage.local),
-  readToggles: async () => { const s = await readFullSettings(); return { cacheEnabled: s.cacheEnabled, saveHistory: s.saveHistory }; },
+  readToggles: async () => {
+    const s = await readFullSettings();
+    return { cacheEnabled: s.cacheEnabled, saveHistory: s.saveHistory };
+  },
   queue: new WriteQueue(),
 });
 
 browser.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   const decision = classifyInbound(msg, sender.id, browser.runtime.id);
   if (decision.action === 'ignore') return false;
-  if (decision.action === 'reject') { sendResponse(decision.reply); return true; }
+  if (decision.action === 'reject') {
+    sendResponse(decision.reply);
+    return true;
+  }
   router(decision.msg)
-    .then((reply) => { if (reply !== SUPPRESS) sendResponse(reply); })
-    .catch((e: unknown) => sendResponse({ ok: false, type: decision.msg.type, error: mapError({ kind: 'thrown', error: e }) }));
+    .then((reply) => {
+      if (reply !== SUPPRESS) sendResponse(reply);
+    })
+    .catch((e: unknown) =>
+      sendResponse({
+        ok: false,
+        type: decision.msg.type,
+        error: mapError({ kind: 'thrown', error: e }),
+      }),
+    );
   return true; // async sendResponse → keep channel open (SUPPRESS leaves it open, never replies)
 });
 ```
+
 > `getApiKey` reads the key directly from `browser.storage.local` (S1: key never crosses the wire). `console.warn` (in `inbound.ts`) logs only `{kind}` — never key/selection/url (§7.2). No `sidePanel` wiring (iOS has none).
 
 Run → PASS. Commit `feat(extension-safari): inbound classifier (S3 guard) + SW listener wiring`.
@@ -609,7 +734,7 @@ Run → PASS. Commit `feat(extension-safari): inbound classifier (S3 guard) + SW
 - [ ] **G1: `src/content.ts`** (composition root — §5.6; **renderer is the bare inline sheet**, no side-panel mirror)
 
 ```ts
-import { runLookupWorkflow } from '@ai-dict/core';            // NOT @ai-dict/core/workflow (no such subpath)
+import { runLookupWorkflow } from '@ai-dict/core'; // NOT @ai-dict/core/workflow (no such subpath)
 import '@ai-dict/shared-ui/lookup-trigger';
 import '@ai-dict/shared-ui/lookup-card';
 import '@ai-dict/shared-ui/bottom-sheet';
@@ -622,47 +747,72 @@ import { MessageRelaySettingsStore } from './adapters/message-relay-settings-sto
 runLookupWorkflow({
   selection: new DomSelectionSource(document),
   trigger: new SafariFloatingTrigger(),
-  renderer: new InlineBottomSheetRenderer(document.body),  // the only surface on iOS
+  renderer: new InlineBottomSheetRenderer(document.body), // the only surface on iOS
   client: new MessageRelayLookupClient(browser.runtime),
   settings: new MessageRelaySettingsStore(browser.runtime),
 });
 ```
+
 > `InlineBottomSheetRenderer` (Bundle 04) implements `ResultRenderer` directly, so it is passed as `renderer` with no fan-out wrapper (Chrome wrapped it only to also feed the side-panel mirror, which does not exist here).
 
 - [ ] **G2: `src/options.html` + `src/options.ts`** (full Settings incl. key, direct `browser.storage.local` — §6.6; no SW hop)
 
 `options.html`:
+
 ```html
 <!doctype html>
 <html lang="en">
-  <head><meta charset="utf-8" /><title>AI Dictionary — Settings</title></head>
-  <body><settings-form></settings-form><script type="module" src="options.js"></script></body>
+  <head>
+    <meta charset="utf-8" />
+    <title>AI Dictionary — Settings</title>
+  </head>
+  <body>
+    <settings-form></settings-form>
+    <script type="module" src="options.js"></script>
+  </body>
 </html>
 ```
 
 `options.ts`:
+
 ```ts
 import '@ai-dict/shared-ui/settings-form';
 import { DEFAULT_TEMPLATE, type Settings } from '@ai-dict/core';
 
 const form = document.querySelector('settings-form')!;
-const DEFAULTS: Settings = { targetLang: 'vi', promptTemplate: DEFAULT_TEMPLATE, hasKey: false, apiKey: '', cacheEnabled: true, saveHistory: true };
+const DEFAULTS: Settings = {
+  targetLang: 'vi',
+  promptTemplate: DEFAULT_TEMPLATE,
+  hasKey: false,
+  apiKey: '',
+  cacheEnabled: true,
+  saveHistory: true,
+};
 
 async function load(): Promise<Settings> {
   const { settings } = (await browser.storage.local.get('settings')) as { settings?: Settings };
   return settings ?? DEFAULTS;
 }
 
-void load().then((s) => { (form as unknown as { value: Settings }).value = s; });
+void load().then((s) => {
+  (form as unknown as { value: Settings }).value = s;
+});
 
 form.addEventListener('save', (e) => {
   const next = (e as CustomEvent<Partial<Settings>>).detail;
   void load().then((cur) => browser.storage.local.set({ settings: { ...cur, ...next } }));
 });
-form.addEventListener('clear-cache', () => { void browser.runtime.sendMessage({ type: 'cache.clear' }); });
-form.addEventListener('clear-history', () => { void browser.runtime.sendMessage({ type: 'history.clear' }); });
-form.addEventListener('test-connection', () => { void browser.runtime.sendMessage({ type: 'connection.test' }); });
+form.addEventListener('clear-cache', () => {
+  void browser.runtime.sendMessage({ type: 'cache.clear' });
+});
+form.addEventListener('clear-history', () => {
+  void browser.runtime.sendMessage({ type: 'history.clear' });
+});
+form.addEventListener('test-connection', () => {
+  void browser.runtime.sendMessage({ type: 'connection.test' });
+});
 ```
+
 > Same `settings-form` event contract owned by Bundle 03; reconcile `SettingsFormValue` field names with 03 at execution (adapt the mapping here, not in 03).
 
 Run typecheck. Commit `feat(extension-safari): composition roots (content, options)`.
@@ -680,7 +830,10 @@ import manifest from '../src/manifest.json';
 describe('manifest.json (S5 CSP + S8 Safari permissions — exact)', () => {
   it('declares only storage; NO sidePanel / scripting / externally_connectable (S8)', () => {
     expect(manifest.permissions).toEqual(['storage']);
-    expect(manifest.host_permissions).toEqual(['<all_urls>', 'https://generativelanguage.googleapis.com/*']);
+    expect(manifest.host_permissions).toEqual([
+      '<all_urls>',
+      'https://generativelanguage.googleapis.com/*',
+    ]);
     expect((manifest.permissions as string[]).includes('sidePanel')).toBe(false);
     expect((manifest.permissions as string[]).includes('scripting')).toBe(false);
     expect('side_panel' in manifest).toBe(false);
@@ -700,6 +853,7 @@ describe('manifest.json (S5 CSP + S8 Safari permissions — exact)', () => {
   });
 });
 ```
+
 > Requires `resolveJsonModule` (on via the base config); if tsc complains, add `"resolveJsonModule": true` to this package's tsconfig.
 
 - [ ] **H2: Build → loadable unpacked `dist/`**
@@ -707,6 +861,7 @@ describe('manifest.json (S5 CSP + S8 Safari permissions — exact)', () => {
 ```bash
 pnpm --filter @ai-dict/extension-safari build
 ```
+
 Expected: `dist/{sw,content,options}.js`, `dist/manifest.json`, `dist/options.html`. (Load-unpacked verification happens inside Safari via the Xcode host app — Task I; there is no `chrome://extensions` equivalent on iOS.) Commit `test(extension-safari): manifest CSP/permission assertions + build`.
 
 ### Task I — Xcode wrapper (iOS target only) + sync script + iOS checklist
@@ -723,6 +878,7 @@ xcrun safari-web-extension-converter packages/extension-safari/dist \
   --bundle-identifier com.ai-dict.safari \
   --ios-only --no-open --no-prompt --copy-resources
 ```
+
 > `--ios-only` ⇒ **no macOS target** (non-goal §2 / spec §5.5). `--copy-resources` copies `dist/` into the extension target's `Resources/` so the committed project is self-contained. The generated `MARKETING_VERSION` (iOS target) is the field Bundle 07's `release:bump` rewrites alongside the manifest `version`.
 
 - [ ] **I2: `xcode/sync-dist.sh`** — re-copy a fresh `dist/` into the Xcode extension resources after each rebuild (so devs don't re-run the converter). Resolve the exact `Resources` path from the generated project at execution:
@@ -740,6 +896,7 @@ mkdir -p "$RES"
 cp -R "$DIST"/. "$RES"/
 echo "synced dist/ → $RES"
 ```
+
 > Wired as `pnpm --filter @ai-dict/extension-safari xcode:sync` (A1). Bundle 07's iOS release job runs `build` → `xcode:sync` → `xcodebuild archive` (iOS target). **No `xcodebuild` here** — D7 only requires the project structure + sync script to exist (the actual archive is exercised on the macOS runner in Bundle 07).
 
 - [ ] **I3: `e2e/ios-simulator-checklist.md`** — the mandatory manual pass (§8.10, all **12** steps verbatim; run every release):
@@ -762,6 +919,7 @@ Prereq: macOS with Xcode; a real Gemini API key.
 11. [ ] Trigger error states: clear the key, turn the network off → verify error UX matches §7.1.
 12. [ ] Tap “Clear all data” → verify `storage.local` is wiped (key gone, history empty).
 ```
+
 Commit `feat(extension-safari): Xcode iOS wrapper + sync script + manual iOS checklist`.
 
 ### Task J — Full-suite gate
@@ -774,24 +932,28 @@ pnpm --filter @ai-dict/extension-safari typecheck
 pnpm lint                                                  # hex: ext/test ⇏ src/adapters; adapters injected
 pnpm --filter @ai-dict/extension-safari build && pnpm size # within §8.7 budgets (content ≤45KB, sw ≤30KB, options ≤40KB gz)
 ```
+
 ```bash
 git add packages/extension-safari
 git commit -m "test(extension-safari): coverage + size gate"
 ```
 
 ## Verify (correctness)
+
 - Run: `pnpm --filter @ai-dict/extension-safari test --coverage` → pass, ≥ 90%.
 - Run: `pnpm --filter @ai-dict/extension-safari build` → loadable `dist/`.
 - Run: `pnpm size` (safari bundles) → within budget.
 - Xcode build itself is exercised by Bundle 07 (macOS runner); here verify project files + sync script presence.
 
 ## Validate (sanity / no scope drift)
+
 - `typecheck` + `lint` clean.
 - `git diff --stat` only `packages/extension-safari/**`.
 - No `sidePanel`, no Chrome-only APIs; no macOS Xcode target (non-goal §2).
 - No key value logged (§7.2).
 
 ## Self-audit (run BEFORE sign-off)
+
 - [ ] D1–D9 met with evidence?
 - [ ] [S1] key isolation verified?
 - [ ] [S3] sender guard tested?
@@ -801,4 +963,5 @@ git commit -m "test(extension-safari): coverage + size gate"
 - [ ] Only `packages/extension-safari/**` changed?
 
 ## Sign-off
+
 Edit YAML: `status: DONE`, `done_at: <UTC>`. Commit. Update README checkbox `06`.

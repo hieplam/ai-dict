@@ -4,7 +4,7 @@
 
 **Goal:** Replace pnpm with bun as the package manager and script runner across the repo, while keeping esbuild (bundler), vitest (tests), eslint, prettier, playwright, knip, and size-limit — each now invoked through bun.
 
-**Architecture:** This is a package-manager + runtime migration only. Tool *behavior* is unchanged; only the launcher changes (pnpm → bun). Workspaces move from `pnpm-workspace.yaml` into `package.json`'s `workspaces` field; the lockfile becomes `bun.lock`; CI swaps `pnpm/action-setup`+`setup-node` for `oven-sh/setup-bun`. Because bundle output and test assertions are untouched, the work is verification-driven: each task ends by running the real command and confirming it stays green.
+**Architecture:** This is a package-manager + runtime migration only. Tool _behavior_ is unchanged; only the launcher changes (pnpm → bun). Workspaces move from `pnpm-workspace.yaml` into `package.json`'s `workspaces` field; the lockfile becomes `bun.lock`; CI swaps `pnpm/action-setup`+`setup-node` for `oven-sh/setup-bun`. Because bundle output and test assertions are untouched, the work is verification-driven: each task ends by running the real command and confirming it stays green.
 
 **Tech Stack:** bun 1.3.14, esbuild, vitest, eslint, prettier, playwright, knip, size-limit, GitHub Actions.
 
@@ -16,22 +16,22 @@
 
 ## File map
 
-| File | Action | Responsibility |
-|---|---|---|
-| `package.json` | Modify | Add `workspaces`; drop `packageManager` + `engines`; rewrite scripts to bun. |
-| `pnpm-workspace.yaml` | Delete | Workspaces moved into `package.json`. |
-| `pnpm-lock.yaml` | Delete | Replaced by `bun.lock`. |
-| `.npmrc` | Delete | pnpm-specific settings. |
-| `.nvmrc` | Delete | Node no longer the declared runtime. |
-| `bun.lock` | Create (generated) | Reproducible install lockfile (committed). |
-| `.bun-version` | Create | Pin bun to `1.3.14` for local + CI parity. |
-| `packages/extension-chrome/package.json` | Modify | `build` script: `node` → `bun`. |
-| `packages/extension-safari/package.json` | Modify | `build` script: `node` → `bun`. |
-| `scripts/wire-check.mjs` | Modify | Spawn `bun` instead of `pnpm`; update hint text. |
-| `scripts/release-bump.mjs` | Modify | Usage string `pnpm` → `bun run`. |
-| `.github/workflows/ci.yml` | Modify | setup-bun + bun command translations + bun cache. |
-| `.github/workflows/release.yml` | Modify | setup-bun + bun command translations. |
-| `RELEASE_CHECKLIST.md` | Modify | `pnpm` commands → bun. |
+| File                                     | Action             | Responsibility                                                               |
+| ---------------------------------------- | ------------------ | ---------------------------------------------------------------------------- |
+| `package.json`                           | Modify             | Add `workspaces`; drop `packageManager` + `engines`; rewrite scripts to bun. |
+| `pnpm-workspace.yaml`                    | Delete             | Workspaces moved into `package.json`.                                        |
+| `pnpm-lock.yaml`                         | Delete             | Replaced by `bun.lock`.                                                      |
+| `.npmrc`                                 | Delete             | pnpm-specific settings.                                                      |
+| `.nvmrc`                                 | Delete             | Node no longer the declared runtime.                                         |
+| `bun.lock`                               | Create (generated) | Reproducible install lockfile (committed).                                   |
+| `.bun-version`                           | Create             | Pin bun to `1.3.14` for local + CI parity.                                   |
+| `packages/extension-chrome/package.json` | Modify             | `build` script: `node` → `bun`.                                              |
+| `packages/extension-safari/package.json` | Modify             | `build` script: `node` → `bun`.                                              |
+| `scripts/wire-check.mjs`                 | Modify             | Spawn `bun` instead of `pnpm`; update hint text.                             |
+| `scripts/release-bump.mjs`               | Modify             | Usage string `pnpm` → `bun run`.                                             |
+| `.github/workflows/ci.yml`               | Modify             | setup-bun + bun command translations + bun cache.                            |
+| `.github/workflows/release.yml`          | Modify             | setup-bun + bun command translations.                                        |
+| `RELEASE_CHECKLIST.md`                   | Modify             | `pnpm` commands → bun.                                                       |
 
 Untouched by design: `vitest.config.ts`, `packages/*/vitest.config.ts`, `.size-limit.json`, `knip.json`, `eslint.config.mjs`, `esbuild.config.mjs` (both), `renovate.json`, historical plan docs.
 
@@ -49,11 +49,13 @@ Expected: `1.3.14`. If different, update `.bun-version` content in Task 2 to mat
 - [ ] **Step 2: Record the current pnpm-based green state + bundle sizes**
 
 Run:
+
 ```bash
 pnpm install --frozen-lockfile
 pnpm typecheck && pnpm test && pnpm build && pnpm size > /tmp/baseline-size.txt 2>&1
 cat /tmp/baseline-size.txt
 ```
+
 Expected: all exit 0; `/tmp/baseline-size.txt` lists each bundle within budget. Keep this file — Task 6 compares against it.
 
 - [ ] **Step 3: No commit** (read-only task).
@@ -63,6 +65,7 @@ Expected: all exit 0; `/tmp/baseline-size.txt` lists each bundle within budget. 
 ## Task 2: Convert `package.json` and remove pnpm config files
 
 **Files:**
+
 - Modify: `package.json`
 - Delete: `pnpm-workspace.yaml`, `.npmrc`, `.nvmrc`
 - Create: `.bun-version`
@@ -70,6 +73,7 @@ Expected: all exit 0; `/tmp/baseline-size.txt` lists each bundle within budget. 
 - [ ] **Step 1: Replace root `package.json` with the bun version**
 
 Write `package.json`:
+
 ```json
 {
   "name": "ai-dict",
@@ -106,11 +110,13 @@ Write `package.json`:
   }
 }
 ```
+
 (`packageManager` and `engines` removed; `workspaces` added; `typecheck`/`build`/`wire:check`/`release:bump` rewritten. `@types/node` is retained — `@ai-dict/core` and the `.mjs` scripts use Node type/API surface.)
 
 - [ ] **Step 2: Create `.bun-version`**
 
 Write `.bun-version`:
+
 ```
 1.3.14
 ```
@@ -118,9 +124,11 @@ Write `.bun-version`:
 - [ ] **Step 3: Delete the pnpm config files**
 
 Run:
+
 ```bash
 git rm pnpm-workspace.yaml .npmrc .nvmrc
 ```
+
 Expected: three files staged for deletion.
 
 - [ ] **Step 4: Do NOT commit yet** — `package.json` references won't resolve until `bun install` runs (Task 3). Commit at the end of Task 3.
@@ -130,12 +138,14 @@ Expected: three files staged for deletion.
 ## Task 3: Generate `bun.lock` and install
 
 **Files:**
+
 - Delete: `pnpm-lock.yaml`
 - Create: `bun.lock` (generated)
 
 - [ ] **Step 1: Remove pnpm's lockfile and the pnpm-linked node_modules**
 
 Run:
+
 ```bash
 git rm pnpm-lock.yaml
 rm -rf node_modules packages/*/node_modules
@@ -211,16 +221,20 @@ Expected: core's tests run with coverage. Record the working form for Task 10's 
 ## Task 6: Switch extension build scripts to bun and verify bundles
 
 **Files:**
+
 - Modify: `packages/extension-chrome/package.json`
 - Modify: `packages/extension-safari/package.json`
 
 - [ ] **Step 1: Update the chrome build script**
 
 In `packages/extension-chrome/package.json`, change:
+
 ```json
     "build": "node esbuild.config.mjs",
 ```
+
 to:
+
 ```json
     "build": "bun esbuild.config.mjs",
 ```
@@ -228,10 +242,13 @@ to:
 - [ ] **Step 2: Update the safari build script**
 
 In `packages/extension-safari/package.json`, change:
+
 ```json
     "build": "node esbuild.config.mjs",
 ```
+
 to:
+
 ```json
     "build": "bun esbuild.config.mjs",
 ```
@@ -258,12 +275,14 @@ git commit -m "build(bun): run esbuild via bun in extension build scripts"
 ## Task 7: Convert the `scripts/` helpers
 
 **Files:**
+
 - Modify: `scripts/wire-check.mjs`
 - Modify: `scripts/release-bump.mjs`
 
 - [ ] **Step 1: Point `wire-check.mjs` at bun**
 
 In `scripts/wire-check.mjs`, change the spawn target and args:
+
 ```js
 const res = spawnSync(
   'pnpm',
@@ -271,7 +290,9 @@ const res = spawnSync(
   { stdio: 'inherit', env: { ...process.env, CI: 'true' } }, // CI=true => vitest never writes snapshots
 );
 ```
+
 to (use the arg form confirmed working in Task 5, Step 2 — shown here without `--`; add `'--'` before `'wire-schema'` if Task 5 required it):
+
 ```js
 const res = spawnSync(
   'bun',
@@ -283,23 +304,33 @@ const res = spawnSync(
 - [ ] **Step 2: Update the failure-hint text in `wire-check.mjs`**
 
 Change:
+
 ```js
-  console.error('If the schema changed intentionally: pnpm --filter @ai-dict/core test wire-schema -u, then commit.');
+console.error(
+  'If the schema changed intentionally: pnpm --filter @ai-dict/core test wire-schema -u, then commit.',
+);
 ```
+
 to:
+
 ```js
-  console.error('If the schema changed intentionally: bun run --filter @ai-dict/core test wire-schema -u, then commit.');
+console.error(
+  'If the schema changed intentionally: bun run --filter @ai-dict/core test wire-schema -u, then commit.',
+);
 ```
 
 - [ ] **Step 3: Update the usage string in `release-bump.mjs`**
 
 In `scripts/release-bump.mjs`, change:
+
 ```js
-  console.error('usage: pnpm release:bump <major.minor.patch> [--dry-run]');
+console.error('usage: pnpm release:bump <major.minor.patch> [--dry-run]');
 ```
+
 to:
+
 ```js
-  console.error('usage: bun run release:bump <major.minor.patch> [--dry-run]');
+console.error('usage: bun run release:bump <major.minor.patch> [--dry-run]');
 ```
 
 - [ ] **Step 4: Verify wire:check**
@@ -343,12 +374,14 @@ Expected: exit 0, no unused exports/deps reported (matches current CI behavior).
 - [ ] **Step 4: Playwright e2e via bunx (local smoke)**
 
 Run:
+
 ```bash
 cd packages/extension-chrome
 bunx playwright install --with-deps chromium
 PLAYWRIGHT_RUN_LOOKUP_E2E=1 bunx playwright test
 cd ../..
 ```
+
 Expected: e2e suite passes. If the local environment cannot run headed/xvfb Chromium, note it and rely on the CI job (Task 10) — but do not mark this step done without either a local pass or an explicit CI-deferral note.
 
 - [ ] **Step 5: No commit** (verification only).
@@ -367,6 +400,7 @@ Expected: runs an advisory scan and exits 0 (no high/critical advisories), match
 - [ ] **Step 2: Handle absent flag (contingency)**
 
 If `bun audit` rejects `--audit-level` or the subcommand is unavailable in 1.3.14:
+
 - Try `bun audit` (no flag) and confirm it reports severities.
 - Record the working invocation; Task 10's `dep-audit` job uses it. If no severity gating exists, keep `bun audit` as informational (the existing job is already non-blocking on PRs via `continue-on-error`).
 
@@ -377,6 +411,7 @@ If `bun audit` rejects `--audit-level` or the subcommand is unavailable in 1.3.1
 ## Task 10: Rewrite `.github/workflows/ci.yml`
 
 **Files:**
+
 - Modify: `.github/workflows/ci.yml`
 
 The current file has many jobs that share an identical setup block. Apply the **setup-block replacement** to every job that currently uses pnpm, then translate each `run:` line per the **command table**. Leave the `secret-scan` and `shared-drift` jobs' `run:`/steps unchanged (they use gitleaks / `diff` only and need no toolchain setup).
@@ -384,60 +419,66 @@ The current file has many jobs that share an identical setup block. Apply the **
 - [ ] **Step 1: Replace the setup block in every pnpm-using job**
 
 Remove this recurring pair of steps:
+
 ```yaml
-      - uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
-        with:
-          node-version-file: .nvmrc
-          cache: pnpm
+- uses: pnpm/action-setup@fc06bc1257f339d1d5d8b3a19a8cae5388b55320 # v4.4.0
+- uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+  with:
+    node-version-file: .nvmrc
+    cache: pnpm
 ```
+
 (and the single-line `with: { node-version-file: .nvmrc, cache: pnpm }` variant)
 
 with:
+
 ```yaml
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version-file: .bun-version
-      - uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-${{ runner.os }}-
+- uses: oven-sh/setup-bun@v2
+  with:
+    bun-version-file: .bun-version
+- uses: actions/cache@v4
+  with:
+    path: ~/.bun/install/cache
+    key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
+    restore-keys: bun-${{ runner.os }}-
 ```
 
 - [ ] **Step 2: Translate every `run:` command**
 
 Apply these exact replacements (left = current, right = new). Use the arg form confirmed in Task 5 for the two forwarding cases:
 
-| Current `run:` | New `run:` |
-|---|---|
-| `pnpm install --frozen-lockfile` | `bun install --frozen-lockfile` |
-| `pnpm typecheck` | `bun run typecheck` |
-| `pnpm lint` | `bun run lint` |
-| `pnpm --filter @ai-dict/core --filter @ai-dict/adapters-shared test` | `bun run --filter @ai-dict/core --filter @ai-dict/adapters-shared test` |
-| `pnpm --filter @ai-dict/shared-ui test` | `bun run --filter @ai-dict/shared-ui test` |
-| `pnpm --filter @ai-dict/core test wire-schema` | `bun run --filter @ai-dict/core test wire-schema` *(add `--` before `wire-schema` iff Task 5 required it)* |
-| `pnpm wire:check` | `bun run wire:check` |
-| `pnpm --filter @ai-dict/extension-chrome build` | `bun run --filter @ai-dict/extension-chrome build` |
-| `pnpm --filter @ai-dict/extension-safari build` | `bun run --filter @ai-dict/extension-safari build` |
-| `pnpm size` | `bun run size` |
-| `pnpm -r --if-present test -- --coverage` | `bun run --filter '*' test -- --coverage` |
-| `pnpm dlx knip` | `bunx knip` |
-| `pnpm audit --audit-level=high` | `bun audit --audit-level=high` *(or the form confirmed in Task 9)* |
+| Current `run:`                                                       | New `run:`                                                                                                 |
+| -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `pnpm install --frozen-lockfile`                                     | `bun install --frozen-lockfile`                                                                            |
+| `pnpm typecheck`                                                     | `bun run typecheck`                                                                                        |
+| `pnpm lint`                                                          | `bun run lint`                                                                                             |
+| `pnpm --filter @ai-dict/core --filter @ai-dict/adapters-shared test` | `bun run --filter @ai-dict/core --filter @ai-dict/adapters-shared test`                                    |
+| `pnpm --filter @ai-dict/shared-ui test`                              | `bun run --filter @ai-dict/shared-ui test`                                                                 |
+| `pnpm --filter @ai-dict/core test wire-schema`                       | `bun run --filter @ai-dict/core test wire-schema` _(add `--` before `wire-schema` iff Task 5 required it)_ |
+| `pnpm wire:check`                                                    | `bun run wire:check`                                                                                       |
+| `pnpm --filter @ai-dict/extension-chrome build`                      | `bun run --filter @ai-dict/extension-chrome build`                                                         |
+| `pnpm --filter @ai-dict/extension-safari build`                      | `bun run --filter @ai-dict/extension-safari build`                                                         |
+| `pnpm size`                                                          | `bun run size`                                                                                             |
+| `pnpm -r --if-present test -- --coverage`                            | `bun run --filter '*' test -- --coverage`                                                                  |
+| `pnpm dlx knip`                                                      | `bunx knip`                                                                                                |
+| `pnpm audit --audit-level=high`                                      | `bun audit --audit-level=high` _(or the form confirmed in Task 9)_                                         |
 
 - [ ] **Step 3: Translate the two `pnpm … exec playwright …` lines in `e2e-chrome`**
 
 Replace:
+
 ```yaml
-      - run: pnpm --filter @ai-dict/extension-chrome build
-      - run: pnpm --filter @ai-dict/extension-chrome exec playwright install --with-deps chromium
-      - run: xvfb-run -a pnpm --filter @ai-dict/extension-chrome exec playwright test
+- run: pnpm --filter @ai-dict/extension-chrome build
+- run: pnpm --filter @ai-dict/extension-chrome exec playwright install --with-deps chromium
+- run: xvfb-run -a pnpm --filter @ai-dict/extension-chrome exec playwright test
 ```
+
 with:
+
 ```yaml
-      - run: bun run --filter @ai-dict/extension-chrome build
-      - run: cd packages/extension-chrome && bunx playwright install --with-deps chromium
-      - run: cd packages/extension-chrome && xvfb-run -a bunx playwright test
+- run: bun run --filter @ai-dict/extension-chrome build
+- run: cd packages/extension-chrome && bunx playwright install --with-deps chromium
+- run: cd packages/extension-chrome && xvfb-run -a bunx playwright test
 ```
 
 - [ ] **Step 4: Validate the workflow file syntax**
@@ -462,17 +503,18 @@ git commit -m "ci(bun): run CI on bun (setup-bun, bun install/run, bun cache)"
 ## Task 11: Rewrite `.github/workflows/release.yml`
 
 **Files:**
+
 - Modify: `.github/workflows/release.yml`
 
 - [ ] **Step 1: Apply the same setup-block replacement** (from Task 10, Step 1) to `build-chrome` and `build-safari-ios`. The `github-release` job has no toolchain setup — leave its steps unchanged.
 
 - [ ] **Step 2: Translate the `run:` commands**
 
-| Current `run:` | New `run:` |
-|---|---|
-| `pnpm install --frozen-lockfile` | `bun install --frozen-lockfile` |
-| `pnpm --filter @ai-dict/extension-chrome build` | `bun run --filter @ai-dict/extension-chrome build` |
-| `pnpm --filter @ai-dict/extension-safari build` | `bun run --filter @ai-dict/extension-safari build` |
+| Current `run:`                                       | New `run:`                                              |
+| ---------------------------------------------------- | ------------------------------------------------------- |
+| `pnpm install --frozen-lockfile`                     | `bun install --frozen-lockfile`                         |
+| `pnpm --filter @ai-dict/extension-chrome build`      | `bun run --filter @ai-dict/extension-chrome build`      |
+| `pnpm --filter @ai-dict/extension-safari build`      | `bun run --filter @ai-dict/extension-safari build`      |
 | `pnpm --filter @ai-dict/extension-safari xcode:sync` | `bun run --filter @ai-dict/extension-safari xcode:sync` |
 
 The `xcodebuild`, `zip`, `gh issue create`, and upload-artifact steps are unchanged.
@@ -494,11 +536,13 @@ git commit -m "ci(bun): run release workflow on bun"
 ## Task 12: Update operational docs
 
 **Files:**
+
 - Modify: `RELEASE_CHECKLIST.md`
 
 - [ ] **Step 1: Translate the pnpm commands in `RELEASE_CHECKLIST.md`**
 
 Apply these replacements:
+
 ```
 `pnpm wire:check`  → `bun run wire:check`
 `pnpm size`        → `bun run size`
@@ -527,23 +571,28 @@ git commit -m "docs(bun): update RELEASE_CHECKLIST commands to bun"
 - [ ] **Step 1: Clean install from the committed lockfile**
 
 Run:
+
 ```bash
 rm -rf node_modules packages/*/node_modules
 bun install --frozen-lockfile
 ```
+
 Expected: exits 0; no lockfile drift (proves `bun.lock` is authoritative and committed).
 
 - [ ] **Step 2: Run the whole local gate sequence via bun**
 
 Run:
+
 ```bash
 bun run typecheck && bun run lint && bun run format:check && bun run test && bun run build && bun run size && bun run wire:check && bunx knip
 ```
+
 Expected: every command exits 0; bundle sizes within budget; matches the Task 1 baseline.
 
 - [ ] **Step 3: Final repo-wide pnpm sweep (excluding historical plan docs + lockfile artifacts)**
 
 Run:
+
 ```bash
 grep -rniE "pnpm|action-setup|setup-node" \
   --include="*.json" --include="*.yml" --include="*.yaml" --include="*.mjs" --include="*.md" \
@@ -552,6 +601,7 @@ grep -rniE "pnpm|action-setup|setup-node" \
   | grep -v "pnpm-lock" \
   || echo "clean"
 ```
+
 Expected: `clean` (only the intentionally-preserved historical plan docs may still mention pnpm, and they are filtered out).
 
 - [ ] **Step 4: Confirm deleted files are gone and new files present**
@@ -562,6 +612,7 @@ Expected: the four pnpm files report "No such file"; `bun.lock` and `.bun-versio
 - [ ] **Step 5: Push the branch and open a PR (only if the user asks)**
 
 Per project policy, push/PR only on explicit user request. When asked:
+
 ```bash
 git push -u origin migrate-to-bun
 gh pr create --title "Migrate toolchain from pnpm to bun" --body "<summary + link to spec>"

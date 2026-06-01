@@ -16,8 +16,15 @@ export function deriveCacheKey(req: { word: string; context: string; target: str
   return fnv1a64Hex(norm);
 }
 
-interface IndexEntry { key: string; atime: number; }
-export interface CacheDeps { storage: Storage; cap?: number; now?: () => number; }
+interface IndexEntry {
+  key: string;
+  atime: number;
+}
+export interface CacheDeps {
+  storage: Storage;
+  cap?: number;
+  now?: () => number;
+}
 
 const INDEX_KEY = 'cache:index';
 const DEFAULT_CAP = 1000;
@@ -30,18 +37,28 @@ async function writeIndex(s: Storage, idx: IndexEntry[]): Promise<void> {
   await s.setItem(INDEX_KEY, JSON.stringify(idx));
 }
 
-export async function cacheGet(deps: CacheDeps, req: { word: string; context: string; target: string }): Promise<LookupResult | null> {
+export async function cacheGet(
+  deps: CacheDeps,
+  req: { word: string; context: string; target: string },
+): Promise<LookupResult | null> {
   const now = deps.now ?? Date.now;
   const hash = deriveCacheKey(req);
   const raw = await deps.storage.getItem(`cache:${hash}`);
   if (!raw) return null;
   const idx = await readIndex(deps.storage);
   const entry = idx.find((e) => e.key === hash);
-  if (entry) { entry.atime = now(); await writeIndex(deps.storage, idx); }
+  if (entry) {
+    entry.atime = now();
+    await writeIndex(deps.storage, idx);
+  }
   return { ...(JSON.parse(raw) as LookupResult), fromCache: true };
 }
 
-export async function cachePut(deps: CacheDeps, req: { word: string; context: string; target: string }, result: LookupResult): Promise<void> {
+export async function cachePut(
+  deps: CacheDeps,
+  req: { word: string; context: string; target: string },
+  result: LookupResult,
+): Promise<void> {
   const now = deps.now ?? Date.now;
   const cap = deps.cap ?? DEFAULT_CAP;
   const hash = deriveCacheKey(req);

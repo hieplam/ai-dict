@@ -16,7 +16,9 @@ const res = spawnSync(
 
 if (res.status !== 0) {
   console.error('\nwire:check FAILED — wire-schema.snapshot.json is out of date or invalid.');
-  console.error('If the schema changed intentionally: bun run --filter @ai-dict/core test wire-schema -u, then commit.');
+  console.error(
+    'If the schema changed intentionally: bun run --filter @ai-dict/core test wire-schema -u, then commit.',
+  );
   process.exit(res.status ?? 1);
 }
 console.log('wire:check OK — wire schema matches the committed snapshot.');

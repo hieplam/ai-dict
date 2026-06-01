@@ -59,7 +59,9 @@ describe('ChromeFloatingTrigger (TriggerUI via <lookup-trigger>)', () => {
     trigger.show({ x: 0, y: 0, w: 1, h: 1 }, vi.fn());
     trigger.hide();
     // A stray press after hide must not throw or re-trigger any handler.
-    expect(() => outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }))).not.toThrow();
+    expect(() =>
+      outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true })),
+    ).not.toThrow();
     // Re-show: the bubble must survive an inside press (listener was cleanly reset).
     trigger.show({ x: 0, y: 0, w: 1, h: 1 }, vi.fn());
     const btn = host.querySelector('lookup-trigger')!.shadowRoot!.querySelector('button')!;

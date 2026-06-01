@@ -1,1 +1,7 @@
-{"error":{"status":"RESOURCE_EXHAUSTED","message":"Quota exceeded for quota metric 'generate_content_free_tier_requests_per_minute' and limit 'GenerateContentRequests' of service 'generativelanguage.googleapis.com'.","code":429}}
+{
+  "error": {
+    "status": "RESOURCE_EXHAUSTED",
+    "message": "Quota exceeded for quota metric 'generate_content_free_tier_requests_per_minute' and limit 'GenerateContentRequests' of service 'generativelanguage.googleapis.com'.",
+    "code": 429
+  }
+}

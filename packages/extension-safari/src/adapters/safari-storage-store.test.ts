@@ -7,8 +7,14 @@ import { fakeStorage } from '@ai-dict/core/test/fakes';
 function fakeArea(seed?: unknown) {
   let stored = seed;
   return {
-    get: vi.fn((): Promise<Record<string, unknown>> => Promise.resolve(stored === undefined ? {} : { settings: stored })),
-    set: vi.fn((obj: { settings: unknown }): Promise<void> => { stored = obj.settings; return Promise.resolve(); }),
+    get: vi.fn(
+      (): Promise<Record<string, unknown>> =>
+        Promise.resolve(stored === undefined ? {} : { settings: stored }),
+    ),
+    set: vi.fn((obj: { settings: unknown }): Promise<void> => {
+      stored = obj.settings;
+      return Promise.resolve();
+    }),
     remove: vi.fn((): Promise<void> => Promise.resolve()),
     _peek: () => stored,
   };
@@ -16,7 +22,14 @@ function fakeArea(seed?: unknown) {
 
 describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
   it('get() returns PublicSettings only — apiKey is never exposed', async () => {
-    const area = fakeArea({ targetLang: 'vi', promptTemplate: 'tpl', apiKey: 'AIza-secret', cacheEnabled: true, saveHistory: true, hasKey: true });
+    const area = fakeArea({
+      targetLang: 'vi',
+      promptTemplate: 'tpl',
+      apiKey: 'AIza-secret',
+      cacheEnabled: true,
+      saveHistory: true,
+      hasKey: true,
+    });
     const pub = await new SafariStorageStore(area).get();
     expect(pub).toEqual({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true });
     expect('apiKey' in pub).toBe(false);
@@ -28,9 +41,20 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
   });
 
   it('set() merges only targetLang/promptTemplate, preserving apiKey + toggles', async () => {
-    const area = fakeArea({ targetLang: 'vi', promptTemplate: 'old', apiKey: 'AIza', cacheEnabled: false, saveHistory: true, hasKey: true });
+    const area = fakeArea({
+      targetLang: 'vi',
+      promptTemplate: 'old',
+      apiKey: 'AIza',
+      cacheEnabled: false,
+      saveHistory: true,
+      hasKey: true,
+    });
     await new SafariStorageStore(area).set({ promptTemplate: 'new' });
-    expect(area._peek()).toMatchObject({ promptTemplate: 'new', apiKey: 'AIza', cacheEnabled: false });
+    expect(area._peek()).toMatchObject({
+      promptTemplate: 'new',
+      apiKey: 'AIza',
+      cacheEnabled: false,
+    });
   });
 
   it('set() on empty storage uses defaults() as base — first-run user path', async () => {
@@ -55,10 +79,20 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
 describe('SafariStorageStore + buildRouter — S1 wire-layer proof (D3)', () => {
   it('settings.get reply contains NO apiKey even when storage holds one (real store, no fake)', async () => {
     // Seed the fake StorageArea with a full Settings object including apiKey
-    let stored: unknown = { targetLang: 'en', promptTemplate: 'tmpl', apiKey: 'AIza-secret', cacheEnabled: true, saveHistory: true, hasKey: true };
+    let stored: unknown = {
+      targetLang: 'en',
+      promptTemplate: 'tmpl',
+      apiKey: 'AIza-secret',
+      cacheEnabled: true,
+      saveHistory: true,
+      hasKey: true,
+    };
     const area = {
       get: vi.fn((): Promise<Record<string, unknown>> => Promise.resolve({ settings: stored })),
-      set: vi.fn((items: Record<string, unknown>): Promise<void> => { stored = items['settings']; return Promise.resolve(); }),
+      set: vi.fn((items: Record<string, unknown>): Promise<void> => {
+        stored = items['settings'];
+        return Promise.resolve();
+      }),
       remove: vi.fn((): Promise<void> => Promise.resolve()),
     };
     const realSettings = new SafariStorageStore(area);
@@ -71,7 +105,8 @@ describe('SafariStorageStore + buildRouter — S1 wire-layer proof (D3)', () => 
     });
     const reply = await route({ type: 'settings.get' });
     expect(reply).toMatchObject({ ok: true, type: 'settings' });
-    if (typeof reply !== 'object' || reply === null || !('settings' in reply)) throw new Error('Expected settings reply');
+    if (typeof reply !== 'object' || reply === null || !('settings' in reply))
+      throw new Error('Expected settings reply');
     const settings = (reply as { settings: Record<string, unknown> }).settings;
     // The wire reply MUST NOT expose apiKey
     expect('apiKey' in settings).toBe(false);

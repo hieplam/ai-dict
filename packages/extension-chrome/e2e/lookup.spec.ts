@@ -14,18 +14,19 @@ test.beforeAll(async () => {
   // MV3 extension service worker registration in the default headless mode.
   ctx = await chromium.launchPersistentContext('', {
     headless: E2E_HEADLESS,
-    args: [
-      `--disable-extensions-except=${dist}`,
-      `--load-extension=${dist}`,
-    ],
+    args: [`--disable-extensions-except=${dist}`, `--load-extension=${dist}`],
   });
   // Give the extension service worker time to register, then find it
   await new Promise((r) => setTimeout(r, 2000));
   const workers = ctx.serviceWorkers();
-  const sw = workers.find((w) => w.url().startsWith('chrome-extension://')) ?? await ctx.waitForEvent('serviceworker', { timeout: 10000 });
+  const sw =
+    workers.find((w) => w.url().startsWith('chrome-extension://')) ??
+    (await ctx.waitForEvent('serviceworker', { timeout: 10000 }));
   extId = new URL(sw.url()).hostname;
 });
-test.afterAll(async () => { await ctx.close(); });
+test.afterAll(async () => {
+  await ctx.close();
+});
 
 // KNOWN LIMITATION: this end-to-end flow does NOT complete under Playwright's bundled Chromium
 // because content-script (isolated world) -> service-worker `chrome.runtime.sendMessage`
@@ -39,29 +40,58 @@ test.afterAll(async () => { await ctx.close(); });
 // at ~93% branch coverage by unit tests. Two real MV3 bugs this spec originally surfaced
 // (SW startup crash; `customElements` null in isolated world) are fixed. Assertions are intact.
 test('selecting a word shows a trigger; clicking it renders the mocked Gemini result', async () => {
-  test.skip(process.env.PLAYWRIGHT_RUN_LOOKUP_E2E !== '1', 'Content-script → SW round-trip only verified under full Chromium build (set PLAYWRIGHT_RUN_LOOKUP_E2E=1 under xvfb-run)');
+  test.skip(
+    process.env.PLAYWRIGHT_RUN_LOOKUP_E2E !== '1',
+    'Content-script → SW round-trip only verified under full Chromium build (set PLAYWRIGHT_RUN_LOOKUP_E2E=1 under xvfb-run)',
+  );
   const page = await ctx.newPage();
   await page.route('https://generativelanguage.googleapis.com/**', (route) =>
-    route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ candidates: [{ content: { parts: [{ text: '## bank\nA financial institution.' }] } }] }) }),
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        candidates: [{ content: { parts: [{ text: '## bank\nA financial institution.' }] } }],
+      }),
+    }),
   );
   // Seed settings and pre-populate the lookup cache so no real Gemini call is needed.
   // Cache key = fnv1a64Hex('bank|The bank by the river is steep.|vi') = 'fbf304968493913a'
   // (computed from the word/sentence/target that DomSelectionSource will extract via dblclick).
   await page.goto(`chrome-extension://${extId}/options.html`);
   const cacheKey = 'fbf304968493913a';
-  const cachedResult = { markdown: '## bank\nA financial institution.', word: 'bank', target: 'vi', model: 'gemini-2.5-flash', fromCache: false, fetchedAt: 1 };
-  await page.evaluate((args: { cacheKey: string; cachedResult: object }) => chrome.storage.local.set({
-    settings: { targetLang: 'vi', promptTemplate: 'Define {word}', apiKey: 'AIza-test', cacheEnabled: true, saveHistory: true, hasKey: true },
-    [`cache:${args.cacheKey}`]: JSON.stringify(args.cachedResult),
-    'cache:index': JSON.stringify([{ key: args.cacheKey, atime: Date.now() }]),
-  }), { cacheKey, cachedResult });
+  const cachedResult = {
+    markdown: '## bank\nA financial institution.',
+    word: 'bank',
+    target: 'vi',
+    model: 'gemini-2.5-flash',
+    fromCache: false,
+    fetchedAt: 1,
+  };
+  await page.evaluate(
+    (args: { cacheKey: string; cachedResult: object }) =>
+      chrome.storage.local.set({
+        settings: {
+          targetLang: 'vi',
+          promptTemplate: 'Define {word}',
+          apiKey: 'AIza-test',
+          cacheEnabled: true,
+          saveHistory: true,
+          hasKey: true,
+        },
+        [`cache:${args.cacheKey}`]: JSON.stringify(args.cachedResult),
+        'cache:index': JSON.stringify([{ key: args.cacheKey, atime: Date.now() }]),
+      }),
+    { cacheKey, cachedResult },
+  );
 
   // Navigate to a real http page so the content script runs (<all_urls> host permission)
-  await page.route('http://test.fixture/', (route) => route.fulfill({
-    status: 200,
-    contentType: 'text/html',
-    body: '<html><body><p id="t">The bank by the river is steep.</p></body></html>',
-  }));
+  await page.route('http://test.fixture/', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: '<html><body><p id="t">The bank by the river is steep.</p></body></html>',
+    }),
+  );
   await page.goto('http://test.fixture/');
   // Wait for content script to inject and the workflow to start
   await page.waitForTimeout(2000);
@@ -85,5 +115,7 @@ test('selecting a word shows a trigger; clicking it renders the mocked Gemini re
   // Wait for the selection trigger to appear
   await page.locator('lookup-trigger').waitFor({ state: 'attached', timeout: 5000 });
   await page.locator('lookup-trigger').click();
-  await expect(page.locator('bottom-sheet lookup-card')).toContainText('financial institution', { timeout: 10000 });
+  await expect(page.locator('bottom-sheet lookup-card')).toContainText('financial institution', {
+    timeout: 10000,
+  });
 });

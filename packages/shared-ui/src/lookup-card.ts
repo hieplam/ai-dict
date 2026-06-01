@@ -40,11 +40,15 @@ const CSS = `:host{display:block;font:14px/1.5 system-ui;color:#202124}
 export function renderCardState(state: CardState): Node[] {
   if (state.kind === 'loading') return [document.createTextNode('Looking up…')];
   if (state.kind === 'error') {
-    const h = document.createElement('h2'); h.textContent = 'Lookup failed';
-    const p = document.createElement('p'); p.className = 'err'; p.textContent = state.error.message;
+    const h = document.createElement('h2');
+    h.textContent = 'Lookup failed';
+    const p = document.createElement('p');
+    p.className = 'err';
+    p.textContent = state.error.message;
     return [h, p];
   }
-  const h = document.createElement('h2'); h.textContent = state.word;
+  const h = document.createElement('h2');
+  h.textContent = state.word;
   const body = document.createElement('div');
   body.innerHTML = state.safeHtml; // trusted: sanitized upstream by adapters-shared (S4)
   return [h, body];
@@ -81,7 +85,9 @@ export class LookupCard extends HTMLElement {
     b.dataset['act'] = act;
     b.setAttribute('aria-label', label);
     b.textContent = label;
-    b.addEventListener('click', () => this.dispatchEvent(new CustomEvent(act, { bubbles: true, composed: true })));
+    b.addEventListener('click', () =>
+      this.dispatchEvent(new CustomEvent(act, { bubbles: true, composed: true })),
+    );
     return b;
   }
 
@@ -89,7 +95,9 @@ export class LookupCard extends HTMLElement {
     this._state = s;
     this.renderState();
   }
-  get state(): CardState { return this._state; }
+  get state(): CardState {
+    return this._state;
+  }
 
   /** Render the current state into the card's LIGHT DOM (projected via <slot>). */
   private renderState(): void {

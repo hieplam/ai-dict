@@ -15,7 +15,8 @@ export class BottomSheet extends HTMLElement {
     if (!this.shadowRoot) {
       const root = this.attachShadow({ mode: 'open' });
       adoptStyles(root, CSS);
-      if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches) this.setAttribute('reduced', '');
+      if (globalThis.matchMedia?.('(prefers-reduced-motion: reduce)').matches)
+        this.setAttribute('reduced', '');
 
       const scrim = document.createElement('div');
       scrim.className = 'scrim';
@@ -48,23 +49,38 @@ export class BottomSheet extends HTMLElement {
   }
 
   private onKeydown = (e: KeyboardEvent): void => {
-    if (e.key === 'Escape') { e.preventDefault(); this.dismiss(); return; }
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      this.dismiss();
+      return;
+    }
     if (e.key === 'Tab') this.trapFocus(e);
   };
 
   private focusables(): HTMLElement[] {
     const sel = 'a[href],button,input,textarea,select,[tabindex]:not([tabindex="-1"])';
-    return [...this.querySelectorAll<HTMLElement>(sel)].filter((el) => !el.hasAttribute('disabled'));
+    return [...this.querySelectorAll<HTMLElement>(sel)].filter(
+      (el) => !el.hasAttribute('disabled'),
+    );
   }
 
   private trapFocus(e: KeyboardEvent): void {
     const f = this.focusables();
-    if (f.length === 0) { e.preventDefault(); this.panel?.focus(); return; }
+    if (f.length === 0) {
+      e.preventDefault();
+      this.panel?.focus();
+      return;
+    }
     const first = f[0]!;
     const last = f[f.length - 1]!;
     const active = document.activeElement;
-    if (e.shiftKey && active === first) { e.preventDefault(); last.focus(); }
-    else if (!e.shiftKey && active === last) { e.preventDefault(); first.focus(); }
+    if (e.shiftKey && active === first) {
+      e.preventDefault();
+      last.focus();
+    } else if (!e.shiftKey && active === last) {
+      e.preventDefault();
+      first.focus();
+    }
   }
 
   dismiss(): void {

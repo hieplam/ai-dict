@@ -33,7 +33,10 @@ describe('<lookup-card>', () => {
 
   it('renders an error message in light DOM', () => {
     const el = mountCard();
-    el.state = { kind: 'error', error: { code: 'NETWORK', message: 'Network failed.', retryable: true } };
+    el.state = {
+      kind: 'error',
+      error: { code: 'NETWORK', message: 'Network failed.', retryable: true },
+    };
     expect(el.querySelector('.err')!.textContent).toBe('Network failed.');
   });
 
@@ -44,7 +47,14 @@ describe('<lookup-card>', () => {
     // shared light DOM via the exported helper. This is the regression guard for the
     // "stuck on Looking up…" bug: the old card only rendered into its shadow via `.state`.
     const el = mountCard();
-    el.replaceChildren(...renderCardState({ kind: 'result', word: 'tree', target: 'vi', safeHtml: safe('<p>a plant</p>') }));
+    el.replaceChildren(
+      ...renderCardState({
+        kind: 'result',
+        word: 'tree',
+        target: 'vi',
+        safeHtml: safe('<p>a plant</p>'),
+      }),
+    );
     expect(el.querySelector('h2')!.textContent).toBe('tree');
     expect(el.innerHTML).toContain('a plant');
     // The shadow <slot> is what projects that light DOM into view.
@@ -55,9 +65,14 @@ describe('<lookup-card>', () => {
     const el = mountCard();
     let closeEvt: Event | null = null;
     let expandEvt: Event | null = null;
-    const close = vi.fn((e: Event) => { closeEvt = e; });
-    const expand = vi.fn((e: Event) => { expandEvt = e; });
-    el.addEventListener('close', close); el.addEventListener('expand', expand);
+    const close = vi.fn((e: Event) => {
+      closeEvt = e;
+    });
+    const expand = vi.fn((e: Event) => {
+      expandEvt = e;
+    });
+    el.addEventListener('close', close);
+    el.addEventListener('expand', expand);
     el.shadowRoot!.querySelector<HTMLButtonElement>('[data-act="close"]')!.click();
     el.shadowRoot!.querySelector<HTMLButtonElement>('[data-act="expand"]')!.click();
     expect(close).toHaveBeenCalledOnce();
@@ -86,7 +101,9 @@ describe('<lookup-card>', () => {
   it('"close" event crosses shadow boundary (composed: true)', () => {
     const el = mountCard();
     let capturedEvent: CustomEvent | null = null;
-    const handler = (e: Event): void => { capturedEvent = e as CustomEvent; };
+    const handler = (e: Event): void => {
+      capturedEvent = e as CustomEvent;
+    };
     // Trigger the click from inside the shadow root; composed:true on the
     // custom event is what allows it to reach this ancestor listener.
     document.body.addEventListener('close', handler);
@@ -103,7 +120,9 @@ describe('<lookup-card>', () => {
   it('"expand" event crosses shadow boundary (composed: true)', () => {
     const el = mountCard();
     let capturedEvent: CustomEvent | null = null;
-    const handler = (e: Event): void => { capturedEvent = e as CustomEvent; };
+    const handler = (e: Event): void => {
+      capturedEvent = e as CustomEvent;
+    };
     // Mirror of the 'close' boundary test: listener on document.body must
     // receive the event dispatched by the in-shadow expand button so that
     // a regression to composed:false would turn this red.

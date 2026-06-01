@@ -44,11 +44,15 @@ describe('<lookup-trigger>', () => {
   it('"lookup-click" event crosses shadow boundary (composed: true)', () => {
     const el = mount('lookup-trigger');
     let capturedEvent: CustomEvent | null = null;
-    const handler = (e: Event): void => { capturedEvent = e as CustomEvent; };
+    const handler = (e: Event): void => {
+      capturedEvent = e as CustomEvent;
+    };
     // Dispatch the triggering click from inside the shadow root so only a
     // composed:true custom event can reach this ancestor listener.
     document.body.addEventListener('lookup-click', handler);
-    el.shadowRoot!.querySelector('button')!.dispatchEvent(new MouseEvent('click', { bubbles: true, composed: true }));
+    el.shadowRoot!.querySelector('button')!.dispatchEvent(
+      new MouseEvent('click', { bubbles: true, composed: true }),
+    );
     document.body.removeEventListener('lookup-click', handler);
     expect(capturedEvent).not.toBeNull();
     // The custom event itself must carry composed:true — asserting this means

@@ -63,7 +63,13 @@ export class SettingsForm extends HTMLElement {
     });
     this.q<HTMLFormElement>('form').addEventListener('submit', (e) => {
       e.preventDefault();
-      this.dispatchEvent(new CustomEvent<SettingsFormValue>('save', { detail: this.collect(), bubbles: true, composed: true }));
+      this.dispatchEvent(
+        new CustomEvent<SettingsFormValue>('save', {
+          detail: this.collect(),
+          bubbles: true,
+          composed: true,
+        }),
+      );
     });
     this.relay('#test', 'test-connection');
     this.relay('#clear-cache', 'clear-cache');

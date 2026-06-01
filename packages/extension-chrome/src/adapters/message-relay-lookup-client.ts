@@ -1,7 +1,15 @@
-import type { LookupClient, LookupRequest, LookupResult, WireReply, LookupError } from '@ai-dict/core';
+import type {
+  LookupClient,
+  LookupRequest,
+  LookupResult,
+  WireReply,
+  LookupError,
+} from '@ai-dict/core';
 import { mapError } from '@ai-dict/core';
 
-export interface RuntimeLike { sendMessage(message: unknown): Promise<unknown>; }
+export interface RuntimeLike {
+  sendMessage(message: unknown): Promise<unknown>;
+}
 
 // `crypto.randomUUID()` only exists in a SECURE context. Content scripts run on arbitrary
 // pages, including plain `http://`, where it is `undefined` — calling it there throws
@@ -21,7 +29,8 @@ function rejectWith(e: LookupError): never {
   (err as unknown as Record<string, unknown>)['code'] = e.code;
   (err as unknown as Record<string, unknown>)['message'] = e.message;
   (err as unknown as Record<string, unknown>)['retryable'] = e.retryable;
-  if (e.retryAfterSec !== undefined) (err as unknown as Record<string, unknown>)['retryAfterSec'] = e.retryAfterSec;
+  if (e.retryAfterSec !== undefined)
+    (err as unknown as Record<string, unknown>)['retryAfterSec'] = e.retryAfterSec;
   throw err;
 }
 
@@ -36,7 +45,9 @@ export class MessageRelayLookupClient implements LookupClient {
     if (opts?.signal) {
       opts.signal.addEventListener(
         'abort',
-        () => { void this.runtime.sendMessage({ type: 'lookup.cancel', requestId }); },
+        () => {
+          void this.runtime.sendMessage({ type: 'lookup.cancel', requestId });
+        },
         { once: true },
       );
     }

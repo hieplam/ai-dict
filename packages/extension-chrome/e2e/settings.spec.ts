@@ -14,18 +14,19 @@ test.beforeAll(async () => {
   // MV3 extension service worker registration in the default headless mode.
   ctx = await chromium.launchPersistentContext('', {
     headless: E2E_HEADLESS,
-    args: [
-      `--disable-extensions-except=${dist}`,
-      `--load-extension=${dist}`,
-    ],
+    args: [`--disable-extensions-except=${dist}`, `--load-extension=${dist}`],
   });
   // Give the extension service worker time to register, then find it
   await new Promise((r) => setTimeout(r, 2000));
   const workers = ctx.serviceWorkers();
-  const sw = workers.find((w) => w.url().startsWith('chrome-extension://')) ?? await ctx.waitForEvent('serviceworker', { timeout: 10000 });
+  const sw =
+    workers.find((w) => w.url().startsWith('chrome-extension://')) ??
+    (await ctx.waitForEvent('serviceworker', { timeout: 10000 }));
   extId = new URL(sw.url()).hostname;
 });
-test.afterAll(async () => { await ctx.close(); });
+test.afterAll(async () => {
+  await ctx.close();
+});
 
 test('options page persists settings to chrome.storage.local and loads them on reload', async () => {
   const page = await ctx.newPage();
@@ -35,7 +36,14 @@ test('options page persists settings to chrome.storage.local and loads them on r
   // Set settings directly via storage (simulating a prior save)
   await page.evaluate(() =>
     chrome.storage.local.set({
-      settings: { targetLang: 'vi', promptTemplate: 'Define {word}', apiKey: 'AIza-testkey', cacheEnabled: true, saveHistory: true, hasKey: true },
+      settings: {
+        targetLang: 'vi',
+        promptTemplate: 'Define {word}',
+        apiKey: 'AIza-testkey',
+        cacheEnabled: true,
+        saveHistory: true,
+        hasKey: true,
+      },
     }),
   );
 
@@ -45,7 +53,9 @@ test('options page persists settings to chrome.storage.local and loads them on r
 
   // Read the stored value to confirm it persisted
   const stored = await page.evaluate(async () => {
-    const { settings } = (await chrome.storage.local.get('settings')) as { settings: { apiKey: string } };
+    const { settings } = (await chrome.storage.local.get('settings')) as {
+      settings: { apiKey: string };
+    };
     return settings.apiKey;
   });
   expect(stored).toBe('AIza-testkey');
@@ -57,7 +67,16 @@ test('clearing storage via chrome.storage.local.clear empties stored settings', 
 
   // Seed data
   await page.evaluate(() =>
-    chrome.storage.local.set({ settings: { apiKey: 'AIza-clear-me', targetLang: 'vi', promptTemplate: 't', cacheEnabled: true, saveHistory: true, hasKey: true } }),
+    chrome.storage.local.set({
+      settings: {
+        apiKey: 'AIza-clear-me',
+        targetLang: 'vi',
+        promptTemplate: 't',
+        cacheEnabled: true,
+        saveHistory: true,
+        hasKey: true,
+      },
+    }),
   );
 
   // Clear all

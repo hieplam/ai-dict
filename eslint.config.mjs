@@ -5,14 +5,27 @@ import importX from 'eslint-plugin-import-x';
 import prettier from 'eslint-config-prettier';
 
 export default tseslint.config(
-  { ignores: ['**/dist/**', '**/coverage/**', '**/*.snapshot.json', '**/playwright-report/**', '**/test-results/**', '**/e2e/**', 'packages/*/playwright.config.ts', '.claude/**'] },
+  {
+    ignores: [
+      '**/dist/**',
+      '**/coverage/**',
+      '**/*.snapshot.json',
+      '**/playwright-report/**',
+      '**/test-results/**',
+      '**/e2e/**',
+      'packages/*/playwright.config.ts',
+      '.claude/**',
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommendedTypeChecked,
   {
     languageOptions: {
       parserOptions: {
         // allow root config TS files to type-check via an inferred default project
-        projectService: { allowDefaultProject: ['*.config.ts', '*.config.mts', 'packages/*/vitest.config.ts'] },
+        projectService: {
+          allowDefaultProject: ['*.config.ts', '*.config.mts', 'packages/*/vitest.config.ts'],
+        },
         tsconfigRootDir: import.meta.dirname,
       },
     },

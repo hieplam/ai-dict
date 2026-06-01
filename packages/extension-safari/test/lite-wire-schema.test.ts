@@ -11,10 +11,17 @@ describe('WireMessageSchema (lite-wire-schema shim)', () => {
   it('(a) lookup with injected extra field: success:true AND extra field stripped', () => {
     const result = WireMessageSchema.safeParse({
       type: 'lookup',
-      req: { word: 'hello', context: 'ctx', url: 'https://example.com', title: 'Page', target: 'en', promptTemplate: 'tmpl {{word}}' },
+      req: {
+        word: 'hello',
+        context: 'ctx',
+        url: 'https://example.com',
+        title: 'Page',
+        target: 'en',
+        promptTemplate: 'tmpl {{word}}',
+      },
       requestId: 'req-1',
-      apiKey: 'AIza-evil',          // injected extra field
-      __proto__: {},                // another unexpected field
+      apiKey: 'AIza-evil', // injected extra field
+      __proto__: {}, // another unexpected field
     });
     expect(result.success).toBe(true);
     if (!result.success) return;
@@ -73,7 +80,11 @@ describe('WireMessageSchema (lite-wire-schema shim)', () => {
   // ── (d) each of the other 6 types with minimal valid input ─────────────────
 
   it('(d) lookup.cancel with requestId → success:true, only {type, requestId}', () => {
-    const result = WireMessageSchema.safeParse({ type: 'lookup.cancel', requestId: 'r1', evil: true });
+    const result = WireMessageSchema.safeParse({
+      type: 'lookup.cancel',
+      requestId: 'r1',
+      evil: true,
+    });
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.data).not.toHaveProperty('evil');
@@ -93,7 +104,12 @@ describe('WireMessageSchema (lite-wire-schema shim)', () => {
   });
 
   it('(d) history.list with limit and cursor → strips extra fields, keeps limit+cursor', () => {
-    const result = WireMessageSchema.safeParse({ type: 'history.list', limit: 10, cursor: 'abc', evil: 'x' });
+    const result = WireMessageSchema.safeParse({
+      type: 'history.list',
+      limit: 10,
+      cursor: 'abc',
+      evil: 'x',
+    });
     expect(result.success).toBe(true);
     if (!result.success) return;
     expect(result.data).not.toHaveProperty('evil');

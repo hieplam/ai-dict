@@ -42,8 +42,24 @@ function ensureHook(): void {
 }
 
 const ALLOWED_TAGS = [
-  'p', 'br', 'strong', 'em', 'b', 'i', 'code', 'pre',
-  'ul', 'ol', 'li', 'h1', 'h2', 'h3', 'h4', 'blockquote', 'a', 'span',
+  'p',
+  'br',
+  'strong',
+  'em',
+  'b',
+  'i',
+  'code',
+  'pre',
+  'ul',
+  'ol',
+  'li',
+  'h1',
+  'h2',
+  'h3',
+  'h4',
+  'blockquote',
+  'a',
+  'span',
 ];
 const ALLOWED_ATTR = ['href', 'target', 'rel'];
 const HTTPS_ONLY = /^https:\/\//i; // anchors: https only (no javascript:, data:, mailto:, relative)
