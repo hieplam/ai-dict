@@ -2,7 +2,7 @@
 
 Prereq: macOS with Xcode; a real Gemini API key.
 
-1. [ ] Build the Xcode project (`pnpm --filter @ai-dict/extension-safari build && pnpm --filter @ai-dict/extension-safari xcode:sync`, then build in Xcode).
+1. [ ] Build the Xcode project (`bun run --filter @ai-dict/extension-safari build && bun run --filter @ai-dict/extension-safari xcode:sync`, then build in Xcode).
 2. [ ] Boot iOS Simulator (iPhone 15, iOS 17+).
 3. [ ] Install the host app.
 4. [ ] Settings → Safari → Extensions → enable "AI Dictionary".
