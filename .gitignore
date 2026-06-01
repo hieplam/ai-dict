@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+*.log
+.DS_Store
+*.ipa
+*.xcarchive
+.vitest/
+playwright-report/
+test-results/
+.claude/

@@ -1,0 +1,23 @@
+{
+  "name": "@ai-dict/extension-chrome",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "build": "node esbuild.config.mjs",
+    "e2e": "playwright test"
+  },
+  "dependencies": {
+    "@ai-dict/core": "workspace:*",
+    "@ai-dict/shared-ui": "workspace:*",
+    "@ai-dict/adapters-shared": "workspace:*"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.270",
+    "@playwright/test": "^1.48.0",
+    "esbuild": "^0.24.0",
+    "happy-dom": "^15.0.0"
+  }
+}

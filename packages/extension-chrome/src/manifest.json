@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "AI Dictionary",
+  "version": "0.0.0",
+  "minimum_chrome_version": "116",
+  "description": "Stay-in-page dictionary lookup powered by your own Gemini API key.",
+  "permissions": ["storage", "sidePanel"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "sw.js", "type": "module" },
+  "content_scripts": [
+    { "matches": ["<all_urls>"], "js": ["content-elements.js"], "run_at": "document_idle", "world": "MAIN" },
+    { "matches": ["<all_urls>"], "js": ["content.js"], "run_at": "document_idle" }
+  ],
+  "action": { "default_title": "AI Dictionary" },
+  "options_page": "options.html",
+  "side_panel": { "default_path": "side-panel.html" },
+  "content_security_policy": {
+    "extension_pages": "default-src 'none'; script-src 'self'; object-src 'none'; connect-src https://generativelanguage.googleapis.com; img-src 'self' data:; style-src 'self'; base-uri 'none'; frame-ancestors 'none';"
+  }
+}

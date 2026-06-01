@@ -1,1 +1,1 @@
-# ai-dictionary
+# ai-dict
