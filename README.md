@@ -43,6 +43,8 @@ All commands run from the repo root.
 | `bun run format:check` | Verify formatting (CI gate).                            |
 | `bun run size`         | Check built bundles against the size budgets.           |
 | `bun run e2e:chrome`   | Run the Chrome extension end-to-end tests (Playwright). |
+| `bun run build:chrome` | Build Chrome extension.                                 |
+| `bun run build:safari` | Build Safari extension.                                 |
 
 Run a script in a single package with `--filter`, e.g. only the core tests:
 
