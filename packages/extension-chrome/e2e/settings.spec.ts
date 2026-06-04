@@ -1,57 +1,15 @@
-import { test, expect, chromium, type BrowserContext } from '@playwright/test';
-import { fileURLToPath } from 'node:url';
-import path from 'node:path';
-import { E2E_HEADLESS } from '../playwright.config';
+import { test, expect } from './fixtures';
+import { seedSettings, storageDump } from './helpers';
 
-const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist');
-
-let ctx: BrowserContext;
-let extId: string;
-
-test.beforeAll(async () => {
-  // Headless mode is controlled by PLAYWRIGHT_HEADLESS=1 env var (set by CI under xvfb-run).
-  // Locally defaults to headless:false because Playwright's bundled Chromium does not support
-  // MV3 extension service worker registration in the default headless mode.
-  ctx = await chromium.launchPersistentContext('', {
-    headless: E2E_HEADLESS,
-    args: [`--disable-extensions-except=${dist}`, `--load-extension=${dist}`],
-  });
-  // Give the extension service worker time to register, then find it
-  await new Promise((r) => setTimeout(r, 2000));
-  const workers = ctx.serviceWorkers();
-  const sw =
-    workers.find((w) => w.url().startsWith('chrome-extension://')) ??
-    (await ctx.waitForEvent('serviceworker', { timeout: 10000 }));
-  extId = new URL(sw.url()).hostname;
-});
-test.afterAll(async () => {
-  await ctx.close();
-});
-
-test('options page persists settings to chrome.storage.local and loads them on reload', async () => {
-  const page = await ctx.newPage();
-  // Navigate to the extension options page via chrome-extension:// (chrome API available)
-  await page.goto(`chrome-extension://${extId}/options.html`);
-
-  // Set settings directly via storage (simulating a prior save)
-  await page.evaluate(() =>
-    chrome.storage.local.set({
-      settings: {
-        targetLang: 'vi',
-        promptTemplate: 'Define {word}',
-        apiKey: 'AIza-testkey',
-        cacheEnabled: true,
-        saveHistory: true,
-        hasKey: true,
-      },
-    }),
-  );
-
-  // Reload and verify the key field shows the stored value (type=password field)
+test('persists settings to storage and reloads them on the options page', async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page, { apiKey: 'AIza-testkey' });
   await page.reload();
   await page.waitForSelector('settings-form');
-
-  // Read the stored value to confirm it persisted
   const stored = await page.evaluate(async () => {
     const { settings } = (await chrome.storage.local.get('settings')) as {
       settings: { apiKey: string };
@@ -61,30 +19,34 @@ test('options page persists settings to chrome.storage.local and loads them on r
   expect(stored).toBe('AIza-testkey');
 });
 
-test('clearing storage via chrome.storage.local.clear empties stored settings', async () => {
-  const page = await ctx.newPage();
-  await page.goto(`chrome-extension://${extId}/options.html`);
-
-  // Seed data
-  await page.evaluate(() =>
-    chrome.storage.local.set({
-      settings: {
-        apiKey: 'AIza-clear-me',
-        targetLang: 'vi',
-        promptTemplate: 't',
-        cacheEnabled: true,
-        saveHistory: true,
-        hasKey: true,
-      },
-    }),
-  );
-
-  // Clear all
+test('chrome.storage.local.clear empties stored settings', async ({ context, extensionId }) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page);
   await page.evaluate(() => chrome.storage.local.clear());
+  const dump = await storageDump(page);
+  expect(dump.settings).toBeUndefined();
+});
 
-  const stored = await page.evaluate(async () => {
-    const { settings } = (await chrome.storage.local.get('settings')) as { settings?: unknown };
-    return settings;
+test('options page applies defaults when storage is empty', async ({ context, extensionId }) => {
+  // beforeEach already cleared storage; options.ts should fall back to DEFAULTS.
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await page.waitForSelector('settings-form');
+  // The form should reflect the default target language 'vi' without any stored settings.
+  // Read from the shadow-DOM select element (SettingsForm exposes no value getter).
+  const targetLang = await page.evaluate(() => {
+    const form = document.querySelector('settings-form')!;
+    const select = form.shadowRoot!.querySelector<HTMLSelectElement>('#target')!;
+    return select.value;
   });
-  expect(stored).toBeUndefined();
+  expect(targetLang).toBe('vi');
+});
+
+test('targetLang round-trips through storage', async ({ context, extensionId }) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page, { targetLang: 'en' });
+  const dump = await storageDump(page);
+  expect((dump.settings as { targetLang: string }).targetLang).toBe('en');
 });
