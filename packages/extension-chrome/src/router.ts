@@ -40,7 +40,19 @@ export interface RouterDeps {
 }
 
 function toLookupError(err: unknown): LookupError {
-  return isLookupError(err) ? err : mapError({ kind: 'thrown', error: err });
+  const e = isLookupError(err) ? err : mapError({ kind: 'thrown', error: err });
+  // Normalise to a PLAIN object before it crosses the chrome.runtime message boundary.
+  // A LookupError thrown by GeminiLookupClient is `Object.assign(new Error(msg), …)`, whose
+  // `message` is a NON-enumerable own property (set by the Error constructor). chrome.runtime
+  // messages are JSON-serialised, which silently drops non-enumerable props — so the message
+  // would be lost in transit and the card would render an empty error. Spreading the fields into
+  // a fresh object makes `message` enumerable so it survives serialisation.
+  return {
+    code: e.code,
+    message: e.message,
+    retryable: e.retryable,
+    ...(e.retryAfterSec !== undefined ? { retryAfterSec: e.retryAfterSec } : {}),
+  };
 }
 
 export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<RouterReply> {
