@@ -133,6 +133,30 @@ describe('buildRouter', () => {
     });
   });
 
+  it('error reply survives JSON serialization with its message intact (wire-boundary regression)', async () => {
+    // chrome.runtime messages are JSON-serialised across the SW→content boundary. A LookupError
+    // thrown by GeminiLookupClient is `Object.assign(new Error(msg), …)`, whose `message` is a
+    // NON-enumerable own property (set by the Error constructor) — JSON.stringify drops it, so the
+    // card would render an EMPTY error. The router must normalise the error to a plain object.
+    const d = deps({
+      client: {
+        lookup: makeLookupMock(() =>
+          Promise.reject(
+            Object.assign(new Error('Google rejected the API key.'), {
+              code: 'INVALID_KEY',
+              message: 'Google rejected the API key.',
+              retryable: false,
+            }),
+          ),
+        ),
+      },
+    });
+    const reply = await buildRouter(d)(lookupMsg('e'));
+    const wire = JSON.parse(JSON.stringify(reply)) as { error: { code: string; message: string } };
+    expect(wire.error.message).toBe('Google rejected the API key.');
+    expect(wire.error.code).toBe('INVALID_KEY');
+  });
+
   it('cancellation suppresses the aborted lookup reply (D5)', async () => {
     let started!: () => void;
     const startedP = new Promise<void>((r) => {
