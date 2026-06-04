@@ -23,7 +23,7 @@ e2e/
 
 The product is a Manifest V3 browser extension. The select-word → trigger →
 card flow spans a **content script** (isolated world) talking to a **service
-worker** via `chrome.runtime.sendMessage`. Playwright's *bundled* Chromium does
+worker** via `chrome.runtime.sendMessage`. Playwright's _bundled_ Chromium does
 not deliver those content-script → SW messages in headless mode, so the real
 flow only runs under a full Chromium build on Linux/xvfb (today's CI
 `e2e-chrome` job sets `PLAYWRIGHT_RUN_LOOKUP_E2E=1` and runs
@@ -84,14 +84,14 @@ while making the extension-context tier runnable locally with no flags.
 4. **lookup-errors.spec** — one test per error mapping, asserting the exact
    mapped card text:
 
-   | Trigger (mock)                          | Card shows                                   |
-   | --------------------------------------- | -------------------------------------------- |
-   | settings without key                    | `Add your Gemini API key in Settings.`       |
-   | `route.abort()` / timeout               | `Network failed. Check connection and retry.`|
-   | HTTP 401 / 403 / 400 `INVALID_ARGUMENT` | `Google rejected the API key.`               |
-   | HTTP 429                                | `Hit Gemini rate limit.`                     |
-   | HTTP ≥ 500                              | `Gemini server error. Retry.`                |
-   | malformed JSON body                     | `Gemini returned unexpected output.`         |
+   | Trigger (mock)                          | Card shows                                    |
+   | --------------------------------------- | --------------------------------------------- |
+   | settings without key                    | `Add your Gemini API key in Settings.`        |
+   | `route.abort()` / timeout               | `Network failed. Check connection and retry.` |
+   | HTTP 401 / 403 / 400 `INVALID_ARGUMENT` | `Google rejected the API key.`                |
+   | HTTP 429                                | `Hit Gemini rate limit.`                      |
+   | HTTP ≥ 500                              | `Gemini server error. Retry.`                 |
+   | malformed JSON body                     | `Gemini returned unexpected output.`          |
 
 5. **cache-history.spec** — cache disabled ⇒ network hit every time; a lookup
    writes a `history:`-prefixed entry (assert via `storage.local.get`);
