@@ -33,6 +33,20 @@
         "happy-dom": "^15.0.0",
       },
     },
+    "packages/app": {
+      "name": "@ai-dict/app",
+      "version": "0.0.0",
+      "dependencies": {
+        "dompurify": "^3.2.0",
+        "marked": "^14.0.0",
+        "zod": "^4.0.0",
+      },
+      "devDependencies": {
+        "@types/node": "^20.11.0",
+        "axe-core": "^4.10.0",
+        "happy-dom": "^15.0.0",
+      },
+    },
     "packages/core": {
       "name": "@ai-dict/core",
       "version": "0.0.0",
@@ -86,6 +100,8 @@
   },
   "packages": {
     "@ai-dict/adapters-shared": ["@ai-dict/adapters-shared@workspace:packages/adapters-shared"],
+
+    "@ai-dict/app": ["@ai-dict/app@workspace:packages/app"],
 
     "@ai-dict/core": ["@ai-dict/core@workspace:packages/core"],
 
