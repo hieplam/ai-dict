@@ -90,7 +90,7 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
-      - run: bun run --filter @ai-dict/core --filter @ai-dict/adapters-shared test
+      - run: bun run --filter @ai-dict/app test
 
   test-component:
     needs: install
@@ -106,7 +106,7 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
-      - run: bun run --filter @ai-dict/shared-ui test # happy-dom + axe-core component tests
+      - run: bun run --filter @ai-dict/app test # happy-dom + axe-core component tests
 
   test-contract: # wire-schema contract tests (spec §8.9, D1)
     needs: install
@@ -122,39 +122,7 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
-      - run: bun run --filter @ai-dict/core test wire-schema # wire validation/contract tests
-
-  # wire-schema-check runs `bun run wire:check` → scripts/wire-check.mjs → bun run --filter @ai-dict/core test wire-schema.
-  # test-contract (above) runs the same vitest filter directly and is kept as the canonical §8.9 job.
-  # wire-schema-check is an additional authoritative drift gate (spec §8.5).
-  wire-schema-check:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version-file: .bun-version
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-${{ runner.os }}-
-      - run: bun install --frozen-lockfile
-      - run: bun run wire:check
-
-  shared-drift: # Bundle 06 promise: guard the deliberately-duplicated platform-agnostic files
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - name: router/inbound/dom-selection must stay byte-identical across extensions
-        run: |
-          set -e
-          for f in src/router.ts src/inbound.ts src/adapters/dom-selection-source.ts; do
-            diff -u "packages/extension-chrome/$f" "packages/extension-safari/$f" \
-              || { echo "::error file=packages/extension-safari/$f::drifted from extension-chrome — re-sync, or hoist to a shared package if a 3rd consumer appeared"; exit 1; }
-          done
+      - run: bun run --filter @ai-dict/app test wire-schema # wire validation/contract tests
 
   build-chrome:
     needs: install
@@ -215,24 +183,6 @@ jobs:
             packages/extension-chrome/test-results/**
             packages/extension-chrome/playwright-report/**
           retention-days: 7
-
-  size-check:
-    needs: install
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
-      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
-        with:
-          bun-version-file: .bun-version
-      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4.3.0
-        with:
-          path: ~/.bun/install/cache
-          key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
-          restore-keys: bun-${{ runner.os }}-
-      - run: bun install --frozen-lockfile
-      - run: bun run --filter @ai-dict/extension-chrome build
-      - run: bun run --filter @ai-dict/extension-safari build
-      - run: bun run size
 
   coverage-gate:
     needs: install

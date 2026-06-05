@@ -1,5 +1,4 @@
-import type { SettingsStore, PublicSettings, WireReply } from '@ai-dict/core';
-import type { RuntimeLike } from './message-relay-lookup-client';
+import type { SettingsStore, PublicSettings, WireReply, RuntimeLike } from '@ai-dict/app';
 
 export class MessageRelaySettingsStore implements SettingsStore {
   private cache: PublicSettings | null = null;
@@ -27,7 +26,7 @@ export class MessageRelaySettingsStore implements SettingsStore {
   // Param is intentionally ignored — method exists only to satisfy the SettingsStore interface.
   set(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _patch: Partial<Pick<import('@ai-dict/core').PublicSettings, 'targetLang' | 'promptTemplate'>>,
+    _patch: Partial<Pick<import('@ai-dict/app').PublicSettings, 'targetLang' | 'promptTemplate'>>,
   ): Promise<void> {
     return Promise.reject(
       new Error('Settings are edited on the options page, not over the content wire.'),

@@ -6,13 +6,11 @@ in an in-page card / side panel.
 
 It's a **bun workspace monorepo**:
 
-| Package                     | Role                                                                                                      |
-| --------------------------- | --------------------------------------------------------------------------------------------------------- |
-| `packages/core`             | Pure domain logic (lookup workflow, prompt/cache/history policies, wire schema). No DOM, no browser APIs. |
-| `packages/shared-ui`        | Framework-free Web Components (`<lookup-card>`, `<bottom-sheet>`, `<settings-form>`, …).                  |
-| `packages/adapters-shared`  | Gemini client + markdown sanitization shared by both extensions.                                          |
-| `packages/extension-chrome` | Chrome MV3 extension (service worker, content scripts, options, side panel).                              |
-| `packages/extension-safari` | Safari/iOS MV3 extension + Xcode wrapper.                                                                 |
+| Package                     | Role                                                                                             |
+| --------------------------- | ------------------------------------------------------------------------------------------------ |
+| `packages/app`              | Platform-agnostic library: domain logic, ports, wire schema, UI components, and shared adapters. |
+| `packages/extension-chrome` | Chrome MV3 extension (service worker, content scripts, options, side panel).                     |
+| `packages/extension-safari` | Safari/iOS MV3 extension + Xcode wrapper.                                                        |
 
 ## Prerequisites
 
@@ -41,15 +39,14 @@ All commands run from the repo root.
 | `bun run lint`         | Lint with ESLint.                                       |
 | `bun run format`       | Auto-format with Prettier.                              |
 | `bun run format:check` | Verify formatting (CI gate).                            |
-| `bun run size`         | Check built bundles against the size budgets.           |
 | `bun run e2e:chrome`   | Run the Chrome extension end-to-end tests (Playwright). |
 | `bun run build:chrome` | Build Chrome extension.                                 |
 | `bun run build:safari` | Build Safari extension.                                 |
 
-Run a script in a single package with `--filter`, e.g. only the core tests:
+Run a script in a single package with `--filter`, e.g. only the app tests:
 
 ```bash
-bun run --filter @ai-dict/core test
+bun run --filter @ai-dict/app test
 ```
 
 There is no bundler watch mode — re-run the build command (below) after changing
@@ -101,6 +98,17 @@ bun run --filter @ai-dict/extension-safari xcode:sync
 Then open the generated `.xcodeproj` in Xcode, run on the iOS Simulator, and enable
 **AI Dictionary** under **Settings → Safari → Extensions**. The manual release pass is
 documented in `packages/extension-safari/e2e/ios-simulator-checklist.md`.
+
+## Known tradeoffs
+
+- **zod ships in the browser bundle.** To keep the architecture simple, message
+  validation uses [`zod`](https://zod.dev) directly in the extension's service worker and
+  content script, instead of a hand-written zero-dependency shim. zod is ~250 kB
+  unminified (smaller gzipped, but still over the old 30 kB service-worker size budget we
+  used to enforce). We accept this for now in exchange for a single, un-duplicated
+  validation schema. **Revisit if** service-worker cold-start latency or bundle size
+  becomes a problem — at which point a build-time shim or a lighter validator can be
+  reintroduced.
 
 ## More
 

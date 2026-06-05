@@ -3,7 +3,7 @@ import {
   type SettingsStore,
   type PublicSettings,
   type Settings,
-} from '@ai-dict/core';
+} from '@ai-dict/app';
 import type { StorageAreaLike } from './safari-kv-store';
 
 const DEFAULT_TARGET = 'vi';

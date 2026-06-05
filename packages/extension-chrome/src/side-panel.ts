@@ -1,7 +1,12 @@
-import '@ai-dict/shared-ui/lookup-card';
-import type { CardState, LookupCard } from '@ai-dict/shared-ui/lookup-card';
-import { sanitizeMarkdown } from '@ai-dict/adapters-shared';
-import type { LookupResult, LookupError } from '@ai-dict/core';
+import {
+  registerContentElements,
+  sanitizeMarkdown,
+  type CardState,
+  type LookupCard,
+  type LookupResult,
+  type LookupError,
+} from '@ai-dict/app';
+registerContentElements();
 
 // Structural guard: verify the payload is a valid LookupResult before passing it to
 // sanitizeMarkdown. Avoids a TypeError crash or attacker-controlled input when a crafted

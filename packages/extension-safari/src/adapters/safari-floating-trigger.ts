@@ -1,5 +1,5 @@
-import type { TriggerUI, AnchorRect } from '@ai-dict/core';
-import '@ai-dict/shared-ui/lookup-trigger';
+import { registerContentElements, type TriggerUI, type AnchorRect } from '@ai-dict/app';
+registerContentElements();
 
 const DISMISS_EVENTS = ['mousedown', 'touchstart'] as const;
 

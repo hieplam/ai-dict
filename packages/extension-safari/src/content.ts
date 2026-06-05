@@ -1,12 +1,13 @@
-import { runLookupWorkflow } from '@ai-dict/core'; // NOT @ai-dict/core/workflow (no such subpath)
-import '@ai-dict/shared-ui/lookup-trigger';
-import '@ai-dict/shared-ui/lookup-card';
-import '@ai-dict/shared-ui/bottom-sheet';
-import { InlineBottomSheetRenderer } from '@ai-dict/adapters-shared';
-import { DomSelectionSource } from './adapters/dom-selection-source';
+import {
+  runLookupWorkflow,
+  registerContentElements,
+  InlineBottomSheetRenderer,
+  DomSelectionSource,
+  MessageRelayLookupClient,
+} from '@ai-dict/app';
 import { SafariFloatingTrigger } from './adapters/safari-floating-trigger';
-import { MessageRelayLookupClient } from './adapters/message-relay-lookup-client';
 import { MessageRelaySettingsStore } from './adapters/message-relay-settings-store';
+registerContentElements();
 
 runLookupWorkflow({
   selection: new DomSelectionSource(document),

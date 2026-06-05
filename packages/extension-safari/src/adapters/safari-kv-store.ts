@@ -1,4 +1,4 @@
-import type { Storage } from '@ai-dict/core';
+import type { Storage } from '@ai-dict/app';
 
 // Minimal surface of browser.storage.StorageArea needed by this adapter.
 // Using a custom interface instead of Pick<Browser.Storage.StorageArea, ...>
