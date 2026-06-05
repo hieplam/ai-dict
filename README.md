@@ -102,6 +102,17 @@ Then open the generated `.xcodeproj` in Xcode, run on the iOS Simulator, and ena
 **AI Dictionary** under **Settings → Safari → Extensions**. The manual release pass is
 documented in `packages/extension-safari/e2e/ios-simulator-checklist.md`.
 
+## Known tradeoffs
+
+- **zod ships in the browser bundle.** To keep the architecture simple, message
+  validation uses [`zod`](https://zod.dev) directly in the extension's service worker and
+  content script, instead of a hand-written zero-dependency shim. zod is ~250 kB
+  unminified (smaller gzipped, but still over the old 30 kB service-worker size budget we
+  used to enforce). We accept this for now in exchange for a single, un-duplicated
+  validation schema. **Revisit if** service-worker cold-start latency or bundle size
+  becomes a problem — at which point a build-time shim or a lighter validator can be
+  reintroduced.
+
 ## More
 
 - Release steps: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md).
