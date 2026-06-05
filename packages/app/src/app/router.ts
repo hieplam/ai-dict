@@ -14,7 +14,7 @@ import {
   type SettingsStore,
   type Storage,
   type HistoryEntry,
-} from '@ai-dict/core';
+} from '../index';
 
 export const SUPPRESS = Symbol('suppress');
 export type RouterReply = WireReply | typeof SUPPRESS;

@@ -1,4 +1,4 @@
-import { WireMessageSchema, mapError, type WireMessage, type WireReply } from '@ai-dict/core';
+import { WireMessageSchema, mapError, type WireMessage, type WireReply } from '../index';
 
 export type Inbound =
   | { action: 'ignore' }

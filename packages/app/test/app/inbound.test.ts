@@ -1,18 +1,16 @@
-// BUNDLE NOTE — lite-wire-schema shim replaces zod in ALL production bundles:
-// The production build uses esbuild's wire-schema-shim plugin to substitute
-// src/lite-wire-schema.ts for @ai-dict/core's zod-backed WireMessageSchema in every
-// output bundle (sw.js, content.js, options.js), keeping sw.js within the 30KB brotli
-// SW budget (~3.5KB brotli).  Zod is never loaded in any production bundle.
-// These unit tests exercise classifyInbound against the REAL zod WireMessageSchema
-// because vitest resolves source files directly without the esbuild alias applied —
-// this is intentional: it validates the canonical schema contract.
-// The lite shim itself (field-stripping + type-discriminant check) is exercised
-// separately in test/lite-wire-schema.test.ts.
-// The sender guard (S3) ensures same-origin-only messages reach this path,
-// limiting the attack surface to extension-internal contexts.
+// INTEGRATION NOTE — shim vs. full Zod schema:
+// These tests exercise classifyInbound against the REAL WireMessageSchema (Zod).
+// In the production browser bundle, esbuild's wire-schema-shim plugin replaces
+// WireMessageSchema with a lightweight Set.has check (see esbuild.config.mjs).
+// The shim adds a structural guard for 'lookup' (req must be a non-null object with
+// a string `word` field) to prevent a malformed message from crashing the SW on
+// req.word access. All other message types carry no payload the router destructures.
+// Accepted risk: non-lookup payload fields (e.g. requestId type) are not validated
+// by the shim. The sender guard (S3) ensures same-origin-only messages reach this
+// path, limiting the attack surface to extension-internal contexts.
 
 import { describe, it, expect } from 'vitest';
-import { classifyInbound } from '../src/inbound';
+import { classifyInbound } from '../../src/app/inbound';
 
 const valid = { type: 'settings.get' };
 

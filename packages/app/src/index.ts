@@ -11,3 +11,7 @@ export * from './ui/index';
 export * from './app/markdown-sanitize';
 export * from './app/gemini-lookup-client';
 export * from './app/inline-bottom-sheet-renderer';
+export * from './app/router';
+export * from './app/inbound';
+export * from './app/dom-selection-source';
+export * from './app/message-relay-lookup-client';

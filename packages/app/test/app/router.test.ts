@@ -1,13 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
-import { buildRouter, WriteQueue, SUPPRESS } from '../src/router';
-import { fakeStorage } from '@ai-dict/core/test/fakes';
+import { buildRouter, WriteQueue, SUPPRESS } from '../../src/app/router';
+import { fakeStorage } from '../fakes';
 import {
   historyList,
   type LookupResult,
   type WireMessage,
   type LookupRequest,
   type PublicSettings,
-} from '@ai-dict/core';
+} from '../../src';
 
 const result: LookupResult = {
   markdown: '#',
@@ -230,7 +230,7 @@ describe('buildRouter', () => {
   });
 
   it('WriteQueue serializes RMW (raw concurrent append loses an entry — documents WHY the queue exists)', async () => {
-    const { historyAppend } = await import('@ai-dict/core');
+    const { historyAppend } = await import('../../src');
     const s = fakeStorage();
     const e = (id: string) => ({ id, word: id, context: '', result, createdAt: Number(id) });
     await Promise.all([

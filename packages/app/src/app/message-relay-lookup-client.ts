@@ -4,8 +4,8 @@ import type {
   LookupResult,
   WireReply,
   LookupError,
-} from '@ai-dict/core';
-import { mapError } from '@ai-dict/core';
+} from '../index';
+import { mapError } from '../index';
 
 export interface RuntimeLike {
   sendMessage(message: unknown): Promise<unknown>;

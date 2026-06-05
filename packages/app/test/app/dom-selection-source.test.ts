@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { extractSentence, DomSelectionSource } from './dom-selection-source';
-import type { SelectionEvent } from '@ai-dict/core';
+import { extractSentence, DomSelectionSource } from '../../src/app/dom-selection-source';
+import type { SelectionEvent } from '../../src';
 
 describe('extractSentence (sentence-boundary detection: . ! ?)', () => {
   const text = 'First one. The bank by the river is steep! Third.';

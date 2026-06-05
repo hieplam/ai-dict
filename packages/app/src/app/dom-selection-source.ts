@@ -1,4 +1,4 @@
-import type { SelectionSource, SelectionEvent, AnchorRect } from '@ai-dict/core';
+import type { SelectionSource, SelectionEvent, AnchorRect } from '../index';
 
 const TERMINATORS = ['.', '!', '?'];
 

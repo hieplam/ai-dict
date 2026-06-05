@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
-import { MessageRelayLookupClient, randomId } from './message-relay-lookup-client';
-import { isLookupError, type LookupResult } from '@ai-dict/core';
+import { MessageRelayLookupClient, randomId } from '../../src/app/message-relay-lookup-client';
+import { isLookupError, type LookupResult } from '../../src';
 
 const okResult: LookupResult = {
   markdown: '#',
@@ -68,6 +68,21 @@ describe('MessageRelayLookupClient', () => {
     expect((err as { code: string }).code).toBe('PARSE');
   });
 
+  it('default genId (randomId) makes a v4 UUID via getRandomValues — works without a secure context', async () => {
+    // Regression: the previous default `crypto.randomUUID()` is undefined on plain http:// pages
+    // (non-secure context) and threw "is not a function", failing every lookup there. randomId
+    // uses crypto.getRandomValues, which is available everywhere.
+    const sendMessage = vi.fn(() =>
+      Promise.resolve({ ok: true, type: 'lookup', result: okResult, requestId: 'x' }),
+    );
+    await new MessageRelayLookupClient({ sendMessage }).lookup(req); // exercises the DEFAULT genId
+    const calls = sendMessage.mock.calls as Array<Array<{ requestId: string }>>;
+    expect(calls[0]?.[0]?.requestId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
+    );
+    expect(randomId()).not.toBe(randomId()); // unique each call
+  });
+
   it('on signal abort, sends a lookup.cancel for the same requestId', async () => {
     const ac = new AbortController();
     const sent: unknown[] = [];
@@ -81,30 +96,5 @@ describe('MessageRelayLookupClient', () => {
     ac.abort();
     expect(sent).toContainEqual({ type: 'lookup', req, requestId: 'id-9' });
     expect(sent).toContainEqual({ type: 'lookup.cancel', requestId: 'id-9' });
-  });
-
-  // Exercise the default genId (randomId) — the constructor's second parameter is optional.
-  // randomId builds a v4 UUID from crypto.getRandomValues, which (unlike crypto.randomUUID)
-  // is available in non-secure contexts, so content scripts on plain http:// pages still work.
-  it('uses the default genId (randomId) when no genId is supplied', async () => {
-    const sendMessage = vi.fn(() =>
-      Promise.resolve({ ok: true, type: 'lookup', result: okResult }),
-    );
-    const c = new MessageRelayLookupClient({ sendMessage });
-    const result = await c.lookup(req);
-    expect(result).toEqual(okResult);
-    expect(sendMessage).toHaveBeenCalledTimes(1);
-    const calls = sendMessage.mock.calls as Array<Array<{ requestId: string }>>;
-    const msg = calls[0]?.[0];
-    expect(msg?.requestId).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
-    );
-  });
-
-  it('randomId produces unique v4 UUIDs', () => {
-    expect(randomId()).not.toBe(randomId());
-    expect(randomId()).toMatch(
-      /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/,
-    );
   });
 });
