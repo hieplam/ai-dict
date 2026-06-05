@@ -1,5 +1,4 @@
-import type { ResultRenderer, LookupResult, LookupError } from '@ai-dict/core';
-import type { RuntimeLike } from './message-relay-lookup-client';
+import type { ResultRenderer, LookupResult, LookupError, RuntimeLike } from '@ai-dict/app';
 
 export class ChromeSidePanelMirror implements ResultRenderer {
   constructor(private readonly runtime: RuntimeLike) {}

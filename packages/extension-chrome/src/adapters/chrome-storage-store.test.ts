@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ChromeStorageStore } from './chrome-storage-store';
-import { DEFAULT_TEMPLATE } from '@ai-dict/core';
+import { DEFAULT_TEMPLATE } from '@ai-dict/app';
 
 function fakeArea(seed?: unknown) {
   let stored = seed;

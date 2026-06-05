@@ -1,10 +1,7 @@
-import { runLookupWorkflow } from '@ai-dict/core'; // NOT @ai-dict/core/workflow (no such subpath)
+import { runLookupWorkflow, InlineBottomSheetRenderer, DomSelectionSource, MessageRelayLookupClient } from '@ai-dict/app';
 // Custom elements are defined by content-elements.ts (world:MAIN) — see manifest.json.
 // Do NOT re-import them here; the page's registry is shared between worlds via the DOM.
-import { InlineBottomSheetRenderer } from '@ai-dict/adapters-shared';
-import { DomSelectionSource } from './adapters/dom-selection-source';
 import { ChromeFloatingTrigger } from './adapters/chrome-floating-trigger';
-import { MessageRelayLookupClient } from './adapters/message-relay-lookup-client';
 import { MessageRelaySettingsStore } from './adapters/message-relay-settings-store';
 import { ChromeSidePanelMirror } from './adapters/chrome-side-panel-mirror';
 

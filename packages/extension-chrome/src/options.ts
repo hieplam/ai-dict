@@ -1,6 +1,5 @@
-import '@ai-dict/shared-ui/settings-form';
-import type { SettingsFormValue } from '@ai-dict/shared-ui';
-import { DEFAULT_TEMPLATE, type Settings } from '@ai-dict/core';
+import { registerSettingsForm, DEFAULT_TEMPLATE, type Settings, type SettingsFormValue } from '@ai-dict/app';
+registerSettingsForm();
 
 const form = document.querySelector('settings-form')!;
 const DEFAULTS: Settings = {

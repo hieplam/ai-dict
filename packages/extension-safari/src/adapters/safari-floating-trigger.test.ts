@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { SafariFloatingTrigger } from './safari-floating-trigger';
-import '@ai-dict/shared-ui/lookup-trigger';
+import { registerContentElements } from '@ai-dict/app';
+registerContentElements();
 
 describe('SafariFloatingTrigger (TriggerUI via <lookup-trigger>)', () => {
   it('show() mounts the trigger and fires onClick on lookup-click; hide() removes it', () => {

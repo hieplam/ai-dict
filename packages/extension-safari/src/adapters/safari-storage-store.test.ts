@@ -1,8 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { SafariStorageStore } from './safari-storage-store';
-import { DEFAULT_TEMPLATE } from '@ai-dict/core';
-import { buildRouter, WriteQueue } from '../router';
-import { fakeStorage } from '@ai-dict/core/test/fakes';
+import { DEFAULT_TEMPLATE, buildRouter, WriteQueue } from '@ai-dict/app';
+import { fakeStorage } from '@ai-dict/app/test/fakes';
 
 function fakeArea(seed?: unknown) {
   let stored = seed;

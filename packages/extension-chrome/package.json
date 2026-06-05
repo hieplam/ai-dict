@@ -10,9 +10,7 @@
     "e2e": "playwright test"
   },
   "dependencies": {
-    "@ai-dict/core": "workspace:*",
-    "@ai-dict/shared-ui": "workspace:*",
-    "@ai-dict/adapters-shared": "workspace:*"
+    "@ai-dict/app": "workspace:*"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.270",
