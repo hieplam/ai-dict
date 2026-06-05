@@ -113,8 +113,9 @@ Platforms implement the interfaces; `app` and `domain` never import a platform.
 | `wire.ts` | `core/src/wire-schema.ts` (zod; now imported at runtime too) |
 | `app/gemini-lookup-client.ts`, `app/markdown-sanitize.ts`, `app/inline-bottom-sheet-renderer.ts` | `adapters-shared/src/*` |
 | `app/router.ts`, `app/inbound.ts`, `app/dom-selection-source.ts`, `app/message-relay-lookup-client.ts` | the identical chrome/safari copies (one survives) |
-| `ui/*` | all of `shared-ui/src/*` |
-| `index.ts` | new barrel re-exporting the public surface |
+| `ui/*` | all of `shared-ui/src/*`, with the 4 top-level `customElements.define` calls removed from the class modules |
+| `ui/register.ts` | new — `registerContentElements()` + `registerSettingsForm()` (extracted side effects) |
+| `index.ts` | new barrel re-exporting the public surface (incl. the two register fns) |
 
 | Stays in `extension-chrome` / `extension-safari` | |
 |---|---|
@@ -150,6 +151,51 @@ Platforms implement the interfaces; `app` and `domain` never import a platform.
 - **`knip.json`, `tsconfig.base.json`, `vitest.config.ts`:** update any path/workspace
   globs that name the deleted packages.
 
+## Custom-Element Registration (single-barrel safety)
+
+The single barrel introduces one hazard that must be handled. The four `shared-ui`
+modules register their custom elements with a **top-level** side effect:
+
+```ts
+if (!customElements.get('lookup-card')) customElements.define('lookup-card', LookupCard);
+```
+
+A service worker has no `customElements` global. With a single barrel, `sw.ts`'s
+`import { ... } from '@ai-dict/app'` risks bundling these top-level calls into `sw.js`,
+crashing the worker on startup (today it is safe only because `sw.ts` imports `@ai-dict/core`,
+which has no UI). Registration is also **selective per entry point**:
+
+- chrome `content-elements.ts` (MAIN world) + safari `content.ts`: register
+  `lookup-trigger`, `lookup-card`, `bottom-sheet`.
+- chrome/safari `options.ts`: register `settings-form`.
+- `sw.ts`: register nothing.
+
+**Resolution:** move the four `define` calls out of the class modules into explicit
+functions in `app/ui/register.ts`, exported from the barrel:
+
+```ts
+// @ai-dict/app/src/ui/register.ts
+import { LookupTrigger } from './lookup-trigger';
+import { LookupCard } from './lookup-card';
+import { BottomSheet } from './bottom-sheet';
+import { SettingsForm } from './settings-form';
+
+export function registerContentElements(): void {
+  if (!customElements.get('lookup-trigger')) customElements.define('lookup-trigger', LookupTrigger);
+  if (!customElements.get('lookup-card')) customElements.define('lookup-card', LookupCard);
+  if (!customElements.get('bottom-sheet')) customElements.define('bottom-sheet', BottomSheet);
+}
+
+export function registerSettingsForm(): void {
+  if (!customElements.get('settings-form')) customElements.define('settings-form', SettingsForm);
+}
+```
+
+The class modules become side-effect-free (export the class only). Entry points call the
+function they need (`registerContentElements()` in content, `registerSettingsForm()` in
+options); `sw.ts` calls neither, so the barrel never executes `customElements` in the worker.
+`shared-ui` tests that asserted registration-on-import are updated to call the function first.
+
 ## Dependency-Direction Invariants
 
 After the move these must hold (eslint `import-x` boundary rules where configured, else
@@ -167,7 +213,10 @@ Small, independently-verifiable steps; tests stay green at each step.
 1. Scaffold `@ai-dict/app` (package.json, tsconfig, vitest.config, empty `src/`).
 2. Move `core` → `app/{domain,ports,wire}` + tests; add barrel `index.ts`; rewire the two
    extensions' `@ai-dict/core` imports to `@ai-dict/app`; `bun run test` green.
-3. Move `shared-ui` → `app/ui` + tests; rewire; green.
+3. Move `shared-ui` → `app/ui` + tests; extract the 4 `customElements.define` calls into
+   `app/ui/register.ts` (`registerContentElements`/`registerSettingsForm`); update the
+   registration tests + the entry points (`content-elements.ts`, safari `content.ts`,
+   `options.ts`) to call the functions; rewire; green.
 4. Move `adapters-shared` → `app/app/*` + tests; rewire; green.
 5. Move the **identical** chrome/safari files (`router`, `inbound`, `dom-selection-source`,
    `message-relay-lookup-client`) into `app/app/*`; delete the duplicates; rewire both
