@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { fnv1a64Hex, deriveCacheKey, cacheGet, cachePut, cacheClear } from '../src/domain/cache-policy';
+import {
+  fnv1a64Hex,
+  deriveCacheKey,
+  cacheGet,
+  cachePut,
+  cacheClear,
+} from '../src/domain/cache-policy';
 import type { Storage, LookupResult } from '../src';
 
 function memStorage(): Storage {

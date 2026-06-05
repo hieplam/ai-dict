@@ -5,8 +5,7 @@ Run on the tagged commit (`vX.Y.Z` on `main`) before publishing.
 ## Pre-tag
 
 - [ ] All CI green on the commit to be tagged.
-- [ ] `wire-schema.snapshot.json` matches generated (`bun run wire:check` clean).
-- [ ] Bundle sizes within budget (`bun run size`).
+- [ ] Wire-schema contract tests pass (`bun run --filter @ai-dict/app test wire-schema` green).
 - [ ] `bun audit --audit-level=high` clean (no high/critical advisories).
 - [ ] `gitleaks` clean (no secrets in history).
 - [ ] `release:bump X.Y.Z` ran: root `package.json` version + both manifests + Xcode `MARKETING_VERSION` all equal the tag.

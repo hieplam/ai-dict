@@ -27,6 +27,7 @@
 ## Task 0: Scaffold the `@ai-dict/app` package
 
 **Files:**
+
 - Create: `packages/app/package.json`
 - Create: `packages/app/tsconfig.json`
 - Create: `packages/app/vitest.config.ts`
@@ -118,6 +119,7 @@ git commit -m "chore(app): scaffold empty @ai-dict/app package"
 The old `core` package stays in place for now (still consumed by shared-ui/adapters-shared/extensions); we are **copying its content into app** so app becomes self-sufficient. We physically move the files and re-create `core` as a thin re-export shim so nothing breaks until the final delete.
 
 **Files:**
+
 - Move: `packages/core/src/{types,ports,default-template,prompt-template,cache-policy,history-policy,error-mapper,workflow}.ts` → `packages/app/src/domain/` (and `ports.ts` → `packages/app/src/ports.ts`, `wire-schema.ts` → `packages/app/src/wire.ts`)
 - Move: `packages/core/test/**` → `packages/app/test/**`
 - Modify: `packages/app/src/index.ts` (real barrel)
@@ -156,6 +158,7 @@ grep -rn "from '\./" packages/app/src/domain packages/app/src/ports.ts packages/
 ```
 
 Apply these rules:
+
 - Inside `packages/app/src/domain/*.ts`: imports of former siblings now in `domain/` stay `./x`. An import of `./ports` becomes `../ports`. An import of `./wire-schema` becomes `../wire`.
 - Inside `packages/app/src/ports.ts`: `./types` becomes `./domain/types`.
 - Inside `packages/app/src/wire.ts`: `./types` becomes `./domain/types`.
@@ -235,6 +238,7 @@ git commit -m "refactor(app): move core domain/ports/wire into @ai-dict/app, cor
 ## Task 2: Move `shared-ui` into `@ai-dict/app/ui` + extract element registration
 
 **Files:**
+
 - Move: `packages/shared-ui/src/*` → `packages/app/src/ui/*`
 - Move: `packages/shared-ui/test/*` → `packages/app/test/ui/*` (or alongside; keep `*.test.ts`)
 - Create: `packages/app/src/ui/register.ts`
@@ -264,6 +268,7 @@ grep -rn "from '@ai-dict/core'\|from '\.\./" packages/app/src/ui packages/app/te
 ```
 
 Rules:
+
 - `from '@ai-dict/core'` → `from '../../src'` is wrong for tests; for **src** ui files use `from '../domain/types'` etc. via the barrel: replace `from '@ai-dict/core'` with `from '../index'` inside `packages/app/src/ui/*.ts` (the barrel is one level up). For nested `styles/adopt.ts`, use `from '../../index'` if it imports core.
 - In `packages/app/test/ui/*.ts`: replace `from '@ai-dict/shared-ui/...'` with `from '../../src/ui/...'`, and `from '@ai-dict/core'` with `from '../../src'`.
 
@@ -272,6 +277,7 @@ Rules:
 In each of `packages/app/src/ui/lookup-trigger.ts`, `lookup-card.ts`, `bottom-sheet.ts`, `settings-form.ts`, delete the final registration line (the one matching `customElements.define(...)`). Leave the exported class intact.
 
 Lines to delete (exact current text):
+
 ```ts
 if (!customElements.get('lookup-trigger')) customElements.define('lookup-trigger', LookupTrigger);
 if (!customElements.get('lookup-card')) customElements.define('lookup-card', LookupCard);
@@ -321,8 +327,8 @@ Tests that asserted "importing the module defines the element" must now call the
 ```ts
 import { registerContentElements, registerSettingsForm } from '../../src/ui/register';
 // in a beforeEach or at the top of the relevant test:
-registerContentElements();   // for trigger/card/bottom-sheet specs
-registerSettingsForm();      // for the settings-form spec
+registerContentElements(); // for trigger/card/bottom-sheet specs
+registerSettingsForm(); // for the settings-form spec
 ```
 
 Run the ui tests to find which assertions broke and fix each:
@@ -340,13 +346,16 @@ export * from '@ai-dict/app';
 The old subpath imports (`@ai-dict/shared-ui/lookup-card` etc.) are still used by the extensions as **side-effect** imports for registration. They will be replaced in Tasks 4–5. Until then, recreate those subpath files as registration shims so current behavior is preserved. Replace `packages/shared-ui/package.json` `exports` with files that call the registration:
 
 Create `packages/shared-ui/src/_register-trigger.ts`:
+
 ```ts
 import { registerContentElements } from '@ai-dict/app';
 registerContentElements();
 ```
+
 (and `_register-card.ts`, `_register-bottom-sheet.ts` with the same body — registration is idempotent; `_register-settings.ts` calls `registerSettingsForm()` instead.)
 
 Set `packages/shared-ui/package.json`:
+
 ```json
 {
   "name": "@ai-dict/shared-ui",
@@ -390,6 +399,7 @@ git commit -m "refactor(app): move shared-ui into @ai-dict/app/ui, extract eleme
 ## Task 3: Move `adapters-shared` into `@ai-dict/app/app`
 
 **Files:**
+
 - Move: `packages/adapters-shared/src/*` → `packages/app/src/app/*`
 - Move: `packages/adapters-shared/test/*` → `packages/app/test/app/*`
 - Modify: app barrel
@@ -413,6 +423,7 @@ grep -rn "from '@ai-dict/core'\|from '@ai-dict/shared-ui'\|from '\.\./" packages
 ```
 
 Rules:
+
 - In `packages/app/src/app/*.ts`: `from '@ai-dict/core'` → `from '../index'`; `from '@ai-dict/shared-ui'` or `from '@ai-dict/shared-ui/lookup-card'` (type imports) → `from '../ui/lookup-card'` (relative to `src/app/`).
 - In `packages/app/test/app/*.ts`: `from '@ai-dict/adapters-shared'` → `from '../../src/app/<module>'`; `from '@ai-dict/core'` → `from '../../src'`; `from '@ai-dict/shared-ui/...'` → `from '../../src/ui/...'`.
 
@@ -427,6 +438,7 @@ export * from './app/inline-bottom-sheet-renderer';
 - [ ] **Step 4: Turn old `adapters-shared` into a shim**
 
 Set `packages/adapters-shared/package.json`:
+
 ```json
 {
   "name": "@ai-dict/adapters-shared",
@@ -445,6 +457,7 @@ Set `packages/adapters-shared/package.json`:
 ```
 
 Create `packages/adapters-shared/src/index.ts`:
+
 ```ts
 export * from '@ai-dict/app';
 ```
@@ -474,6 +487,7 @@ git commit -m "refactor(app): move adapters-shared into @ai-dict/app/app"
 These four files are byte-identical across the two extensions: `router.ts`, `inbound.ts`, `adapters/dom-selection-source.ts`, `adapters/message-relay-lookup-client.ts`. One copy moves into `app`; both extensions will import it.
 
 **Files:**
+
 - Move (from chrome copy): `packages/extension-chrome/src/router.ts`, `src/inbound.ts`, `src/adapters/dom-selection-source.ts`, `src/adapters/message-relay-lookup-client.ts` → `packages/app/src/app/`
 - Delete (safari duplicates): the same four under `packages/extension-safari/src`
 - Move the corresponding tests into `packages/app/test/app/`
@@ -503,6 +517,7 @@ grep -rn "from '@ai-dict/core'\|from '@ai-dict/adapters-shared'\|from '\./" pack
 ```
 
 Rules (these files now live in `src/app/`):
+
 - `from '@ai-dict/core'` → `from '../index'`.
 - `from '@ai-dict/adapters-shared/...'` or `'@ai-dict/adapters-shared'` → `from './<module>'` (e.g. `./gemini-lookup-client`).
 - `inbound.ts` imports the wire schema: ensure it imports `WireMessageSchema`/`WireReplySchema` from `../index` (the real zod schema — no lite shim).
@@ -570,15 +585,17 @@ In `packages/extension-chrome/package.json` and `packages/extension-safari/packa
     "@ai-dict/app": "workspace:*"
   },
 ```
+
 (keep each extension's existing devDependencies: `@types/chrome`/`@types/webextension-polyfill`, `@playwright/test` (chrome), `esbuild`, `happy-dom`.)
 
-- [ ] **Step 2: Rewire library imports in both extensions' remaining `src/**`**
+- [ ] **Step 2: Rewire library imports in both extensions' remaining `src/**`\*\*
 
 ```bash
 grep -rln "@ai-dict/core\|@ai-dict/shared-ui\|@ai-dict/adapters-shared" packages/extension-chrome/src packages/extension-safari/src
 ```
 
 For each hit apply:
+
 - `from '@ai-dict/core'` → `from '@ai-dict/app'`.
 - `from '@ai-dict/adapters-shared'` and `from '@ai-dict/adapters-shared/<x>'` → `from '@ai-dict/app'`.
 - `import type { LookupCard } from '@ai-dict/shared-ui/lookup-card'` (and the other type-only ui imports) → `from '@ai-dict/app'`.
@@ -592,6 +609,7 @@ For each hit apply:
   ```
 - safari `content.ts`: delete the three `import '@ai-dict/shared-ui/...'` lines; add the same two lines as above (top of file).
 - chrome `options.ts` and safari `options.ts`: delete `import '@ai-dict/shared-ui/settings-form'`; add:
+
   ```ts
   import { registerSettingsForm } from '@ai-dict/app';
   registerSettingsForm();
@@ -606,6 +624,7 @@ grep -rn "from '\./router'\|from '\./inbound'\|from '\./adapters/dom-selection-s
 ```
 
 Replace each with the named import from `@ai-dict/app`, e.g.:
+
 - `import { buildRouter, WriteQueue, SUPPRESS } from './router';` → `from '@ai-dict/app';`
 - `import { classifyInbound } from './inbound';` → `from '@ai-dict/app';`
 - `import { DomSelectionSource } from './adapters/dom-selection-source';` → `from '@ai-dict/app';`
@@ -621,14 +640,17 @@ git rm packages/extension-safari/src/lite-wire-schema.ts packages/extension-safa
 ```
 
 Find any remaining references and repoint to the real schema from `@ai-dict/app`:
+
 ```bash
 grep -rn "lite-wire-schema" packages/extension-chrome packages/extension-safari
 ```
+
 `inbound`/`content`/`sw` that referenced the lite shim should already import `WireMessageSchema` from `@ai-dict/app`.
 
 - [ ] **Step 6: Remove the esbuild `wire-schema-shim` plugin from both configs**
 
 In `packages/extension-chrome/esbuild.config.mjs` and `packages/extension-safari/esbuild.config.mjs`:
+
 - Delete the `coreSrcDir`/`liteWireSchemaPath` consts and the entire `wireSchemaShim` plugin object (the comment block + `const wireSchemaShim = {...}`).
 - Remove `wireSchemaShim` from the `plugins: [...]` array in `common` (leave `plugins: []` or drop the key).
 
@@ -650,6 +672,7 @@ Expected: both succeed; `dist/sw.js` etc. produced. (zod is now in the bundle �
 ```bash
 grep -c "customElements" packages/extension-chrome/dist/sw.js || echo "0 — good, SW is clean"
 ```
+
 Expected: `0` (or "good"). If non-zero, a UI module leaked into the SW bundle — re-check that `sw.ts` imports only logic symbols and that the class modules no longer call `define` at top level.
 
 - [ ] **Step 9: Commit**
@@ -670,6 +693,7 @@ Nothing imports `@ai-dict/{core,shared-ui,adapters-shared}` anymore (all rewired
 ```bash
 grep -rn "@ai-dict/core\|@ai-dict/shared-ui\|@ai-dict/adapters-shared" packages --include='*.ts' --include='*.mjs' --include='*.json' | grep -v node_modules | grep -v coverage
 ```
+
 Expected: only matches inside the packages about to be deleted (the shims themselves). If any other file matches, fix it first.
 
 - [ ] **Step 2: Delete the packages**
@@ -697,6 +721,7 @@ git commit -m "refactor: delete old core/shared-ui/adapters-shared packages (mer
 ## Task 7: Remove the dropped gates, CI jobs, and stale references
 
 **Files:**
+
 - Delete: `scripts/wire-check.mjs`, `packages/core/wire-schema.snapshot.json` (already gone with core — verify), `.size-limit.json`
 - Modify: root `package.json` (drop `wire:check`, `size` scripts), `.github/workflows/ci.yml`, `knip.json`, `tsconfig.base.json`, `RELEASE_CHECKLIST.md`
 
@@ -710,10 +735,12 @@ ls packages/core 2>/dev/null && echo "core still present — should be gone" || 
 - [ ] **Step 2: Drop root scripts**
 
 In `package.json`, remove these two lines from `scripts`:
+
 ```json
     "wire:check": "bun scripts/wire-check.mjs",
     "size": "size-limit",
 ```
+
 Also remove `@size-limit/file` and `size-limit` from `devDependencies` (no longer used).
 
 - [ ] **Step 3: Update `.github/workflows/ci.yml`**
@@ -730,6 +757,7 @@ Also remove `@size-limit/file` and `size-limit` from `devDependencies` (no longe
 ```bash
 grep -n "core\|shared-ui\|adapters-shared\|size-limit\|wire-check" knip.json tsconfig.base.json
 ```
+
 Update any `workspaces`/`paths`/`entry`/`project` globs that named the deleted packages or scripts to reference `packages/app` instead.
 
 - [ ] **Step 5: Update `RELEASE_CHECKLIST.md`**
@@ -737,6 +765,7 @@ Update any `workspaces`/`paths`/`entry`/`project` globs that named the deleted p
 ```bash
 grep -n "core\|shared-ui\|adapters-shared\|wire:check\|size" RELEASE_CHECKLIST.md
 ```
+
 Remove/repoint any steps referencing `wire:check`, `size`, or the deleted package names.
 
 - [ ] **Step 6: Verify everything green**
@@ -767,6 +796,7 @@ bun run build:chrome
 bun run build:safari
 bun run e2e:chrome
 ```
+
 Expected: all PASS. If `format:check` fails, run `bun run format` and re-commit.
 
 - [ ] **Step 2: Verify the end-state invariants**
@@ -775,6 +805,7 @@ Expected: all PASS. If `format:check` fails, run `bun run format` and re-commit.
 ls packages            # expect exactly: app  extension-chrome  extension-safari
 grep -rn "@ai-dict/core\|@ai-dict/shared-ui\|@ai-dict/adapters-shared\|lite-wire\|wire:check\|size-limit" packages scripts .github knip.json package.json | grep -v node_modules | grep -v coverage
 ```
+
 Expected: package list is the 3 packages; the grep returns nothing.
 
 - [ ] **Step 3: Confirm no duplication remains between extensions**
@@ -791,6 +822,7 @@ echo "(no STILL IDENTICAL lines = good)"
 ```bash
 grep -n "wire:check\|size\|core\|shared-ui\|adapters-shared" README.md
 ```
+
 Repoint or remove any stale references (the "Known tradeoffs" note added earlier stays).
 
 - [ ] **Step 5: Push and open the PR**

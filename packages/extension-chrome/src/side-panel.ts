@@ -1,4 +1,11 @@
-import { registerContentElements, sanitizeMarkdown, type CardState, type LookupCard, type LookupResult, type LookupError } from '@ai-dict/app';
+import {
+  registerContentElements,
+  sanitizeMarkdown,
+  type CardState,
+  type LookupCard,
+  type LookupResult,
+  type LookupError,
+} from '@ai-dict/app';
 registerContentElements();
 
 // Structural guard: verify the payload is a valid LookupResult before passing it to

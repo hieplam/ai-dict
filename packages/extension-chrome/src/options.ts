@@ -1,4 +1,9 @@
-import { registerSettingsForm, DEFAULT_TEMPLATE, type Settings, type SettingsFormValue } from '@ai-dict/app';
+import {
+  registerSettingsForm,
+  DEFAULT_TEMPLATE,
+  type Settings,
+  type SettingsFormValue,
+} from '@ai-dict/app';
 registerSettingsForm();
 
 const form = document.querySelector('settings-form')!;

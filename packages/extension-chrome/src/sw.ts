@@ -1,4 +1,13 @@
-import { mapError, DEFAULT_TEMPLATE, type Settings, GeminiLookupClient, buildRouter, WriteQueue, SUPPRESS, classifyInbound } from '@ai-dict/app';
+import {
+  mapError,
+  DEFAULT_TEMPLATE,
+  type Settings,
+  GeminiLookupClient,
+  buildRouter,
+  WriteQueue,
+  SUPPRESS,
+  classifyInbound,
+} from '@ai-dict/app';
 import { ChromeKvStore } from './adapters/chrome-kv-store';
 import { ChromeStorageStore } from './adapters/chrome-storage-store';
 

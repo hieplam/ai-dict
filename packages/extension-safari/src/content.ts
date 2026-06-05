@@ -1,4 +1,10 @@
-import { runLookupWorkflow, registerContentElements, InlineBottomSheetRenderer, DomSelectionSource, MessageRelayLookupClient } from '@ai-dict/app';
+import {
+  runLookupWorkflow,
+  registerContentElements,
+  InlineBottomSheetRenderer,
+  DomSelectionSource,
+  MessageRelayLookupClient,
+} from '@ai-dict/app';
 import { SafariFloatingTrigger } from './adapters/safari-floating-trigger';
 import { MessageRelaySettingsStore } from './adapters/message-relay-settings-store';
 registerContentElements();

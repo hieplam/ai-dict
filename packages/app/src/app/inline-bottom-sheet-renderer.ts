@@ -1,10 +1,5 @@
 import type { ResultRenderer, LookupResult, LookupError } from '../index';
-import {
-  renderCardState,
-  type CardState,
-  type LookupCard,
-  type SafeHtml,
-} from '../ui/index';
+import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '../ui/index';
 import { sanitizeMarkdown } from './markdown-sanitize';
 
 export class InlineBottomSheetRenderer implements ResultRenderer {

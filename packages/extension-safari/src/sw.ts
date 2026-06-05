@@ -1,4 +1,13 @@
-import { mapError, DEFAULT_TEMPLATE, type Settings, GeminiLookupClient, buildRouter, WriteQueue, SUPPRESS, classifyInbound } from '@ai-dict/app';
+import {
+  mapError,
+  DEFAULT_TEMPLATE,
+  type Settings,
+  GeminiLookupClient,
+  buildRouter,
+  WriteQueue,
+  SUPPRESS,
+  classifyInbound,
+} from '@ai-dict/app';
 import { SafariKvStore } from './adapters/safari-kv-store';
 import { SafariStorageStore } from './adapters/safari-storage-store';
 

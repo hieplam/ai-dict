@@ -1,10 +1,4 @@
-import type {
-  LookupClient,
-  LookupRequest,
-  LookupResult,
-  WireReply,
-  LookupError,
-} from '../index';
+import type { LookupClient, LookupRequest, LookupResult, WireReply, LookupError } from '../index';
 import { mapError } from '../index';
 
 export interface RuntimeLike {

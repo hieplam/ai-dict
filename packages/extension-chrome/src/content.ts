@@ -1,4 +1,9 @@
-import { runLookupWorkflow, InlineBottomSheetRenderer, DomSelectionSource, MessageRelayLookupClient } from '@ai-dict/app';
+import {
+  runLookupWorkflow,
+  InlineBottomSheetRenderer,
+  DomSelectionSource,
+  MessageRelayLookupClient,
+} from '@ai-dict/app';
 // Custom elements are defined by content-elements.ts (world:MAIN) — see manifest.json.
 // Do NOT re-import them here; the page's registry is shared between worlds via the DOM.
 import { ChromeFloatingTrigger } from './adapters/chrome-floating-trigger';

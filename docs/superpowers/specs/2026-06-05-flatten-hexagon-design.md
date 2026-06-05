@@ -12,10 +12,10 @@ Gemini → render a card), shipped to Chrome and Safari. It is built with a full
 this is over-engineered: the layering forces **file duplication** across the two extension
 packages and a multi-package indirection that adds navigation cost without adding value.
 
-Verified duplication — and the project even has a CI job (`shared-drift`) that *enforces*
+Verified duplication — and the project even has a CI job (`shared-drift`) that _enforces_
 these files staying byte-identical across `extension-chrome` and `extension-safari`, with a
-comment anticipating this exact fix (*"hoist to a shared package if a 3rd consumer
-appeared"*):
+comment anticipating this exact fix (_"hoist to a shared package if a 3rd consumer
+appeared"_):
 
 - `src/router.ts` (153 lines each)
 - `src/inbound.ts`
@@ -27,12 +27,14 @@ appeared"*):
 Keep the principles that earn their keep, drop the ceremony that does not.
 
 **Keep:**
+
 - **One-directional dependency flow.**
 - **Abstraction via interfaces** (the `ports.ts` seam).
 - **Pure domain** (no platform/UI imports).
 - **Full test coverage** — refactor under green tests (baseline: 282 tests passing).
 
 **Drop:**
+
 - Multi-package indirection (5 → 3 packages).
 - Per-platform file duplication.
 - The entire wire-schema shim/drift/size apparatus (see Decisions below).
@@ -64,7 +66,7 @@ Keep the principles that earn their keep, drop the ceremony that does not.
    esbuild `wire-schema-shim` plugin in both `esbuild.config.mjs`, are removed.
 5. **Delete the drift gate.** `scripts/wire-check.mjs`, `wire-schema.snapshot.json`, the
    `wire:check` root script, the snapshot test in `wire-schema.test.ts`, and the CI
-   `wire-schema-check` job are removed. The schema's accept/reject *behavior* is still
+   `wire-schema-check` job are removed. The schema's accept/reject _behavior_ is still
    covered by the rest of `wire-schema.test.ts`.
 6. **Delete the size gate.** `.size-limit.json`, the `size` root script, and the CI
    `size-check` job are removed.
@@ -106,25 +108,26 @@ Platforms implement the interfaces; `app` and `domain` never import a platform.
 
 ## File Map (old → new)
 
-| New location (`@ai-dict/app/src/`) | Source |
-|---|---|
-| `domain/*` | all of `core/src/*` except `ports.ts`, `wire-schema.ts`, `index.ts` |
-| `ports.ts` | `core/src/ports.ts` |
-| `wire.ts` | `core/src/wire-schema.ts` (zod; now imported at runtime too) |
-| `app/gemini-lookup-client.ts`, `app/markdown-sanitize.ts`, `app/inline-bottom-sheet-renderer.ts` | `adapters-shared/src/*` |
-| `app/router.ts`, `app/inbound.ts`, `app/dom-selection-source.ts`, `app/message-relay-lookup-client.ts` | the identical chrome/safari copies (one survives) |
-| `ui/*` | all of `shared-ui/src/*`, with the 4 top-level `customElements.define` calls removed from the class modules |
-| `ui/register.ts` | new — `registerContentElements()` + `registerSettingsForm()` (extracted side effects) |
-| `index.ts` | new barrel re-exporting the public surface (incl. the two register fns) |
+| New location (`@ai-dict/app/src/`)                                                                     | Source                                                                                                      |
+| ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
+| `domain/*`                                                                                             | all of `core/src/*` except `ports.ts`, `wire-schema.ts`, `index.ts`                                         |
+| `ports.ts`                                                                                             | `core/src/ports.ts`                                                                                         |
+| `wire.ts`                                                                                              | `core/src/wire-schema.ts` (zod; now imported at runtime too)                                                |
+| `app/gemini-lookup-client.ts`, `app/markdown-sanitize.ts`, `app/inline-bottom-sheet-renderer.ts`       | `adapters-shared/src/*`                                                                                     |
+| `app/router.ts`, `app/inbound.ts`, `app/dom-selection-source.ts`, `app/message-relay-lookup-client.ts` | the identical chrome/safari copies (one survives)                                                           |
+| `ui/*`                                                                                                 | all of `shared-ui/src/*`, with the 4 top-level `customElements.define` calls removed from the class modules |
+| `ui/register.ts`                                                                                       | new — `registerContentElements()` + `registerSettingsForm()` (extracted side effects)                       |
+| `index.ts`                                                                                             | new barrel re-exporting the public surface (incl. the two register fns)                                     |
 
-| Stays in `extension-chrome` / `extension-safari` | |
-|---|---|
-| `manifest.json`, `sw.ts`, `content.ts`, `options.ts`, `options.html` | platform entry points |
-| chrome only: `content-elements.ts`, `side-panel.ts`, `side-panel.html` | platform entry points |
+| Stays in `extension-chrome` / `extension-safari`                                                                       |                             |
+| ---------------------------------------------------------------------------------------------------------------------- | --------------------------- |
+| `manifest.json`, `sw.ts`, `content.ts`, `options.ts`, `options.html`                                                   | platform entry points       |
+| chrome only: `content-elements.ts`, `side-panel.ts`, `side-panel.html`                                                 | platform entry points       |
 | platform adapters: storage-store, kv-store, floating-trigger, (chrome) side-panel-mirror, message-relay-settings-store | genuinely platform-specific |
-| `esbuild.config.mjs` (shim plugin removed), `playwright.config.ts` (chrome) | build config |
+| `esbuild.config.mjs` (shim plugin removed), `playwright.config.ts` (chrome)                                            | build config                |
 
 **Deleted outright:**
+
 - `packages/core`, `packages/adapters-shared`, `packages/shared-ui` (emptied into `app`).
 - `{extension-chrome,extension-safari}/src/lite-wire-schema.ts` + their `.test.ts`.
 - `scripts/wire-check.mjs`, `packages/core/wire-schema.snapshot.json`.
@@ -234,14 +237,14 @@ Small, independently-verifiable steps; tests stay green at each step.
 
 ## Risks & Mitigations
 
-| Risk | Mitigation |
-|---|---|
-| Builds break from import-path churn | One package moved per step; per-step `typecheck` + `test`. |
-| zod bundling breaks the build (unlikely) | `bun run build:chrome`/`build:safari` in step 6 must succeed before proceeding. |
-| Service-worker cold-start latency from zod | Accepted + documented in README; out of scope to fix now. |
-| e2e (Chrome) breaks from entry/manifest changes | Manifests + entry points stay in place; run `e2e:chrome` in step 9. |
-| Dangling references to deleted packages/gates | Grep sweep in step 8 across CI, knip, tsconfig, release docs, scripts. |
-| Behavior regression in message validation | `wire-schema.test.ts` behavior tests + `inbound.test.ts` (both platforms) must stay green. |
+| Risk                                            | Mitigation                                                                                 |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Builds break from import-path churn             | One package moved per step; per-step `typecheck` + `test`.                                 |
+| zod bundling breaks the build (unlikely)        | `bun run build:chrome`/`build:safari` in step 6 must succeed before proceeding.            |
+| Service-worker cold-start latency from zod      | Accepted + documented in README; out of scope to fix now.                                  |
+| e2e (Chrome) breaks from entry/manifest changes | Manifests + entry points stay in place; run `e2e:chrome` in step 9.                        |
+| Dangling references to deleted packages/gates   | Grep sweep in step 8 across CI, knip, tsconfig, release docs, scripts.                     |
+| Behavior regression in message validation       | `wire-schema.test.ts` behavior tests + `inbound.test.ts` (both platforms) must stay green. |
 
 ## Definition of Done
 
