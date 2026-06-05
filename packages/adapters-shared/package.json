@@ -5,21 +5,10 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./gemini-lookup-client": "./src/gemini-lookup-client.ts",
-    "./inline-bottom-sheet-renderer": "./src/inline-bottom-sheet-renderer.ts",
-    "./markdown-sanitize": "./src/markdown-sanitize.ts"
+    "./gemini-lookup-client": "./src/index.ts",
+    "./inline-bottom-sheet-renderer": "./src/index.ts",
+    "./markdown-sanitize": "./src/index.ts"
   },
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@ai-dict/core": "workspace:*",
-    "@ai-dict/shared-ui": "workspace:*",
-    "marked": "^14.0.0",
-    "dompurify": "^3.2.0"
-  },
-  "devDependencies": {
-    "happy-dom": "^15.0.0"
-  }
+  "scripts": { "typecheck": "tsc --noEmit", "test": "vitest run" },
+  "dependencies": { "@ai-dict/app": "workspace:*" }
 }

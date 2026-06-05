@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sanitizeMarkdown } from '../src/markdown-sanitize';
+import { sanitizeMarkdown } from '../../src/app/markdown-sanitize';
 
 describe('sanitizeMarkdown (S4)', () => {
   it('renders benign markdown to safe HTML', () => {

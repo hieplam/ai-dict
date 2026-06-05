@@ -1,7 +1,7 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { InlineBottomSheetRenderer } from '../src/inline-bottom-sheet-renderer';
-import type { LookupResult, LookupError } from '@ai-dict/core';
-import type { SafeHtml } from '@ai-dict/shared-ui';
+import { InlineBottomSheetRenderer } from '../../src/app/inline-bottom-sheet-renderer';
+import type { LookupResult, LookupError } from '../../src';
+import type { SafeHtml } from '../../src/ui/index';
 
 const result: LookupResult = {
   markdown: '**def** <script>alert(1)</script>',

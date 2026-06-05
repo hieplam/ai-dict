@@ -24,13 +24,7 @@
       "name": "@ai-dict/adapters-shared",
       "version": "0.0.0",
       "dependencies": {
-        "@ai-dict/core": "workspace:*",
-        "@ai-dict/shared-ui": "workspace:*",
-        "dompurify": "^3.2.0",
-        "marked": "^14.0.0",
-      },
-      "devDependencies": {
-        "happy-dom": "^15.0.0",
+        "@ai-dict/app": "workspace:*",
       },
     },
     "packages/app": {

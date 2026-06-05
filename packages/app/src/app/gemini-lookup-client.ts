@@ -5,7 +5,7 @@ import {
   type LookupRequest,
   type LookupResult,
   type LookupError,
-} from '@ai-dict/core';
+} from '../index';
 
 const ENDPOINT =
   'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { GeminiLookupClient, type FetchLike, type ResponseLike } from '../src/gemini-lookup-client';
-import { isLookupError, type LookupRequest } from '@ai-dict/core';
+import { GeminiLookupClient, type FetchLike, type ResponseLike } from '../../src/app/gemini-lookup-client';
+import { isLookupError, type LookupRequest } from '../../src';
 
 const req: LookupRequest = {
   word: 'bank',

@@ -1,12 +1,10 @@
-import type { ResultRenderer, LookupResult, LookupError } from '@ai-dict/core';
+import type { ResultRenderer, LookupResult, LookupError } from '../index';
 import {
   renderCardState,
   type CardState,
   type LookupCard,
   type SafeHtml,
-} from '@ai-dict/shared-ui';
-import '@ai-dict/shared-ui/bottom-sheet';
-import '@ai-dict/shared-ui/lookup-card';
+} from '../ui/index';
 import { sanitizeMarkdown } from './markdown-sanitize';
 
 export class InlineBottomSheetRenderer implements ResultRenderer {

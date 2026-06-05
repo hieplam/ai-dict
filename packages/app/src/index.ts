@@ -8,3 +8,6 @@ export * from './domain/error-mapper';
 export * from './wire';
 export * from './domain/workflow';
 export * from './ui/index';
+export * from './app/markdown-sanitize';
+export * from './app/gemini-lookup-client';
+export * from './app/inline-bottom-sheet-renderer';
