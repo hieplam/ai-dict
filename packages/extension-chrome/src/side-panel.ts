@@ -1,5 +1,5 @@
 import '@ai-dict/shared-ui/lookup-card';
-import type { CardState, LookupCard } from '@ai-dict/shared-ui/lookup-card';
+import type { CardState, LookupCard } from '@ai-dict/shared-ui';
 import { sanitizeMarkdown } from '@ai-dict/adapters-shared';
 import type { LookupResult, LookupError } from '@ai-dict/core';
 

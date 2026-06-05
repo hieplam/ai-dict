@@ -1,6 +1,6 @@
 import { Marked } from 'marked';
 import DOMPurify from 'dompurify';
-import type { SafeHtml } from '@ai-dict/shared-ui/lookup-card';
+import type { SafeHtml } from '@ai-dict/shared-ui';
 
 // Spec S4: "markdown renderer with raw HTML DISABLED".
 // Strip any literal HTML from the markdown source before lexing — this is the

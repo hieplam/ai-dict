@@ -1,6 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
-import '../src/lookup-trigger';
+import { registerContentElements } from '../../src/ui/register';
+
+beforeAll(() => {
+  registerContentElements();
+});
 
 function mount<T extends HTMLElement>(tag: string): T {
   const el = document.createElement(tag) as T;

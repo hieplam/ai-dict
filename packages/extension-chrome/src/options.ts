@@ -1,5 +1,5 @@
 import '@ai-dict/shared-ui/settings-form';
-import type { SettingsFormValue } from '@ai-dict/shared-ui/settings-form';
+import type { SettingsFormValue } from '@ai-dict/shared-ui';
 import { DEFAULT_TEMPLATE, type Settings } from '@ai-dict/core';
 
 const form = document.querySelector('settings-form')!;

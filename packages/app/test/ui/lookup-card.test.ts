@@ -1,7 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
-import { LookupCard, renderCardState, type SafeHtml } from '../src/lookup-card';
-import '../src/lookup-card';
+import { LookupCard, renderCardState, type SafeHtml } from '../../src/ui/lookup-card';
+import { registerContentElements } from '../../src/ui/register';
+
+beforeAll(() => {
+  registerContentElements();
+});
 
 /** Cast a trusted literal to SafeHtml for test fixtures only. */
 const safe = (html: string) => html as SafeHtml;

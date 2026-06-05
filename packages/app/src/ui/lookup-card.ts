@@ -1,4 +1,4 @@
-import type { LookupError } from '@ai-dict/core';
+import type { LookupError } from '../index';
 import { adoptStyles } from './styles/adopt';
 
 /**
@@ -104,5 +104,3 @@ export class LookupCard extends HTMLElement {
     this.replaceChildren(...renderCardState(this._state));
   }
 }
-
-if (!customElements.get('lookup-card')) customElements.define('lookup-card', LookupCard);

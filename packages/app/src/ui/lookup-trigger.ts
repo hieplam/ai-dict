@@ -26,5 +26,3 @@ export class LookupTrigger extends HTMLElement {
     root.append(btn);
   }
 }
-
-if (!customElements.get('lookup-trigger')) customElements.define('lookup-trigger', LookupTrigger);

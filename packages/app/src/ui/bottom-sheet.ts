@@ -87,5 +87,3 @@ export class BottomSheet extends HTMLElement {
     this.dispatchEvent(new CustomEvent('dismiss', { bubbles: true, composed: true }));
   }
 }
-
-if (!customElements.get('bottom-sheet')) customElements.define('bottom-sheet', BottomSheet);

@@ -1,6 +1,10 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
-import '../src/bottom-sheet';
+import { registerContentElements } from '../../src/ui/register';
+
+beforeAll(() => {
+  registerContentElements();
+});
 
 function mountSheet(): HTMLElement {
   const el = document.createElement('bottom-sheet');

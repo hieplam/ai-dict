@@ -5,20 +5,11 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./lookup-trigger": "./src/lookup-trigger.ts",
-    "./lookup-card": "./src/lookup-card.ts",
-    "./bottom-sheet": "./src/bottom-sheet.ts",
-    "./settings-form": "./src/settings-form.ts"
+    "./lookup-trigger": "./src/_register-trigger.ts",
+    "./lookup-card": "./src/_register-card.ts",
+    "./bottom-sheet": "./src/_register-bottom-sheet.ts",
+    "./settings-form": "./src/_register-settings.ts"
   },
-  "scripts": {
-    "typecheck": "tsc --noEmit",
-    "test": "vitest run"
-  },
-  "dependencies": {
-    "@ai-dict/core": "workspace:*"
-  },
-  "devDependencies": {
-    "happy-dom": "^15.0.0",
-    "axe-core": "^4.10.0"
-  }
+  "scripts": { "typecheck": "tsc --noEmit", "test": "vitest run" },
+  "dependencies": { "@ai-dict/app": "workspace:*" }
 }

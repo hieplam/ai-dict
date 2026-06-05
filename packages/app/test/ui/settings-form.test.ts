@@ -1,7 +1,11 @@
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
-import { SettingsForm, type SettingsFormValue } from '../src/settings-form';
-import '../src/settings-form';
+import { SettingsForm, type SettingsFormValue } from '../../src/ui/settings-form';
+import { registerSettingsForm } from '../../src/ui/register';
+
+beforeAll(() => {
+  registerSettingsForm();
+});
 
 function mountForm(): SettingsForm {
   const el = document.createElement('settings-form') as SettingsForm;

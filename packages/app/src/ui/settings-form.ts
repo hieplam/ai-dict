@@ -117,5 +117,3 @@ export class SettingsForm extends HTMLElement {
     this.q<HTMLInputElement>('#history').checked = v.saveHistory;
   }
 }
-
-if (!customElements.get('settings-form')) customElements.define('settings-form', SettingsForm);

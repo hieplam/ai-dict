@@ -90,11 +90,7 @@
       "name": "@ai-dict/shared-ui",
       "version": "0.0.0",
       "dependencies": {
-        "@ai-dict/core": "workspace:*",
-      },
-      "devDependencies": {
-        "axe-core": "^4.10.0",
-        "happy-dom": "^15.0.0",
+        "@ai-dict/app": "workspace:*",
       },
     },
   },

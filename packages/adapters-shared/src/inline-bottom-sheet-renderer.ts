@@ -4,7 +4,7 @@ import {
   type CardState,
   type LookupCard,
   type SafeHtml,
-} from '@ai-dict/shared-ui/lookup-card';
+} from '@ai-dict/shared-ui';
 import '@ai-dict/shared-ui/bottom-sheet';
 import '@ai-dict/shared-ui/lookup-card';
 import { sanitizeMarkdown } from './markdown-sanitize';
