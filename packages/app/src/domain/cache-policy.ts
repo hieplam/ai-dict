@@ -1,4 +1,5 @@
-import type { Storage, LookupResult } from './index';
+import type { Storage } from '../ports';
+import type { LookupResult } from './types';
 
 export function fnv1a64Hex(input: string): string {
   const PRIME = 0x100000001b3n;

@@ -1,4 +1,4 @@
-import type { LookupError } from './index';
+import type { LookupError } from './types';
 
 export type ErrorInput =
   | { kind: 'no-key' }

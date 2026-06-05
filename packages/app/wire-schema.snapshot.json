@@ -1,0 +1,408 @@
+{
+  "WireMessage": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "oneOf": [
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "lookup"
+          },
+          "req": {
+            "type": "object",
+            "properties": {
+              "word": {
+                "type": "string"
+              },
+              "context": {
+                "type": "string"
+              },
+              "url": {
+                "type": "string"
+              },
+              "title": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              },
+              "promptTemplate": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "word",
+              "context",
+              "url",
+              "title",
+              "target",
+              "promptTemplate"
+            ],
+            "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "req",
+          "requestId"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "lookup.cancel"
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "requestId"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "settings.get"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "history.list"
+          },
+          "limit": {
+            "type": "number"
+          },
+          "cursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "history.clear"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "cache.clear"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "connection.test"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      }
+    ]
+  },
+  "WireReply": {
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "anyOf": [
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
+            "const": "lookup"
+          },
+          "result": {
+            "type": "object",
+            "properties": {
+              "markdown": {
+                "type": "string"
+              },
+              "word": {
+                "type": "string"
+              },
+              "target": {
+                "type": "string"
+              },
+              "model": {
+                "type": "string",
+                "const": "gemini-2.5-flash"
+              },
+              "fromCache": {
+                "type": "boolean"
+              },
+              "fetchedAt": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "markdown",
+              "word",
+              "target",
+              "model",
+              "fromCache",
+              "fetchedAt"
+            ],
+            "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "result",
+          "requestId"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
+            "const": "settings"
+          },
+          "settings": {
+            "type": "object",
+            "properties": {
+              "targetLang": {
+                "type": "string"
+              },
+              "promptTemplate": {
+                "type": "string"
+              },
+              "hasKey": {
+                "type": "boolean"
+              }
+            },
+            "required": [
+              "targetLang",
+              "promptTemplate",
+              "hasKey"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "settings"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
+            "const": "history"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "word": {
+                  "type": "string"
+                },
+                "context": {
+                  "type": "string"
+                },
+                "result": {
+                  "type": "object",
+                  "properties": {
+                    "markdown": {
+                      "type": "string"
+                    },
+                    "word": {
+                      "type": "string"
+                    },
+                    "target": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string",
+                      "const": "gemini-2.5-flash"
+                    },
+                    "fromCache": {
+                      "type": "boolean"
+                    },
+                    "fetchedAt": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "markdown",
+                    "word",
+                    "target",
+                    "model",
+                    "fromCache",
+                    "fetchedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "createdAt": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "word",
+                "context",
+                "result",
+                "createdAt"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "nextCursor": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "entries"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
+            "const": "ack"
+          }
+        },
+        "required": [
+          "ok",
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": false
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "lookup",
+              "lookup.cancel",
+              "settings.get",
+              "history.list",
+              "history.clear",
+              "cache.clear",
+              "connection.test"
+            ]
+          },
+          "error": {
+            "type": "object",
+            "properties": {
+              "code": {
+                "type": "string",
+                "enum": [
+                  "NO_KEY",
+                  "INVALID_KEY",
+                  "RATE_LIMIT",
+                  "NETWORK",
+                  "PARSE",
+                  "UNKNOWN"
+                ]
+              },
+              "message": {
+                "type": "string",
+                "maxLength": 200
+              },
+              "retryable": {
+                "type": "boolean"
+              },
+              "retryAfterSec": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "code",
+              "message",
+              "retryable"
+            ],
+            "additionalProperties": false
+          },
+          "requestId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "error"
+        ],
+        "additionalProperties": false
+      }
+    ]
+  }
+}

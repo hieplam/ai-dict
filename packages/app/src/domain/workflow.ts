@@ -4,10 +4,8 @@ import type {
   ResultRenderer,
   LookupClient,
   SettingsStore,
-  SelectionEvent,
-  LookupRequest,
-  LookupError,
-} from './index';
+} from '../ports';
+import type { SelectionEvent, LookupRequest, LookupError } from './types';
 import { isLookupError } from './types';
 import { mapError } from './error-mapper';
 

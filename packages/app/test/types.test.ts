@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import type { Settings, PublicSettings } from '@ai-dict/core';
+import type { Settings, PublicSettings } from '../src';
 
 describe('Settings public shape (FIX 1 — contract lock)', () => {
   it('Settings is importable from @ai-dict/core and has the full shape', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { historyAppend, historyList, historyClear } from '../src/history-policy';
+import { historyAppend, historyList, historyClear } from '../src/domain/history-policy';
 import type { Storage, HistoryEntry } from '../src';
 
 function memStorage(): Storage {

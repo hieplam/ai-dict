@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { runLookupWorkflow } from '../src/workflow';
+import { runLookupWorkflow } from '../src/domain/workflow';
 import {
   FakeSelectionSource,
   FakeTriggerUI,

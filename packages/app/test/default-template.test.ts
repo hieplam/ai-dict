@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { DEFAULT_TEMPLATE } from '../src/default-template';
+import { DEFAULT_TEMPLATE } from '../src/domain/default-template';
 
 describe('DEFAULT_TEMPLATE', () => {
   it('references the minimal placeholders and ordered sections', () => {

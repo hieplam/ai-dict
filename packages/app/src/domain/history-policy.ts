@@ -1,4 +1,5 @@
-import type { Storage, HistoryEntry } from './index';
+import type { Storage } from '../ports';
+import type { HistoryEntry } from './types';
 
 const INDEX_KEY = 'history:index';
 const DEFAULT_CAP = 500;

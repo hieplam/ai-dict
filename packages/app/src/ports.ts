@@ -5,7 +5,7 @@ import type {
   LookupResult,
   LookupError,
   PublicSettings,
-} from './types';
+} from './domain/types';
 
 export interface SelectionSource {
   onSelection(cb: (e: SelectionEvent) => void): () => void;

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { WireMessageSchema, WireReplySchema, wireJsonSchema } from '../src/wire-schema';
+import { WireMessageSchema, WireReplySchema, wireJsonSchema } from '../src/wire';
 
 describe('wire-schema', () => {
   it('accepts a valid lookup message', () => {

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { renderTemplate } from '../src/prompt-template';
+import { renderTemplate } from '../src/domain/prompt-template';
 
 describe('renderTemplate', () => {
   const vars = {

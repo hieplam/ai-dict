@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { mapError } from '../src/error-mapper';
+import { mapError } from '../src/domain/error-mapper';
 
 describe('mapError (spec §6.9)', () => {
   it('no-key → NO_KEY, not retryable', () => {

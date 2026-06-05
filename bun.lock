@@ -51,7 +51,7 @@
       "name": "@ai-dict/core",
       "version": "0.0.0",
       "dependencies": {
-        "zod": "^4.0.0",
+        "@ai-dict/app": "workspace:*",
       },
       "devDependencies": {
         "@types/node": "^20.11.0",

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { LookupRequest, LookupResult, PublicSettings, HistoryEntry } from './types';
+import type { LookupRequest, LookupResult, PublicSettings, HistoryEntry } from './domain/types';
 
 const LookupErrorSchema = z.strictObject({
   code: z.enum(['NO_KEY', 'INVALID_KEY', 'RATE_LIMIT', 'NETWORK', 'PARSE', 'UNKNOWN']),
