@@ -10,6 +10,7 @@ This repo is documented with **C3** in `.c3/` (a queryable architecture model). 
 - `c3-2` **extension-chrome** / `c3-3` **extension-safari** — MV3 shells; `sw.ts` / `content.ts` are the composition roots that inject platform adapters into the core.
 
 **Use C3 (via `/c3` or the `c3` CLI) for architecture questions, changes, audits, and file context:**
+
 - `c3 lookup <file-or-glob>` → which component + refs + rules own a file (run before editing).
 - `c3 list` → topology; `c3 graph <id> --format mermaid` → diagram; `c3 check` → validate docs.
 - Refs (the "why"): `ref-core-dependency-rule`, `ref-wire-protocol-validation`, `ref-dependency-injection`, `ref-kv-storage-prefixes`, `ref-web-components-shadow-dom`.
