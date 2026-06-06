@@ -21,8 +21,6 @@ export type CardState =
 
 // Decorative shadow-DOM icons. Stroked with currentColor so they inherit the token
 // colour of their button; aria-hidden because each control carries its own aria-label.
-const ICON_EXPAND =
-  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 2.5H2.5V6M10 2.5H13.5V6M13.5 10V13.5H10M2.5 10V13.5H6"/></svg>';
 const ICON_CLOSE =
   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 4L12 12M12 4L4 12"/></svg>';
 const ICON_SHIELD =
@@ -127,10 +125,7 @@ export class LookupCard extends HTMLElement {
     brand.innerHTML = `${HOLLY_SVG}<span>AI Dictionary</span>`;
     const actions = document.createElement('span');
     actions.className = 'actions';
-    actions.append(
-      this.actionButton('expand', 'Expand', ICON_EXPAND),
-      this.actionButton('close', 'Close', ICON_CLOSE),
-    );
+    actions.append(this.actionButton('close', 'Close', ICON_CLOSE));
     bar.append(brand, actions);
 
     const region = document.createElement('section');
@@ -154,7 +149,7 @@ export class LookupCard extends HTMLElement {
     if (this.childNodes.length === 0) this.renderState();
   }
 
-  private actionButton(act: 'expand' | 'close', label: string, icon: string): HTMLButtonElement {
+  private actionButton(act: 'close', label: string, icon: string): HTMLButtonElement {
     const b = document.createElement('button');
     b.type = 'button';
     b.dataset['act'] = act;
