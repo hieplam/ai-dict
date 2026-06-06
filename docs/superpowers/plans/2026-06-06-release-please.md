@@ -27,12 +27,12 @@ We still keep changes minimal and commit per-task to enable easy revert.
 
 ## File map
 
-| Path | Action | Purpose |
-| --- | --- | --- |
-| `release-please-config.json` | Create | Per-package release-please config (which files to bump, which release-type) |
-| `.release-please-manifest.json` | Create | State file anchoring the current version per package |
+| Path                                   | Action | Purpose                                                                          |
+| -------------------------------------- | ------ | -------------------------------------------------------------------------------- |
+| `release-please-config.json`           | Create | Per-package release-please config (which files to bump, which release-type)      |
+| `.release-please-manifest.json`        | Create | State file anchoring the current version per package                             |
 | `.github/workflows/release-please.yml` | Create | Workflow that runs release-please on every `master` push and `workflow_dispatch` |
-| `RELEASE_CHECKLIST.md` | Modify | Replace the manual `release:bump` step with "merge the Release PR" |
+| `RELEASE_CHECKLIST.md`                 | Modify | Replace the manual `release:bump` step with "merge the Release PR"               |
 
 No other files are touched. Specifically NOT touched: `scripts/release-bump.mjs`, `packages/extension-safari/src/manifest.json`, `packages/extension-safari/xcode/*.pbxproj`, `.github/workflows/release.yml`, `.github/workflows/ci.yml`, `packages/extension-chrome/src/manifest.json` (will be bumped automatically by release-please starting from the next merged Release PR — not pre-bumped here).
 
@@ -41,6 +41,7 @@ No other files are touched. Specifically NOT touched: `scripts/release-bump.mjs`
 ## Task 1: Add `release-please-config.json`
 
 **Files:**
+
 - Create: `release-please-config.json`
 
 - [ ] **Step 1: Create the config file**
@@ -69,6 +70,7 @@ Path: `release-please-config.json` (repo root)
 ```
 
 Notes:
+
 - `release-type: node` → release-please bumps the root `package.json` `version` field natively.
 - `include-component-in-tag: false` → tags stay `vX.Y.Z` (not `ai-dict-vX.Y.Z`), preserving compatibility with `release.yml`'s `tags: ['v*']` trigger.
 - `extra-files` with `jsonpath: $.version` → Chrome manifest `version` key is bumped in lockstep.
@@ -83,6 +85,7 @@ bun --print "JSON.parse(require('fs').readFileSync('release-please-config.json',
 ```
 
 Expected output:
+
 ```
 OK
 ```
@@ -101,6 +104,7 @@ git commit -m "chore: add release-please-config.json"
 ## Task 2: Add `.release-please-manifest.json`
 
 **Files:**
+
 - Create: `.release-please-manifest.json`
 
 - [ ] **Step 1: Create the manifest file**
@@ -130,6 +134,7 @@ bun --print "JSON.parse(require('fs').readFileSync('package.json','utf8')).versi
 ```
 
 Expected output:
+
 ```
 0.0.0
 ```
@@ -148,6 +153,7 @@ git commit -m "chore: add release-please manifest"
 ## Task 3: Add the `release-please` workflow
 
 **Files:**
+
 - Create: `.github/workflows/release-please.yml`
 
 - [ ] **Step 1: Create the workflow file**
@@ -169,8 +175,8 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     permissions:
-      contents: write       # push the version-bump commit and the vX.Y.Z tag
-      pull-requests: write  # open and update the Release PR
+      contents: write # push the version-bump commit and the vX.Y.Z tag
+      pull-requests: write # open and update the Release PR
     steps:
       - name: Run release-please
         uses: googleapis/release-please-action@5c625bfb5d1ff62eadeeb3772007f7f66fdcf071 # v4.4.1
@@ -180,6 +186,7 @@ jobs:
 ```
 
 Notes:
+
 - Action pinned by commit SHA (matches the convention used elsewhere in `release.yml` — `actions/checkout`, `oven-sh/setup-bun`, etc.).
 - Top-level `permissions: contents: read` keeps the default least-privilege; the job overrides to `write` only for what release-please needs.
 - No `secrets:` — `GITHUB_TOKEN` is used implicitly by the action.
@@ -194,9 +201,11 @@ bun --print "const yaml = require('node:fs').readFileSync('.github/workflows/rel
 Expected: `OK`.
 
 For stricter validation (optional, if `actionlint` is installed locally):
+
 ```bash
 actionlint .github/workflows/release-please.yml
 ```
+
 Expected: no output (success).
 
 If `actionlint` isn't installed locally, GitHub itself will validate it on push — that is sufficient.
@@ -208,6 +217,7 @@ gh api repos/googleapis/release-please-action/git/refs/tags/v4.4.1 --jq '.object
 ```
 
 Expected output (exactly):
+
 ```
 5c625bfb5d1ff62eadeeb3772007f7f66fdcf071
 ```
@@ -226,6 +236,7 @@ git commit -m "ci: add release-please workflow"
 ## Task 4: Update `RELEASE_CHECKLIST.md`
 
 **Files:**
+
 - Modify: `RELEASE_CHECKLIST.md`
 
 - [ ] **Step 1: Read the existing checklist**
@@ -235,6 +246,7 @@ cat RELEASE_CHECKLIST.md
 ```
 
 Locate the line under **Pre-tag**:
+
 ```
 - [ ] `release:bump X.Y.Z` ran: root `package.json` version + both manifests + Xcode `MARKETING_VERSION` all equal the tag.
 ```
@@ -249,6 +261,7 @@ Open `RELEASE_CHECKLIST.md` and replace the `release:bump` line above with these
 ```
 
 Rationale:
+
 - Chrome flow is fully automated by release-please.
 - Safari flow keeps its manual step for now (matches the design's Chrome-only scope).
 
@@ -267,11 +280,11 @@ grep -nEi 'release|changelog|version' README.md | head -20
 ```
 
 Decision rule:
+
 - If you find an existing "Releases" / "How releases work" / "Versioning" section, **leave `README.md` alone**.
 - If you find no such section, append the following at the end of `README.md` (keep the blank line before the heading):
 
 ```markdown
-
 ## How releases work
 
 This repo uses [release-please](https://github.com/googleapis/release-please) to automate version bumps and changelog generation.
@@ -283,6 +296,7 @@ This repo uses [release-please](https://github.com/googleapis/release-please) to
 ```
 
 Stage only if you edited the file:
+
 ```bash
 git diff --stat README.md
 ```
@@ -387,20 +401,24 @@ gh pr list --search "chore(master): release in:title" --state=open
 Two valid outcomes:
 
 - **A Release PR was opened.** Inspect its diff:
+
   ```bash
   gh pr diff <release-pr-number>
   ```
+
   Expected files in the diff:
   - `package.json` (`version` bumped)
   - `packages/extension-chrome/src/manifest.json` (`version` bumped to the same value)
   - `.release-please-manifest.json` (`.` value bumped to the same value)
   - `CHANGELOG.md` (new section appended)
-  No other files should appear. If they do, comment on the PR with the unexpected diff and pause for review.
+    No other files should appear. If they do, comment on the PR with the unexpected diff and pause for review.
 
 - **No Release PR was opened.** That's fine if there are no `feat:`/`fix:` commits since the anchor — release-please correctly no-ops. Confirm by running:
+
   ```bash
   git log master --oneline -- ':!.claude' ':!docs' | head
   ```
+
   and checking whether the recent commits are only `chore:`/`docs:`/`style:` (which don't trigger a release). If a clearly release-worthy commit was skipped, capture the workflow log and investigate.
 
 - [ ] **Step 3: Comment on the merged PR with the outcome**
@@ -414,6 +432,7 @@ This closes the loop and provides evidence the change works end-to-end.
 - [ ] **Step 4: Done**
 
 The release-please adoption is complete. From now on:
+
 1. Land Conventional-Commit changes on `master`.
 2. Review and merge the open Release PR when ready to ship.
 3. Tag-triggered `release.yml` builds and attaches Chrome zip to the release shell.
