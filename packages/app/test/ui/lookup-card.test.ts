@@ -140,6 +140,28 @@ describe('<lookup-card>', () => {
     expect(capturedEvent!.bubbles).toBe(true);
   });
 
+  it('renderCardState loading returns a .spinner node, textContent contains "Looking up", and card CSS has @keyframes', () => {
+    const el = mountCard();
+    const nodes = renderCardState({ kind: 'loading' });
+    // must contain a .spinner element; role="status" is intentionally absent — the card's
+    // aria-live="polite" section handles announcement; a nested live region double-announces.
+    const spinner = nodes.find(
+      (n): n is HTMLElement => n instanceof HTMLElement && n.classList.contains('spinner'),
+    );
+    expect(spinner).toBeDefined();
+    // spinner must NOT have role="status" to avoid nested live region double-announcement
+    expect(spinner!.getAttribute('role')).toBeNull();
+    // combined textContent must contain "Looking up" (accessible name via visually-hidden span)
+    const combined = nodes.map((n) => (n as HTMLElement).textContent ?? '').join('');
+    expect(combined).toContain('Looking up');
+    // card's adopted CSS must include an @keyframes rule
+    const sheet = el.shadowRoot!.adoptedStyleSheets[0]!;
+    const hasKeyframes = [...sheet.cssRules].some(
+      (r) => r instanceof CSSKeyframesRule || r.cssText.includes('@keyframes'),
+    );
+    expect(hasKeyframes).toBe(true);
+  });
+
   it('has no axe violations (loading state)', async () => {
     const el = mountCard();
     expect(await axeViolations(el)).toEqual([]);

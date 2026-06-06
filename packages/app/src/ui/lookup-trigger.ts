@@ -10,9 +10,13 @@ import { adoptStyles } from './styles/adopt';
 // positive z-index (real-world example: support.claude.com wraps article headings in a
 // `z-3` container, so a click on the trigger lands on the heading instead and is
 // dismissed by the capture-phase outside-press handler).
+// @keyframes spin is also defined in lookup-card.ts; each shadow root needs its own copy
+// because CSS @keyframes are scoped per shadow tree — they cannot be shared across roots.
 const CSS = `:host{all:initial;color-scheme:light;z-index:2147483647}
 button{font:600 13px/1 system-ui;color:#202124;padding:6px 10px;border:1px solid #888;border-radius:6px;background:#fff;cursor:pointer}
-button:focus-visible{outline:2px solid #1a73e8;outline-offset:2px}`;
+button:focus-visible{outline:2px solid #1a73e8;outline-offset:2px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid #888;border-top-color:#202124;border-radius:50%;animation:spin .7s linear infinite}`;
 
 export class LookupTrigger extends HTMLElement {
   constructor() {
@@ -27,6 +31,14 @@ export class LookupTrigger extends HTMLElement {
     btn.setAttribute('aria-label', 'Look up selected text');
     btn.textContent = 'Define';
     btn.addEventListener('click', () => {
+      // swap label → spinner; disabled alone signals unavailability — aria-busy on a
+      // disabled button is contradictory (AT ignores aria-busy on removed-from-tree nodes)
+      btn.disabled = true;
+      btn.textContent = '';
+      const ring = document.createElement('span');
+      ring.className = 'spinner';
+      ring.setAttribute('aria-hidden', 'true'); // decorative; btn retains its aria-label
+      btn.append(ring);
       this.dispatchEvent(new CustomEvent('lookup-click', { bubbles: true, composed: true }));
     });
     root.append(btn);

@@ -100,6 +100,17 @@ describe('runLookupWorkflow', () => {
     expect(signals[1]!.aborted).toBe(false);
   });
 
+  it('hide() is deferred: trigger NOT hidden synchronously on click, hidden after async resolves', async () => {
+    const h = harness({});
+    h.selection.emit(sel);
+    h.trigger.click();
+    // synchronously after click: hide must NOT have been called yet
+    expect(h.trigger.hidden).toBe(0);
+    // after the full async chain completes, hide must have been called once
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(h.trigger.hidden).toBe(1);
+  });
+
   it('teardown() aborts an in-flight lookup, closes renderer, hides trigger, and stops future events', async () => {
     let capturedSignal: AbortSignal | undefined;
     // Never resolves — simulates a pending request

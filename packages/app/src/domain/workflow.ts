@@ -29,7 +29,12 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
     const controller = new AbortController();
     inFlight = controller;
 
-    const settings = await deps.settings.get();
+    // try/finally ensures hide() fires even if settings.get() rejects (stuck-spinner guard);
+    // the abort guard inside finally prevents double-hide when a newer click cancels this run
+    const settings = await deps.settings.get().finally(() => {
+      if (!controller.signal.aborted) deps.trigger.hide();
+    });
+    // hide bubble once settings are known — keeps spinner visible during the async gap
     if (!settings.hasKey) {
       deps.renderer.renderError(mapError({ kind: 'no-key' }));
       return;
@@ -55,7 +60,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
 
   const teardown = deps.selection.onSelection((e) => {
     deps.trigger.show(e.anchor, () => {
-      deps.trigger.hide();
+      // hide() is now called inside runLookup after settings.get() resolves
       void runLookup(e).catch((err) =>
         deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
       );

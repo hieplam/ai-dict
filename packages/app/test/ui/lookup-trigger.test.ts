@@ -83,4 +83,30 @@ describe('<lookup-trigger>', () => {
     const el = mount('lookup-trigger');
     expect(await axeViolations(el)).toEqual([]);
   });
+
+  it('has no axe violations in post-click state (disabled + spinner)', async () => {
+    // Regression guard: if aria-label were accidentally dropped, the disabled button
+    // would have no accessible name in this state — axe would catch it here.
+    const el = mount('lookup-trigger');
+    el.shadowRoot!.querySelector('button')!.click();
+    expect(await axeViolations(el)).toEqual([]);
+  });
+
+  it('clicking the button sets disabled, renders an aria-hidden .spinner in shadow, and still emits lookup-click', () => {
+    const el = mount('lookup-trigger');
+    const spy = vi.fn();
+    el.addEventListener('lookup-click', spy);
+    const btn = el.shadowRoot!.querySelector('button')!;
+    btn.click();
+    // button must be disabled (aria-busy is intentionally absent — it is contradictory on a
+    // disabled button: AT removes disabled buttons from the interactive tree and ignores aria-busy)
+    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute('aria-busy')).toBeNull();
+    // a decorative aria-hidden spinner must appear inside the shadow root
+    const spinner = el.shadowRoot!.querySelector('.spinner');
+    expect(spinner).not.toBeNull();
+    expect(spinner!.getAttribute('aria-hidden')).toBe('true');
+    // the lookup-click event must still fire
+    expect(spy).toHaveBeenCalledOnce();
+  });
 });
