@@ -44,8 +44,10 @@ export class FakeResultRenderer implements ResultRenderer {
   calls: string[] = [];
   lastResult: LookupResult | null = null;
   lastError: LookupError | null = null;
-  renderLoading() {
+  loadingWord: string | undefined;
+  renderLoading(word?: string) {
     this.calls.push('loading');
+    this.loadingWord = word;
   }
   renderResult(r: LookupResult) {
     this.calls.push('result');

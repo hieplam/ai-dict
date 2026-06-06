@@ -14,11 +14,15 @@ describe('ChromeSidePanelMirror', () => {
   it('posts state transitions to the side panel', async () => {
     const sendMessage = vi.fn(() => Promise.resolve({}));
     const m = new ChromeSidePanelMirror({ sendMessage });
-    m.renderLoading();
+    m.renderLoading('resilient');
     m.renderResult(result);
     m.close();
     await Promise.resolve();
-    expect(sendMessage).toHaveBeenCalledWith({ to: 'side-panel', state: 'loading' });
+    expect(sendMessage).toHaveBeenCalledWith({
+      to: 'side-panel',
+      state: 'loading',
+      word: 'resilient',
+    });
     expect(sendMessage).toHaveBeenCalledWith({
       to: 'side-panel',
       state: 'result',

@@ -45,6 +45,8 @@ describe('runLookupWorkflow', () => {
     await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
     expect(h.trigger.hidden).toBe(1);
     expect(h.renderer.calls).toEqual(['loading', 'result']);
+    // the selected word is threaded into renderLoading so the card shows it immediately
+    expect(h.renderer.loadingWord).toBe('bank');
     expect(h.client.lastReq).toMatchObject({
       word: 'bank',
       context: 'river bank',

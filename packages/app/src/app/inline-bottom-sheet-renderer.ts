@@ -33,8 +33,8 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.ensureCard().replaceChildren(...renderCardState(state));
   }
 
-  renderLoading(): void {
-    this.setState({ kind: 'loading' });
+  renderLoading(word?: string): void {
+    this.setState(word === undefined ? { kind: 'loading' } : { kind: 'loading', word });
   }
 
   renderResult(r: LookupResult): void {

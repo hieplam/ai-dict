@@ -17,9 +17,9 @@ runLookupWorkflow({
   selection: new DomSelectionSource(document),
   trigger: new ChromeFloatingTrigger(),
   renderer: {
-    renderLoading() {
-      inline.renderLoading();
-      mirror.renderLoading();
+    renderLoading(word) {
+      inline.renderLoading(word);
+      mirror.renderLoading(word);
     },
     renderResult(r) {
       inline.renderResult(r);

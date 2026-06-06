@@ -16,18 +16,17 @@ function mountCard(): LookupCard {
   return el;
 }
 
-/** Locate the spinner ring and the "Looking up…" label across the loading nodes
- * (works whether the label is a child of the ring or a top-level sibling). */
-function loadingParts(): { spinner: HTMLElement; label: HTMLElement } {
-  const nodes = renderCardState({ kind: 'loading' });
-  const els = nodes.flatMap((n) =>
-    n instanceof HTMLElement ? [n, ...Array.from(n.querySelectorAll<HTMLElement>('*'))] : [],
-  );
-  const spinner = els.find((e) => e.classList.contains('spinner'))!;
-  const label = els.find(
-    (e) => e.tagName === 'SPAN' && (e.textContent ?? '').includes('Looking up'),
+/** Locate the visible loading caption (`.loadrow`) among the loading nodes. The spinner is
+ * the caption's ::before pseudo-element (defined in CSS), not a DOM node. */
+function loadingCaption(state: { kind: 'loading'; word?: string } = { kind: 'loading' }): {
+  caption: HTMLElement;
+  nodes: Node[];
+} {
+  const nodes = renderCardState(state);
+  const caption = nodes.find(
+    (n): n is HTMLElement => n instanceof HTMLElement && n.classList.contains('loadrow'),
   )!;
-  return { spinner, label };
+  return { caption, nodes };
 }
 
 describe('<lookup-card>', () => {
@@ -129,55 +128,70 @@ describe('<lookup-card>', () => {
     expect(capturedEvent!.composed).toBe(true);
   });
 
-  it('renderCardState loading returns a .spinner node, textContent contains "Looking up", and card CSS has @keyframes', () => {
+  it('renderCardState loading returns a visible .loadrow caption, with the spinner as its ::before, and @keyframes', () => {
     const el = mountCard();
-    const nodes = renderCardState({ kind: 'loading' });
-    // must contain a .spinner element; role="status" is intentionally absent — the card's
-    // aria-live="polite" section handles announcement; a nested live region double-announces.
-    const spinner = nodes.find(
-      (n): n is HTMLElement => n instanceof HTMLElement && n.classList.contains('spinner'),
-    );
-    expect(spinner).toBeDefined();
-    // spinner must NOT have role="status" to avoid nested live region double-announcement
-    expect(spinner!.getAttribute('role')).toBeNull();
-    // combined textContent must contain "Looking up" (accessible name via visually-hidden span)
+    const { caption, nodes } = loadingCaption();
+    // The caption is a real, VISIBLE element (not visually-hidden) carrying the loading text.
+    expect(caption).toBeDefined();
+    expect(caption.textContent).toContain('Looking up');
+    // role="status" is intentionally absent — the card's aria-live="polite" section announces;
+    // a nested live region double-announces in NVDA/JAWS.
+    expect(caption.getAttribute('role')).toBeNull();
+    // combined textContent must contain "Looking up"
     const combined = nodes.map((n) => (n as HTMLElement).textContent ?? '').join('');
     expect(combined).toContain('Looking up');
-    // card's adopted CSS must include an @keyframes rule
+    // The spinner is the caption's ::before pseudo-element with the spin animation, and the
+    // card's adopted CSS must define @keyframes spin for it to resolve.
     const sheet = el.shadowRoot!.adoptedStyleSheets[0]!;
+    const css = [...sheet.cssRules].map((r) => r.cssText).join('\n');
+    expect(css).toContain('::slotted(.loadrow)::before');
     const hasKeyframes = [...sheet.cssRules].some(
       (r) => r instanceof CSSKeyframesRule || r.cssText.includes('@keyframes'),
     );
     expect(hasKeyframes).toBe(true);
   });
 
-  it('loading label is a sibling of the ring, not a child (so it cannot rotate with the spinner)', () => {
-    // On strict-CSP surfaces (the extension side panel uses `style-src 'self'`) the
-    // visually-hidden label was unhidden; because it sat INSIDE the rotating `.spinner`,
-    // the now-visible "Looking up…" text rotated with the ring. The label must live
-    // OUTSIDE the ring so it can never rotate, regardless of any styling outcome.
-    const { spinner, label } = loadingParts();
-    expect(label).toBeTruthy();
-    expect(spinner.contains(label)).toBe(false);
+  it('the rotating spinner cannot drag the caption text (spinner is generated content, not a wrapper element)', () => {
+    // Regression guard for the old bug where the "Looking up…" label sat INSIDE the rotating
+    // ring and span around with it. Now the spinner is the caption's ::before pseudo-element,
+    // so it is structurally impossible for any animated DOM node to contain the text.
+    const { caption } = loadingCaption();
+    expect(caption.querySelector('*')).toBeNull(); // no child elements — text only
+    expect(caption.classList.contains('loadrow')).toBe(true);
   });
 
-  it('loading label is hidden via a CSP-safe ::slotted(.sr-only) class, not an inline style attribute', () => {
-    // The extension-page CSP blocks inline `style` attributes — that is why the label
-    // became visible. Hide it with a class styled from the card's adopted (constructable)
-    // stylesheet, which is exempt from `style-src`.
-    const el = mountCard();
-    const { label } = loadingParts();
-    expect(label.hasAttribute('style')).toBe(false);
-    expect(label.classList.contains('sr-only')).toBe(true);
-    const sheet = el.shadowRoot!.adoptedStyleSheets[0]!;
-    const hasSrOnlySlotted = [...sheet.cssRules].some((r) =>
-      r.cssText.includes('::slotted(.sr-only)'),
-    );
-    expect(hasSrOnlySlotted).toBe(true);
+  it('loading caption is visible body text (no sr-only class) and CSP-safe (no inline style attribute)', () => {
+    // The caption is intentionally visible now: a lone hidden spinner made the card read as
+    // an empty box to sighted readers. It must not carry an inline `style` attribute, since
+    // extension pages run under `style-src 'self'` which blocks inline styles.
+    const { caption } = loadingCaption();
+    expect(caption.classList.contains('sr-only')).toBe(false);
+    expect(caption.hasAttribute('style')).toBe(false);
+  });
+
+  it('loading shows the selected word as the headword the instant Define is clicked', () => {
+    // The key fix: the reader's selected word is known immediately, so the card renders it as
+    // the serif headword right away instead of showing an empty box until the model replies.
+    const { nodes } = loadingCaption({ kind: 'loading', word: 'resilient' });
+    const h = nodes.find((n): n is HTMLElement => n instanceof HTMLElement && n.tagName === 'H2');
+    expect(h).toBeDefined();
+    expect(h!.textContent).toBe('resilient');
+  });
+
+  it('loading without a word still renders a non-empty card (caption only, no headword)', () => {
+    const { caption, nodes } = loadingCaption({ kind: 'loading' });
+    expect(nodes.some((n) => n instanceof HTMLElement && n.tagName === 'H2')).toBe(false);
+    expect(caption.textContent).toContain('Looking up');
   });
 
   it('has no axe violations (loading state)', async () => {
     const el = mountCard();
+    expect(await axeViolations(el)).toEqual([]);
+  });
+
+  it('has no axe violations (loading state with word headword)', async () => {
+    const el = mountCard();
+    el.state = { kind: 'loading', word: 'resilient' };
     expect(await axeViolations(el)).toEqual([]);
   });
 
