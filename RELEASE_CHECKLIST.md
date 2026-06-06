@@ -8,7 +8,8 @@ Run on the tagged commit (`vX.Y.Z` on `main`) before publishing.
 - [ ] Wire-schema contract tests pass (`bun run --filter @ai-dict/app test wire-schema` green).
 - [ ] `bun audit --audit-level=high` clean (no high/critical advisories).
 - [ ] `gitleaks` clean (no secrets in history).
-- [ ] `release:bump X.Y.Z` ran: root `package.json` version + both manifests + Xcode `MARKETING_VERSION` all equal the tag.
+- [ ] release-please's open Release PR has been reviewed and merged on `master`; root `package.json` and `packages/extension-chrome/src/manifest.json` now both equal the tag version.
+- [ ] If the release includes Safari changes: run `bun scripts/release-bump.mjs X.Y.Z` to sync `packages/extension-safari/src/manifest.json` and Xcode `MARKETING_VERSION`, then commit before tagging.
 - [ ] Manifest permissions match §7.3 S8 exactly — **chrome**: `permissions:["storage","sidePanel"]`, `host_permissions:["<all_urls>","https://generativelanguage.googleapis.com/*"]`; **safari**: `permissions:["storage"]` (no `sidePanel`), same `host_permissions`; **both**: no `scripting`, no `externally_connectable`.
 - [ ] Default prompt template reviewed — no inadvertent `{url}` / `{title}` placeholders (data minimization, §7.2 / Appendix A).
 - [ ] CHANGELOG entry written for this version.
