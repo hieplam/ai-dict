@@ -98,7 +98,7 @@ export class LookupCard extends HTMLElement {
 
     const bar = document.createElement('div');
     bar.className = 'bar';
-    bar.append(this.actionButton('expand', 'Expand'), this.actionButton('close', 'Close'));
+    bar.append(this.actionButton('close', 'Close'));
 
     const region = document.createElement('section');
     region.className = 'region';
@@ -113,7 +113,7 @@ export class LookupCard extends HTMLElement {
     if (this.childNodes.length === 0) this.renderState();
   }
 
-  private actionButton(act: 'expand' | 'close', label: string): HTMLButtonElement {
+  private actionButton(act: 'close', label: string): HTMLButtonElement {
     const b = document.createElement('button');
     b.type = 'button';
     b.dataset['act'] = act;
