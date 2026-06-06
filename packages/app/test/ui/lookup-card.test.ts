@@ -16,6 +16,20 @@ function mountCard(): LookupCard {
   return el;
 }
 
+/** Locate the spinner ring and the "Looking up…" label across the loading nodes
+ * (works whether the label is a child of the ring or a top-level sibling). */
+function loadingParts(): { spinner: HTMLElement; label: HTMLElement } {
+  const nodes = renderCardState({ kind: 'loading' });
+  const els = nodes.flatMap((n) =>
+    n instanceof HTMLElement ? [n, ...Array.from(n.querySelectorAll<HTMLElement>('*'))] : [],
+  );
+  const spinner = els.find((e) => e.classList.contains('spinner'))!;
+  const label = els.find(
+    (e) => e.tagName === 'SPAN' && (e.textContent ?? '').includes('Looking up'),
+  )!;
+  return { spinner, label };
+}
+
 describe('<lookup-card>', () => {
   it('has an aria-live region in the shadow and shows the loading text by default', () => {
     const el = mountCard();
@@ -135,6 +149,31 @@ describe('<lookup-card>', () => {
       (r) => r instanceof CSSKeyframesRule || r.cssText.includes('@keyframes'),
     );
     expect(hasKeyframes).toBe(true);
+  });
+
+  it('loading label is a sibling of the ring, not a child (so it cannot rotate with the spinner)', () => {
+    // On strict-CSP surfaces (the extension side panel uses `style-src 'self'`) the
+    // visually-hidden label was unhidden; because it sat INSIDE the rotating `.spinner`,
+    // the now-visible "Looking up…" text rotated with the ring. The label must live
+    // OUTSIDE the ring so it can never rotate, regardless of any styling outcome.
+    const { spinner, label } = loadingParts();
+    expect(label).toBeTruthy();
+    expect(spinner.contains(label)).toBe(false);
+  });
+
+  it('loading label is hidden via a CSP-safe ::slotted(.sr-only) class, not an inline style attribute', () => {
+    // The extension-page CSP blocks inline `style` attributes — that is why the label
+    // became visible. Hide it with a class styled from the card's adopted (constructable)
+    // stylesheet, which is exempt from `style-src`.
+    const el = mountCard();
+    const { label } = loadingParts();
+    expect(label.hasAttribute('style')).toBe(false);
+    expect(label.classList.contains('sr-only')).toBe(true);
+    const sheet = el.shadowRoot!.adoptedStyleSheets[0]!;
+    const hasSrOnlySlotted = [...sheet.cssRules].some((r) =>
+      r.cssText.includes('::slotted(.sr-only)'),
+    );
+    expect(hasSrOnlySlotted).toBe(true);
   });
 
   it('has no axe violations (loading state)', async () => {

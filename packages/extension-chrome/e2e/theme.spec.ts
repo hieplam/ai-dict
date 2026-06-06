@@ -1,11 +1,13 @@
 import { test, expect } from './fixtures';
 import { gotoFixture } from './helpers';
 
-// Both components pin text color #202124 → computed rgb(32, 33, 36). The regression: the
-// trigger button previously inherited the system color, which goes (near-)white under a dark
-// theme and vanished on its white background. Asserting the explicit value under dark
-// emulation fails if anyone removes the color pin.
-const PINNED = 'rgb(32, 33, 36)';
+// Regression guard, updated for the adaptive cozy palette. The trigger button and the result
+// card pin an EXPLICIT text colour from the --ad-ink token — never the system `canvastext`,
+// which goes near-white under a dark theme and used to vanish the "Define" label on its
+// surface. The token is now theme-aware: a dark warm ink on light pages, a light warm ink on
+// dark pages. So we assert the text is legible *against its own theme* (dark-on-light /
+// light-on-dark) rather than against one fixed value. Colours are normalised through a
+// <canvas> so the check does not depend on how the browser serialises oklch().
 
 async function waitForElements(page: import('@playwright/test').Page): Promise<void> {
   await page.waitForFunction(
@@ -16,21 +18,28 @@ async function waitForElements(page: import('@playwright/test').Page): Promise<v
 }
 
 for (const scheme of ['light', 'dark'] as const) {
+  // dark ink on a light page → low luminance; light ink on a dark page → high luminance.
+  const isLegible = (lum: number): boolean => (scheme === 'light' ? lum < 0.4 : lum > 0.6);
+
   test(`Define button label stays visible in ${scheme} theme`, async ({ context }) => {
     const page = await context.newPage();
     await page.emulateMedia({ colorScheme: scheme });
     await gotoFixture(page);
     await waitForElements(page);
 
-    const { label, color } = await page.evaluate(() => {
+    const { label, lum } = await page.evaluate(() => {
       const el = document.createElement('lookup-trigger');
       document.body.append(el);
       const btn = (el as HTMLElement).shadowRoot!.querySelector('button')!;
-      return { label: btn.textContent, color: getComputedStyle(btn).color };
+      const ctx = document.createElement('canvas').getContext('2d')!;
+      ctx.fillStyle = getComputedStyle(btn).color; // normalise rgb()/oklch() → canvas pixel
+      ctx.fillRect(0, 0, 1, 1);
+      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+      return { label: btn.textContent, lum: (0.2126 * r! + 0.7152 * g! + 0.0722 * b!) / 255 };
     });
 
     expect(label).toBe('Define');
-    expect(color).toBe(PINNED);
+    expect(isLegible(lum)).toBe(true);
     await page.close();
   });
 
@@ -40,7 +49,7 @@ for (const scheme of ['light', 'dark'] as const) {
     await gotoFixture(page);
     await waitForElements(page);
 
-    const { text, color } = await page.evaluate(() => {
+    const { text, lum } = await page.evaluate(() => {
       const card = document.createElement('lookup-card');
       document.body.append(card);
       // Drive the card via its public state setter (same world as the page).
@@ -50,11 +59,18 @@ for (const scheme of ['light', 'dark'] as const) {
         word: 'bank',
         target: 'vi',
       };
-      return { text: (card as HTMLElement).textContent, color: getComputedStyle(card).color };
+      const ctx = document.createElement('canvas').getContext('2d')!;
+      ctx.fillStyle = getComputedStyle(card).color;
+      ctx.fillRect(0, 0, 1, 1);
+      const [r, g, b] = ctx.getImageData(0, 0, 1, 1).data;
+      return {
+        text: (card as HTMLElement).textContent,
+        lum: (0.2126 * r! + 0.7152 * g! + 0.0722 * b!) / 255,
+      };
     });
 
     expect(text).toContain('financial institution');
-    expect(color).toBe(PINNED);
+    expect(isLegible(lum)).toBe(true);
     await page.close();
   });
 }
