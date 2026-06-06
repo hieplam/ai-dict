@@ -31,6 +31,7 @@ const CSS = `:host{display:block;font:14px/1.5 system-ui;color:#202124}
 .region{padding:0 12px 12px}
 ::slotted(h2){font-size:1.1rem;margin:0 0 8px}
 ::slotted(.err){color:#b00020}
+::slotted(.sr-only){position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::slotted(.spinner){display:inline-block;width:16px;height:16px;border:2px solid #ccc;border-top-color:#1a73e8;border-radius:50%;animation:spin .7s linear infinite}`;
 
@@ -57,20 +58,20 @@ function ensureDocKeyframes(): void {
  */
 export function renderCardState(state: CardState): Node[] {
   if (state.kind === 'loading') {
-    // spinner ring (light DOM, projected via ::slotted(.spinner)) + visually-hidden label;
-    // role="status" omitted — the card's own aria-live="polite" section handles the
-    // announcement; a nested live region causes double-announcements in NVDA/JAWS.
+    // spinner ring (light DOM, projected via ::slotted(.spinner)) + a visually-hidden
+    // SIBLING label. The label must NOT be a child of the ring: the ring rotates, so a
+    // child label rotates with it. It is hidden via the `.sr-only` class from the card's
+    // adopted (constructable) stylesheet, NOT an inline `style` attribute — extension
+    // pages such as the side panel run under `style-src 'self'`, which blocks inline
+    // styles, so an inline-styled label un-hides and (as a ring child) spins with it.
+    // role="status" omitted — the card's own aria-live="polite" section announces; a
+    // nested live region double-announces in NVDA/JAWS.
     const ring = document.createElement('div');
     ring.className = 'spinner';
     const label = document.createElement('span');
-    // visually-hidden via standard clip technique so screen readers still read it
-    label.setAttribute(
-      'style',
-      'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0',
-    );
+    label.className = 'sr-only';
     label.textContent = 'Looking up…';
-    ring.append(label);
-    return [ring];
+    return [ring, label];
   }
   if (state.kind === 'error') {
     const h = document.createElement('h2');
