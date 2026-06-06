@@ -37,6 +37,21 @@ describe('<lookup-trigger>', () => {
     expect(buttonRule!.style.color).not.toBe('');
   });
 
+  it(':host pins a high z-index so the trigger is not occluded by page stacking contexts', () => {
+    // Regression (support.claude.com): `all:initial` resets z-index to `auto`, so the
+    // host paints at z=0 in body's stacking context. Pages that wrap selectable text
+    // in a positioned ancestor with a positive z-index (e.g. a `z-3` heading container)
+    // then cover the trigger — the bubble renders but hit-testing returns the page
+    // element underneath. mousedown on what looks like "Define" falls outside our
+    // composedPath check and the capture-phase outside-press handler dismisses the
+    // bubble before the click can fire.
+    const el = mount('lookup-trigger');
+    const rules = [...el.shadowRoot!.adoptedStyleSheets[0]!.cssRules] as CSSStyleRule[];
+    const hostRule = rules.find((r) => r.selectorText === ':host');
+    expect(hostRule).toBeTruthy();
+    expect(parseInt(hostRule!.style.zIndex, 10)).toBeGreaterThanOrEqual(2147483647);
+  });
+
   it('emits a composed "lookup-click" on activation', () => {
     const el = mount('lookup-trigger');
     const spy = vi.fn();
