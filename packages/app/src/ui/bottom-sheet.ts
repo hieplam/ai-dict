@@ -1,9 +1,13 @@
 import { adoptStyles } from './styles/adopt';
 
+// The panel is a transparent, centring container — the slotted <lookup-card> carries the
+// cozy surface (bg, radius, shadow), so the sheet never frames it in a second card. A warm
+// dim scrim sets the focus; the slide-up easing is an ease-out curve (no bounce).
 const CSS = `:host{position:fixed;inset:0;z-index:2147483647}
-.scrim{position:absolute;inset:0;background:rgba(0,0,0,.4)}
-.panel{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:12px 12px 0 0;
-  max-height:80vh;overflow:auto;padding:12px;transition:transform .25s ease}
+.scrim{position:absolute;inset:0;background:oklch(0.18 0.02 50 / 0.46)}
+.panel{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;
+  max-height:88vh;overflow:auto;padding:0 14px max(14px, env(safe-area-inset-bottom));
+  transition:transform .28s cubic-bezier(.22,1,.36,1)}
 :host([reduced]) .panel{transition:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}`;
 
