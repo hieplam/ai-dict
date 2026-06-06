@@ -15,7 +15,7 @@ export type SafeHtml = string & { readonly __brand: 'SafeHtml' };
  * pipeline — never pass raw API content directly.
  */
 export type CardState =
-  | { kind: 'loading' }
+  | { kind: 'loading'; word?: string }
   | { kind: 'result'; safeHtml: SafeHtml; word: string; target: string }
   | { kind: 'error'; error: LookupError };
 
@@ -33,9 +33,10 @@ const ICON_SHIELD =
 // light/dark via prefers-color-scheme.
 // @keyframes spin is also defined in lookup-trigger.ts; each shadow root needs its own copy
 // because CSS @keyframes are scoped per shadow tree — they cannot be shared across roots.
-// The .spinner div lives in light DOM and is projected via ::slotted(); per CSS Scoping
-// Level 1, @keyframes defined in a shadow tree are not in scope for light-DOM elements, so
-// we also inject the rule into the document stylesheet once on element registration.
+// The loading spinner is the ::before pseudo-element of the slotted .loadrow caption (styled
+// via ::slotted(.loadrow)::before); per CSS Scoping Level 1, @keyframes defined in a shadow
+// tree are not reliably in scope for light-DOM nodes, so we also inject the rule into the
+// document stylesheet once on element registration as a belt-and-suspenders fallback.
 const CSS = `:host{${LIGHT_VARS};display:block;box-sizing:border-box;width:100%;max-width:420px;margin:0 auto;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);border-radius:16px;box-shadow:var(--ad-shadow);overflow:hidden;color-scheme:light dark}
 @media (prefers-color-scheme:dark){:host{${DARK_VARS}}}
 .ribbon{height:4px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
@@ -50,11 +51,12 @@ button[data-act] svg{width:15px;height:15px;pointer-events:none}
 .region{padding:2px 16px 2px}
 .footer{display:flex;align-items:center;gap:6px;margin:8px 16px 0;padding:10px 0 13px;border-top:1px solid var(--ad-line);font-size:11px;color:var(--ad-ink-soft)}
 .footer svg{width:13px;height:13px;flex:none}
-::slotted(h2){font-family:Georgia,"Times New Roman",serif;font-size:1.7rem;line-height:1.15;letter-spacing:-.01em;margin:.1em 0 .4em;color:var(--ad-ink);display:inline-block;padding-bottom:5px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-cranberry)) left bottom/44px 3px no-repeat}
+::slotted(h2){font-family:Georgia,"Times New Roman",serif;font-size:1.7rem;line-height:1.15;letter-spacing:-.01em;margin:.1em 0 .4em;color:var(--ad-ink);display:inline-block;max-width:100%;overflow-wrap:anywhere;padding-bottom:5px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-cranberry)) left bottom/44px 3px no-repeat}
 ::slotted(.err){color:var(--ad-err);font-weight:500}
-::slotted(.sr-only){position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 @keyframes spin{to{transform:rotate(360deg)}}
-::slotted(.spinner){display:inline-block;width:18px;height:18px;border:2px solid var(--ad-line);border-top-color:var(--ad-amber);border-radius:50%;animation:spin .7s linear infinite;vertical-align:-3px}`;
+::slotted(.loadrow){display:flex;align-items:center;gap:9px;margin:4px 0 9px;color:var(--ad-ink-soft);font-size:14px}
+::slotted(.loadrow)::before{content:"";display:block;width:16px;height:16px;flex:none;border:2px solid var(--ad-line);border-top-color:var(--ad-amber);border-radius:50%;animation:spin .7s linear infinite}
+@media (prefers-reduced-motion:reduce){::slotted(.loadrow)::before{animation:none}}`;
 
 // Inject @keyframes spin into the document once so Firefox/Safari (which follow CSS
 // Scoping Level 1 strictly) can resolve the animation on the light-DOM .spinner node.
@@ -79,20 +81,26 @@ function ensureDocKeyframes(): void {
  */
 export function renderCardState(state: CardState): Node[] {
   if (state.kind === 'loading') {
-    // spinner ring (light DOM, projected via ::slotted(.spinner)) + a visually-hidden
-    // SIBLING label. The label must NOT be a child of the ring: the ring rotates, so a child
-    // label would spin with it. It is hidden via the `.sr-only` class from the card's adopted
-    // (constructable) stylesheet, NOT an inline `style` attribute — extension pages such as
-    // the side panel run under `style-src 'self'`, which blocks inline styles, so an
-    // inline-styled label un-hides (and as a ring child would spin).
-    // role="status" omitted — the card's own aria-live="polite" section announces; a nested
-    // live region double-announces in NVDA/JAWS.
-    const ring = document.createElement('div');
-    ring.className = 'spinner';
-    const label = document.createElement('span');
-    label.className = 'sr-only';
-    label.textContent = 'Looking up…';
-    return [ring, label];
+    // The loading state must read as a populated, on-brand card, never an empty box. We show
+    // the reader's own selected word as the headword the instant they click (it is known long
+    // before the model replies), then a visible "Looking up the meaning…" caption with a small
+    // amber spinner. The spinner is the caption's ::before pseudo-element (styled in CSS via
+    // ::slotted(.loadrow)::before), so the rotating ring can never drag the text around with it
+    // and we need no separate, rotation-prone ring element.
+    // The caption is visible body text (not visually-hidden): the card's own aria-live="polite"
+    // section announces it once. role="status" is intentionally omitted to avoid a nested live
+    // region double-announcing in NVDA/JAWS.
+    const nodes: Node[] = [];
+    if (state.word) {
+      const h = document.createElement('h2');
+      h.textContent = state.word;
+      nodes.push(h);
+    }
+    const cap = document.createElement('span');
+    cap.className = 'loadrow';
+    cap.textContent = 'Looking up the meaning…';
+    nodes.push(cap);
+    return nodes;
   }
   if (state.kind === 'error') {
     const h = document.createElement('h2');

@@ -7,8 +7,8 @@ export class ChromeSidePanelMirror implements ResultRenderer {
       () => undefined,
     );
   }
-  renderLoading(): void {
-    this.post({ state: 'loading' });
+  renderLoading(word?: string): void {
+    this.post({ state: 'loading', word });
   }
   renderResult(r: LookupResult): void {
     this.post({ state: 'result', payload: r });

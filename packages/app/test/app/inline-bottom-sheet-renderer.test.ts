@@ -40,6 +40,14 @@ describe('InlineBottomSheetRenderer', () => {
     expect(c.textContent).toContain('Looking up');
   });
 
+  it('renderLoading(word) shows the selected word as the headword immediately', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderLoading('resilient');
+    const c = card(h);
+    expect(c.querySelector('h2')!.textContent).toBe('resilient');
+    expect(c.textContent).toContain('Looking up');
+  });
+
   it('renderResult feeds SANITIZED html (no <script>) into the card light DOM', () => {
     const h = host();
     const r = new InlineBottomSheetRenderer(h);

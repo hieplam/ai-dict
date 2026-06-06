@@ -2,87 +2,87 @@
 name: AI Dictionary
 description: A warm, candlelit bilingual lookup card that appears in the margin of whatever you're reading.
 colors:
-  candlelit-cream: "oklch(0.985 0.009 80)"
-  cream-soft: "oklch(0.962 0.017 72)"
-  ink: "oklch(0.31 0.025 50)"
-  ink-soft: "oklch(0.45 0.022 55)"
-  honey-amber: "oklch(0.61 0.13 64)"
-  mulled-cranberry: "oklch(0.52 0.16 25)"
-  pine: "oklch(0.46 0.075 155)"
-  line: "oklch(0.9 0.014 74)"
-  error: "oklch(0.5 0.17 25)"
+  candlelit-cream: 'oklch(0.985 0.009 80)'
+  cream-soft: 'oklch(0.962 0.017 72)'
+  ink: 'oklch(0.31 0.025 50)'
+  ink-soft: 'oklch(0.45 0.022 55)'
+  honey-amber: 'oklch(0.61 0.13 64)'
+  mulled-cranberry: 'oklch(0.52 0.16 25)'
+  pine: 'oklch(0.46 0.075 155)'
+  line: 'oklch(0.9 0.014 74)'
+  error: 'oklch(0.5 0.17 25)'
 typography:
   headword:
-    fontFamily: "Georgia, \"Times New Roman\", serif"
-    fontSize: "1.7rem"
+    fontFamily: 'Georgia, "Times New Roman", serif'
+    fontSize: '1.7rem'
     fontWeight: 400
     lineHeight: 1.15
-    letterSpacing: "-0.01em"
+    letterSpacing: '-0.01em'
   body:
-    fontFamily: "system-ui, -apple-system, \"Segoe UI\", sans-serif"
-    fontSize: "15px"
+    fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontSize: '15px'
     fontWeight: 400
     lineHeight: 1.6
-    letterSpacing: "normal"
+    letterSpacing: 'normal'
   brand-label:
-    fontFamily: "system-ui, -apple-system, \"Segoe UI\", sans-serif"
-    fontSize: "12px"
+    fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontSize: '12px'
     fontWeight: 700
     lineHeight: 1.6
-    letterSpacing: "0.01em"
+    letterSpacing: '0.01em'
   trigger-label:
-    fontFamily: "system-ui, -apple-system, \"Segoe UI\", sans-serif"
-    fontSize: "13px"
+    fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontSize: '13px'
     fontWeight: 600
     lineHeight: 1
-    letterSpacing: "normal"
+    letterSpacing: 'normal'
   footer-label:
-    fontFamily: "system-ui, -apple-system, \"Segoe UI\", sans-serif"
-    fontSize: "11px"
+    fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontSize: '11px'
     fontWeight: 400
     lineHeight: 1.6
-    letterSpacing: "normal"
+    letterSpacing: 'normal'
 rounded:
-  control: "8px"
-  card: "16px"
-  pill: "999px"
+  control: '8px'
+  card: '16px'
+  pill: '999px'
 spacing:
-  xs: "2px"
-  sm: "8px"
-  md: "12px"
-  lg: "16px"
+  xs: '2px'
+  sm: '8px'
+  md: '12px'
+  lg: '16px'
 components:
   trigger-pill:
-    backgroundColor: "{colors.candlelit-cream}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.pill}"
-    padding: "7px 12px 7px 9px"
-    typography: "{typography.trigger-label}"
+    backgroundColor: '{colors.candlelit-cream}'
+    textColor: '{colors.ink}'
+    rounded: '{rounded.pill}'
+    padding: '7px 12px 7px 9px'
+    typography: '{typography.trigger-label}'
   trigger-pill-hover:
-    backgroundColor: "{colors.cream-soft}"
-    textColor: "{colors.ink}"
+    backgroundColor: '{colors.cream-soft}'
+    textColor: '{colors.ink}'
   lookup-card:
-    backgroundColor: "{colors.candlelit-cream}"
-    textColor: "{colors.ink}"
-    rounded: "{rounded.card}"
-    width: "420px"
+    backgroundColor: '{colors.candlelit-cream}'
+    textColor: '{colors.ink}'
+    rounded: '{rounded.card}'
+    width: '420px'
   card-headword:
-    textColor: "{colors.ink}"
-    typography: "{typography.headword}"
+    textColor: '{colors.ink}'
+    typography: '{typography.headword}'
   card-brand:
-    textColor: "{colors.pine}"
-    typography: "{typography.brand-label}"
+    textColor: '{colors.pine}'
+    typography: '{typography.brand-label}'
   card-action:
-    backgroundColor: "transparent"
-    textColor: "{colors.ink-soft}"
-    rounded: "{rounded.control}"
-    size: "28px"
+    backgroundColor: 'transparent'
+    textColor: '{colors.ink-soft}'
+    rounded: '{rounded.control}'
+    size: '28px'
   card-action-hover:
-    backgroundColor: "{colors.cream-soft}"
-    textColor: "{colors.ink}"
+    backgroundColor: '{colors.cream-soft}'
+    textColor: '{colors.ink}'
   card-footer:
-    textColor: "{colors.ink-soft}"
-    typography: "{typography.footer-label}"
+    textColor: '{colors.ink-soft}'
+    typography: '{typography.footer-label}'
 ---
 
 # Design System: AI Dictionary
@@ -91,7 +91,7 @@ components:
 
 **Creative North Star: "The Candlelit Margin"**
 
-AI Dictionary is a warm pool of light cast in the margin of whatever you happen to be reading. A reader hits an unfamiliar English word mid-sentence; one selection brings up a small, self-owned card that explains the word in this sentence, in their language, then gets out of the way. The whole system is built to feel like a candle set down beside the page: honey-amber glow at the top of the surface, a serif headword that reads like a printed dictionary entry, and just enough festive trim (a holly mark, a thin ribbon) to make the card unmistakably *ours* the instant it appears over any website.
+AI Dictionary is a warm pool of light cast in the margin of whatever you happen to be reading. A reader hits an unfamiliar English word mid-sentence; one selection brings up a small, self-owned card that explains the word in this sentence, in their language, then gets out of the way. The whole system is built to feel like a candle set down beside the page: honey-amber glow at the top of the surface, a serif headword that reads like a printed dictionary entry, and just enough festive trim (a holly mark, a thin ribbon) to make the card unmistakably _ours_ the instant it appears over any website.
 
 The card overlays arbitrary, unpredictable pages, so it is built as a fully opaque, fully self-contained shadow-DOM surface that carries its own tokens and never leans on the host background. Every color is OKLCH and tuned for WCAG AA against its own surface, verified in-browser, because legibility has to hold whether the page behind it is a white news site or a black code editor. The warmth is the felt emotion the product designs for: the relief of understanding without friction, the calm of a tool that respects you. The cozy-Christmas identity is the carrier of that warmth, not a costume on top of it.
 
@@ -133,9 +133,9 @@ A warm, candlelit reading surface: honey-amber is the signature, with pine green
 
 ### Named Rules
 
-**The Trim Rule.** The festive accents (pine, cranberry) live only at the *trim* of the card: the 4px ribbon, the holly mark, the brand label, the headword underline. They never fill a surface or tint body text. Strip the trim away and the card is still a calm, legible reading surface. That restraint is what keeps "Christmas" from tipping into gimmick.
+**The Trim Rule.** The festive accents (pine, cranberry) live only at the _trim_ of the card: the 4px ribbon, the holly mark, the brand label, the headword underline. They never fill a surface or tint body text. Strip the trim away and the card is still a calm, legible reading surface. That restraint is what keeps "Christmas" from tipping into gimmick.
 
-**The Candle Rule.** Honey-amber is the only color that *glows*. It is the radial wash at the top of the card and the focus ring; it is never used for plain text or borders. Its job is light, not labeling.
+**The Candle Rule.** Honey-amber is the only color that _glows_. It is the radial wash at the top of the card and the focus ring; it is never used for plain text or borders. Its job is light, not labeling.
 
 **The No-Color-Only Rule.** The English term and its translation must be distinguishable without color (order, label, and weight carry the distinction). Primary users read in a second language; color is decoration, never the signal.
 
@@ -200,7 +200,7 @@ The card is a single lifted surface floating above an arbitrary page; depth is c
 - **Bar:** Brand cluster (holly mark + "AI Dictionary" in pine 700/12px) on the left, a `28px` close button on the right.
 - **Content region:** A `<section aria-live="polite">` projecting light-DOM content through a `<slot>`, so loading→result transitions announce once.
 - **Footer:** A hairline-topped row with a shield icon and "Stays on your device" (ink-soft, 11px) — privacy made visible.
-- **States:** *Loading* (amber-arc spinner + visually-hidden "Looking up…" label); *Result* (serif headword + sanitized definition body); *Error* ("Lookup failed" headword + cranberry-leaning error text).
+- **States:** _Loading_ (the reader's selected word shown immediately as the serif headword, with a visible "Looking up the meaning…" caption led by a small amber spinner — the spinner is the caption's `::before`, so the card reads as populated and on-brand the instant Define is clicked, never as an empty box); _Result_ (serif headword + sanitized definition body); _Error_ ("Lookup failed" headword + cranberry-leaning error text).
 
 ### Icon Buttons (card actions)
 
@@ -235,9 +235,9 @@ The extension options form is plain neutral browser chrome (`#202124` on `#f1f3f
 
 ### Do:
 
-- **Do** keep the festive accents (pine, cranberry) at the *trim* only — ribbon, holly, brand label, headword underline. Strip the trim and the card must still be a calm, legible reading surface.
+- **Do** keep the festive accents (pine, cranberry) at the _trim_ only — ribbon, holly, brand label, headword underline. Strip the trim and the card must still be a calm, legible reading surface.
 - **Do** use honey-amber as the one glowing color: the radial card glow, the focus ring, the spinner arc. Nothing else glows.
-- **Do** render every color in OKLCH and verify ≥4.5:1 body / ≥3:1 UI contrast in-browser, against the card's *own* surface, in both light and dark.
+- **Do** render every color in OKLCH and verify ≥4.5:1 body / ≥3:1 UI contrast in-browser, against the card's _own_ surface, in both light and dark.
 - **Do** keep the card fully opaque and self-contained (own shadow root, own tokens). It must read identically over a white news site and a black editor.
 - **Do** isolate any over-page host with `all: initial` plus the cozy `--ad-*` tokens (custom properties survive `all`) and lift it with `z-index: 2147483647`.
 - **Do** keep exactly one visible cozy surface: the card carries bg/radius/shadow; the bottom sheet stays transparent.

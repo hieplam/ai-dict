@@ -24,14 +24,17 @@ function isLookupResult(v: unknown): v is LookupResult {
 const card = document.querySelector('lookup-card') as LookupCard;
 
 chrome.runtime.onMessage.addListener(
-  (msg: { to?: string; state?: string; payload?: unknown }, sender) => {
+  (msg: { to?: string; state?: string; word?: unknown; payload?: unknown }, sender) => {
     // S3: reject messages from any context outside this extension
     if (sender.id !== chrome.runtime.id) return;
     if (msg.to !== 'side-panel') return;
     const set = (s: CardState): void => {
       card.state = s;
     };
-    if (msg.state === 'loading') set({ kind: 'loading' });
+    // `word` is rendered as textContent only (never innerHTML), so it cannot inject markup;
+    // still coerce defensively so a malformed message degrades to a wordless loading card.
+    if (msg.state === 'loading')
+      set(typeof msg.word === 'string' ? { kind: 'loading', word: msg.word } : { kind: 'loading' });
     else if (msg.state === 'result') {
       if (!isLookupResult(msg.payload)) {
         console.warn('[side-panel] invalid result payload');

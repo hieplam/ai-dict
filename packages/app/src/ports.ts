@@ -17,7 +17,12 @@ export interface TriggerUI {
 }
 
 export interface ResultRenderer {
-  renderLoading(): void;
+  /**
+   * Show the loading state. `word` is the reader's selected text, known the
+   * instant they click Define — render it immediately as the headword so the
+   * card never appears empty while waiting for the model's reply.
+   */
+  renderLoading(word?: string): void;
   renderResult(r: LookupResult): void;
   renderError(e: LookupError): void;
   close(): void;
