@@ -1,23 +1,26 @@
 import {
   registerSettingsForm,
   DEFAULT_TEMPLATE,
+  ENV_KEY_NOTICE,
   type Settings,
+  type SettingsForm,
   type SettingsFormValue,
 } from '@ai-dict/app';
 registerSettingsForm();
 
+const form = document.querySelector('settings-form')! as unknown as SettingsForm;
+
 // When the extension was built with GEMINI_API_KEY in the env, the SW ignores
-// the stored key. Surface that so users don't think their input is broken.
+// the stored key. Lock the key field (same wording as the banner) so users
+// don't think their input is broken, and keep a top banner for prominence.
 if (__GEMINI_KEY_FROM_ENV__) {
+  form.keyFromEnv = true;
   const notice = document.createElement('p');
-  notice.textContent =
-    'Gemini API key is baked into this build (GEMINI_API_KEY env var). The key field below is ignored.';
+  notice.textContent = ENV_KEY_NOTICE;
   notice.style.cssText =
     'margin:8px 12px;padding:8px 12px;border-left:3px solid #1a73e8;background:#e8f0fe;font:14px/1.5 system-ui;color:#202124';
   document.body.insertBefore(notice, document.body.firstChild);
 }
-
-const form = document.querySelector('settings-form')!;
 const DEFAULTS: Settings = {
   targetLang: 'vi',
   promptTemplate: DEFAULT_TEMPLATE,

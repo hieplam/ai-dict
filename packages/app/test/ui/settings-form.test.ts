@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
-import { SettingsForm, type SettingsFormValue } from '../../src/ui/settings-form';
+import { SettingsForm, ENV_KEY_NOTICE, type SettingsFormValue } from '../../src/ui/settings-form';
 import { registerSettingsForm } from '../../src/ui/register';
 
 beforeAll(() => {
@@ -164,6 +164,81 @@ describe('<settings-form>', () => {
 
   it('has no axe violations', async () => {
     const el = mountForm();
+    expect(await axeViolations(el)).toEqual([]);
+  });
+});
+
+describe('<settings-form> env-key lock', () => {
+  it('locks the key field, hides reveal, and marks it read-only when keyFromEnv is set', () => {
+    const el = mountForm();
+    el.keyFromEnv = true;
+    const key = el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
+    const reveal = el.shadowRoot!.querySelector<HTMLButtonElement>('#reveal')!;
+    expect(key.readOnly).toBe(true);
+    expect(key.getAttribute('aria-readonly')).toBe('true');
+    expect(key.classList.contains('locked')).toBe(true);
+    expect(reveal.hidden).toBe(true);
+  });
+
+  it('reveals the full env notice on focus and reverts on blur', () => {
+    const el = mountForm();
+    el.keyFromEnv = true;
+    const key = el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
+    const help = el.shadowRoot!.querySelector<HTMLElement>('#key-help')!;
+    const hint = help.textContent;
+    expect(hint).not.toBe(ENV_KEY_NOTICE);
+    key.dispatchEvent(new Event('focus'));
+    expect(help.textContent).toBe(ENV_KEY_NOTICE);
+    key.dispatchEvent(new Event('blur'));
+    expect(help.textContent).toBe(hint);
+  });
+
+  it('preserves the stored key on save so locking never wipes it', () => {
+    const el = mountForm();
+    el.value = {
+      apiKey: 'AIza-stored',
+      targetLang: 'vi',
+      promptTemplate: 'T',
+      cacheEnabled: true,
+      saveHistory: true,
+    };
+    el.keyFromEnv = true;
+    let captured: SettingsFormValue | undefined;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(captured!.apiKey).toBe('AIza-stored');
+  });
+
+  it('does not display the stored key value while locked', () => {
+    const el = mountForm();
+    el.value = {
+      apiKey: 'AIza-stored',
+      targetLang: 'vi',
+      promptTemplate: 'T',
+      cacheEnabled: true,
+      saveHistory: true,
+    };
+    el.keyFromEnv = true;
+    const key = el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
+    expect(key.value).toBe('');
+    expect(key.placeholder.length).toBeGreaterThan(0);
+  });
+
+  it('keyFromEnv set before connect applies the lock after hydration', () => {
+    const el = document.createElement('settings-form') as SettingsForm;
+    el.keyFromEnv = true;
+    document.body.append(el);
+    const key = el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
+    expect(key.readOnly).toBe(true);
+  });
+
+  it('has no axe violations while locked', async () => {
+    const el = mountForm();
+    el.keyFromEnv = true;
     expect(await axeViolations(el)).toEqual([]);
   });
 });

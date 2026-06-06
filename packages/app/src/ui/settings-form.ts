@@ -11,10 +11,21 @@ export interface SettingsFormValue {
   // the form's 'save' event.
 }
 
+// Single source of truth for the "key comes from the build env" wording, shared
+// by the inline hint here and the options-page banner so the two never drift.
+export const ENV_KEY_NOTICE =
+  'Gemini API key is loaded from the GEMINI_API_KEY build env. This field is ignored.';
+// Resting copy under the locked field; focus/click swaps it for ENV_KEY_NOTICE.
+const ENV_KEY_HINT = 'Locked — supplied by this build. Click to learn more.';
+const DEFAULT_KEY_HELP = 'Stored locally on this device only.';
+const ENV_KEY_PLACEHOLDER = 'Loaded from GEMINI_API_KEY build env';
+
 const CSS = `:host{display:block;font:14px/1.5 system-ui;color:#202124}
 label{display:block;margin:8px 0 4px;font-weight:600}
 .row{margin-bottom:12px}
 input,select,textarea{font:inherit;width:100%;box-sizing:border-box}
+input.locked{background:#f1f3f4;color:#5f6368;cursor:help}
+[hidden]{display:none}
 .actions button{margin-right:8px}`;
 
 const MARKUP = `<form>
@@ -48,6 +59,11 @@ const MARKUP = `<form>
 export class SettingsForm extends HTMLElement {
   private root!: ShadowRoot;
   private _pendingValue: SettingsFormValue | null = null;
+  // When the build baked in GEMINI_API_KEY the stored key is irrelevant (the SW
+  // ignores it), so the field is locked. We still echo the stored key back on
+  // save so toggling this state never silently wipes what the user had entered.
+  private _keyFromEnv = false;
+  private _storedApiKey = '';
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -60,6 +76,17 @@ export class SettingsForm extends HTMLElement {
       const revealBtn = this.q<HTMLButtonElement>('#reveal');
       key.type = key.type === 'password' ? 'text' : 'password';
       revealBtn.setAttribute('aria-label', key.type === 'text' ? 'Hide API key' : 'Reveal API key');
+    });
+
+    // A locked field is read-only (not `disabled`) precisely so it still takes
+    // focus on tab/click — that is what lets us surface the full notice here.
+    const key = this.q<HTMLInputElement>('#key');
+    const help = this.q<HTMLElement>('#key-help');
+    key.addEventListener('focus', () => {
+      if (this._keyFromEnv) help.textContent = ENV_KEY_NOTICE;
+    });
+    key.addEventListener('blur', () => {
+      if (this._keyFromEnv) help.textContent = ENV_KEY_HINT;
     });
     this.q<HTMLFormElement>('form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -80,6 +107,41 @@ export class SettingsForm extends HTMLElement {
       this.value = this._pendingValue;
       this._pendingValue = null;
     }
+    // Enforce the lock last so it wins over any value just hydrated above.
+    this.applyKeyLock();
+  }
+
+  /** Lock the key field because the build supplies GEMINI_API_KEY itself. */
+  set keyFromEnv(on: boolean) {
+    this._keyFromEnv = on;
+    if (this.shadowRoot) this.applyKeyLock();
+  }
+  get keyFromEnv(): boolean {
+    return this._keyFromEnv;
+  }
+
+  private applyKeyLock(): void {
+    const key = this.q<HTMLInputElement>('#key');
+    const reveal = this.q<HTMLButtonElement>('#reveal');
+    const help = this.q<HTMLElement>('#key-help');
+    if (this._keyFromEnv) {
+      key.readOnly = true;
+      key.value = '';
+      key.type = 'text';
+      key.placeholder = ENV_KEY_PLACEHOLDER;
+      key.classList.add('locked');
+      key.setAttribute('aria-readonly', 'true');
+      reveal.hidden = true;
+      help.textContent = ENV_KEY_HINT;
+    } else {
+      key.readOnly = false;
+      key.value = this._storedApiKey;
+      key.placeholder = '';
+      key.classList.remove('locked');
+      key.removeAttribute('aria-readonly');
+      reveal.hidden = false;
+      help.textContent = DEFAULT_KEY_HELP;
+    }
   }
 
   private q<T extends Element>(sel: string): T {
@@ -96,7 +158,8 @@ export class SettingsForm extends HTMLElement {
 
   private collect(): SettingsFormValue {
     return {
-      apiKey: this.q<HTMLInputElement>('#key').value,
+      // Locked → the input is blanked for display, so echo the stored key back.
+      apiKey: this._keyFromEnv ? this._storedApiKey : this.q<HTMLInputElement>('#key').value,
       targetLang: this.q<HTMLSelectElement>('#target').value,
       promptTemplate: this.q<HTMLTextAreaElement>('#tpl').value,
       cacheEnabled: this.q<HTMLInputElement>('#cache').checked,
@@ -110,10 +173,13 @@ export class SettingsForm extends HTMLElement {
       this._pendingValue = v;
       return;
     }
+    this._storedApiKey = v.apiKey;
     this.q<HTMLInputElement>('#key').value = v.apiKey;
     this.q<HTMLSelectElement>('#target').value = v.targetLang;
     this.q<HTMLTextAreaElement>('#tpl').value = v.promptTemplate;
     this.q<HTMLInputElement>('#cache').checked = v.cacheEnabled;
     this.q<HTMLInputElement>('#history').checked = v.saveHistory;
+    // Re-assert the lock if the key arrived after keyFromEnv was set.
+    if (this._keyFromEnv) this.applyKeyLock();
   }
 }
