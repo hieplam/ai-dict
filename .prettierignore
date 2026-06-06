@@ -2,3 +2,5 @@ dist/
 coverage/
 pnpm-lock.yaml
 **/*.snapshot.json
+
+.c3/

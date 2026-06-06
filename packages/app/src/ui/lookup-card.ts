@@ -21,11 +21,29 @@ export type CardState =
 // Content lives in the card's LIGHT DOM, projected through a <slot>, so the
 // shadow rules target slotted nodes via ::slotted(). `color`/`font` are inherited
 // and cross the slot boundary from :host automatically.
+// @keyframes spin is also defined in lookup-trigger.ts; each shadow root needs its own copy
+// because CSS @keyframes are scoped per shadow tree — they cannot be shared across roots.
+// The .spinner div lives in light DOM and is projected via ::slotted(); per CSS Scoping
+// Level 1, @keyframes defined in a shadow tree are not in scope for light-DOM elements, so
+// we also inject the rule into the document stylesheet once on element registration.
 const CSS = `:host{display:block;font:14px/1.5 system-ui;color:#202124}
 .bar{display:flex;gap:8px;justify-content:flex-end;padding:8px}
 .region{padding:0 12px 12px}
 ::slotted(h2){font-size:1.1rem;margin:0 0 8px}
-::slotted(.err){color:#b00020}`;
+::slotted(.err){color:#b00020}
+@keyframes spin{to{transform:rotate(360deg)}}
+::slotted(.spinner){display:inline-block;width:16px;height:16px;border:2px solid #ccc;border-top-color:#1a73e8;border-radius:50%;animation:spin .7s linear infinite}`;
+
+// Inject @keyframes spin into the document once so Firefox/Safari (which follow CSS
+// Scoping Level 1 strictly) can resolve the animation on the light-DOM .spinner node.
+let _docKeyframesInjected = false;
+function ensureDocKeyframes(): void {
+  if (_docKeyframesInjected) return;
+  _docKeyframesInjected = true;
+  const style = document.createElement('style');
+  style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+  document.head.append(style);
+}
 
 /**
  * Build the card's display content for a given state as LIGHT-DOM nodes.
@@ -38,7 +56,22 @@ const CSS = `:host{display:block;font:14px/1.5 system-ui;color:#202124}
  * (side panel) use the `state` setter, which funnels through this same helper.
  */
 export function renderCardState(state: CardState): Node[] {
-  if (state.kind === 'loading') return [document.createTextNode('Looking up…')];
+  if (state.kind === 'loading') {
+    // spinner ring (light DOM, projected via ::slotted(.spinner)) + visually-hidden label;
+    // role="status" omitted — the card's own aria-live="polite" section handles the
+    // announcement; a nested live region causes double-announcements in NVDA/JAWS.
+    const ring = document.createElement('div');
+    ring.className = 'spinner';
+    const label = document.createElement('span');
+    // visually-hidden via standard clip technique so screen readers still read it
+    label.setAttribute(
+      'style',
+      'position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0',
+    );
+    label.textContent = 'Looking up…';
+    ring.append(label);
+    return [ring];
+  }
   if (state.kind === 'error') {
     const h = document.createElement('h2');
     h.textContent = 'Lookup failed';
@@ -59,6 +92,7 @@ export class LookupCard extends HTMLElement {
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
+    ensureDocKeyframes(); // inject document @keyframes for light-DOM spinner (Firefox/Safari)
     const root = this.attachShadow({ mode: 'open' });
     adoptStyles(root, CSS);
 
