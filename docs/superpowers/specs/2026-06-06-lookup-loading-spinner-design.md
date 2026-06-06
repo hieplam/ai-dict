@@ -30,12 +30,14 @@ bubble spinner; and the card's loading state is text, not an icon.
 ## Changes
 
 ### 1. `packages/app/src/ui/lookup-trigger.ts`
+
 On click, swap the button label for a CSS ring spinner and set `disabled` +
 `aria-busy="true"`, **then** dispatch `lookup-click` (as today). Add
 `@keyframes` + a `.spinner` rule to the host's adopted CSS. Self-contained in the
 element — no port change.
 
 ### 2. `packages/app/src/ui/lookup-card.ts`
+
 `renderCardState({kind:'loading'})` returns a spinner node
 (`<div class="spinner" role="status">`) plus a visually-hidden `"Looking up…"`
 span (keeps screen-reader text and the existing `el.textContent` contract). Add
@@ -43,6 +45,7 @@ span (keeps screen-reader text and the existing `el.textContent` contract). Add
 The live region is already `aria-live="polite"`.
 
 ### 3. `packages/app/src/domain/workflow.ts`
+
 Move `deps.trigger.hide()` out of the onClick callback into `runLookup`, called
 **once** right after `settings.get()` resolves (before both the no-key error
 branch and `renderLoading()`). The bubble's spinner now stays visible during the
