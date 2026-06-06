@@ -47,14 +47,24 @@ CSP-safe `.sr-only` pattern already used in `bottom-sheet.ts`:
 const ring = document.createElement('div');
 ring.className = 'spinner';
 const label = document.createElement('span');
-label.className = 'sr-only';          // was: inline style attribute
+label.className = 'sr-only'; // was: inline style attribute
 label.textContent = 'Looking up…';
-return [ring, label];                 // was: ring.append(label); return [ring]
+return [ring, label]; // was: ring.append(label); return [ring]
 ```
 
 ```css
 /* added to the card's adopted CSS */
-::slotted(.sr-only){position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+::slotted(.sr-only) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
 ```
 
 Both `.spinner` and `.sr-only` are now top-level slotted nodes, so both `::slotted(...)`
@@ -62,7 +72,7 @@ rules match.
 
 ### Why this covers both asks
 
-The side panel and the bottom sheet both render loading through the *same*
+The side panel and the bottom sheet both render loading through the _same_
 `renderCardState`. Fixing it once corrects the spinner on **both** surfaces (and on
 strict-CSP websites). No workflow or per-surface change is needed.
 
