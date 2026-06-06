@@ -1,10 +1,10 @@
 ---
 id: adr-20260606-fix-loading-label-csp-safe-hide
-c3-seal: a2c2db902fb082ad9cc8466c75787eb60ba6c72455cfb718680bb7b5fd735bb3
+c3-seal: 8b5963c8c68f2e45cd0dc7251349ced27bec8000f08299ce20055dd67b29521d
 title: fix-loading-label-csp-safe-hide
 type: adr
 goal: Change how the lookup card's loading state hides its "Looking up…" screen-reader label so the label stays hidden under a strict `style-src 'self'` Content-Security-Policy. Today the label is hidden with an inline `style` attribute and nested inside the rotating ring; this ADR authorizes hiding it with a CSS class (`::slotted(.sr-only)` in the card's adopted stylesheet) and making it a sibling of the ring, so the hidden text can never become visible or rotate on extension pages (the Chrome side panel) or strict-CSP websites.
-status: accepted
+status: implemented
 date: "2026-06-06"
 ---
 
