@@ -2,6 +2,16 @@ import * as esbuild from 'esbuild';
 import { mkdir, copyFile } from 'node:fs/promises';
 
 await mkdir('dist', { recursive: true });
+
+// Build-time injection of the Gemini API key. If GEMINI_API_KEY is set in the
+// shell environment when this script runs, it is baked into the SW bundle and
+// the SW will use it instead of asking the user via the options page. The
+// options page still works as a fallback for users who build without the env
+// var set. Anyone who can read the .crx can extract the key — treat builds
+// with this env var as personal/dev artefacts, not for distribution.
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? '';
+const HAS_ENV_KEY = GEMINI_API_KEY.length > 0;
+
 const common = {
   bundle: true,
   minify: true,
@@ -15,6 +25,7 @@ await esbuild.build({
   entryPoints: ['src/sw.ts'],
   outfile: 'dist/sw.js',
   format: 'esm',
+  define: { __GEMINI_API_KEY__: JSON.stringify(GEMINI_API_KEY) },
 });
 
 // content-elements.js: runs in world:"MAIN" (manifest content_scripts.world).
@@ -49,6 +60,7 @@ await esbuild.build({
   entryPoints: ['src/options.ts'],
   outfile: 'dist/options.js',
   format: 'esm',
+  define: { __GEMINI_KEY_FROM_ENV__: JSON.stringify(HAS_ENV_KEY) },
 });
 await esbuild.build({
   ...common,
