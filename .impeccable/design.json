@@ -100,23 +100,70 @@
       }
     },
     "typographyMeta": {
-      "headword": { "displayName": "Headword", "purpose": "The looked-up word. The single serif element per card; carries a pine→cranberry underline swatch." },
-      "body": { "displayName": "Body", "purpose": "Definition content (IPA, POS, learner definition, translation, example). Native system sans, capped under 75ch by the 420px card width." },
-      "brand-label": { "displayName": "Brand Label", "purpose": "'AI Dictionary' in the card bar, paired with the holly mark. Pine, 700." },
-      "trigger-label": { "displayName": "Trigger Label", "purpose": "The word 'Define' in the floating trigger pill." },
-      "footer-label": { "displayName": "Footer Label", "purpose": "'Stays on your device' privacy line beside the shield." }
+      "headword": {
+        "displayName": "Headword",
+        "purpose": "The looked-up word. The single serif element per card; carries a pine→cranberry underline swatch."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Definition content (IPA, POS, learner definition, translation, example). Native system sans, capped under 75ch by the 420px card width."
+      },
+      "brand-label": {
+        "displayName": "Brand Label",
+        "purpose": "'AI Dictionary' in the card bar, paired with the holly mark. Pine, 700."
+      },
+      "trigger-label": {
+        "displayName": "Trigger Label",
+        "purpose": "The word 'Define' in the floating trigger pill."
+      },
+      "footer-label": {
+        "displayName": "Footer Label",
+        "purpose": "'Stays on your device' privacy line beside the shield."
+      }
     },
     "shadows": [
-      { "name": "card-lift-light", "value": "0 1px 1px oklch(0.4 0.05 50 / 0.05), 0 12px 26px -8px oklch(0.42 0.06 45 / 0.26), 0 30px 60px -24px oklch(0.4 0.06 45 / 0.3)", "purpose": "Lookup card resting shadow, light mode. Three warm-tinted layers." },
-      { "name": "card-lift-dark", "value": "0 1px 1px oklch(0 0 0 / 0.3), 0 16px 32px -10px oklch(0 0 0 / 0.55), 0 40px 70px -28px oklch(0 0 0 / 0.6)", "purpose": "Lookup card shadow, dark mode. Deeper near-black layers to separate from a dark host page." },
-      { "name": "trigger-lift", "value": "0 2px 5px oklch(0.4 0.05 50 / 0.16), 0 10px 22px -10px oklch(0.4 0.06 45 / 0.4)", "purpose": "Floating 'Define' pill, two warm layers, lighter than the card." },
-      { "name": "glow-light", "value": "radial-gradient(125% 80% at 50% -14%, oklch(0.85 0.12 78 / 0.72), transparent 72%)", "purpose": "Candlelight: honey-amber radial wash behind the card surface top edge (light)." },
-      { "name": "glow-dark", "value": "radial-gradient(125% 80% at 50% -14%, oklch(0.72 0.14 72 / 0.46), transparent 72%)", "purpose": "Candlelight wash, dark mode." },
-      { "name": "scrim", "value": "oklch(0.18 0.02 50 / 0.46)", "purpose": "Warm dim behind the bottom sheet on mobile. Warm-tinted, never neutral black." }
+      {
+        "name": "card-lift-light",
+        "value": "0 1px 1px oklch(0.4 0.05 50 / 0.05), 0 12px 26px -8px oklch(0.42 0.06 45 / 0.26), 0 30px 60px -24px oklch(0.4 0.06 45 / 0.3)",
+        "purpose": "Lookup card resting shadow, light mode. Three warm-tinted layers."
+      },
+      {
+        "name": "card-lift-dark",
+        "value": "0 1px 1px oklch(0 0 0 / 0.3), 0 16px 32px -10px oklch(0 0 0 / 0.55), 0 40px 70px -28px oklch(0 0 0 / 0.6)",
+        "purpose": "Lookup card shadow, dark mode. Deeper near-black layers to separate from a dark host page."
+      },
+      {
+        "name": "trigger-lift",
+        "value": "0 2px 5px oklch(0.4 0.05 50 / 0.16), 0 10px 22px -10px oklch(0.4 0.06 45 / 0.4)",
+        "purpose": "Floating 'Define' pill, two warm layers, lighter than the card."
+      },
+      {
+        "name": "glow-light",
+        "value": "radial-gradient(125% 80% at 50% -14%, oklch(0.85 0.12 78 / 0.72), transparent 72%)",
+        "purpose": "Candlelight: honey-amber radial wash behind the card surface top edge (light)."
+      },
+      {
+        "name": "glow-dark",
+        "value": "radial-gradient(125% 80% at 50% -14%, oklch(0.72 0.14 72 / 0.46), transparent 72%)",
+        "purpose": "Candlelight wash, dark mode."
+      },
+      {
+        "name": "scrim",
+        "value": "oklch(0.18 0.02 50 / 0.46)",
+        "purpose": "Warm dim behind the bottom sheet on mobile. Warm-tinted, never neutral black."
+      }
     ],
     "motion": [
-      { "name": "sheet-slide", "value": "0.28s cubic-bezier(0.22, 1, 0.36, 1)", "purpose": "Bottom-sheet slide-up via transform. Ease-out, no bounce. Removed under prefers-reduced-motion." },
-      { "name": "spin", "value": "spin 0.7s linear infinite", "purpose": "Loading spinner: a ring with a honey-amber leading arc. Used in both the trigger and the card." }
+      {
+        "name": "sheet-slide",
+        "value": "0.28s cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Bottom-sheet slide-up via transform. Ease-out, no bounce. Removed under prefers-reduced-motion."
+      },
+      {
+        "name": "spin",
+        "value": "spin 0.7s linear infinite",
+        "purpose": "Loading spinner: a ring with a honey-amber leading arc. Used in both the trigger and the card."
+      }
     ],
     "breakpoints": [
       { "name": "card-max", "value": "420px" },
@@ -169,13 +216,41 @@
       "Privacy you can feel. A shield-marked 'Stays on your device' line is part of the card itself."
     ],
     "rules": [
-      { "name": "The Trim Rule", "body": "The festive accents (pine, cranberry) live only at the trim of the card: the 4px ribbon, the holly mark, the brand label, the headword underline. They never fill a surface or tint body text. Strip the trim away and the card is still a calm, legible reading surface.", "section": "colors" },
-      { "name": "The Candle Rule", "body": "Honey-amber is the only color that glows. It is the radial wash at the top of the card and the focus ring; it is never used for plain text or borders. Its job is light, not labeling.", "section": "colors" },
-      { "name": "The No-Color-Only Rule", "body": "The English term and its translation must be distinguishable without color (order, label, and weight carry the distinction). Color is decoration, never the signal.", "section": "colors" },
-      { "name": "The One Serif Rule", "body": "Georgia appears exactly once per card: the headword. Everything else is the system sans.", "section": "typography" },
-      { "name": "The Native Sans Rule", "body": "The body face is always the host system's UI font (system-ui stack), never a webfont.", "section": "typography" },
-      { "name": "The One Surface Rule", "body": "Only one cozy surface is ever visible. The card owns the bg/radius/shadow; any container around it (the bottom sheet) is transparent. Never nest the card inside a second visible card.", "section": "elevation" },
-      { "name": "The Warm Shadow Rule", "body": "Shadows are tinted toward warm hue (45–52°), never neutral gray.", "section": "elevation" }
+      {
+        "name": "The Trim Rule",
+        "body": "The festive accents (pine, cranberry) live only at the trim of the card: the 4px ribbon, the holly mark, the brand label, the headword underline. They never fill a surface or tint body text. Strip the trim away and the card is still a calm, legible reading surface.",
+        "section": "colors"
+      },
+      {
+        "name": "The Candle Rule",
+        "body": "Honey-amber is the only color that glows. It is the radial wash at the top of the card and the focus ring; it is never used for plain text or borders. Its job is light, not labeling.",
+        "section": "colors"
+      },
+      {
+        "name": "The No-Color-Only Rule",
+        "body": "The English term and its translation must be distinguishable without color (order, label, and weight carry the distinction). Color is decoration, never the signal.",
+        "section": "colors"
+      },
+      {
+        "name": "The One Serif Rule",
+        "body": "Georgia appears exactly once per card: the headword. Everything else is the system sans.",
+        "section": "typography"
+      },
+      {
+        "name": "The Native Sans Rule",
+        "body": "The body face is always the host system's UI font (system-ui stack), never a webfont.",
+        "section": "typography"
+      },
+      {
+        "name": "The One Surface Rule",
+        "body": "Only one cozy surface is ever visible. The card owns the bg/radius/shadow; any container around it (the bottom sheet) is transparent. Never nest the card inside a second visible card.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Warm Shadow Rule",
+        "body": "Shadows are tinted toward warm hue (45–52°), never neutral gray.",
+        "section": "elevation"
+      }
     ],
     "dos": [
       "Do keep the festive accents (pine, cranberry) at the trim only — ribbon, holly, brand label, headword underline.",
