@@ -26,10 +26,15 @@ async function readFullSettings(): Promise<Settings> {
   );
 }
 
+// Build-time key (esbuild `define`) wins over the stored settings key. Lets you
+// ship a personal build with GEMINI_API_KEY in the env and skip the options
+// page entirely; empty string => fall through to whatever the user entered.
+const ENV_API_KEY = __GEMINI_API_KEY__;
+
 const router = buildRouter({
   client: new GeminiLookupClient({
     fetch: (u, i) => fetch(u, i),
-    getApiKey: async () => (await readFullSettings()).apiKey,
+    getApiKey: async () => ENV_API_KEY || (await readFullSettings()).apiKey,
   }),
   settings: new ChromeStorageStore(chrome.storage.local),
   kv: new ChromeKvStore(chrome.storage.local),
