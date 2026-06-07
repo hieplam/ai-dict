@@ -72,6 +72,44 @@ describe('<settings-form>', () => {
     }
   });
 
+  it('setStatus shows the message text and reveals the status line', () => {
+    const el = mountForm();
+    const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
+    expect(status.hidden).toBe(true); // hidden until something to say
+    el.setStatus('Settings saved');
+    expect(status.hidden).toBe(false);
+    expect(status.textContent).toBe('Settings saved');
+    // Announced to assistive tech as a polite live region.
+    expect(status.getAttribute('role')).toBe('status');
+    expect(status.getAttribute('aria-live')).toBe('polite');
+  });
+
+  it('setStatus with the error tone marks the status as an error', () => {
+    const el = mountForm();
+    const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
+    el.setStatus('Connection failed', 'error');
+    expect(status.textContent).toBe('Connection failed');
+    expect(status.classList.contains('error')).toBe(true);
+  });
+
+  it('setStatus clears the error tone when a success message follows', () => {
+    const el = mountForm();
+    const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
+    el.setStatus('Connection failed', 'error');
+    el.setStatus('Connection OK');
+    expect(status.classList.contains('error')).toBe(false);
+    expect(status.textContent).toBe('Connection OK');
+  });
+
+  it('setStatus with empty text hides the status line', () => {
+    const el = mountForm();
+    const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
+    el.setStatus('Saved');
+    el.setStatus('');
+    expect(status.hidden).toBe(true);
+    expect(status.textContent).toBe('');
+  });
+
   it('reveal toggles back to password on second click', () => {
     const el = mountForm();
     const key = el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;

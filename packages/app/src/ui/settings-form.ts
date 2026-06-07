@@ -26,7 +26,9 @@ label{display:block;margin:8px 0 4px;font-weight:600}
 input,select,textarea{font:inherit;width:100%;box-sizing:border-box}
 input.locked{background:#f1f3f4;color:#5f6368;cursor:help}
 [hidden]{display:none}
-.actions button{margin-right:8px}`;
+.actions button{margin-right:8px}
+#status{margin:12px 0 0;padding:8px 12px;border-radius:4px;background:#e6f4ea;color:#137333;font-weight:600}
+#status.error{background:#fce8e6;color:#c5221f}`;
 
 const MARKUP = `<form>
   <div class="row">
@@ -54,6 +56,7 @@ const MARKUP = `<form>
     <button type="button" id="clear-history">Clear history</button>
     <button type="button" id="export">Export history</button>
   </div>
+  <p id="status" role="status" aria-live="polite" hidden></p>
 </form>`;
 
 export class SettingsForm extends HTMLElement {
@@ -142,6 +145,18 @@ export class SettingsForm extends HTMLElement {
       reveal.hidden = false;
       help.textContent = DEFAULT_KEY_HELP;
     }
+  }
+
+  /**
+   * Surface the outcome of an action (save, test, clear, export) to the user.
+   * Empty text hides the line. Text is set via textContent — never innerHTML —
+   * so it can never inject model-influenced HTML (rule-sanitize-model-output).
+   */
+  setStatus(text: string, tone: 'ok' | 'error' = 'ok'): void {
+    const status = this.q<HTMLElement>('#status');
+    status.textContent = text;
+    status.hidden = text.length === 0;
+    status.classList.toggle('error', tone === 'error');
   }
 
   private q<T extends Element>(sel: string): T {
