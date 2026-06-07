@@ -1,15 +1,15 @@
 ---
 name: AI Dictionary
-description: A warm, candlelit bilingual lookup card that appears in the margin of whatever you're reading.
+description: A bright, warm bilingual lookup card — winter-morning light in the margin of whatever you're reading.
 colors:
-  candlelit-cream: 'oklch(0.985 0.009 80)'
-  cream-soft: 'oklch(0.962 0.017 72)'
-  ink: 'oklch(0.31 0.025 50)'
-  ink-soft: 'oklch(0.45 0.022 55)'
-  honey-amber: 'oklch(0.61 0.13 64)'
-  mulled-cranberry: 'oklch(0.52 0.16 25)'
-  pine: 'oklch(0.46 0.075 155)'
-  line: 'oklch(0.9 0.014 74)'
+  candlelit-cream: 'oklch(0.992 0.005 95)'
+  cream-soft: 'oklch(0.968 0.012 90)'
+  ink: 'oklch(0.33 0.02 60)'
+  ink-soft: 'oklch(0.48 0.018 65)'
+  honey-amber: 'oklch(0.64 0.14 70)'
+  mulled-cranberry: 'oklch(0.54 0.165 26)'
+  pine: 'oklch(0.48 0.09 154)'
+  line: 'oklch(0.93 0.008 90)'
   error: 'oklch(0.5 0.17 25)'
 typography:
   headword:
@@ -100,7 +100,7 @@ This system explicitly rejects the experiences that make looking a word up feel 
 **Key Characteristics:**
 
 - **In-page, not in-app.** The cozy identity belongs to the reading surfaces: the lookup card that floats over the host page and the docked side panel that mirrors it. The settings/options form — a configuration surface, not a reading one — stays deliberately neutral.
-- **Candlelit warmth.** A honey-amber radial glow tops the card surface; the palette sits in warm OKLCH hues (45–80°) with festive accents at pine green and cranberry red.
+- **Candlelit warmth, lifted to morning.** A honey-amber radial glow still tops the card surface, but the palette is lifted toward clean winter-morning light: a cooler near-white surface (less amber tint) across warm-to-clean OKLCH hues (≈26–95°), with festive accents at pine green and cranberry red. Brighter room, same cozy warmth.
 - **Opaque and self-contained.** Own shadow root, own tokens, full opacity. The card never borrows the page's background or fights its content.
 - **Bilingual clarity first.** The English headword and its translation are each unmistakable and scannable; meaning is never carried by color alone.
 - **Adapts to the page.** Light and dark token sets switch on `prefers-color-scheme`, so the card matches the host page's mood.
@@ -108,24 +108,24 @@ This system explicitly rejects the experiences that make looking a word up feel 
 
 ## 2. Colors
 
-A warm, candlelit reading surface: honey-amber is the signature, with pine green and mulled-wine cranberry as the small festive accents. Every value is OKLCH, tuned for WCAG AA against its own surface. Each token carries a light value (below) and a paired dark value applied inside `@media (prefers-color-scheme: dark)`.
+A bright, warm reading surface — winter-morning light rather than 8pm candlelight: honey-amber is the signature, with pine green and mulled-wine cranberry as the small festive accents. The light surface is a cooler near-white with the amber tint pulled back, hairlines are lighter, and the top wash is brighter (but whiter); the dark set is lifted a step to match. Every value is OKLCH, tuned for WCAG AA against its own surface (verified in-browser; the lightest amber that still clears the ≥3:1 focus ring sets the amber value). Each token carries a light value (below) and a paired dark value applied inside `@media (prefers-color-scheme: dark)`.
 
 ### Primary
 
-- **Honey-Amber** (`oklch(0.61 0.13 64)`; dark `oklch(0.82 0.13 72)`): The signature. It is the candle. Used for the warm radial glow at the top of the card, the focus-ring outline on every control, the spinner's leading arc, and the warm midpoint of the festive ribbon. It is the color the card is remembered by.
+- **Honey-Amber** (`oklch(0.64 0.14 70)`; dark `oklch(0.84 0.13 75)`): The signature. It is the candle. Used for the warm radial glow at the top of the card, the focus-ring outline on every control, the spinner's leading arc, and the warm midpoint of the festive ribbon. It is the color the card is remembered by.
 
 ### Secondary
 
-- **Pine Green** (`oklch(0.46 0.075 155)`; dark `oklch(0.67 0.085 155)`): The festive evergreen. Carries the brand label ("AI Dictionary"), the holly leaves, the left end of the ribbon, and the left half of the headword underline. A calm, low-chroma green that reads as botanical, not neon.
-- **Mulled-Wine Cranberry** (`oklch(0.52 0.16 25)`; dark `oklch(0.67 0.155 28)`): The berry accent. The holly berries, the right end of the ribbon, and the right half of the headword underline. Warm red, deliberately muted toward wine rather than candy.
+- **Pine Green** (`oklch(0.48 0.09 154)`; dark `oklch(0.7 0.09 154)`): The festive evergreen. Carries the brand label ("AI Dictionary"), the holly leaves, the left end of the ribbon, and the left half of the headword underline. A calm, low-chroma green that reads as botanical, not neon.
+- **Mulled-Wine Cranberry** (`oklch(0.54 0.165 26)`; dark `oklch(0.69 0.155 28)`): The berry accent. The holly berries, the right end of the ribbon, and the right half of the headword underline. Warm red, deliberately muted toward wine rather than candy.
 
 ### Neutral
 
-- **Candlelit Cream** (`oklch(0.985 0.009 80)`; dark `oklch(0.265 0.022 52)`): The card surface itself. A warm near-white in light mode, a deep warm brown-charcoal in dark. Fully opaque; this is what isolates the card from the host page.
-- **Cream Soft** (`oklch(0.962 0.017 72)`; dark `oklch(0.31 0.026 50)`): The one-step-warmer hover fill for icon buttons and the trigger pill.
-- **Ink** (`oklch(0.31 0.025 50)`; dark `oklch(0.93 0.016 82)`): Primary text. The headword, body copy, and active control labels. Carries the ≥4.5:1 body contrast against cream.
-- **Ink Soft** (`oklch(0.45 0.022 55)`; dark `oklch(0.75 0.022 72)`): Secondary text. Icon-button rest color and the footer line.
-- **Line** (`oklch(0.9 0.014 74)`; dark `oklch(0.37 0.022 55)`): Hairline borders and dividers (footer rule, trigger-pill border, spinner track).
+- **Candlelit Cream** (`oklch(0.992 0.005 95)`; dark `oklch(0.285 0.02 55)`): The card surface itself. A clean, barely-warm near-white in light mode, a lifted warm brown-charcoal in dark. Fully opaque; this is what isolates the card from the host page.
+- **Cream Soft** (`oklch(0.968 0.012 90)`; dark `oklch(0.33 0.024 52)`): The one-step-warmer hover fill for icon buttons and the trigger pill.
+- **Ink** (`oklch(0.33 0.02 60)`; dark `oklch(0.94 0.014 85)`): Primary text. The headword, body copy, and active control labels. Carries the ≥4.5:1 body contrast against cream (≈12:1 in both modes).
+- **Ink Soft** (`oklch(0.48 0.018 65)`; dark `oklch(0.77 0.02 75)`): Secondary text. Icon-button rest color and the footer line.
+- **Line** (`oklch(0.93 0.008 90)`; dark `oklch(0.39 0.022 55)`): Hairline borders and dividers (footer rule, trigger-pill border, spinner track).
 
 ### Tertiary
 
@@ -166,8 +166,8 @@ The card is a single lifted surface floating above an arbitrary page; depth is c
 
 ### Shadow Vocabulary
 
-- **Card lift (light)** (`box-shadow: 0 1px 1px oklch(0.4 0.05 50 / 0.05), 0 12px 26px -8px oklch(0.42 0.06 45 / 0.26), 0 30px 60px -24px oklch(0.4 0.06 45 / 0.3)`): The lookup card's resting shadow. Three warm-tinted layers (the shadow is keyed to warm hues, not neutral gray) for a soft, candle-warm lift off the host page.
-- **Card lift (dark)** (`box-shadow: 0 1px 1px oklch(0 0 0 / 0.3), 0 16px 32px -10px oklch(0 0 0 / 0.55), 0 40px 70px -28px oklch(0 0 0 / 0.6)`): Deeper, near-black layers so the card still separates from a dark host page.
+- **Card lift (light)** (`box-shadow: 0 1px 1px oklch(0.45 0.05 60 / 0.05), 0 12px 26px -10px oklch(0.5 0.05 60 / 0.18), 0 28px 56px -24px oklch(0.5 0.05 55 / 0.22)`): The lookup card's resting shadow. Three warm-tinted layers (the shadow is keyed to warm hues, not neutral gray), lightened for the brighter surface so the card still lifts off the host page without reading heavy.
+- **Card lift (dark)** (`box-shadow: 0 1px 1px oklch(0 0 0 / 0.3), 0 16px 32px -10px oklch(0 0 0 / 0.52), 0 40px 70px -28px oklch(0 0 0 / 0.58)`): Deeper, near-black layers so the card still separates from a dark host page.
 - **Trigger lift** (`box-shadow: 0 2px 5px oklch(0.4 0.05 50 / 0.16), 0 10px 22px -10px oklch(0.4 0.06 45 / 0.4)`): The floating pill's two-layer warm shadow, lighter than the card.
 - **Glow** (`radial-gradient(125% 80% at 50% -14%, oklch(0.85 0.12 78 / 0.72), transparent 72%)`; dark uses `oklch(0.72 0.14 72 / 0.46)`): Not a shadow but the candlelight: a honey-amber radial wash layered behind the card surface at its top edge.
 - **Scrim** (`oklch(0.18 0.02 50 / 0.46)`): The warm dim behind the bottom sheet on mobile. A warm-tinted dark, never neutral black.
