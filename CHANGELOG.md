@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.1.0](https://github.com/hieplam/ai-dict/compare/v1.0.0...v1.1.0) (2026-06-07)
+
+
+### Features
+
+* **app:** redesign the side panel as a persistent reading surface ([#18](https://github.com/hieplam/ai-dict/issues/18)) ([60493a0](https://github.com/hieplam/ai-dict/commit/60493a0937245d69ba2c429b4f95e2f841b9e000))
+
 ## 1.0.0 (2026-06-06)
 
 
