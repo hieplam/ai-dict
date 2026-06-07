@@ -24,14 +24,20 @@ const ICON_SHIELD =
 // nodes live directly in this shadow tree (the panel is a single-world extension page, not a
 // cross-world content script), so the card's `::slotted(...)` rules are restated as direct-child
 // `.focus ...` selectors. The headword stays the one serif; the recent list is sans (One Serif Rule).
-const CSS = `:host{${LIGHT_VARS};display:flex;flex-direction:column;min-height:100vh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light dark}
+//
+// Layout: the host is a column pinned to EXACTLY the panel viewport (`height:100dvh`, not
+// `min-height`) so the ribbon/header/footer stay fixed and only `main` scrolls. `main` needs the
+// explicit `min-height:0` to override a flex item's default `min-height:auto`, which would
+// otherwise refuse to shrink below its content and let a long definition overflow the host (the
+// scroll then lands on the whole document) instead of scrolling inside `main`.
+const CSS = `:host{${LIGHT_VARS};display:flex;flex-direction:column;height:100dvh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light dark}
 @media (prefers-color-scheme:dark){:host{${DARK_VARS}}}
 *{box-sizing:border-box}
 .ribbon{height:4px;flex:none;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
 header{display:flex;align-items:center;gap:8px;padding:13px 18px 11px;flex:none}
 .brand{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.01em;color:var(--ad-pine)}
 .holly{width:22px;height:22px;flex:none}
-main{flex:1 1 auto;overflow-y:auto;overscroll-behavior:contain;padding:0 18px}
+main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 18px}
 .focus{padding:6px 0 10px}
 .focus h2{font-family:Georgia,"Times New Roman",serif;font-size:1.8rem;line-height:1.15;letter-spacing:-.01em;margin:.1em 0 .45em;color:var(--ad-ink);display:inline-block;max-width:100%;overflow-wrap:anywhere;padding-bottom:6px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-cranberry)) left bottom/46px 3px no-repeat}
 .focus p{margin:.5em 0}
