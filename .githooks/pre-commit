@@ -1,0 +1,13 @@
+#!/bin/sh
+# Shared, version-controlled pre-commit hook (wired via the package.json `prepare`
+# script, which sets core.hooksPath to .githooks). Keep this POSIX-sh and fast.
+set -e
+
+# Preserve the local worktree guard if it is installed (wtguard manages .git/hooks
+# locally; pointing core.hooksPath here would otherwise bypass it).
+if command -v "${WTGUARD_BIN:-wtguard}" >/dev/null 2>&1; then
+  "${WTGUARD_BIN:-wtguard}" hook pre-commit "$@"
+fi
+
+# Enforce formatting before a commit lands, matching the CI format-check gate.
+exec bun run format:check
