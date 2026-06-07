@@ -3,11 +3,19 @@ import { adoptStyles } from './styles/adopt';
 // The panel is a transparent, centring container — the slotted <lookup-card> carries the
 // cozy surface (bg, radius, shadow), so the sheet never frames it in a second card. A warm
 // dim scrim sets the focus; the slide-up easing is an ease-out curve (no bounce).
+//
+// The panel caps at 88vh and is the scroll container (`overflow-y:auto`); a long definition
+// scrolls inside it instead of growing the sheet past the viewport. It is deliberately a BLOCK,
+// not a flex box: as a flex item the card would inherit `flex-shrink:1` and get squashed to the
+// 88vh cap, and since the card is `overflow:hidden` the overflow would be clipped (no scroll).
+// As a block the card keeps its natural height, overflows the cap, and the panel scrolls. The
+// card centres itself horizontally via `::slotted(*){margin:0 auto}` (it sets its own max-width).
 const CSS = `:host{position:fixed;inset:0;z-index:2147483647}
 .scrim{position:absolute;inset:0;background:oklch(0.18 0.02 50 / 0.46)}
-.panel{position:absolute;left:0;right:0;bottom:0;display:flex;justify-content:center;
-  max-height:88vh;overflow:auto;padding:0 14px max(14px, env(safe-area-inset-bottom));
+.panel{position:absolute;left:0;right:0;bottom:0;
+  max-height:88vh;overflow-y:auto;overscroll-behavior:contain;padding:0 14px max(14px, env(safe-area-inset-bottom));
   transition:transform .28s cubic-bezier(.22,1,.36,1)}
+::slotted(*){display:block;margin:0 auto}
 :host([reduced]) .panel{transition:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}`;
 
