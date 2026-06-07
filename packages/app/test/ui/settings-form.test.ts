@@ -280,3 +280,56 @@ describe('<settings-form> env-key lock', () => {
     expect(await axeViolations(el)).toEqual([]);
   });
 });
+
+describe('<settings-form> themed chrome', () => {
+  it('renders the ribbon, holly brand, and device footer', () => {
+    const el = mountForm();
+    const r = el.shadowRoot!;
+    expect(r.querySelector('.ribbon')).not.toBeNull();
+    expect(r.querySelector('.brand')!.textContent).toContain('AI Dictionary');
+    expect(r.querySelector('.holly')).not.toBeNull();
+    expect(r.querySelector('footer')!.textContent).toContain('Stays on your device');
+  });
+
+  it('groups controls into Connection, Translation, and Privacy & data sections', () => {
+    const el = mountForm();
+    const heads = [...el.shadowRoot!.querySelectorAll('.sec .sec-h')].map((h) => h.textContent);
+    expect(heads).toEqual(['Connection', 'Translation', 'Privacy & data']);
+  });
+
+  it('keeps every required control (incl. #status) inside the redesigned markup', () => {
+    const el = mountForm();
+    const r = el.shadowRoot!;
+    for (const sel of [
+      '#key',
+      '#reveal',
+      '#target',
+      '#tpl',
+      '#cache',
+      '#history',
+      '#save',
+      '#test',
+      '#clear-cache',
+      '#clear-history',
+      '#export',
+      '#key-help',
+      '#status',
+    ]) {
+      expect(r.querySelector(sel), `${sel} must still exist`).not.toBeNull();
+    }
+  });
+
+  it('uses a single adopted stylesheet', () => {
+    const el = mountForm();
+    expect(el.shadowRoot!.adoptedStyleSheets.length).toBe(1);
+  });
+
+  it('keeps the env notice hidden until keyFromEnv is set', () => {
+    const el = mountForm();
+    const notice = el.shadowRoot!.querySelector<HTMLElement>('#env-notice')!;
+    expect(notice.hidden).toBe(true);
+    el.keyFromEnv = true;
+    expect(notice.hidden).toBe(false);
+    expect(notice.textContent).toBe(ENV_KEY_NOTICE);
+  });
+});
