@@ -1,16 +1,29 @@
 import {
-  registerContentElements,
+  registerSidePanel,
   sanitizeMarkdown,
-  type CardState,
-  type LookupCard,
+  type PanelFocusState,
+  type SidePanelView,
   type LookupResult,
   type LookupError,
+  type HistoryEntry,
+  type WireReply,
 } from '@ai-dict/app';
-registerContentElements();
+registerSidePanel();
 
-// Structural guard: verify the payload is a valid LookupResult before passing it to
-// sanitizeMarkdown. Avoids a TypeError crash or attacker-controlled input when a crafted
-// message arrives with the right `to/state` fields but a malformed payload.
+// The side panel is a persistent, docked surface — it fills the panel viewport edge-to-edge.
+// CSP (`style-src 'self'`) forbids inline <style>/style="", but a constructable stylesheet is
+// not inline, so it is the CSP-safe way to drop the default body margin. The panel element
+// paints its own candlelit surface and sizes itself to the viewport.
+const reset = new CSSStyleSheet();
+reset.replaceSync('html,body{margin:0}');
+document.adoptedStyleSheets = [...document.adoptedStyleSheets, reset];
+
+const view = document.querySelector('side-panel-view') as SidePanelView;
+
+// Entries currently shown under "Recent", kept in memory so a click can resolve an id back to
+// its full stored result without another round-trip to the service worker.
+let recent: HistoryEntry[] = [];
+
 function isLookupResult(v: unknown): v is LookupResult {
   return (
     v !== null &&
@@ -21,32 +34,59 @@ function isLookupResult(v: unknown): v is LookupResult {
   );
 }
 
-const card = document.querySelector('lookup-card') as LookupCard;
+// A stored/looked-up result becomes the focus. Markdown is (re-)sanitized here at the render
+// boundary — never trust stored markdown as safe (S4).
+function resultToFocus(r: LookupResult): PanelFocusState {
+  return { kind: 'result', safeHtml: sanitizeMarkdown(r.markdown), word: r.word, target: r.target };
+}
 
+async function refreshRecent(): Promise<void> {
+  try {
+    // chrome.runtime.sendMessage is typed `any`; pin it to `unknown` first so the WireReply
+    // assertion is a real narrowing the linter accepts (and we still gate on the shape below).
+    const raw: unknown = await chrome.runtime.sendMessage({ type: 'history.list', limit: 50 });
+    const reply = raw as WireReply | undefined;
+    if (reply && reply.ok && reply.type === 'history') {
+      recent = reply.entries;
+      view.recent = recent;
+    }
+  } catch {
+    // History is a convenience; a failed query just leaves the section as-is.
+  }
+}
+
+// Re-show a past lookup in the focus region when its row is clicked.
+view.addEventListener('select', (e) => {
+  const { id } = (e as CustomEvent<{ id: string }>).detail;
+  const entry = recent.find((x) => x.id === id);
+  if (entry) view.focusState = resultToFocus(entry.result);
+});
+
+// Live mirror of the in-page lookup (posted by ChromeSidePanelMirror over runtime messaging).
 chrome.runtime.onMessage.addListener(
   (msg: { to?: string; state?: string; word?: unknown; payload?: unknown }, sender) => {
-    // S3: reject messages from any context outside this extension
+    // S3: reject anything from outside this extension.
     if (sender.id !== chrome.runtime.id) return;
     if (msg.to !== 'side-panel') return;
-    const set = (s: CardState): void => {
-      card.state = s;
-    };
-    // `word` is rendered as textContent only (never innerHTML), so it cannot inject markup;
-    // still coerce defensively so a malformed message degrades to a wordless loading card.
-    if (msg.state === 'loading')
-      set(typeof msg.word === 'string' ? { kind: 'loading', word: msg.word } : { kind: 'loading' });
-    else if (msg.state === 'result') {
+    if (msg.state === 'loading') {
+      view.focusState =
+        typeof msg.word === 'string' ? { kind: 'loading', word: msg.word } : { kind: 'loading' };
+    } else if (msg.state === 'result') {
       if (!isLookupResult(msg.payload)) {
         console.warn('[side-panel] invalid result payload');
         return;
       }
-      const r = msg.payload;
-      set({
-        kind: 'result',
-        safeHtml: sanitizeMarkdown(r.markdown),
-        word: r.word,
-        target: r.target,
-      });
-    } else if (msg.state === 'error') set({ kind: 'error', error: msg.payload as LookupError });
+      view.focusState = resultToFocus(msg.payload);
+      // The router just appended this lookup to history; pull it into Recent.
+      void refreshRecent();
+    } else if (msg.state === 'error') {
+      view.focusState = { kind: 'error', error: msg.payload as LookupError };
+    }
+    // `state === 'close'` (the in-page card was dismissed) is intentionally ignored: the panel
+    // is persistent and keeps showing the last lookup.
   },
 );
+
+// On open, populate Recent from stored history. The focus region stays on its teaching empty
+// state until the first lookup mirrors in or a recent row is clicked.
+void refreshRecent();

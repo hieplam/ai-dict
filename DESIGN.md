@@ -99,7 +99,7 @@ This system explicitly rejects the experiences that make looking a word up feel 
 
 **Key Characteristics:**
 
-- **In-page, not in-app.** The cozy identity belongs to the lookup card that floats over the host page. Browser-chrome surfaces (the options page) stay deliberately neutral.
+- **In-page, not in-app.** The cozy identity belongs to the reading surfaces: the lookup card that floats over the host page and the docked side panel that mirrors it. The settings/options form — a configuration surface, not a reading one — stays deliberately neutral.
 - **Candlelit warmth.** A honey-amber radial glow tops the card surface; the palette sits in warm OKLCH hues (45–80°) with festive accents at pine green and cranberry red.
 - **Opaque and self-contained.** Own shadow root, own tokens, full opacity. The card never borrows the page's background or fights its content.
 - **Bilingual clarity first.** The English headword and its translation are each unmistakable and scannable; meaning is never carried by color alone.
@@ -216,6 +216,16 @@ The card is a single lifted surface floating above an arbitrary page; depth is c
 - **Panel:** `max-height: 88vh`, scrollable, respects `env(safe-area-inset-bottom)`.
 - **Motion:** Slide-up via `transform` on `transition: 0.28s cubic-bezier(0.22, 1, 0.36, 1)` (ease-out, no bounce).
 - **Accessibility:** `role="dialog"`, `aria-modal="true"`, focus-trapped, ESC-to-close, focus restoration on close. `[reduced]` attribute (set from `prefers-reduced-motion`) drops the transition entirely.
+
+### Side Panel (persistent docked surface)
+
+- **Character:** The candlelit margin made persistent. When the reader opens the panel from the toolbar, it docks full-height beside the page and keeps a running record of their reading. Unlike the floating card it is _the_ surface, not a surface floating over one.
+- **The One Surface Rule, applied:** the panel paints the cozy surface itself — candlelit-cream with the honey-amber glow at the top edge — and carries **no** card framing: no `border-radius`, no drop shadow, no Close button. Re-framing a docked panel as a floating card would double the surface. Depth comes from the host browser chrome.
+- **Structure (top → bottom):** the festive `4px` ribbon; a brand header (holly + "AI Dictionary" in pine); a scrolling body holding the **focus region** then the **Recent** list; a hairline-topped privacy footer ("Stays on your device"). Header and footer are flush; only the body scrolls.
+- **Focus region** (`<section aria-live="polite">`): the current lookup, in the card's own three states (loading headword + spinner caption, serif headword + sanitized body, error). It opens on a fourth, panel-only **empty state** — a centered holly mark with "Select a word on any page" and a one-line instruction — so a freshly opened panel teaches the interface instead of showing a wordless spinner.
+- **Recent list:** the reader's history (`history.list` over the wire), newest-first, each row a full-width button (`word` + a muted one-line context snippet). Clicking re-shows that lookup in the focus region. The whole section is hidden when history is empty — never an empty "Recent" header. Per the One Serif Rule the rows are the system sans; Georgia stays reserved for the focus headword.
+- **Markdown safety:** stored and mirrored markdown is re-sanitized at the render boundary (S4); the panel never trusts history as pre-sanitized.
+- **Accessibility:** the focus region announces loading→result once via `aria-live="polite"`; recent rows carry an explicit "Show definition of {word}" label; honey-amber focus rings on every control; verified against the panel's own surface in light and dark.
 
 ### Holly Mark (signature)
 
