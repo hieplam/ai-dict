@@ -1,7 +1,6 @@
 import {
   registerSettingsForm,
   DEFAULT_TEMPLATE,
-  ENV_KEY_NOTICE,
   buildHistoryExport,
   type Settings,
   type SettingsForm,
@@ -13,15 +12,10 @@ registerSettingsForm();
 const form = document.querySelector('settings-form')! as unknown as SettingsForm;
 
 // When the extension was built with GEMINI_API_KEY in the env, the SW ignores
-// the stored key. Lock the key field (same wording as the banner) so users
-// don't think their input is broken, and keep a top banner for prominence.
+// the stored key. Lock the key field; the component renders the themed inline
+// notice (ENV_KEY_NOTICE) inside its Connection section, so no separate banner.
 if (__GEMINI_KEY_FROM_ENV__) {
   form.keyFromEnv = true;
-  const notice = document.createElement('p');
-  notice.textContent = ENV_KEY_NOTICE;
-  notice.style.cssText =
-    'margin:8px 12px;padding:8px 12px;border-left:3px solid #1a73e8;background:#e8f0fe;font:14px/1.5 system-ui;color:#202124';
-  document.body.insertBefore(notice, document.body.firstChild);
 }
 const DEFAULTS: Settings = {
   targetLang: 'vi',
