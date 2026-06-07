@@ -1,4 +1,11 @@
 import { adoptStyles } from './styles/adopt';
+import { LIGHT_VARS, DARK_VARS, HOLLY_SVG } from './styles/tokens';
+
+// Restated locally to keep this component self-contained — the codebase already
+// duplicates this small shield across side-panel-view.ts and lookup-card.ts;
+// consolidating all three into tokens.ts is a separate, out-of-scope cleanup.
+const ICON_SHIELD =
+  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8l5 2v3.4c0 3-2.1 5.2-5 6.2-2.9-1-5-3.2-5-6.2V3.8l5-2z"/></svg>';
 
 export interface SettingsFormValue {
   apiKey: string;
@@ -20,44 +27,88 @@ const ENV_KEY_HINT = 'Locked — supplied by this build. Click to learn more.';
 const DEFAULT_KEY_HELP = 'Stored locally on this device only.';
 const ENV_KEY_PLACEHOLDER = 'Loaded from GEMINI_API_KEY build env';
 
-const CSS = `:host{display:block;font:14px/1.5 system-ui;color:#202124}
-label{display:block;margin:8px 0 4px;font-weight:600}
-.row{margin-bottom:12px}
-input,select,textarea{font:inherit;width:100%;box-sizing:border-box}
-input.locked{background:#f1f3f4;color:#5f6368;cursor:help}
-[hidden]{display:none}
-.actions button{margin-right:8px}
-#status{margin:12px 0 0;padding:8px 12px;border-radius:4px;background:#e6f4ea;color:#137333;font-weight:600}
-#status.error{background:#fce8e6;color:#c5221f}`;
+const CSS = `:host{${LIGHT_VARS};display:block;min-height:100vh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light dark}
+@media (prefers-color-scheme:dark){:host{${DARK_VARS}}button.primary{background:color-mix(in oklab,var(--ad-pine) 86%,white)}}
+*{box-sizing:border-box}
+.ribbon{height:4px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
+header{display:flex;align-items:center;gap:8px;max-width:640px;margin:0 auto;padding:14px 18px 6px}
+.brand{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.01em;color:var(--ad-pine)}
+.holly{width:22px;height:22px;flex:none}
+.col{max-width:640px;margin:0 auto;padding:2px 18px 26px}
+h1.title{font-family:Georgia,"Times New Roman",serif;font-size:1.8rem;line-height:1.15;letter-spacing:-.01em;margin:.1em 0 .55em;color:var(--ad-ink);display:inline-block;padding-bottom:6px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-cranberry)) left bottom/46px 3px no-repeat}
+.sec{border:1px solid var(--ad-line);border-radius:13px;padding:15px 16px;margin:0 0 14px;background:var(--ad-surface-soft)}
+.sec-h{margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ad-ink-soft)}
+label{display:block;margin:12px 0 5px;font-weight:600;font-size:13px;color:var(--ad-ink)}
+label.check{display:flex;align-items:center;gap:9px;margin:9px 0;font-weight:500;font-size:14px}
+label.check input{width:16px;height:16px;flex:none;accent-color:var(--ad-pine)}
+input,select,textarea{font:inherit;width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--ad-line);border-radius:10px;background:var(--ad-surface);color:var(--ad-ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ad-amber);outline-offset:1px;border-color:transparent}
+textarea{resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.keyrow{display:flex;gap:8px;align-items:stretch}
+.keyrow input{flex:1}
+input.locked{background:var(--ad-surface-soft);color:var(--ad-ink-soft);cursor:help}
+#key-help{margin:6px 0 0;font-size:12px;color:var(--ad-ink-soft)}
+.env-notice{margin:10px 0 0;padding:9px 12px;border-left:3px solid var(--ad-amber);background:var(--ad-surface);border-radius:0 8px 8px 0;font-size:13px;line-height:1.5;color:var(--ad-ink)}
+.inline-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;padding-top:11px;border-top:1px dashed var(--ad-line)}
+button{font:inherit;font-weight:600;font-size:13px;padding:9px 15px;border-radius:10px;cursor:pointer;border:1px solid var(--ad-line);background:var(--ad-surface);color:var(--ad-ink)}
+button:hover{background:var(--ad-surface-soft)}
+button:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
+button.sm{padding:6px 11px;font-size:12px}
+button.link{border:none;background:none;color:var(--ad-pine);padding:6px 4px;text-decoration:underline;text-underline-offset:2px}
+button.link:hover{background:none;text-decoration:none}
+.savebar{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:2px}
+button.primary{background:var(--ad-pine);border-color:transparent;color:var(--ad-surface)}
+button.primary:hover{background:var(--ad-pine);filter:brightness(1.06)}
+.savebar .muted{font-size:12px;color:var(--ad-ink-soft)}
+#status{margin:14px 0 0;padding:9px 12px;border-radius:8px;border-left:3px solid var(--ad-pine);background:var(--ad-surface-soft);color:var(--ad-ink);font-size:13px;font-weight:600}
+#status.error{border-left-color:var(--ad-err);color:var(--ad-err)}
+footer{display:flex;align-items:center;gap:6px;max-width:640px;margin:0 auto;padding:13px 18px 18px;border-top:1px solid var(--ad-line);font-size:11px;color:var(--ad-ink-soft)}
+footer svg{width:13px;height:13px;flex:none}
+[hidden]{display:none}`;
 
-const MARKUP = `<form>
-  <div class="row">
-    <label for="key">Gemini API key</label>
-    <input id="key" type="password" autocomplete="off" aria-describedby="key-help" />
-    <button type="button" id="reveal" aria-label="Reveal API key">Show</button>
-    <p id="key-help">Stored locally on this device only.</p>
+const MARKUP = `<div class="ribbon"></div>
+<header><span class="brand">${HOLLY_SVG}<span>AI Dictionary</span></span></header>
+<form>
+  <div class="col">
+    <h1 class="title">Settings</h1>
+    <section class="sec" aria-labelledby="sec-conn">
+      <h2 class="sec-h" id="sec-conn">Connection</h2>
+      <label for="key">Gemini API key</label>
+      <div class="keyrow">
+        <input id="key" type="password" autocomplete="off" aria-describedby="key-help" />
+        <button type="button" id="reveal" aria-label="Reveal API key">Show</button>
+      </div>
+      <p id="key-help">Stored locally on this device only.</p>
+      <p id="env-notice" class="env-notice" hidden></p>
+      <div class="inline-actions">
+        <button type="button" id="test" class="sm">Test connection</button>
+      </div>
+    </section>
+    <section class="sec" aria-labelledby="sec-trans">
+      <h2 class="sec-h" id="sec-trans">Translation</h2>
+      <label for="target">Target language</label>
+      <select id="target"><option value="vi">Vietnamese</option><option value="es">Spanish</option></select>
+      <label for="tpl">Prompt template</label>
+      <textarea id="tpl" rows="6"></textarea>
+    </section>
+    <section class="sec" aria-labelledby="sec-priv">
+      <h2 class="sec-h" id="sec-priv">Privacy &amp; data</h2>
+      <label class="check"><input type="checkbox" id="cache" /> Cache lookups</label>
+      <label class="check"><input type="checkbox" id="history" /> Save history</label>
+      <div class="inline-actions">
+        <button type="button" id="clear-cache" class="sm">Clear cache</button>
+        <button type="button" id="clear-history" class="sm">Clear history</button>
+        <button type="button" id="export" class="link">Export history</button>
+      </div>
+    </section>
+    <div class="savebar">
+      <button type="submit" id="save" class="primary">Save settings</button>
+      <span class="muted">Changes apply after saving</span>
+    </div>
+    <p id="status" role="status" aria-live="polite" hidden></p>
   </div>
-  <div class="row">
-    <label for="target">Target language</label>
-    <select id="target"><option value="vi">Vietnamese</option><option value="es">Spanish</option></select>
-  </div>
-  <div class="row">
-    <label for="tpl">Prompt template</label>
-    <textarea id="tpl" rows="6"></textarea>
-  </div>
-  <div class="row">
-    <label><input type="checkbox" id="cache" /> Cache lookups</label>
-    <label><input type="checkbox" id="history" /> Save history</label>
-  </div>
-  <div class="row actions">
-    <button type="submit" id="save">Save</button>
-    <button type="button" id="test">Test connection</button>
-    <button type="button" id="clear-cache">Clear cache</button>
-    <button type="button" id="clear-history">Clear history</button>
-    <button type="button" id="export">Export history</button>
-  </div>
-  <p id="status" role="status" aria-live="polite" hidden></p>
-</form>`;
+</form>
+<footer>${ICON_SHIELD}<span>Stays on your device</span></footer>`;
 
 export class SettingsForm extends HTMLElement {
   private root!: ShadowRoot;
@@ -127,6 +178,7 @@ export class SettingsForm extends HTMLElement {
     const key = this.q<HTMLInputElement>('#key');
     const reveal = this.q<HTMLButtonElement>('#reveal');
     const help = this.q<HTMLElement>('#key-help');
+    const envNotice = this.q<HTMLElement>('#env-notice');
     if (this._keyFromEnv) {
       key.readOnly = true;
       key.value = '';
@@ -136,6 +188,8 @@ export class SettingsForm extends HTMLElement {
       key.setAttribute('aria-readonly', 'true');
       reveal.hidden = true;
       help.textContent = ENV_KEY_HINT;
+      envNotice.textContent = ENV_KEY_NOTICE;
+      envNotice.hidden = false;
     } else {
       key.readOnly = false;
       key.value = this._storedApiKey;
@@ -144,6 +198,7 @@ export class SettingsForm extends HTMLElement {
       key.removeAttribute('aria-readonly');
       reveal.hidden = false;
       help.textContent = DEFAULT_KEY_HELP;
+      envNotice.hidden = true;
     }
   }
 
