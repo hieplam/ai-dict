@@ -2,9 +2,14 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
 import { SettingsForm, ENV_KEY_NOTICE, type SettingsFormValue } from '../../src/ui/settings-form';
 import { registerSettingsForm } from '../../src/ui/register';
+import { DEFAULT_TEMPLATE } from '../../src/domain/default-template';
 
 beforeAll(() => {
   registerSettingsForm();
+  // happy-dom does not implement window.confirm; stub it so vi.spyOn can wrap it.
+  if (typeof window.confirm !== 'function') {
+    (window as unknown as Record<string, unknown>).confirm = () => false;
+  }
 });
 
 function mountForm(): SettingsForm {
@@ -206,6 +211,63 @@ describe('<settings-form>', () => {
   });
 });
 
+describe('<settings-form> restore default prompt', () => {
+  it('restores the default after confirm when the field was customized', () => {
+    const el = mountForm();
+    el.value = {
+      apiKey: '',
+      targetLang: 'vi',
+      promptTemplate: 'my custom prompt',
+      cacheEnabled: true,
+      saveHistory: true,
+    };
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
+    const tpl = el.shadowRoot!.querySelector<HTMLTextAreaElement>('#tpl')!;
+    expect(tpl.value).toBe(DEFAULT_TEMPLATE);
+    expect(confirmSpy).toHaveBeenCalledOnce();
+    const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
+    expect(status.textContent).toBe('Prompt template restored — Save settings to apply.');
+    confirmSpy.mockRestore();
+  });
+
+  it('leaves the template unchanged when the confirm is cancelled', () => {
+    const el = mountForm();
+    el.value = {
+      apiKey: '',
+      targetLang: 'vi',
+      promptTemplate: 'my custom prompt',
+      cacheEnabled: true,
+      saveHistory: true,
+    };
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
+    const tpl = el.shadowRoot!.querySelector<HTMLTextAreaElement>('#tpl')!;
+    expect(tpl.value).toBe('my custom prompt');
+    expect(confirmSpy).toHaveBeenCalledOnce();
+    const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
+    expect(status.hidden).toBe(true); // no status on user cancel
+    confirmSpy.mockRestore();
+  });
+
+  it('does not prompt when the template already equals the default', () => {
+    const el = mountForm();
+    el.value = {
+      apiKey: '',
+      targetLang: 'vi',
+      promptTemplate: DEFAULT_TEMPLATE,
+      cacheEnabled: true,
+      saveHistory: true,
+    };
+    const confirmSpy = vi.spyOn(window, 'confirm');
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
+    expect(confirmSpy).not.toHaveBeenCalled();
+    const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
+    expect(status.textContent).toBe('Prompt template is already the default.');
+    confirmSpy.mockRestore();
+  });
+});
+
 describe('<settings-form> env-key lock', () => {
   it('locks the key field, hides reveal, and marks it read-only when keyFromEnv is set', () => {
     const el = mountForm();
@@ -305,6 +367,7 @@ describe('<settings-form> themed chrome', () => {
       '#reveal',
       '#target',
       '#tpl',
+      '#reset-tpl',
       '#cache',
       '#history',
       '#save',
