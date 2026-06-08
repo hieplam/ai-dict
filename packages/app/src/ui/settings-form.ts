@@ -1,5 +1,6 @@
 import { adoptStyles } from './styles/adopt';
 import { LIGHT_VARS, DARK_VARS, HOLLY_SVG } from './styles/tokens';
+import { DEFAULT_TEMPLATE } from '../domain/default-template';
 
 // Restated locally to keep this component self-contained — the codebase already
 // duplicates this small shield across side-panel-view.ts and lookup-card.ts;
@@ -90,6 +91,9 @@ const MARKUP = `<div class="ribbon"></div>
       <select id="target"><option value="vi">Vietnamese</option><option value="es">Spanish</option></select>
       <label for="tpl">Prompt template</label>
       <textarea id="tpl" rows="6"></textarea>
+      <div class="inline-actions">
+        <button type="button" id="reset-tpl" class="sm">Restore default</button>
+      </div>
     </section>
     <section class="sec" aria-labelledby="sec-priv">
       <h2 class="sec-h" id="sec-priv">Privacy &amp; data</h2>
@@ -156,6 +160,9 @@ export class SettingsForm extends HTMLElement {
     this.relay('#clear-cache', 'clear-cache');
     this.relay('#clear-history', 'clear-history');
     this.relay('#export', 'export-history');
+    this.q<HTMLButtonElement>('#reset-tpl').addEventListener('click', () =>
+      this.restoreDefaultTemplate(),
+    );
 
     if (this._pendingValue !== null) {
       this.value = this._pendingValue;
@@ -212,6 +219,27 @@ export class SettingsForm extends HTMLElement {
     status.textContent = text;
     status.hidden = text.length === 0;
     status.classList.toggle('error', tone === 'error');
+  }
+
+  /**
+   * Re-populate the prompt-template field with the shipped DEFAULT_TEMPLATE.
+   * Fills the field only — the user must still Save (matches the form's
+   * "Changes apply after saving" contract). If the field already holds the
+   * default there is nothing to lose, so we skip the confirm and just say so;
+   * a customized field prompts a confirm() before its contents are replaced.
+   */
+  private restoreDefaultTemplate(): void {
+    const tpl = this.q<HTMLTextAreaElement>('#tpl');
+    if (tpl.value === DEFAULT_TEMPLATE) {
+      this.setStatus('Prompt template is already the default.');
+      return;
+    }
+    const ok = window.confirm(
+      'Replace your prompt template with the default? Your current prompt will be lost.',
+    );
+    if (!ok) return;
+    tpl.value = DEFAULT_TEMPLATE;
+    this.setStatus('Prompt template restored — Save settings to apply.');
   }
 
   private q<T extends Element>(sel: string): T {
