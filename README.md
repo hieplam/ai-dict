@@ -4,6 +4,44 @@
 the word or phrase you select on a page using Google's Gemini API and shows the result
 in an in-page card / side panel.
 
+## Install (Chrome)
+
+There are **two ways** to install — both download the **same prebuilt build** attached to
+the [latest GitHub Release](https://github.com/hieplam/ai-dict/releases/latest), so nothing
+is compiled from source. Chrome cannot auto-install extensions, so either way ends with two
+clicks in `chrome://extensions`.
+
+### Option 1 — one command
+
+```bash
+curl -fsSL https://github.com/hieplam/ai-dict/raw/master/scripts/install-chrome.sh | bash
+```
+
+This downloads the extension to `~/.ai-dict/dist` and prints the finishing steps. Re-run it
+any time to update.
+
+### Option 2 — fetch the build yourself
+
+```bash
+# plain curl
+curl -fsSL https://github.com/hieplam/ai-dict/releases/latest/download/dist-chrome.zip -o dist-chrome.zip
+unzip dist-chrome.zip -d ai-dict-dist
+
+# …or with the GitHub CLI
+gh release download --repo hieplam/ai-dict --pattern dist-chrome.zip
+```
+
+### Finish in Chrome (either way)
+
+1. Open `chrome://extensions`.
+2. Enable **Developer mode** (top-right).
+3. Click **Load unpacked** and select the unzipped folder
+   (`~/.ai-dict/dist` for the one-command install).
+4. Open the extension's **options** page and paste your Gemini API key.
+5. Select a word on any page to trigger a lookup.
+
+> Want to build from source instead? See **Build the Chrome extension** below.
+
 It's a **bun workspace monorepo**:
 
 | Package                     | Role                                                                                             |
@@ -51,44 +89,6 @@ bun run --filter @ai-dict/app test
 
 There is no bundler watch mode — re-run the build command (below) after changing
 extension code, then reload the extension in the browser.
-
-## Install (Chrome)
-
-Both methods download the **same prebuilt build** attached to the
-[latest GitHub Release](https://github.com/hieplam/ai-dict/releases/latest) — nothing is
-compiled from source. Chrome cannot auto-install extensions, so every method ends with two
-clicks in `chrome://extensions`.
-
-### Non-technical — one command
-
-```bash
-curl -fsSL https://github.com/hieplam/ai-dict/raw/master/scripts/install-chrome.sh | bash
-```
-
-This downloads the extension to `~/.ai-dict/dist` and prints the finishing steps. Re-run it
-any time to update.
-
-### Technical — fetch the build yourself
-
-```bash
-# plain curl
-curl -fsSL https://github.com/hieplam/ai-dict/releases/latest/download/dist-chrome.zip -o dist-chrome.zip
-unzip dist-chrome.zip -d ai-dict-dist
-
-# …or with the GitHub CLI
-gh release download --repo hieplam/ai-dict --pattern dist-chrome.zip
-```
-
-### Finish in Chrome (all methods)
-
-1. Open `chrome://extensions`.
-2. Enable **Developer mode** (top-right).
-3. Click **Load unpacked** and select the unzipped folder
-   (`~/.ai-dict/dist` for the one-command install).
-4. Open the extension's **options** page and paste your Gemini API key.
-5. Select a word on any page to trigger a lookup.
-
-> Want to build from source instead? See **Build the Chrome extension** below.
 
 ## Build the Chrome extension
 
