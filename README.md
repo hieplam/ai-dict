@@ -167,10 +167,11 @@ built so your key (and your reading) stay yours:
    Chrome install above._ The key lives only in this browser.
 2. **Bake it into your own build with an environment variable** — _for people
    who build from source._ Set `GEMINI_API_KEY` before building and it's
-   compiled into your personal build, so the options page stops asking for a key
-   and you never type it into any UI. See
-   [Local development](#local-development). Treat such a build as personal —
-   anyone who can read its files can extract the key, so don't share it.
+   compiled into your personal build, so the key is **never typed into the UI or
+   saved in browser storage at all** — it lives only in your own build, and the
+   options page stops asking for one. See [Local development](#local-development).
+   Treat such a build as personal — anyone who can read its files can extract the
+   key, so don't share it.
 
 ---
 
