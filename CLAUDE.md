@@ -11,7 +11,7 @@
 
 # Screenshotting the Chrome extension
 
-**Guardrail: never drive your installed Google Chrome to capture extension screenshots** — Chrome 136+ silently ignores `--remote-debugging-port` (default profile) and `--load-extension`. Use **agent-browser's bundled Chromium** instead (use the agent-browser skill).
+**Guardrail: don't drive your installed Google Chrome to capture extension screenshots** — Chrome 136+ silently ignores `--remote-debugging-port` (default profile) and `--load-extension`. Drive a **bundled/standalone Chromium** instead (not Google Chrome), which honors both.
 
 # Architecture (C3)
 
