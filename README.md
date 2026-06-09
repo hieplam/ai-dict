@@ -92,12 +92,18 @@ gh release download --repo hieplam/ai-dict --pattern dist-chrome.zip
 
 Open the extension's **options** page, paste your
 [Gemini API key](#getting-a-gemini-api-key), and click **Save settings**.
-The key is stored locally on your device and is never sent anywhere except
-Google's API.
 
 <p align="center">
   <img src="docs/screenshots/options-api-key.png" alt="The AI Dictionary settings page with a field for the Gemini API key, target language, and prompt template" width="540">
 </p>
+
+> [!IMPORTANT]
+> **Your key never leaves your browser.** There is no server and no account, so
+> there is nothing to upload it to. The key is saved **only in your browser's
+> local storage on this device** and is used for one thing: calling Google's
+> Gemini API directly from your browser. See
+> [Your API key & privacy](#your-api-key--privacy) for the full picture (and a
+> way to avoid typing it into the UI at all).
 
 That's it — you're ready to read.
 
@@ -137,6 +143,34 @@ You can change the **target language**, tweak the **prompt template**, and toggl
 
 You only pay Google for your own usage, and Gemini has a free tier that's plenty
 for everyday reading. The default model is `gemini-2.5-flash`.
+
+---
+
+## Your API key & privacy
+
+Worried your key will leak? It can't go anywhere it shouldn't — the extension is
+built so your key (and your reading) stay yours:
+
+- **No server, no account.** AI Dictionary has **no backend**. There is nothing
+  to sign into and nowhere to upload your key to. Every lookup goes **straight
+  from your browser to Google's Gemini API** and back — it is never proxied
+  through, stored by, or shared with us or anyone else.
+- **Saved only in your browser.** When you paste your key into the options page,
+  it's kept in your browser's local storage (`chrome.storage.local`) **on this
+  device only** — never in the cloud. Remove it any time by clearing the field
+  and clicking **Save settings**.
+- **No tracking.** No analytics, no telemetry — nothing phones home.
+
+**Two ways to provide the key — pick whichever you trust more:**
+
+1. **Paste it into the options page** — _the default; works with the prebuilt
+   Chrome install above._ The key lives only in this browser.
+2. **Bake it into your own build with an environment variable** — _for people
+   who build from source._ Set `GEMINI_API_KEY` before building and it's
+   compiled into your personal build, so the options page stops asking for a key
+   and you never type it into any UI. See
+   [Local development](#local-development). Treat such a build as personal —
+   anyone who can read its files can extract the key, so don't share it.
 
 ---
 
