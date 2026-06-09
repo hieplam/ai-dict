@@ -6,6 +6,11 @@ set -euo pipefail
 here="$(cd "$(dirname "$0")" && pwd)"
 script="$here/install-chrome.sh"
 
+if ! command -v zip >/dev/null 2>&1; then
+  echo "FAIL: 'zip' is required to build the fixture but is not installed" >&2
+  exit 1
+fi
+
 work="$(mktemp -d)"
 trap 'rm -rf "$work"' EXIT
 
