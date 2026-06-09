@@ -1,5 +1,21 @@
 # Changelog
 
+## [1.2.0](https://github.com/hieplam/ai-dict/compare/v1.1.0...v1.2.0) (2026-06-09)
+
+
+### Features
+
+* **app:** add restore-default button for the prompt template ([#26](https://github.com/hieplam/ai-dict/issues/26)) ([c9b5e36](https://github.com/hieplam/ai-dict/commit/c9b5e36f4ce86b0e80dde15a371bb0dc12c2c70d))
+* **app:** brighten the theme to winter-morning light ([#21](https://github.com/hieplam/ai-dict/issues/21)) ([1791963](https://github.com/hieplam/ai-dict/commit/179196366362629757e4f142ea8eaa67faac7ac1))
+* **app:** redesign the options page onto the winter-morning theme ([#25](https://github.com/hieplam/ai-dict/issues/25)) ([452803f](https://github.com/hieplam/ai-dict/commit/452803f2d742fa679d7e2655519d0312d6d2e93a))
+* **install:** publish dist-chrome.zip on release + one-line Chrome installer ([#27](https://github.com/hieplam/ai-dict/issues/27)) ([e8d0449](https://github.com/hieplam/ai-dict/commit/e8d0449bd8dd6b613ab9e46392285ed9f9baba5b))
+
+
+### Bug Fixes
+
+* **app:** scroll long lookups instead of clipping the sheet / growing the panel ([#23](https://github.com/hieplam/ai-dict/issues/23)) ([1531a6b](https://github.com/hieplam/ai-dict/commit/1531a6b781c5fc96d7ffc7ef4437c41934bb0cc0))
+* **app:** surface a status line for every options action and wire export-history ([#24](https://github.com/hieplam/ai-dict/issues/24)) ([609d791](https://github.com/hieplam/ai-dict/commit/609d79115632239e4916bdcaf39b05ac88d52ee0))
+
 ## [1.1.0](https://github.com/hieplam/ai-dict/compare/v1.0.0...v1.1.0) (2026-06-07)
 
 
