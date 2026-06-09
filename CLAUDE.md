@@ -9,6 +9,10 @@
 - ❌ Never use `https://raw.githubusercontent.com/...` — it is a _different origin_, gets no auth cookies, returns **404** for private repos, and renders as a broken image. (GitHub does not Camo-proxy GitHub-owned hosts, so the only thing that makes the image load is the same-origin cookie.)
 - Host evidence on a throwaway branch (e.g. `pr-assets/<slug>`) referenced by the `github.com/.../raw/...` URL, keeping binaries out of the merged source branch.
 
+# Screenshotting the Chrome extension
+
+**Guardrail: never drive your installed Google Chrome to capture extension screenshots** — Chrome 136+ silently ignores `--remote-debugging-port` (default profile) and `--load-extension`. Use **agent-browser's bundled Chromium** instead (use the agent-browser skill).
+
 # Architecture (C3)
 
 This repo is documented with **C3** in `.c3/` (a queryable architecture model). Consult it before changing code; `.c3/` is CLI-only — never edit it by hand.
