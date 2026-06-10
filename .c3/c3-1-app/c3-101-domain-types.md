@@ -1,6 +1,6 @@
 ---
 id: c3-101
-c3-seal: 8e400a5cfbea307bdf264d01d72b34570b2d50dcab91b6868e4f66649279b808
+c3-seal: 2d075756410e4b91532034955c0f60bc421eccab396c9f245694a4f6dd033472
 title: domain-types
 type: component
 category: foundation
@@ -23,13 +23,13 @@ Define the shared domain vocabulary and typed error model that every layer of ai
 | Parent container | c3-1 (app) |
 | Category | Foundation |
 | Runtime | both |
-| Public surface | AnchorRect, SelectionEvent, LookupRequest, LookupResult, LookupError, LookupErrorCode, HistoryEntry, PublicSettings, Settings, isLookupError, ErrorInput, mapError |
+| Public surface | AnchorRect, SelectionEvent, LookupRequest, LookupResult, LookupError, LookupErrorCode, HistoryEntry, PublicSettings, Settings, Provider, isLookupError, hasKeyFor, ErrorInput, mapError |
 | Bundled into | packages/app/src/domain/types.ts and packages/app/src/domain/error-mapper.ts |
 | Depends on | Nothing — no external imports; error-mapper.ts imports only ./types |
 
 ## Purpose
 
-Owns all shared domain interfaces and the canonical error pipeline. `types.ts` declares every cross-layer data shape: selection geometry (`AnchorRect`), user selection events (`SelectionEvent`), lookup inputs and outputs (`LookupRequest`, `LookupResult`), the typed error sum type (`LookupError` / `LookupErrorCode`), history records (`HistoryEntry`), and the critical two-tier settings split (`PublicSettings` vs `Settings`). `error-mapper.ts` provides the single conversion point from raw failure inputs — HTTP status codes, offline signals, timeouts, parse failures, thrown exceptions, and missing-key conditions — into typed `LookupError` values. This component does NOT perform network calls, storage access, DOM interaction, or any platform-specific operation. It does NOT validate schemas over the wire; that is owned by `c3-103` (wire-protocol).
+Owns all shared domain interfaces and the canonical error pipeline. `types.ts` declares every cross-layer data shape: selection geometry (`AnchorRect`), user selection events (`SelectionEvent`), lookup inputs and outputs (`LookupRequest`, `LookupResult`), the typed error sum type (`LookupError` / `LookupErrorCode`), history records (`HistoryEntry`), the critical two-tier settings split (`PublicSettings` vs `Settings`), and the `Provider` union plus the `hasKeyFor` function that drive AI-provider selection. `error-mapper.ts` provides the single conversion point from raw failure inputs into typed `LookupError` values; an `ErrorInput` may carry a provider discriminator so user-facing messages name the selected vendor — Gemini/Google when absent, OpenAI when tagged. This component does NOT perform network calls, storage access, DOM interaction, or any platform-specific operation. It does NOT validate schemas over the wire; that is owned by `c3-103` (wire-protocol).
 
 ## Foundational Flow
 
@@ -38,8 +38,8 @@ Owns all shared domain interfaces and the canonical error pipeline. `types.ts` d
 | Preconditions | No external dependencies; the module tree is bootstrapped before any adapter imports | ref-core-dependency-rule |
 | Inputs | Raw error signals: ErrorInput discriminated union (no-key, offline, timeout, parse, http, thrown) defined in packages/app/src/domain/error-mapper.ts | rule-typed-errors |
 | Internal state | Stateless — mapError is a pure function; isLookupError is a pure type guard; both defined in packages/app/src/domain/types.ts | rule-domain-purity |
-| Settings split | Settings extends PublicSettings; apiKey, cacheEnabled, saveHistory exist only on Settings | rule-api-key-isolation |
-| Key scrubbing | sanitize() in packages/app/src/domain/error-mapper.ts redacts AIza… tokens and caps messages at 200 chars before returning LookupError.message | rule-typed-errors |
+| Settings split | Settings extends PublicSettings; apiKey, openaiApiKey, provider, cacheEnabled, saveHistory exist only on Settings | rule-api-key-isolation |
+| Key scrubbing | sanitize() in packages/app/src/domain/error-mapper.ts redacts AIza… (Google) and sk-… (OpenAI) shaped tokens and caps messages at 200 chars before returning LookupError.message | rule-typed-errors |
 
 ## Business Flow
 
@@ -63,9 +63,11 @@ Owns all shared domain interfaces and the canonical error pipeline. `types.ts` d
 
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
-| Settings | OUT | Extends PublicSettings; adds apiKey: string, cacheEnabled: boolean, saveHistory: boolean | Trusted contexts only (options page, storage adapter) | packages/app/src/domain/types.ts:74 |
+| Settings | OUT | Extends PublicSettings; adds apiKey: string, openaiApiKey: string, provider: Provider, cacheEnabled: boolean, saveHistory: boolean | Trusted contexts only (options page, storage adapter) | packages/app/src/domain/types.ts |
+| Provider | OUT | Union 'gemini' \| 'openai'; 'gemini' is the default wherever a stored value is absent (pre-provider settings) | Non-secret; selects the LookupClient in c3-114 | packages/app/src/domain/types.ts — export type Provider |
+| hasKeyFor | OUT | Pure helper deriving hasKey from the selected provider's key; accepts partial pre-provider shapes | Storage adapters + options pages | packages/app/test/types.test.ts — hasKeyFor describe block |
 | PublicSettings | OUT | { targetLang: string; promptTemplate: string; hasKey: boolean; theme: Theme } — no apiKey field | Safe for wire and port boundaries | packages/app/test/types.test.ts — [type-level] apiKey is NOT a key of PublicSettings |
-| Theme | OUT | Union 'light' \| 'dark' \| 'system'; 'light' is the default everywhere a stored value is absent; 'system' follows prefers-color-scheme | Non-secret reader preference; safe on the wire | packages/app/src/domain/types.ts — export type Theme |
+| Theme | OUT | Union 'light' \\| 'dark' \\| 'system'; 'light' is the default everywhere a stored value is absent; 'system' follows prefers-color-scheme | Non-secret reader preference; safe on the wire | packages/app/src/domain/types.ts — export type Theme |
 | mapError | OUT | Pure function (ErrorInput) => LookupError; never throws; retryAfterSec absent (not undefined) when not provided by the server | Adapters (chrome, safari) only | packages/app/test/error-mapper.test.ts — HTTP 429 without retryAfterSec → retryAfterSec field is ABSENT |
 | isLookupError | OUT | Type guard (unknown) => e is LookupError; checks code, message, retryable presence | All catch sites in the codebase | packages/app/src/domain/types.ts:63 |
 | LookupErrorCode | OUT | Enum union: NO_KEY, INVALID_KEY, RATE_LIMIT, NETWORK, PARSE, UNKNOWN | Mirrored verbatim in WireMessageSchema error arm in c3-103 | packages/app/src/domain/types.ts:34 |

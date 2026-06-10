@@ -174,3 +174,35 @@ test('evidence: side panel with the header Settings gear', async ({ context, ext
   await panel.waitForTimeout(300);
   await panel.screenshot({ path: navShot('side-panel-header-gear') });
 });
+
+// ——— Evidence for the provider-selection PR: the Connection section gains an AI-provider
+// picker; the key row morphs per provider; both keys survive switching. ———
+const providerOut = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../e2e-evidence/provider-selection',
+);
+const providerShot = (name: string) => path.join(providerOut, `${name}.png`);
+
+test('evidence: settings with the AI provider picker (gemini + openai views)', async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  await page.setViewportSize({ width: 1180, height: 900 });
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page, { apiKey: 'AIza-example', openaiApiKey: 'sk-example' });
+  await page.reload();
+  await page.waitForSelector('settings-form');
+  await page.screenshot({ path: providerShot('settings-provider-gemini-AFTER') });
+
+  await page.locator('settings-form #provider').selectOption('openai');
+  await page.waitForTimeout(150);
+  await page.screenshot({ path: providerShot('settings-provider-openai-AFTER') });
+
+  // Close-up of the Connection section in the OpenAI state for the PR table.
+  const section = page.locator('settings-form section[aria-labelledby="sec-conn"]');
+  await section.screenshot({ path: providerShot('connection-openai-AFTER') });
+  await page.locator('settings-form #provider').selectOption('gemini');
+  await page.waitForTimeout(150);
+  await section.screenshot({ path: providerShot('connection-gemini-AFTER') });
+});

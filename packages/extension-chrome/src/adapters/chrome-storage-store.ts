@@ -1,5 +1,6 @@
 import {
   DEFAULT_TEMPLATE,
+  hasKeyFor,
   type SettingsStore,
   type PublicSettings,
   type Settings,
@@ -16,6 +17,8 @@ function defaults(): Settings {
     cacheEnabled: true,
     saveHistory: true,
     theme: 'light',
+    provider: 'gemini',
+    openaiApiKey: '',
   };
 }
 
@@ -32,7 +35,7 @@ export class ChromeStorageStore implements SettingsStore {
     return {
       targetLang: s?.targetLang ?? DEFAULT_TARGET,
       promptTemplate: s?.promptTemplate ?? DEFAULT_TEMPLATE,
-      hasKey: Boolean(s?.apiKey),
+      hasKey: hasKeyFor(s ?? {}),
       // Settings stored before the theme setting existed have no `theme` — default light.
       theme: s?.theme ?? 'light',
     };
