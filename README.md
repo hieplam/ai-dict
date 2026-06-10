@@ -45,57 +45,62 @@ browser to Google and nowhere else.
 
 ---
 
-## Browser support
-
-| Browser                                                              | Status                                                                    |
-| -------------------------------------------------------------------- | ------------------------------------------------------------------------- |
-| **Google Chrome** (and Chromium browsers with MV3 + "Load unpacked") | ✅ Supported                                                              |
-| **Safari / iOS**                                                     | 🚧 **Not yet supported** — a Safari port is planned but not available yet |
-
-> [!NOTE]
-> Today this extension works on **Chrome only**. If you're on Safari or iOS,
-> there's nothing to install yet — please check back later.
-
----
-
 ## Install (Chrome)
 
-Nothing is compiled from source — both options download the **same prebuilt
-build** from the
-[latest GitHub Release](https://github.com/hieplam/ai-dict/releases/latest).
-Chrome can't auto-install extensions, so either way ends with two clicks in
-`chrome://extensions`.
+> [!NOTE]
+> AI Dictionary currently works on **Google Chrome** on a computer (and
+> Chrome-like browsers such as Edge or Brave). **Safari and iPhone/iPad are not
+> supported yet** — a Safari version is planned, so please check back later.
 
-### 1 — Get the extension
+Installing takes about **three minutes** and three steps: **download** the
+extension, **add it to Chrome**, and **paste in a free key from Google**.
+There's no account to create and nothing to pay for.
 
-**Option A · one command** (downloads to `~/.ai-dict/dist`; re-run any time to update):
+### 1 — Download the extension
+
+**[⬇️ Download AI Dictionary (dist-chrome.zip)](https://github.com/hieplam/ai-dict/releases/latest/download/dist-chrome.zip)**
+
+Then unzip the downloaded file — **double-click** it on a Mac, or
+**right-click → Extract All…** on Windows. You'll get a folder with the
+extension's files in it. Put that folder somewhere it can stay (for example
+your Documents folder): Chrome will read the extension from there from now on,
+so don't delete it later.
+
+<details>
+<summary>Comfortable with the terminal? One command does the download for you.</summary>
+
+This downloads the same files into `~/.ai-dict/dist`; re-run it any time to
+update to the newest version:
 
 ```bash
 curl -fsSL https://github.com/hieplam/ai-dict/raw/master/scripts/install-chrome.sh | bash
 ```
 
-**Option B · download the build yourself:**
+</details>
 
-```bash
-# with plain curl
-curl -fsSL https://github.com/hieplam/ai-dict/releases/latest/download/dist-chrome.zip -o dist-chrome.zip
-unzip dist-chrome.zip -d ai-dict-dist
+### 2 — Add it to Chrome
 
-# …or with the GitHub CLI
-gh release download --repo hieplam/ai-dict --pattern dist-chrome.zip
-```
+AI Dictionary isn't in the Chrome Web Store, so you add it yourself — three
+clicks, no tools needed:
 
-### 2 — Load it in Chrome
+1. In Chrome's address bar, type `chrome://extensions` and press Enter.
+2. Turn on the **Developer mode** switch in the top-right corner. (That's just
+   Chrome's name for "let me add extensions from my own computer" — it doesn't
+   change anything else about your browser.)
+3. Click **Load unpacked** and choose the folder from step 1 — the unzipped
+   folder, or `~/.ai-dict/dist` if you used the terminal command.
 
-1. Open `chrome://extensions`.
-2. Turn on **Developer mode** (top-right).
-3. Click **Load unpacked** and select the folder from step 1
-   (`~/.ai-dict/dist` for the one-command install, or the unzipped folder).
+AI Dictionary now shows up in your list of extensions.
 
-### 3 — Add your Gemini API key
+### 3 — Add your free Google key
 
-Open the extension's **options** page, paste your
-[Gemini API key](#getting-a-gemini-api-key), and click **Save settings**.
+One last thing: the extension needs a **Gemini API key** — a personal code from
+Google that lets it ask Google's AI for definitions. It's **free**, and getting
+one takes about a minute — see
+[Getting a Gemini API key](#getting-a-gemini-api-key) just below.
+
+Open the extension's **settings** page (it opens by itself the first time),
+paste your key, and click **Save**.
 
 <p align="center">
   <img src="docs/screenshots/options-api-key.png" alt="The AI Dictionary settings page with a field for the Gemini API key, target language, and prompt template" width="540">
@@ -135,7 +140,7 @@ Prefer a sidebar? Click the toolbar icon to open the **side panel**, which keeps
 the current definition and your recent lookups beside the page.
 
 You can change the **target language**, tweak the **prompt template**, and toggle
-**caching** and **history** any time from the options page.
+**caching** and **history** any time from the extension's settings page.
 
 ---
 
@@ -143,7 +148,7 @@ You can change the **target language**, tweak the **prompt template**, and toggl
 
 1. Go to **[Google AI Studio → API keys](https://aistudio.google.com/app/apikey)**.
 2. Sign in with a Google account and click **Create API key**.
-3. Copy the key and paste it into the extension's options page.
+3. Copy the key and paste it into the extension's settings page.
 
 You only pay Google for your own usage, and Gemini has a free tier that's plenty
 for everyday reading. The default model is `gemini-2.5-flash`.
@@ -159,7 +164,7 @@ built so your key (and your reading) stay yours:
   to sign into and nowhere to upload your key to. Every lookup goes **straight
   from your browser to Google's Gemini API** and back — it is never proxied
   through, stored by, or shared with us or anyone else.
-- **Saved only in your browser.** When you paste your key into the options page,
+- **Saved only in your browser.** When you paste your key into the settings page,
   it's kept in your browser's local storage (`chrome.storage.local`) **on this
   device only** — never in the cloud. Remove it any time by clearing the field
   and clicking **Save settings**.
@@ -167,13 +172,13 @@ built so your key (and your reading) stay yours:
 
 **Two ways to provide the key — pick whichever you trust more:**
 
-1. **Paste it into the options page** — _the default; works with the prebuilt
+1. **Paste it into the settings page** — _the default; works with the standard
    Chrome install above._ The key lives only in this browser.
 2. **Bake it into your own build with an environment variable** — _for people
    who build from source._ Set `GEMINI_API_KEY` before building and it's
    compiled into your personal build, so the key is **never typed into the UI or
    saved in browser storage at all** — it lives only in your own build, and the
-   options page stops asking for one. See [Local development](#local-development).
+   settings page stops asking for one. See [Local development](#local-development).
    Treat such a build as personal — anyone who can read its files can extract the
    key, so don't share it.
 
@@ -184,9 +189,9 @@ built so your key (and your reading) stay yours:
 <details>
 <summary><strong>It says "Add your Gemini API key in Settings."</strong></summary>
 
-You haven't saved a key yet, or it was rejected. Open the options page, paste
-your key, and click **Save settings**. Use **Test connection** to confirm the key
-works.
+You haven't saved a key yet, or it was rejected. Open the extension's settings
+page, paste your key, and click **Save settings**. Use **Test connection** to
+confirm the key works.
 
 </details>
 
@@ -221,8 +226,11 @@ has a generous free tier.
 <details>
 <summary><strong>How do I update?</strong></summary>
 
-Re-run the one-command installer (or download the latest `dist-chrome.zip`), then
-click **Reload** on the extension's card in `chrome://extensions`.
+Download the newest
+[dist-chrome.zip](https://github.com/hieplam/ai-dict/releases/latest/download/dist-chrome.zip)
+and unzip it into the same folder as before (or re-run the one-command
+installer), then click **Reload** on the extension's card in
+`chrome://extensions`.
 
 </details>
 
