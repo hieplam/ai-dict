@@ -25,12 +25,20 @@ const ICON_CLOSE =
   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 4L12 12M12 4L4 12"/></svg>';
 const ICON_SHIELD =
   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8l5 2v3.4c0 3-2.1 5.2-5 6.2-2.9-1-5-3.2-5-6.2V3.8l5-2z"/></svg>';
+// "Tune" sliders — the header's always-available path to the options page.
+export const ICON_SETTINGS =
+  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 5H4.2M7.8 5H13.5M2.5 11H8.2M11.8 11H13.5"/><circle cx="6" cy="5" r="1.8"/><circle cx="10" cy="11" r="1.8"/></svg>';
 
 // Content lives in the card's LIGHT DOM, projected through a <slot>, so the shadow rules
 // target slotted nodes via ::slotted(). `color`/`font` are inherited and cross the slot
 // boundary from :host automatically. The card carries the full cozy surface (the
 // <bottom-sheet> panel is neutralised so this is the single visible surface). Light by
 // default; THEME_DARK_CSS swaps the palette per the stamped theme attribute.
+// Page CSS reaches these slotted light-DOM nodes too, and an outer tree's NORMAL declarations
+// beat the shadow's normal ::slotted() ones (CSS Scoping tree-context order) — a host reset as
+// mundane as `button{margin:0}` was enough to shove the setup CTA off-centre. The setup-invite
+// rules are therefore !important: IMPORTANT declarations from the inner tree win the same
+// tiebreak against any outer author CSS, reset or not, regardless of specificity.
 // @keyframes spin is also defined in lookup-trigger.ts; each shadow root needs its own copy
 // because CSS @keyframes are scoped per shadow tree — they cannot be shared across roots.
 // The loading spinner is the ::before pseudo-element of the slotted .loadrow caption (styled
@@ -53,12 +61,12 @@ button[data-act] svg{width:15px;height:15px;pointer-events:none}
 .footer svg{width:13px;height:13px;flex:none}
 ::slotted(h2){font-family:Georgia,"Times New Roman",serif;font-size:1.7rem;line-height:1.15;letter-spacing:-.01em;margin:.1em 0 .4em;color:var(--ad-ink);display:inline-block;max-width:100%;overflow-wrap:anywhere;padding-bottom:5px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-cranberry)) left bottom/44px 3px no-repeat}
 ::slotted(.err){color:var(--ad-err);font-weight:500}
-::slotted(.holly){display:block;width:30px;height:30px;margin:16px auto 2px}
-::slotted(.setup-title){text-align:center;margin:8px 0 0;font-size:16px;font-weight:600;color:var(--ad-ink)}
-::slotted(.setup-text){text-align:center;margin:6px auto 0;max-width:32ch;font-size:13.5px;line-height:1.55;color:var(--ad-ink-soft)}
-::slotted(.setup-cta){display:block;margin:15px auto 6px;padding:9px 18px;border:0;border-radius:8px;background:var(--ad-cta);color:var(--ad-surface);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+::slotted(.holly){display:block !important;width:30px !important;height:30px !important;margin:16px auto 2px !important}
+::slotted(.setup-title){text-align:center !important;margin:8px 0 0 !important;font-size:16px !important;font-weight:600 !important;color:var(--ad-ink) !important}
+::slotted(.setup-text){text-align:center !important;margin:6px auto 0 !important;max-width:32ch !important;font-size:13.5px !important;line-height:1.55 !important;color:var(--ad-ink-soft) !important}
+::slotted(.setup-cta){display:block !important;margin:15px auto 6px !important;padding:9px 18px !important;border:0 !important;border-radius:8px !important;background:var(--ad-cta) !important;color:var(--ad-surface) !important;font:inherit !important;font-size:13px !important;font-weight:600 !important;text-align:center !important;cursor:pointer !important}
 ::slotted(.setup-cta:hover){filter:brightness(1.06)}
-::slotted(.setup-cta:focus-visible){outline:2px solid var(--ad-amber);outline-offset:2px}
+::slotted(.setup-cta:focus-visible){outline:2px solid var(--ad-amber) !important;outline-offset:2px !important}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::slotted(.loadrow){display:flex;align-items:center;gap:9px;margin:4px 0 9px;color:var(--ad-ink-soft);font-size:14px}
 ::slotted(.loadrow)::before{content:"";display:block;width:16px;height:16px;flex:none;border:2px solid var(--ad-line);border-top-color:var(--ad-amber);border-radius:50%;animation:spin .7s linear infinite}
@@ -180,7 +188,10 @@ export class LookupCard extends HTMLElement {
     brand.innerHTML = `${HOLLY_SVG}<span>AI Dictionary</span>`;
     const actions = document.createElement('span');
     actions.className = 'actions';
-    actions.append(this.actionButton('close', 'Close', ICON_CLOSE));
+    actions.append(
+      this.actionButton('settings', 'Settings', ICON_SETTINGS),
+      this.actionButton('close', 'Close', ICON_CLOSE),
+    );
     bar.append(brand, actions);
 
     const region = document.createElement('section');
@@ -204,14 +215,17 @@ export class LookupCard extends HTMLElement {
     if (this.childNodes.length === 0) this.renderState();
   }
 
-  private actionButton(act: 'close', label: string, icon: string): HTMLButtonElement {
+  private actionButton(act: 'settings' | 'close', label: string, icon: string): HTMLButtonElement {
     const b = document.createElement('button');
     b.type = 'button';
     b.dataset['act'] = act;
     b.setAttribute('aria-label', label);
     b.innerHTML = icon; // decorative aria-hidden SVG; accessible name comes from aria-label
+    // The settings action reuses the `open-settings` event name the shells already route to
+    // the options page (content script → service worker; side panel directly) — see settingsCta.
+    const event = act === 'settings' ? 'open-settings' : act;
     b.addEventListener('click', () =>
-      this.dispatchEvent(new CustomEvent(act, { bubbles: true, composed: true })),
+      this.dispatchEvent(new CustomEvent(event, { bubbles: true, composed: true })),
     );
     return b;
   }

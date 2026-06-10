@@ -59,6 +59,23 @@ describe('<side-panel-view>', () => {
     expect(el.shadowRoot!.querySelector('footer')!.textContent).toContain('Stays on your device');
   });
 
+  it('the header offers a Settings action that emits a composed "open-settings" event', () => {
+    const el = mount();
+    const gear = el.shadowRoot!.querySelector<HTMLButtonElement>('header .settings')!;
+    expect(gear).not.toBeNull();
+    expect(gear.getAttribute('aria-label')).toBe('Settings');
+    let evt: CustomEvent | null = null;
+    const handler = (e: Event): void => {
+      evt = e as CustomEvent;
+    };
+    document.body.addEventListener('open-settings', handler);
+    gear.click();
+    document.body.removeEventListener('open-settings', handler);
+    expect(evt).not.toBeNull();
+    // Same frozen event-name contract as the lookup card; side-panel.ts listens on the view.
+    expect(evt!.composed).toBe(true);
+  });
+
   it('renders a loading focus with the selected word as the headword', () => {
     const el = mount();
     el.focusState = { kind: 'loading', word: 'resilient' };

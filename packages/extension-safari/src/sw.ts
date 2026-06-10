@@ -39,6 +39,9 @@ const router = buildRouter({
     return { cacheEnabled: s.cacheEnabled, saveHistory: s.saveHistory };
   },
   queue: new WriteQueue(),
+  // A content script can't open the options page itself; it sends `open-options` and we do it
+  // here — the reader's path from the in-page Settings actions to setup. Mirrors the Chrome sw.
+  openOptions: () => browser.runtime.openOptionsPage(),
 });
 
 // Uses the sendResponse + return true idiom (the WebExtensions runtime.onMessage contract Safari implements).

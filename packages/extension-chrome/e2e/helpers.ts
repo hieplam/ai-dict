@@ -88,6 +88,29 @@ export async function gotoFixture(
   await page.goto('http://test.fixture/');
 }
 
+/**
+ * Like gotoFixture, but the page ships a hostile normalize-style reset — zeroed button/p
+ * margins, stripped button chrome, inherited text-align — the real-world page CSS that used
+ * to override the card's normal ::slotted() declarations and shove the setup CTA off-centre.
+ */
+export async function gotoResetFixture(
+  page: Page,
+  paragraph = 'The bank by the river is steep.',
+): Promise<void> {
+  const reset =
+    '*{margin:0;padding:0;box-sizing:border-box}' +
+    'button{margin:0;padding:0;border:0;background:none;font:inherit;text-align:inherit;appearance:none}' +
+    'p,h1,h2,h3,svg{margin:0}';
+  await page.route('http://test.fixture/', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: `<html><head><style>${reset}</style></head><body><p id="t">${paragraph}</p></body></html>`,
+    }),
+  );
+  await page.goto('http://test.fixture/');
+}
+
 /** Make a deterministic, non-collapsed selection over `word` inside `#${id}` and dispatch mouseup. */
 export async function selectWord(page: Page, id: string, word: string): Promise<void> {
   await page.evaluate(

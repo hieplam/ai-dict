@@ -1,6 +1,6 @@
 ---
 id: c3-310
-c3-seal: 811ff91dc1fb9325d39ae657af0a4fbbf8113891242615c833bed45b7eff0594
+c3-seal: 45147182ccd105bfb10d4e980318850e0e93c99c1840cd423aabdd28fd210288
 title: safari-service-worker
 type: component
 category: feature
@@ -39,7 +39,7 @@ Acts as the composition root for the Safari service worker. Instantiates `Gemini
 | --- | --- | --- |
 | Preconditions | Safari ≥ 16.4 per browser_specific_settings in packages/extension-safari/src/manifest.json; browser global declared via var browser: Browser in packages/extension-safari/src/global.d.ts | c3-3 |
 | Manifest registration | "background": { "service_worker": "sw.js", "type": "module" } and "permissions": ["storage"] in packages/extension-safari/src/manifest.json grants browser.storage.local to the SW | c3-3 |
-| Composition root pattern | buildRouter({client, settings, kv, readToggles, queue}) in packages/extension-safari/src/sw.ts — all dependencies injected; no direct domain logic here | ref-dependency-injection |
+| Composition root pattern | buildRouter({client, settings, kv, readToggles, queue, openOptions}) in packages/extension-safari/src/sw.ts — all dependencies injected; no direct domain logic here | ref-dependency-injection |
 | API key read locality | readFullSettings() defined and called only inside packages/extension-safari/src/sw.ts; no other extension-safari module reads apiKey | rule-api-key-isolation |
 | Message gating | classifyInbound(msg, sender.id, browser.runtime.id) runs before router() in packages/extension-safari/src/sw.ts; returns action: 'ignore', 'reject', or 'process' | rule-gate-runtime-messages |
 
@@ -51,6 +51,7 @@ Acts as the composition root for the Safari service worker. Instantiates `Gemini
 | Primary path | onMessage fires → classifyInbound returns process → router(decision.msg) resolves → sendResponse(reply) if not SUPPRESS (see packages/extension-safari/src/sw.ts) | rule-gate-runtime-messages |
 | Ignore path | classifyInbound returns action: 'ignore' → listener returns false immediately, closing the channel (see packages/extension-safari/src/sw.ts) | rule-gate-runtime-messages |
 | Reject path | classifyInbound returns action: 'reject' → sendResponse(decision.reply) called synchronously, channel closed with return true (see packages/extension-safari/src/sw.ts) | rule-gate-runtime-messages |
+| Open options path | A gated open-options message (relayed by the content script from the UI's composed open-settings event) routes to the injected openOptions dep, which calls browser.runtime.openOptionsPage — the reader's path from the in-page Settings actions to setup (see packages/extension-safari/src/sw.ts) | c3-111 |
 | Error path | Router promise rejects → .catch calls sendResponse({ok: false, type: ..., error: mapError({kind: 'thrown', error: e})}) (see packages/extension-safari/src/sw.ts) | rule-typed-errors |
 | SUPPRESS path | Router resolves with SUPPRESS sentinel → sendResponse is not called; channel stays open for fire-and-forget semantics (see packages/extension-safari/src/sw.ts) | c3-111 |
 

@@ -1,7 +1,7 @@
 import type { HistoryEntry } from '../domain/types';
 import { adoptStyles } from './styles/adopt';
 import { LIGHT_VARS, THEME_DARK_CSS, HOLLY_SVG } from './styles/tokens';
-import { renderCardState, type CardState } from './lookup-card';
+import { renderCardState, ICON_SETTINGS, type CardState } from './lookup-card';
 
 /**
  * What the panel's single "focus" region shows. It mirrors the in-page card's three
@@ -36,6 +36,10 @@ ${THEME_DARK_CSS}
 .ribbon{height:4px;flex:none;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
 header{display:flex;align-items:center;gap:8px;padding:13px 18px 11px;flex:none}
 .brand{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.01em;color:var(--ad-pine)}
+.settings{display:inline-grid;place-items:center;width:28px;height:28px;margin-left:auto;border:0;background:transparent;color:var(--ad-ink-soft);border-radius:8px;cursor:pointer;font:inherit}
+.settings:hover{background:var(--ad-surface-soft);color:var(--ad-ink)}
+.settings:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
+.settings svg{width:15px;height:15px;pointer-events:none}
 .holly{width:22px;height:22px;flex:none}
 main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 18px}
 .focus{padding:6px 0 10px}
@@ -108,7 +112,17 @@ export class SidePanelView extends HTMLElement {
     const brand = document.createElement('span');
     brand.className = 'brand';
     brand.innerHTML = `${HOLLY_SVG}<span>AI Dictionary</span>`;
-    header.append(brand);
+    // Persistent path to the options page; same `open-settings` contract as the lookup card,
+    // caught by the panel's composition root (a trusted page, it calls openOptionsPage itself).
+    const settings = document.createElement('button');
+    settings.type = 'button';
+    settings.className = 'settings';
+    settings.setAttribute('aria-label', 'Settings');
+    settings.innerHTML = ICON_SETTINGS; // decorative aria-hidden SVG; name comes from aria-label
+    settings.addEventListener('click', () =>
+      this.dispatchEvent(new CustomEvent('open-settings', { bubbles: true, composed: true })),
+    );
+    header.append(brand, settings);
 
     const main = document.createElement('main');
 

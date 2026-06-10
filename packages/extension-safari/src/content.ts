@@ -38,3 +38,11 @@ runLookupWorkflow({
   client: new MessageRelayLookupClient(browser.runtime),
   settings: themedSettings,
 });
+
+// The card's Settings actions (header gear, no-key/invalid-key "Open Settings" CTA) dispatch a
+// composed `open-settings` event that bubbles to the document. A content script can't open the
+// options page directly, so relay to the service worker (it calls runtime.openOptionsPage) —
+// mirrors the Chrome shell.
+document.addEventListener('open-settings', () => {
+  void browser.runtime.sendMessage({ type: 'open-options' });
+});
