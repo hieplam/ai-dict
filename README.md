@@ -144,6 +144,64 @@ You can change the **target language**, tweak the **prompt template**, and toggl
 
 ---
 
+## Customize the prompt template
+
+Every definition is produced by sending Google's Gemini a short set of
+instructions — _the **prompt**_. AI Dictionary ships with a sensible default,
+but the **whole prompt is yours to rewrite**, so you can shape what every lookup
+returns: add etymology, drop the IPA, ask for three example sentences, answer in
+a different style, whatever suits how you read.
+
+**Where:** open the extension's **settings** page → **Translation** section →
+**Prompt template**. Edit the text, click **Save settings**, and your next lookup
+uses it. Changed your mind? **Restore default** puts the shipped prompt back.
+
+### Fill-in placeholders
+
+Before the prompt is sent, AI Dictionary swaps each `{placeholder}` for the real
+value from your current lookup. Use any of these — anything in `{curly braces}`
+that isn't on this list is left untouched, so stray braces won't break anything:
+
+| Placeholder     | Becomes…                                                    |
+| --------------- | ----------------------------------------------------------- |
+| `{word}`        | The word or phrase you selected.                            |
+| `{context}`     | The sentence around it, so the answer fits how it's used.   |
+| `{target_lang}` | Your target language (e.g. _Vietnamese_) from the dropdown. |
+| `{source_lang}` | The language being defined — currently always _English_.    |
+| `{url}`         | The address of the page you're reading.                     |
+| `{title}`       | The title of that page.                                     |
+
+### The default prompt
+
+This is what ships out of the box — copy it as a starting point for your own:
+
+```text
+You are a bilingual dictionary for {target_lang} learners of English.
+Word/phrase: "{word}"
+Sentence context: "{context}"
+
+Output Markdown with sections in this exact order:
+1. **IPA**
+2. **Part of Speech (POS)**
+3. **Eng -> Eng** (learner-style definition in simple English)
+4. **Eng -> {target_lang}** (translation)
+5. **Example** (one short sentence in English + its {target_lang} translation)
+
+Constraints:
+- Disambiguate the sense based on the sentence context.
+- Do not include any HTML.
+- Do not repeat the user's input verbatim more than once.
+- Keep the response under 200 words.
+```
+
+> [!TIP]
+> Keep `{word}` and `{context}` in your prompt — they're what makes the answer
+> fit _this_ sentence instead of a generic dictionary entry. The result is shown
+> as Markdown, so asking for **bold** headings and short lists reads best on the
+> card.
+
+---
+
 ## Getting a Gemini API key
 
 1. Go to **[Google AI Studio → API keys](https://aistudio.google.com/app/apikey)**.
