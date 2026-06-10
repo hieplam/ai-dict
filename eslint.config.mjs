@@ -34,25 +34,38 @@ export default tseslint.config(
       'import-x/resolver': { typescript: true },
     },
     rules: {
-      // §8.3 structural zones (path-based)
+      // §8.3 structural zones (rule-domain-purity / ref-core-dependency-rule).
+      // IDE-time feedback only — the hard allowlist gate is scripts/check-dep-direction.mjs,
+      // which runs before every extension build and at the front of `bun run lint`.
       'import-x/no-restricted-paths': [
         'error',
         {
           zones: [
-            // core MUST NOT import from adapters/ui/extensions
+            // domain core MUST NOT import the edge (adapters/ui/wire/barrel) or a shell
             {
-              target: './packages/core/src',
+              target: './packages/app/src/domain',
               from: [
-                './packages/adapters-shared',
-                './packages/shared-ui',
+                './packages/app/src/app',
+                './packages/app/src/ui',
+                './packages/app/src/wire.ts',
+                './packages/app/src/index.ts',
                 './packages/extension-chrome',
                 './packages/extension-safari',
               ],
             },
-            // adapters-shared MUST NOT import from extensions
+            // the core package MUST NOT import an extension shell
             {
-              target: './packages/adapters-shared/src',
+              target: './packages/app/src',
               from: ['./packages/extension-chrome', './packages/extension-safari'],
+            },
+            // shells MUST NOT import each other
+            {
+              target: './packages/extension-chrome/src',
+              from: ['./packages/extension-safari'],
+            },
+            {
+              target: './packages/extension-safari/src',
+              from: ['./packages/extension-chrome'],
             },
             // extension tests MUST NOT import sibling adapters (inject via fakes)
             {
@@ -62,24 +75,6 @@ export default tseslint.config(
             {
               target: './packages/extension-safari/test',
               from: ['./packages/extension-safari/src/adapters'],
-            },
-          ],
-        },
-      ],
-    },
-  },
-  // §8.3 rule 3: shared-ui may import core TYPES ONLY (value imports forbidden)
-  {
-    files: ['packages/shared-ui/src/**/*.ts'],
-    rules: {
-      '@typescript-eslint/no-restricted-imports': [
-        'error',
-        {
-          patterns: [
-            {
-              group: ['@ai-dict/core', '@ai-dict/core/*'],
-              allowTypeImports: true,
-              message: 'shared-ui may import core types only (import type ...).',
             },
           ],
         },
