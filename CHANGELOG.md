@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.3.0](https://github.com/hieplam/ai-dict/compare/v1.2.0...v1.3.0) (2026-06-10)
+
+
+### Features
+
+* **ci:** SonarQube Cloud scan + coverage + one-time issue backlog importer ([#34](https://github.com/hieplam/ai-dict/issues/34)) ([408f5b1](https://github.com/hieplam/ai-dict/commit/408f5b13b36e7e2a8ee61ca034e23ebee6032cd0))
+* **onboarding:** guide keyless first-run users from Define to setup ([#31](https://github.com/hieplam/ai-dict/issues/31)) ([6601a77](https://github.com/hieplam/ai-dict/commit/6601a7790db3f258aeb4cb84899130b664dcef77))
+* **settings:** user-selectable light/dark/system theme, light by default ([#35](https://github.com/hieplam/ai-dict/issues/35)) ([a361430](https://github.com/hieplam/ai-dict/commit/a36143035c13a5fc241cd0cd3bb67379f48fd06a))
+
 ## [1.2.0](https://github.com/hieplam/ai-dict/compare/v1.1.0...v1.2.0) (2026-06-09)
 
 
