@@ -91,6 +91,49 @@ describe('<lookup-card>', () => {
     expect(evt!.composed).toBe(true);
   });
 
+  it('the header offers a Settings action (before Close) that emits a composed "open-settings"', () => {
+    const el = mountCard();
+    const acts = [...el.shadowRoot!.querySelectorAll<HTMLButtonElement>('button[data-act]')];
+    // Settings sits left of Close so Close keeps its familiar right-most spot.
+    expect(acts.map((b) => b.dataset['act'])).toEqual(['settings', 'close']);
+    const gear = acts[0]!;
+    expect(gear.getAttribute('aria-label')).toBe('Settings');
+    let evt: CustomEvent | null = null;
+    const handler = (e: Event): void => {
+      evt = e as CustomEvent;
+    };
+    document.body.addEventListener('open-settings', handler);
+    gear.click();
+    document.body.removeEventListener('open-settings', handler);
+    expect(evt).not.toBeNull();
+    // Frozen cross-bundle contract: same event name as the setup CTA, composed across shadows.
+    expect(evt!.type).toBe('open-settings');
+    expect(evt!.composed).toBe(true);
+  });
+
+  it('setup-invite slotted rules are !important so host-page resets cannot strip the centering', () => {
+    // The invite nodes are slotted LIGHT-DOM children, so the host page's NORMAL declarations
+    // beat the shadow's normal ::slotted() ones — a reset like button{margin:0} used to shove
+    // the CTA off-centre (e1 bug). Inner-tree !important wins that tiebreak; pin it here.
+    const el = mountCard();
+    const sheet = el.shadowRoot!.adoptedStyleSheets[0]!;
+    const rules = [...sheet.cssRules].map((r) => r.cssText);
+    const cta = rules.find(
+      (t) => t.includes('::slotted(.setup-cta)') && !t.includes(':hover') && !t.includes(':focus'),
+    );
+    expect(cta).toBeDefined();
+    expect(cta).toMatch(/margin:\s*15px auto 6px\s*!important/);
+    expect(cta).toMatch(/display:\s*block\s*!important/);
+    for (const sel of ['.setup-title', '.setup-text']) {
+      expect(rules.find((t) => t.includes(`::slotted(${sel})`))).toMatch(
+        /text-align:\s*center\s*!important/,
+      );
+    }
+    expect(rules.find((t) => t.includes('::slotted(.holly)'))).toMatch(
+      /margin:\s*16px auto 2px\s*!important/,
+    );
+  });
+
   it('a rejected (invalid) key keeps the error but still offers Open Settings', () => {
     const el = mountCard();
     el.state = {

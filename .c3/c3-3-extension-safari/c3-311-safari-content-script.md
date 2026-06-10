@@ -1,6 +1,6 @@
 ---
 id: c3-311
-c3-seal: a7c27d4b67c3a5b441138e08fdec13bf1bca7ce280501bd8129bc78beb862192
+c3-seal: 0a725b5b2ff35cf0f1668a742bc42e1c678d7a628b8b8ae5e3cadd6946ba5a6b
 title: safari-content-script
 type: component
 category: feature
@@ -49,6 +49,7 @@ Acts as the composition root for the Safari content script. Calls `registerConte
 | Primary path | DomSelectionSource emits selection → runLookupWorkflow calls SafariFloatingTrigger.show() → user clicks → MessageRelayLookupClient sends lookup.* message to SW → reply rendered by InlineBottomSheetRenderer (see packages/extension-safari/src/content.ts) | c3-110 |
 | Settings read path | MessageRelaySettingsStore.get() returns cached PublicSettings; on browser.storage.onChanged cache clears and next get() re-fetches from SW (see packages/extension-safari/src/adapters/message-relay-settings-store.ts) | c3-301 |
 | Alternate path (no key) | If hasKey is false, runLookupWorkflow surfaces a no-key state via the renderer without sending a network request | c3-110 |
+| Open settings relay | The card's Settings actions (header gear, no-key/invalid-key "Open Settings" CTA) dispatch a composed open-settings DOM event that bubbles to the document; content.ts relays the validated, payload-free {type:'open-options'} wire message to the SW, which calls browser.runtime.openOptionsPage — mirrors the Chrome shell (see packages/extension-safari/src/content.ts) | c3-103 |
 | Failure behavior | Network or SW errors are returned as typed WireReply error objects; InlineBottomSheetRenderer displays the error; no crash in the content script | c3-115 |
 
 ## Governance
@@ -66,6 +67,7 @@ Acts as the composition root for the Safari content script. Calls `registerConte
 | runLookupWorkflow({selection, trigger, renderer, client, settings}) call | OUT | Starts the end-to-end lookup lifecycle with the five injected port implementations | Content-script-to-core boundary | packages/extension-safari/src/content.ts |
 | browser.storage.onChanged subscription | IN | MessageRelaySettingsStore cache invalidation callback wired at construction time; fires on any storage area change | Safari WebExtension runtime boundary | packages/extension-safari/src/content.ts |
 | browser.runtime (via MessageRelayLookupClient and MessageRelaySettingsStore) | OUT | sendMessage used to relay lookup.* and settings.get messages to the service worker | Safari WebExtension runtime boundary | packages/extension-safari/src/content.ts |
+| document 'open-settings' listener | IN | Catches the composed CustomEvent dispatched by the UI layer (c3-117 gear + setup CTA) and relays the payload-free open-options wire message to the SW | DOM-event-to-wire boundary | packages/extension-safari/src/content.ts |
 
 ## Change Safety
 

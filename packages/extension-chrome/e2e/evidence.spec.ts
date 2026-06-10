@@ -1,5 +1,12 @@
 import { test, expect } from './fixtures';
-import { seedSettings, gotoFixture, selectWord, openTrigger } from './helpers';
+import {
+  seedSettings,
+  gotoFixture,
+  gotoResetFixture,
+  selectWord,
+  openTrigger,
+  mockGemini,
+} from './helpers';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -113,4 +120,57 @@ test('evidence: no-key side panel setup invite (light + dark)', async ({
   await panel.emulateMedia({ colorScheme: 'dark' });
   await panel.waitForTimeout(150);
   await panel.screenshot({ path: shot('side-panel-no-key-dark') });
+});
+
+// ——— Evidence for the settings-reachability PR: centered setup invite on hostile-reset pages
+// and the new header Settings gear (card + side panel). ———
+const navOut = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../e2e-evidence/settings-nav',
+);
+const navShot = (name: string) => path.join(navOut, `${name}.png`);
+
+test('evidence: no-key card on a hostile-reset page (light + dark)', async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page, { apiKey: '', hasKey: false });
+  await gotoResetFixture(page);
+  await page.waitForTimeout(1_000);
+  await selectWord(page, 't', 'bank');
+  await openTrigger(page);
+  const card = page.locator('bottom-sheet lookup-card');
+  await expect(card).toContainText('Set up AI Dictionary', { timeout: 10_000 });
+  await page.waitForTimeout(200);
+  await card.screenshot({ path: navShot('card-no-key-reset-light') });
+
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.waitForTimeout(150);
+  await card.screenshot({ path: navShot('card-no-key-reset-dark') });
+});
+
+test('evidence: result card with the header Settings gear', async ({ context, extensionId }) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page);
+  await mockGemini(context);
+  await gotoFixture(page);
+  await page.waitForTimeout(1_000);
+  await selectWord(page, 't', 'bank');
+  await openTrigger(page);
+  const card = page.locator('bottom-sheet lookup-card');
+  await expect(card).toContainText('bank', { timeout: 10_000 });
+  await page.waitForTimeout(200);
+  await card.screenshot({ path: navShot('card-result-header-gear') });
+});
+
+test('evidence: side panel with the header Settings gear', async ({ context, extensionId }) => {
+  const panel = await context.newPage();
+  await panel.setViewportSize({ width: 380, height: 720 });
+  await panel.goto(`chrome-extension://${extensionId}/side-panel.html`);
+  await panel.waitForSelector('side-panel-view');
+  await panel.waitForTimeout(300);
+  await panel.screenshot({ path: navShot('side-panel-header-gear') });
 });

@@ -56,9 +56,10 @@ runLookupWorkflow({
   settings: themedSettings,
 });
 
-// The no-key card's "Open Settings" button dispatches a composed `open-settings` event that
-// bubbles out of the bottom sheet to the document. A content script can't open the options page
-// directly, so we ask the service worker to (it calls chrome.runtime.openOptionsPage).
+// The card's Settings actions (header gear, no-key/invalid-key "Open Settings" CTA) dispatch a
+// composed `open-settings` event that bubbles out of the bottom sheet to the document. A content
+// script can't open the options page directly, so we ask the service worker to (it calls
+// chrome.runtime.openOptionsPage).
 document.addEventListener('open-settings', () => {
   void chrome.runtime.sendMessage({ type: 'open-options' });
 });
