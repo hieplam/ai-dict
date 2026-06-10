@@ -9,12 +9,9 @@ interface Case {
   expected: string;
 }
 
+// NOTE: the no-key case is intentionally NOT here — it is no longer a plain error message but a
+// setup invite with an "Open Settings" action, covered in full by onboarding.spec.ts.
 const CASES: Case[] = [
-  {
-    name: 'no API key',
-    settings: { apiKey: '', hasKey: false },
-    expected: 'Add your Gemini API key in Settings.',
-  },
   {
     name: 'offline / aborted',
     mock: { abort: true },

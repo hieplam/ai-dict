@@ -1,0 +1,206 @@
+import { adoptStyles } from './styles/adopt';
+import { LIGHT_VARS, DARK_VARS, HOLLY_SVG } from './styles/tokens';
+
+// Where a reader creates a free Gemini key. Surfaced as the first onboarding step so a
+// first-time user is never left wondering where the key comes from.
+export const GET_KEY_URL = 'https://aistudio.google.com/apikey';
+
+/** What the onboarding screen collects: just enough to make the extension usable. */
+export interface OnboardingValue {
+  apiKey: string;
+  targetLang: string;
+}
+
+const ICON_SHIELD =
+  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8l5 2v3.4c0 3-2.1 5.2-5 6.2-2.9-1-5-3.2-5-6.2V3.8l5-2z"/></svg>';
+// Small "opens in a new tab" arrow, paired with the Google AI Studio link.
+const ICON_EXTERNAL =
+  '<svg class="ext" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3H3.5A1.5 1.5 0 0 0 2 4.5v8A1.5 1.5 0 0 0 3.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-3"/><path d="M9.5 2.5H13.5V6.5"/><path d="M13.5 2.5 7.5 8.5"/></svg>';
+
+// The first-run screen the options page shows until a key exists. It is the same cozy surface
+// as the rest of the in-page UI (ribbon, holly, candlelit glow, warm tokens) and is fully
+// responsive: one centred column that reflows from a wide tab down to a narrow window, the key
+// row wrapping rather than overflowing. The single blocking step is the API key — language has
+// a sensible default — so the checklist shows what is already done (language) and what is still
+// missing (the key), and the progress count moves the moment a key is pasted.
+const CSS = `:host{${LIGHT_VARS};display:block;min-height:100vh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light dark}
+@media (prefers-color-scheme:dark){:host{${DARK_VARS}}button.primary{background:color-mix(in oklab,var(--ad-pine) 86%,white)}}
+*{box-sizing:border-box}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.ribbon{height:4px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
+header{display:flex;align-items:center;gap:8px;max-width:560px;margin:0 auto;padding:14px clamp(16px,5vw,22px) 6px}
+.brand{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.01em;color:var(--ad-pine)}
+.brand .holly{width:22px;height:22px;flex:none}
+main{max-width:560px;margin:0 auto;padding:6px clamp(16px,5vw,22px) 30px}
+.hero{text-align:center;padding:10px 0 4px}
+.mark{width:46px;height:46px;margin:0 auto 6px;display:block}
+h1.title{font-family:Georgia,"Times New Roman",serif;font-size:clamp(1.7rem,1.4rem + 1.4vw,2.1rem);line-height:1.12;letter-spacing:-.01em;margin:.1em 0 .3em;color:var(--ad-ink);text-wrap:balance}
+.lead{margin:0 auto;max-width:46ch;font-size:14.5px;line-height:1.6;color:var(--ad-ink-soft);text-wrap:pretty}
+.panel{margin:20px 0 0;border:1px solid var(--ad-line);border-radius:14px;padding:6px clamp(14px,4vw,20px) 18px;background:var(--ad-surface-soft)}
+.panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 0 4px;border-bottom:1px solid var(--ad-line)}
+.panel-h{margin:0;font-size:15px;font-weight:700;color:var(--ad-ink)}
+.progress{margin:0;font-size:12px;font-weight:600;color:var(--ad-pine)}
+.steps{list-style:none;margin:0;padding:0}
+.step{display:flex;gap:13px;padding:16px 0;border-bottom:1px solid var(--ad-line)}
+.step:last-child{border-bottom:0;padding-bottom:6px}
+.dot{width:21px;height:21px;border-radius:50%;flex:none;margin-top:1px;border:2px solid var(--ad-line);position:relative;background:var(--ad-surface);transition:background .15s ease,border-color .15s ease}
+.step.done .dot{background:var(--ad-pine);border-color:var(--ad-pine)}
+.step.done .dot::after{content:"";position:absolute;left:6px;top:2.5px;width:4px;height:9px;border:solid var(--ad-surface);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.step-body{flex:1 1 auto;min-width:0}
+.step-title{margin:0;font-size:14.5px;font-weight:600;color:var(--ad-ink)}
+.step-sub{margin:2px 0 0;font-size:13px;line-height:1.5;color:var(--ad-ink-soft)}
+select{font:inherit;margin-top:10px;width:100%;max-width:240px;padding:9px 11px;border:1px solid var(--ad-line);border-radius:10px;background:var(--ad-surface);color:var(--ad-ink)}
+.getkey{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;font-weight:600;color:var(--ad-pine);text-decoration:underline;text-underline-offset:2px}
+.getkey:hover{text-decoration:none}
+.getkey:focus-visible{outline:2px solid var(--ad-amber);outline-offset:3px;border-radius:4px}
+.getkey .ext{width:14px;height:14px;flex:none}
+.keyrow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin-top:11px}
+.keyrow input{flex:1 1 200px;min-width:0;font:inherit;padding:10px 12px;border:1px solid var(--ad-line);border-radius:10px;background:var(--ad-surface);color:var(--ad-ink)}
+input:focus,select:focus{outline:2px solid var(--ad-amber);outline-offset:1px;border-color:transparent}
+#reveal{font:inherit;font-weight:600;font-size:13px;padding:9px 14px;border-radius:10px;cursor:pointer;border:1px solid var(--ad-line);background:var(--ad-surface);color:var(--ad-ink)}
+#reveal:hover{background:var(--ad-surface-soft)}
+#reveal:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
+#key-help{margin:8px 0 0;font-size:12px;color:var(--ad-ink-soft)}
+.actions{margin-top:18px}
+button.primary{font:inherit;font-weight:600;font-size:14px;width:100%;padding:12px 18px;border-radius:11px;cursor:pointer;border:1px solid transparent;background:var(--ad-pine);color:var(--ad-surface)}
+button.primary:hover{filter:brightness(1.06)}
+button.primary:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
+#status{margin:13px 0 0;padding:9px 12px;border-radius:8px;border-left:3px solid var(--ad-pine);background:var(--ad-surface);color:var(--ad-ink);font-size:13px;font-weight:600}
+#status.error{border-left-color:var(--ad-err);color:var(--ad-err)}
+footer{display:flex;align-items:center;gap:6px;max-width:560px;margin:0 auto;padding:6px clamp(16px,5vw,22px) 20px;font-size:11px;color:var(--ad-ink-soft)}
+footer svg{width:13px;height:13px;flex:none}
+[hidden]{display:none}`;
+
+const MARKUP = `<div class="ribbon"></div>
+<header><span class="brand">${HOLLY_SVG}<span>AI Dictionary</span></span></header>
+<form novalidate>
+  <main>
+    <div class="hero">
+      ${HOLLY_SVG.replace('class="holly"', 'class="holly mark"')}
+      <h1 class="title">Welcome to AI Dictionary</h1>
+      <p class="lead">Look up any English word right where you're reading, translated into your language, powered by your own free Google Gemini key. Nothing leaves your device but the word you choose.</p>
+    </div>
+    <section class="panel" aria-labelledby="setup-h">
+      <div class="panel-head">
+        <h2 class="panel-h" id="setup-h">Finish setup</h2>
+        <p class="progress" id="progress"></p>
+      </div>
+      <ol class="steps">
+        <li class="step done" id="step-lang">
+          <span class="dot"></span>
+          <div class="step-body">
+            <p class="step-title">Reading language</p>
+            <p class="step-sub">Definitions are translated into this language. Change it anytime.</p>
+            <label class="sr-only" for="target">Reading language</label>
+            <select id="target"><option value="vi">Vietnamese</option><option value="es">Spanish</option></select>
+          </div>
+        </li>
+        <li class="step todo" id="step-key">
+          <span class="dot"></span>
+          <div class="step-body">
+            <p class="step-title">Add your Gemini API key</p>
+            <p class="step-sub">Free from Google AI Studio, about a minute to create. Paste it below to activate the extension.</p>
+            <a class="getkey" id="getkey" href="${GET_KEY_URL}" target="_blank" rel="noopener noreferrer">Get a free API key${ICON_EXTERNAL}</a>
+            <div class="keyrow">
+              <input id="key" type="password" autocomplete="off" placeholder="Paste your key (AIza…)" aria-label="Gemini API key" aria-describedby="key-help" />
+              <button type="button" id="reveal" aria-label="Reveal API key">Show</button>
+            </div>
+            <p id="key-help">Stored locally on this device only.</p>
+          </div>
+        </li>
+      </ol>
+      <div class="actions">
+        <button type="submit" id="activate" class="primary">Save &amp; activate</button>
+      </div>
+      <p id="status" role="status" aria-live="polite" hidden></p>
+    </section>
+  </main>
+</form>
+<footer>${ICON_SHIELD}<span>Stays on your device</span></footer>`;
+
+export class OnboardingView extends HTMLElement {
+  private root!: ShadowRoot;
+  private _pendingValue: OnboardingValue | null = null;
+
+  connectedCallback(): void {
+    if (this.shadowRoot) return;
+    this.root = this.attachShadow({ mode: 'open' });
+    adoptStyles(this.root, CSS);
+    this.root.innerHTML = MARKUP;
+
+    const key = this.q<HTMLInputElement>('#key');
+    this.q<HTMLButtonElement>('#reveal').addEventListener('click', () => {
+      const reveal = this.q<HTMLButtonElement>('#reveal');
+      key.type = key.type === 'password' ? 'text' : 'password';
+      reveal.setAttribute('aria-label', key.type === 'text' ? 'Hide API key' : 'Reveal API key');
+    });
+    // Live progress: the moment a key is present, step 2 flips to done and the count moves.
+    key.addEventListener('input', () => this.refreshProgress());
+
+    this.q<HTMLFormElement>('form').addEventListener('submit', (e) => {
+      e.preventDefault();
+      this.submit();
+    });
+
+    if (this._pendingValue !== null) {
+      this.value = this._pendingValue;
+      this._pendingValue = null;
+    }
+    this.refreshProgress();
+    // Arrivals from the no-key card should land directly on the one thing they must do.
+    key.focus();
+  }
+
+  /** Validate then emit `save` so the host (options page) can persist + advance to settings. */
+  private submit(): void {
+    const apiKey = this.q<HTMLInputElement>('#key').value.trim();
+    if (apiKey.length === 0) {
+      this.setStatus('Paste your Gemini API key to activate the extension.', 'error');
+      this.q<HTMLInputElement>('#key').focus();
+      return;
+    }
+    this.dispatchEvent(
+      new CustomEvent<OnboardingValue>('save', {
+        detail: { apiKey, targetLang: this.q<HTMLSelectElement>('#target').value },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  /** Reflect what is done vs. still missing: language is always ready, the key is the gate. */
+  private refreshProgress(): void {
+    const hasKey = this.q<HTMLInputElement>('#key').value.trim().length > 0;
+    const stepKey = this.q<HTMLElement>('#step-key');
+    stepKey.classList.toggle('done', hasKey);
+    stepKey.classList.toggle('todo', !hasKey);
+    const done = 1 + (hasKey ? 1 : 0);
+    this.q<HTMLElement>('#progress').textContent = hasKey
+      ? '2 of 2 — activate to finish'
+      : `${done} of 2 ready`;
+  }
+
+  /** Surface save/persist outcomes inline (mirrors settings-form). Empty text hides the line. */
+  setStatus(text: string, tone: 'ok' | 'error' = 'ok'): void {
+    const status = this.q<HTMLElement>('#status');
+    status.textContent = text;
+    status.hidden = text.length === 0;
+    status.classList.toggle('error', tone === 'error');
+  }
+
+  set value(v: OnboardingValue) {
+    if (!this.shadowRoot) {
+      this._pendingValue = v;
+      return;
+    }
+    this.q<HTMLSelectElement>('#target').value = v.targetLang;
+    this.q<HTMLInputElement>('#key').value = v.apiKey;
+    this.refreshProgress();
+  }
+
+  private q<T extends Element>(sel: string): T {
+    const el = this.root.querySelector<T>(sel);
+    if (!el) throw new Error(`onboarding-view: missing ${sel}`);
+    return el;
+  }
+}

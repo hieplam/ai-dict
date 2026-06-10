@@ -288,6 +288,20 @@ describe('buildRouter', () => {
     expect(ack).toMatchObject({ ok: true, type: 'ack' });
   });
 
+  it('open-options → calls the injected openOptions port and replies ack', async () => {
+    const openOptions = vi.fn<() => void>();
+    const route = buildRouter({ ...deps(), openOptions });
+    const reply = await route({ type: 'open-options' });
+    expect(openOptions).toHaveBeenCalledOnce();
+    expect(reply).toMatchObject({ ok: true, type: 'ack' });
+  });
+
+  it('open-options without an openOptions port still replies ack (no crash)', async () => {
+    // The port is optional — a shell that never sends open-options need not provide it.
+    const reply = await buildRouter(deps())({ type: 'open-options' });
+    expect(reply).toMatchObject({ ok: true, type: 'ack' });
+  });
+
   it('non-LookupError rejection is wrapped via mapError (toLookupError fallback)', async () => {
     // Throw a plain Error (not LookupError-shaped) to hit the mapError branch
     const d = deps({

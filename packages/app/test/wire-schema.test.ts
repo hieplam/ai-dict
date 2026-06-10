@@ -75,6 +75,9 @@ describe('wire-schema', () => {
   it('accepts connection.test message', () => {
     expect(WireMessageSchema.safeParse({ type: 'connection.test' }).success).toBe(true);
   });
+  it('accepts open-options message', () => {
+    expect(WireMessageSchema.safeParse({ type: 'open-options' }).success).toBe(true);
+  });
 
   // Rejection test: lookup message missing required field
   it('rejects a lookup message missing requestId', () => {

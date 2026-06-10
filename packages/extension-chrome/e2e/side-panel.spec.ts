@@ -1,15 +1,19 @@
 import { test, expect } from './fixtures';
+import { seedSettings } from './helpers';
 import type { BrowserContext, Page } from '@playwright/test';
 
 // Open side-panel.html as a normal tab, then post {to:'side-panel', state, payload} from a
 // SECOND extension page. chrome.runtime.sendMessage broadcasts to other extension contexts;
 // side-panel.ts accepts it (sender.id === runtime.id) and maps it onto the panel.
 async function openPanelAndSender(context: BrowserContext, extensionId: string) {
+  // Seed a key BEFORE opening the panel so it lands on its teaching empty state rather than the
+  // no-key setup invite — these tests exercise mirrored lookup states, not first-run onboarding.
+  const sender = await context.newPage();
+  await sender.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(sender);
   const panel = await context.newPage();
   await panel.goto(`chrome-extension://${extensionId}/side-panel.html`);
   await panel.waitForSelector('side-panel-view');
-  const sender = await context.newPage();
-  await sender.goto(`chrome-extension://${extensionId}/options.html`);
   return { panel, sender };
 }
 
@@ -40,15 +44,38 @@ async function seedHistory(page: Page, entries: ReturnType<typeof entry>[]): Pro
   }, entries);
 }
 
-test('opens on a teaching empty state, not a fake loading spinner', async ({
+test('opens on a teaching empty state (key set), not a fake loading spinner', async ({
   context,
   extensionId,
 }) => {
+  const seeder = await context.newPage();
+  await seeder.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(seeder); // a key exists → the teaching empty state, not the setup invite
   const panel = await context.newPage();
   await panel.goto(`chrome-extension://${extensionId}/side-panel.html`);
   await panel.waitForSelector('side-panel-view');
   await expect(panel.locator('side-panel-view')).toContainText('Select a word', { timeout: 5_000 });
   await expect(panel.locator('side-panel-view')).not.toContainText('Looking up');
+});
+
+test('with no key, the panel shows the setup invite and Open Settings opens the options page', async ({
+  context,
+  extensionId,
+}) => {
+  // Storage is cleared by beforeEach → no key. The panel can't look anything up, so its focus
+  // region guides setup instead of the misleading "Select a word".
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${extensionId}/side-panel.html`);
+  await panel.waitForSelector('side-panel-view');
+  await expect(panel.locator('side-panel-view')).toContainText('Set up AI Dictionary', {
+    timeout: 5_000,
+  });
+  const optionsPagePromise = context.waitForEvent('page');
+  await panel.locator('side-panel-view .setup-cta').click();
+  const optionsPage = await optionsPagePromise;
+  await optionsPage.waitForLoadState();
+  expect(optionsPage.url()).toContain('options.html');
+  await optionsPage.waitForSelector('onboarding-view');
 });
 
 test('renders a result delivered via runtime message', async ({ context, extensionId }) => {
@@ -78,14 +105,14 @@ test('renders an error state', async ({ context, extensionId }) => {
       to: 'side-panel',
       state: 'error',
       payload: {
-        code: 'NO_KEY',
-        message: 'Add your Gemini API key in Settings.',
-        retryable: false,
+        code: 'NETWORK',
+        message: 'Network failed. Check connection and retry.',
+        retryable: true,
       },
     }),
   );
   await expect(panel.locator('side-panel-view')).toContainText(
-    'Add your Gemini API key in Settings.',
+    'Network failed. Check connection and retry.',
     { timeout: 5_000 },
   );
 });
@@ -120,6 +147,7 @@ test('lists stored history under Recent and revisits a lookup on click', async (
   // history.list query (to the service worker) returns these entries.
   const seeder = await context.newPage();
   await seeder.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(seeder); // key set → focus stays on the empty state until a row is clicked
   await seedHistory(seeder, [
     entry('id-bank', 'bank', 'A financial institution.'),
     entry('id-ledger', 'ledger', 'A record of accounts.'),

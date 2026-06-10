@@ -139,6 +139,19 @@
           "type"
         ],
         "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "open-options"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
       }
     ]
   },
@@ -357,7 +370,8 @@
               "history.list",
               "history.clear",
               "cache.clear",
-              "connection.test"
+              "connection.test",
+              "open-options"
             ]
           },
           "error": {

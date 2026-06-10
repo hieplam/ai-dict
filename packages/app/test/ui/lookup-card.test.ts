@@ -57,6 +57,50 @@ describe('<lookup-card>', () => {
     expect(el.querySelector('.err')!.textContent).toBe('Network failed.');
   });
 
+  it('renders the no-key state as a setup invite (not a red error) with an Open Settings button', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'error',
+      error: { code: 'NO_KEY', message: 'Add your Gemini API key in Settings.', retryable: false },
+    };
+    // No generic ".err" failure text, and no "Lookup failed" headword — this is onboarding.
+    expect(el.querySelector('.err')).toBeNull();
+    expect(el.textContent).not.toContain('Lookup failed');
+    expect(el.querySelector('.setup-title')!.textContent).toBe('Set up AI Dictionary');
+    expect(el.querySelector<HTMLButtonElement>('.setup-cta')!.textContent).toBe('Open Settings');
+  });
+
+  it('the no-key Open Settings button emits a composed "open-settings" event', () => {
+    const el = mountCard();
+    el.replaceChildren(
+      ...renderCardState({
+        kind: 'error',
+        error: { code: 'NO_KEY', message: 'x', retryable: false },
+      }),
+    );
+    let evt: CustomEvent | null = null;
+    const handler = (e: Event): void => {
+      evt = e as CustomEvent;
+    };
+    document.body.addEventListener('open-settings', handler);
+    el.querySelector<HTMLButtonElement>('.setup-cta')!.click();
+    document.body.removeEventListener('open-settings', handler);
+    expect(evt).not.toBeNull();
+    // Frozen cross-bundle contract: the shell listens for exactly this name, composed across shadows.
+    expect(evt!.type).toBe('open-settings');
+    expect(evt!.composed).toBe(true);
+  });
+
+  it('a rejected (invalid) key keeps the error but still offers Open Settings', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'error',
+      error: { code: 'INVALID_KEY', message: 'Google rejected the API key.', retryable: false },
+    };
+    expect(el.querySelector('.err')!.textContent).toBe('Google rejected the API key.');
+    expect(el.querySelector<HTMLButtonElement>('.setup-cta')!.textContent).toBe('Open Settings');
+  });
+
   it('renders content written straight to light DOM, with no .state setter (cross-world path)', () => {
     // Simulate the Chrome MV3 isolated-world reality: the card is a plain element whose
     // LookupCard class — and `.state` setter — live in the page MAIN world and are
@@ -204,6 +248,15 @@ describe('<lookup-card>', () => {
   it('has no axe violations (error state)', async () => {
     const el = mountCard();
     el.state = { kind: 'error', error: { code: 'NETWORK', message: 'fail', retryable: false } };
+    expect(await axeViolations(el)).toEqual([]);
+  });
+
+  it('has no axe violations (no-key setup invite)', async () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'error',
+      error: { code: 'NO_KEY', message: 'Add your Gemini API key in Settings.', retryable: false },
+    };
     expect(await axeViolations(el)).toEqual([]);
   });
 });

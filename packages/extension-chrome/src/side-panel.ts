@@ -1,6 +1,7 @@
 import {
   registerSidePanel,
   sanitizeMarkdown,
+  mapError,
   type PanelFocusState,
   type SidePanelView,
   type LookupResult,
@@ -62,6 +63,30 @@ view.addEventListener('select', (e) => {
   if (entry) view.focusState = resultToFocus(entry.result);
 });
 
+// The no-key setup invite's "Open Settings" button bubbles `open-settings` out of the focus
+// region. The panel is an extension page, so it can open the options page directly.
+view.addEventListener('open-settings', () => {
+  void chrome.runtime.openOptionsPage();
+});
+
+// On open, if no key is configured the panel can't look anything up — so instead of the
+// "Select a word…" teaching state (which would mislead), show the same setup invite the card
+// shows, pointing the reader straight at Settings. A later lookup mirroring in overrides it.
+async function showSetupIfNoKey(): Promise<void> {
+  // An env-key build (GEMINI_API_KEY baked in) is always usable even with no stored key, so it
+  // must never show the setup nag — mirrors how the options page treats the env key as set up.
+  if (__GEMINI_KEY_FROM_ENV__) return;
+  try {
+    const raw: unknown = await chrome.runtime.sendMessage({ type: 'settings.get' });
+    const reply = raw as WireReply | undefined;
+    if (reply && reply.ok && reply.type === 'settings' && !reply.settings.hasKey) {
+      view.focusState = { kind: 'error', error: mapError({ kind: 'no-key' }) };
+    }
+  } catch {
+    // Best-effort probe; the empty teaching state is a fine fallback if it fails.
+  }
+}
+
 // Live mirror of the in-page lookup (posted by ChromeSidePanelMirror over runtime messaging).
 chrome.runtime.onMessage.addListener(
   (msg: { to?: string; state?: string; word?: unknown; payload?: unknown }, sender) => {
@@ -88,5 +113,7 @@ chrome.runtime.onMessage.addListener(
 );
 
 // On open, populate Recent from stored history. The focus region stays on its teaching empty
-// state until the first lookup mirrors in or a recent row is clicked.
+// state until the first lookup mirrors in or a recent row is clicked — unless no key is set,
+// in which case showSetupIfNoKey swaps it for the setup invite.
 void refreshRecent();
+void showSetupIfNoKey();

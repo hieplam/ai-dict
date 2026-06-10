@@ -13,6 +13,9 @@ const status = 'settings-form #status';
 test('Save shows a confirmation status', async ({ context, extensionId }) => {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/options.html`);
+  // A key already exists → the settings screen (not onboarding) is shown.
+  await seedSettings(page);
+  await page.reload();
   await page.waitForSelector('settings-form');
   await page.locator('settings-form #key').fill('AIza-newkey');
   await page.locator('settings-form #save').click();
@@ -50,11 +53,18 @@ test('Test connection reports OK when the key works', async ({ context, extensio
   await page.screenshot({ path: path.join(shots, 'test-ok.png') });
 });
 
-test('Test connection reports an error when there is no key', async ({ context, extensionId }) => {
+test('Test connection reports an error when the stored key is missing', async ({
+  context,
+  extensionId,
+}) => {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/options.html`);
-  await seedSettings(page, { apiKey: '', hasKey: false });
+  await seedSettings(page); // a key exists → land on the settings screen
   await page.reload();
+  await page.waitForSelector('settings-form');
+  // Drop the stored key so a connection test hits NO_KEY. Routing to onboarding only runs on
+  // load, so the settings form stays put while storage now has no usable key.
+  await seedSettings(page, { apiKey: '', hasKey: false });
   await page.locator('settings-form #test').click();
   // NO_KEY surfaces as an error-toned status (exact copy comes from the error mapper).
   await expect(page.locator(status)).toHaveClass(/error/);
@@ -67,6 +77,7 @@ test('Export history downloads a JSON file containing the entries', async ({
 }) => {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page); // a key → the settings screen (export lives there, not in onboarding)
   // Seed one history entry directly into storage.
   await page.evaluate(() => {
     const entry = {
@@ -111,6 +122,9 @@ test('Export history downloads a JSON file containing the entries', async ({
 test('Export with empty history reports nothing to export', async ({ context, extensionId }) => {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/options.html`);
+  // A key (no history) → settings screen with nothing to export.
+  await seedSettings(page);
+  await page.reload();
   await page.waitForSelector('settings-form');
   await page.locator('settings-form #export').click();
   await expect(page.locator(status)).toHaveText('No history to export');
@@ -122,6 +136,8 @@ test('Restore default repopulates the prompt template after confirm', async ({
 }) => {
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page);
+  await page.reload();
   await page.waitForSelector('settings-form');
   const tpl = page.locator('settings-form #tpl');
   await tpl.fill('my custom prompt that differs from the default');

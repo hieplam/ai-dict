@@ -37,6 +37,10 @@ export interface RouterDeps {
   kv: Storage; // single store; core owns cache:/history: prefixes
   readToggles: () => Promise<{ cacheEnabled: boolean; saveHistory: boolean }>;
   queue: WriteQueue;
+  // Open the extension's options page. Injected by the composition root because the act
+  // itself (chrome.runtime.openOptionsPage) is platform code that has no place in the pure
+  // router. Optional: a shell that never sends 'open-options' need not provide it.
+  openOptions?: () => void | Promise<void>;
 }
 
 function toLookupError(err: unknown): LookupError {
@@ -160,6 +164,9 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
         return { ok: true, type: 'ack' };
       case 'connection.test':
         return handleConnectionTest();
+      case 'open-options':
+        await deps.openOptions?.();
+        return { ok: true, type: 'ack' };
     }
   };
 }

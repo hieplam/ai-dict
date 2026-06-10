@@ -38,7 +38,7 @@ const ICON_SHIELD =
 // tree are not reliably in scope for light-DOM nodes, so we also inject the rule into the
 // document stylesheet once on element registration as a belt-and-suspenders fallback.
 const CSS = `:host{${LIGHT_VARS};display:block;box-sizing:border-box;width:100%;max-width:420px;margin:0 auto;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);border-radius:16px;box-shadow:var(--ad-shadow);overflow:hidden;color-scheme:light dark}
-@media (prefers-color-scheme:dark){:host{${DARK_VARS}}}
+@media (prefers-color-scheme:dark){:host{${DARK_VARS}}::slotted(.setup-cta){background:color-mix(in oklab,var(--ad-pine) 86%,white)}}
 .ribbon{height:4px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
 .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px 2px 16px}
 .brand{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.01em;color:var(--ad-pine)}
@@ -53,6 +53,12 @@ button[data-act] svg{width:15px;height:15px;pointer-events:none}
 .footer svg{width:13px;height:13px;flex:none}
 ::slotted(h2){font-family:Georgia,"Times New Roman",serif;font-size:1.7rem;line-height:1.15;letter-spacing:-.01em;margin:.1em 0 .4em;color:var(--ad-ink);display:inline-block;max-width:100%;overflow-wrap:anywhere;padding-bottom:5px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-cranberry)) left bottom/44px 3px no-repeat}
 ::slotted(.err){color:var(--ad-err);font-weight:500}
+::slotted(.holly){display:block;width:30px;height:30px;margin:16px auto 2px}
+::slotted(.setup-title){text-align:center;margin:8px 0 0;font-size:16px;font-weight:600;color:var(--ad-ink)}
+::slotted(.setup-text){text-align:center;margin:6px auto 0;max-width:32ch;font-size:13.5px;line-height:1.55;color:var(--ad-ink-soft)}
+::slotted(.setup-cta){display:block;margin:15px auto 6px;padding:9px 18px;border:0;border-radius:8px;background:var(--ad-pine);color:var(--ad-surface);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+::slotted(.setup-cta:hover){filter:brightness(1.06)}
+::slotted(.setup-cta:focus-visible){outline:2px solid var(--ad-amber);outline-offset:2px}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::slotted(.loadrow){display:flex;align-items:center;gap:9px;margin:4px 0 9px;color:var(--ad-ink-soft);font-size:14px}
 ::slotted(.loadrow)::before{content:"";display:block;width:16px;height:16px;flex:none;border:2px solid var(--ad-line);border-top-color:var(--ad-amber);border-radius:50%;animation:spin .7s linear infinite}
@@ -67,6 +73,42 @@ function ensureDocKeyframes(): void {
   const style = document.createElement('style');
   style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
   document.head.append(style);
+}
+
+/**
+ * The "open the options page" button. It dispatches a composed `open-settings` event that the
+ * platform shell catches (content script → service worker `openOptionsPage`; side panel calls
+ * it directly). The UI layer stays platform-agnostic — it never touches chrome.* itself.
+ */
+function settingsCta(label: string): HTMLButtonElement {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'setup-cta';
+  b.textContent = label;
+  b.addEventListener('click', () =>
+    b.dispatchEvent(new CustomEvent('open-settings', { bubbles: true, composed: true })),
+  );
+  return b;
+}
+
+/**
+ * First-run, no-key state. A keyless lookup can never succeed, so rather than a red failure we
+ * render a warm setup nudge: the holly mark, a plain explainer that AI Dictionary runs on the
+ * reader's own free Gemini key, and a single "Open Settings" action. Returned as top-level
+ * light-DOM nodes so the card's `::slotted(...)` rules style them across the world boundary.
+ */
+function renderSetupInvite(): Node[] {
+  const tpl = document.createElement('template');
+  tpl.innerHTML = HOLLY_SVG; // decorative (aria-hidden inside HOLLY_SVG); the text carries meaning
+  const holly = tpl.content.firstElementChild as Element;
+  const title = document.createElement('p');
+  title.className = 'setup-title';
+  title.textContent = 'Set up AI Dictionary';
+  const text = document.createElement('p');
+  text.className = 'setup-text';
+  text.textContent =
+    'AI Dictionary uses your own free Google Gemini key. Add it once to start looking up words.';
+  return [holly, title, text, settingsCta('Open Settings')];
 }
 
 /**
@@ -103,11 +145,16 @@ export function renderCardState(state: CardState): Node[] {
     return nodes;
   }
   if (state.kind === 'error') {
+    // First-run with no key isn't a failure, it's setup that hasn't happened yet — show a
+    // warm onboarding nudge instead of a red error so the reader knows exactly what to do.
+    if (state.error.code === 'NO_KEY') return renderSetupInvite();
     const h = document.createElement('h2');
     h.textContent = 'Lookup failed';
     const p = document.createElement('p');
     p.className = 'err';
     p.textContent = state.error.message;
+    // A rejected key is the same dead-end as no key: hand the reader a way to fix it.
+    if (state.error.code === 'INVALID_KEY') return [h, p, settingsCta('Open Settings')];
     return [h, p];
   }
   const h = document.createElement('h2');
