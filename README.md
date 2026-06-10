@@ -14,8 +14,12 @@
 </p>
 
 <p align="center">
-  <img src="docs/screenshots/lookup-result.png" alt="AI Dictionary showing a bilingual definition of the word serendipity over an article" width="720">
+  <a href="docs/demos/define-bubble/define-bubble-demo.mp4">
+    <img src="docs/demos/define-bubble/define-bubble-demo.gif" alt="Selecting the word serendipity in an article, clicking the Define button, and reading the definition card with IPA, part of speech, an English explanation, a Vietnamese translation, and an example" width="760">
+  </a>
 </p>
+
+<p align="center"><em>Select a word → click <strong>Define</strong> → read the meaning, right on the page. (<a href="docs/demos/define-bubble/define-bubble-demo.mp4">watch the video</a>)</em></p>
 
 ---
 
