@@ -85,9 +85,40 @@ describe('<side-panel-view>', () => {
     const el = mount();
     el.focusState = {
       kind: 'error',
-      error: { code: 'NO_KEY', message: 'Add your key.', retryable: false },
+      error: { code: 'NETWORK', message: 'Network failed.', retryable: true },
     };
-    expect(el.shadowRoot!.querySelector('.focus .err')!.textContent).toBe('Add your key.');
+    expect(el.shadowRoot!.querySelector('.focus .err')!.textContent).toBe('Network failed.');
+  });
+
+  it('renders the no-key setup invite (not a red error) with an Open Settings action', () => {
+    const el = mount();
+    el.focusState = {
+      kind: 'error',
+      error: { code: 'NO_KEY', message: 'Add your Gemini API key in Settings.', retryable: false },
+    };
+    const focus = el.shadowRoot!.querySelector('.focus')!;
+    // No generic ".err" red-failure text — this is onboarding, not a failure.
+    expect(focus.querySelector('.err')).toBeNull();
+    expect(focus.querySelector('.setup-title')!.textContent).toBe('Set up AI Dictionary');
+    const cta = focus.querySelector<HTMLButtonElement>('.setup-cta')!;
+    expect(cta.textContent).toBe('Open Settings');
+  });
+
+  it('"open-settings" from the setup invite crosses the shadow boundary (composed)', () => {
+    const el = mount();
+    el.focusState = {
+      kind: 'error',
+      error: { code: 'NO_KEY', message: 'Add your Gemini API key in Settings.', retryable: false },
+    };
+    let evt: CustomEvent | null = null;
+    const handler = (e: Event): void => {
+      evt = e as CustomEvent;
+    };
+    document.body.addEventListener('open-settings', handler);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('.focus .setup-cta')!.click();
+    document.body.removeEventListener('open-settings', handler);
+    expect(evt).not.toBeNull();
+    expect(evt!.composed).toBe(true);
   });
 
   it('announces focus changes via an aria-live region', () => {
@@ -150,6 +181,15 @@ describe('<side-panel-view>', () => {
     const el = mount();
     el.focusState = { kind: 'result', word: 'sky', target: 'vi', safeHtml: safe('<p>the sky</p>') };
     el.recent = [entry({ id: 'a', word: 'sky' }), entry({ id: 'b', word: 'cloud' })];
+    expect(await axeViolations(el)).toEqual([]);
+  });
+
+  it('has no axe violations (no-key setup invite)', async () => {
+    const el = mount();
+    el.focusState = {
+      kind: 'error',
+      error: { code: 'NO_KEY', message: 'Add your Gemini API key in Settings.', retryable: false },
+    };
     expect(await axeViolations(el)).toEqual([]);
   });
 });

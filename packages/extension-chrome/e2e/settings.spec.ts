@@ -28,17 +28,20 @@ test('chrome.storage.local.clear empties stored settings', async ({ context, ext
   expect(dump.settings).toBeUndefined();
 });
 
-test('options page applies defaults when storage is empty', async ({ context, extensionId }) => {
-  // beforeEach already cleared storage; options.ts should fall back to DEFAULTS.
+test('first run with empty storage shows onboarding, not the settings form', async ({
+  context,
+  extensionId,
+}) => {
+  // beforeEach already cleared storage; with no usable key, options.ts shows onboarding so a
+  // first-time user is guided to add a key instead of being dropped into a settings form.
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/options.html`);
-  await page.waitForSelector('settings-form');
-  // The form should reflect the default target language 'vi' without any stored settings.
-  // Read from the shadow-DOM select element (SettingsForm exposes no value getter).
+  await page.waitForSelector('onboarding-view');
+  expect(await page.locator('settings-form').count()).toBe(0);
+  // The language step defaults to Vietnamese without any stored settings.
   const targetLang = await page.evaluate(() => {
-    const form = document.querySelector('settings-form')!;
-    const select = form.shadowRoot!.querySelector<HTMLSelectElement>('#target')!;
-    return select.value;
+    const view = document.querySelector('onboarding-view')!;
+    return view.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value;
   });
   expect(targetLang).toBe('vi');
 });

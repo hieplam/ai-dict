@@ -43,6 +43,9 @@ const router = buildRouter({
     return { cacheEnabled: s.cacheEnabled, saveHistory: s.saveHistory };
   },
   queue: new WriteQueue(),
+  // A content script can't open the options page itself; it sends `open-options` and we do it
+  // here. This is the keyless reader's path from the in-page "Open Settings" button to setup.
+  openOptions: () => chrome.runtime.openOptionsPage(),
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {

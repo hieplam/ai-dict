@@ -67,6 +67,9 @@ await esbuild.build({
   entryPoints: ['src/side-panel.ts'],
   outfile: 'dist/side-panel.js',
   format: 'esm',
+  // The side panel skips its no-key setup nag when the key is baked into the build, so it needs
+  // this flag defined too (same as options.js); without it the reference throws at runtime.
+  define: { __GEMINI_KEY_FROM_ENV__: JSON.stringify(HAS_ENV_KEY) },
 });
 
 await copyFile('src/manifest.json', 'dist/manifest.json');

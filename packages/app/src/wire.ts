@@ -52,6 +52,10 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('history.clear') }),
   z.object({ type: z.literal('cache.clear') }),
   z.object({ type: z.literal('connection.test') }),
+  // Open the extension's options page. Sent by a content script (which cannot call
+  // chrome.runtime.openOptionsPage itself) when the reader taps "Open Settings" on the
+  // no-key card; the service worker performs the actual open. Payload-free.
+  z.object({ type: z.literal('open-options') }),
 ]);
 
 const MessageTypeEnum = z.enum([
@@ -62,6 +66,7 @@ const MessageTypeEnum = z.enum([
   'history.clear',
   'cache.clear',
   'connection.test',
+  'open-options',
 ]);
 
 export const WireReplySchema = z.union([

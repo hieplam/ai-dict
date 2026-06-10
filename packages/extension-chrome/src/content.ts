@@ -37,3 +37,10 @@ runLookupWorkflow({
   client: new MessageRelayLookupClient(chrome.runtime),
   settings: new MessageRelaySettingsStore(chrome.runtime),
 });
+
+// The no-key card's "Open Settings" button dispatches a composed `open-settings` event that
+// bubbles out of the bottom sheet to the document. A content script can't open the options page
+// directly, so we ask the service worker to (it calls chrome.runtime.openOptionsPage).
+document.addEventListener('open-settings', () => {
+  void chrome.runtime.sendMessage({ type: 'open-options' });
+});

@@ -1,0 +1,116 @@
+import { test, expect } from './fixtures';
+import { seedSettings, gotoFixture, selectWord, openTrigger } from './helpers';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Capture-only spec: drives the REAL extension in Chromium and writes screenshots used as the
+// PR's Before/After evidence. No behavioural assertions — the *.spec.ts siblings own those.
+const out = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../e2e-evidence/onboarding',
+);
+const shot = (name: string) => path.join(out, `${name}.png`);
+
+test('evidence: onboarding screen (light, dark, narrow, key-entered)', async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  await page.setViewportSize({ width: 1180, height: 900 });
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await page.waitForSelector('onboarding-view');
+  await page.screenshot({ path: shot('onboarding-light') });
+
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.screenshot({ path: shot('onboarding-dark') });
+
+  await page.emulateMedia({ colorScheme: 'light' });
+  await page.locator('onboarding-view #key').fill('AIza-example-key');
+  await page.screenshot({ path: shot('onboarding-key-entered') });
+
+  await page.setViewportSize({ width: 390, height: 860 });
+  await page.locator('onboarding-view #key').fill('');
+  await page.screenshot({ path: shot('onboarding-narrow') });
+});
+
+test('evidence: settings screen after activating from onboarding', async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  await page.setViewportSize({ width: 1180, height: 900 });
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await page.waitForSelector('onboarding-view');
+  await page.locator('onboarding-view #key').fill('AIza-activated');
+  await page.locator('onboarding-view #activate').click();
+  await page.waitForSelector('settings-form');
+  await page.screenshot({ path: shot('settings-after-activation') });
+});
+
+test('evidence: BEFORE — old no-key card dead-end (simulated old render)', async ({
+  context,
+  extensionId,
+}) => {
+  // The card chrome is unchanged by this PR — only the no-key *content* changed. We reproduce the
+  // OLD render (a red "Lookup failed" + the bare message, no action) inside the real card so the
+  // Before/After comparison is faithful and like-for-like.
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page, { apiKey: '', hasKey: false });
+  await gotoFixture(page);
+  await page.waitForTimeout(1_000);
+  await selectWord(page, 't', 'bank');
+  await openTrigger(page);
+  const card = page.locator('bottom-sheet lookup-card');
+  await card.waitFor({ state: 'visible', timeout: 10_000 });
+  await page.evaluate(() => {
+    const el = document.querySelector('bottom-sheet lookup-card')!;
+    const h = document.createElement('h2');
+    h.textContent = 'Lookup failed';
+    const p = document.createElement('p');
+    p.className = 'err';
+    p.textContent = 'Add your Gemini API key in Settings.';
+    el.replaceChildren(h, p);
+  });
+  await page.waitForTimeout(150);
+  await card.screenshot({ path: shot('card-no-key-BEFORE') });
+});
+
+test('evidence: no-key Define card setup invite (light + dark)', async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page, { apiKey: '', hasKey: false });
+  await gotoFixture(page);
+  await page.waitForTimeout(1_000);
+  await selectWord(page, 't', 'bank');
+  await openTrigger(page);
+  const card = page.locator('bottom-sheet lookup-card');
+  await card.waitFor({ state: 'visible', timeout: 10_000 });
+  await page.waitForTimeout(200);
+  await card.screenshot({ path: shot('card-no-key-light') });
+
+  await page.emulateMedia({ colorScheme: 'dark' });
+  await page.waitForTimeout(150);
+  await card.screenshot({ path: shot('card-no-key-dark') });
+});
+
+test('evidence: no-key side panel setup invite (light + dark)', async ({
+  context,
+  extensionId,
+}) => {
+  const panel = await context.newPage();
+  await panel.setViewportSize({ width: 380, height: 720 });
+  await panel.goto(`chrome-extension://${extensionId}/side-panel.html`);
+  await panel.waitForSelector('side-panel-view');
+  await expect(panel.locator('side-panel-view')).toContainText('Set up AI Dictionary', {
+    timeout: 10_000,
+  });
+  await panel.screenshot({ path: shot('side-panel-no-key-light') });
+
+  await panel.emulateMedia({ colorScheme: 'dark' });
+  await panel.waitForTimeout(150);
+  await panel.screenshot({ path: shot('side-panel-no-key-dark') });
+});
