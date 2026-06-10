@@ -221,11 +221,15 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
-      # Non-blocking on purpose: coverage-gate enforces thresholds and the test-*
-      # jobs catch real failures; this job only needs the lcov files to exist so
-      # a threshold miss never prevents the scan from running.
-      - run: bun run --filter '*' test -- --coverage || true
-      - uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8.2.0
+      # Both steps skip while the SONAR_TOKEN secret is absent (dashboard half
+      # not done yet) so the job stays green instead of failing on every push.
+      # Non-blocking coverage on purpose: coverage-gate enforces thresholds and
+      # the test-* jobs catch real failures; this job only needs the lcov files
+      # to exist so a threshold miss never prevents the scan from running.
+      - if: ${{ secrets.SONAR_TOKEN != '' }}
+        run: bun run --filter '*' test -- --coverage || true
+      - if: ${{ secrets.SONAR_TOKEN != '' }}
+        uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8.2.0
         with:
           args: -Dsonar.qualitygate.wait=true
         env:
