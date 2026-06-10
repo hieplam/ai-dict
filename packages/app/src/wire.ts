@@ -21,7 +21,9 @@ const LookupResultSchema = z.strictObject({
   markdown: z.string(),
   word: z.string(),
   target: z.string(),
-  model: z.literal('gemini-2.5-flash'),
+  // Display-only model id; non-empty string rather than a per-provider literal
+  // so adding a provider never requires a wire-schema change.
+  model: z.string().min(1),
   fromCache: z.boolean(),
   fetchedAt: z.number(),
 });

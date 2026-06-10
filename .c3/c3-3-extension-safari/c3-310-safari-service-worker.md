@@ -1,11 +1,11 @@
 ---
 id: c3-310
-c3-seal: 45147182ccd105bfb10d4e980318850e0e93c99c1840cd423aabdd28fd210288
+c3-seal: 64d751143e2a48fee34d32f0828a6505a3977e10f6e8da747cfde937700628c7
 title: safari-service-worker
 type: component
 category: feature
 parent: c3-3
-goal: 'Compose the Safari service-worker runtime: wire Safari adapters and `GeminiLookupClient` into the message router, then gate every inbound extension message through `classifyInbound` before dispatching.'
+goal: 'Compose the Safari service-worker runtime: wire Safari adapters and the provider clients (`GeminiLookupClient`/`OpenAILookupClient` behind `createLookupClientSelector`) into the message router, then gate every inbound extension message through `classifyInbound` before dispatching.'
 uses:
     - ref-dependency-injection
     - rule-api-key-isolation
@@ -15,7 +15,7 @@ uses:
 
 ## Goal
 
-Compose the Safari service-worker runtime: wire Safari adapters and `GeminiLookupClient` into the message router, then gate every inbound extension message through `classifyInbound` before dispatching.
+Compose the Safari service-worker runtime: wire Safari adapters and the provider clients (`GeminiLookupClient`/`OpenAILookupClient` behind `createLookupClientSelector`) into the message router, then gate every inbound extension message through `classifyInbound` before dispatching.
 
 ## Parent Fit
 
@@ -26,12 +26,12 @@ Compose the Safari service-worker runtime: wire Safari adapters and `GeminiLooku
 | Runtime | service worker |
 | Public surface | None — module is the entry point sw.js; no exported symbols |
 | Bundled into | sw.js (declared as "service_worker" in manifest.json) |
-| Depends on | buildRouter (c3-111), GeminiLookupClient (c3-114), SafariKvStore (c3-301), SafariStorageStore (c3-301), classifyInbound, mapError, WriteQueue, SUPPRESS from @ai-dict/app |
+| Depends on | buildRouter (c3-111), GeminiLookupClient + OpenAILookupClient + createLookupClientSelector (c3-114), SafariKvStore (c3-301), SafariStorageStore (c3-301), classifyInbound, mapError, WriteQueue, SUPPRESS from @ai-dict/app |
 | Full Settings access | Only this module reads apiKey from storage — all other callers receive PublicSettings only |
 
 ## Purpose
 
-Acts as the composition root for the Safari service worker. Instantiates `GeminiLookupClient` with a `getApiKey` callback that reads the full `Settings` object (including `apiKey`) directly from `browser.storage.local`, and passes `SafariKvStore` and `SafariStorageStore` to `buildRouter`. Registers a single `browser.runtime.onMessage` listener that applies `classifyInbound` to authenticate and classify each message before routing it; ignores foreign-origin messages and replies synchronously to rejected ones. Keeps the channel open with `return true` for all async dispatches; uses the `SUPPRESS` sentinel to leave the channel open without calling `sendResponse` for fire-and-forget messages. Does NOT manage side-panel, tab, or window state — Safari has no side panel. Does NOT implement any port interface itself — it only wires concrete implementations together.
+Acts as the composition root for the Safari service worker. Instantiates `GeminiLookupClient` and `OpenAILookupClient`, wraps both in `createLookupClientSelector` (provider read from stored settings per lookup, defaulting to gemini), each with a `getApiKey` callback that reads the full `Settings` object (including `apiKey`) directly from `browser.storage.local`, and passes `SafariKvStore` and `SafariStorageStore` to `buildRouter`. Registers a single `browser.runtime.onMessage` listener that applies `classifyInbound` to authenticate and classify each message before routing it; ignores foreign-origin messages and replies synchronously to rejected ones. Keeps the channel open with `return true` for all async dispatches; uses the `SUPPRESS` sentinel to leave the channel open without calling `sendResponse` for fire-and-forget messages. Does NOT manage side-panel, tab, or window state — Safari has no side panel. Does NOT implement any port interface itself — it only wires concrete implementations together.
 
 ## Foundational Flow
 

@@ -1,6 +1,6 @@
 ---
 id: c3-212
-c3-seal: 32ec2e6134b5d6f9c5a7845bafd46f5c929cf2d567c0cd9c6b267787a5d9ec14
+c3-seal: 2a1878de9467a17b40e66661597fcc440481f8f8a54dc4fb8fb562cea763a1bd
 title: chrome-ui-pages
 type: component
 category: feature
@@ -46,7 +46,7 @@ The **options page** (`options.ts` + `options.html`) hosts the `<settings-form>`
 
 | Aspect | Detail | Reference |
 | --- | --- | --- |
-| Outcome — options | User saves API key and preferences; full Settings written atomically to chrome.storage.local; hasKey derived from Boolean(apiKey) | rule-api-key-isolation |
+| Outcome — options | User saves API key and preferences; full Settings written atomically to chrome.storage.local; hasKey derived via hasKeyFor (the selected provider's key) | rule-api-key-isolation |
 | Primary path — options | load() reads current Settings → maps to SettingsFormValue → sets form.value; user edits and submits → save event fires → load() re-reads base → merged object written via chrome.storage.local.set; see packages/extension-chrome/src/options.ts lines 33-57 | rule-api-key-isolation |
 | Alternate path — env key | GEMINI_KEY_FROM_ENV true → form.keyFromEnv = true + banner inserted; key field locked; stored key ignored at lookup time because SW prefers env key; see packages/extension-chrome/src/options.ts lines 16-23 | rule-api-key-isolation |
 | Outcome — side panel | <side-panel-view> reflects the latest lookup state (loading spinner, rendered markdown, or error message) in sync with the inline card, plus a Recent list of stored lookups | c3-117 |
@@ -67,7 +67,7 @@ The **options page** (`options.ts` + `options.html`) hosts the `<settings-form>`
 
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
-| chrome.storage.local.set({ settings: ... }) in options.ts | OUT | Writes full Settings (including apiKey) directly; merges with current persisted state; sets hasKey = Boolean(apiKey) | Chrome storage boundary (trusted extension page only) | packages/extension-chrome/src/options.ts |
+| chrome.storage.local.set({ settings: ... }) in options.ts | OUT | Writes full Settings (including apiKey) directly; merges with current persisted state; sets hasKey = hasKeyFor(next) (the selected provider's key) | Chrome storage boundary (trusted extension page only) | packages/extension-chrome/src/options.ts |
 | form (SettingsForm) save event | IN | Carries SettingsFormValue detail; triggers the merge-and-write flow | packages/app SettingsForm custom element | packages/extension-chrome/src/options.ts |
 | chrome.runtime.sendMessage for action events | OUT | Forwards { type: 'cache.clear' }, { type: 'history.clear' }, { type: 'connection.test' } to SW | Chrome runtime messaging boundary | packages/extension-chrome/src/options.ts |
 | chrome.runtime.onMessage listener in side-panel.ts | IN | Accepts messages with to: 'side-panel' from same extension only; maps state onto card.state | Chrome runtime messaging boundary | packages/extension-chrome/src/side-panel.ts |

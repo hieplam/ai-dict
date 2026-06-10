@@ -1,6 +1,6 @@
 ---
 id: c3-301
-c3-seal: c47abd16a36eaaf7077e73dccb51a84599605b78b7a759344848858e527cb3ea
+c3-seal: f7eeeb05d0b49349a70d48a626006d34e5ccb2c00ef7177b93b2a6b6e48ca071
 title: safari-adapters
 type: component
 category: foundation
@@ -48,7 +48,7 @@ Owns all Safari-specific I/O at the boundary between the dependency-free core an
 | --- | --- | --- |
 | Outcome | Callers (service worker composition root, content composition root) receive platform-agnostic port implementations they can inject into the core workflow without knowing they are on Safari | c3-102 |
 | Primary path (KV) | SafariKvStore.getItem(key) → area.get(key) → returns value or null; setItem and removeItem delegate to area.set and area.remove (see packages/extension-safari/src/adapters/safari-kv-store.ts) | ref-kv-storage-prefixes |
-| Primary path (Settings SW side) | SafariStorageStore.get() reads settings key, derives hasKey = Boolean(apiKey), returns PublicSettings without apiKey (see packages/extension-safari/src/adapters/safari-storage-store.ts) | rule-api-key-isolation |
+| Primary path (Settings SW side) | SafariStorageStore.get() reads settings key, derives hasKey via hasKeyFor(settings) (the selected provider's key), returns PublicSettings without apiKey (see packages/extension-safari/src/adapters/safari-storage-store.ts) | rule-api-key-isolation |
 | Primary path (Trigger) | SafariFloatingTrigger.show(anchor, onClick) creates <lookup-trigger>, positions it at fixed (anchor.x, anchor.y + anchor.h), registers capture-phase dismiss listeners; hide() removes element and all listeners (see packages/extension-safari/src/adapters/safari-floating-trigger.ts) | ref-web-components-shadow-dom |
 | Primary path (Settings content side) | MessageRelaySettingsStore.get() returns cached PublicSettings if present, else sends {type: 'settings.get'} via runtime.sendMessage, strips to known fields, caches result; set() rejects unconditionally (see packages/extension-safari/src/adapters/message-relay-settings-store.ts) | rule-api-key-isolation |
 | Failure behavior | MessageRelaySettingsStore.get() throws 'settings.get failed' when SW reply is not ok or not type settings; SafariKvStore propagates area promise rejections unmodified (see packages/extension-safari/src/adapters/message-relay-settings-store.test.ts) | c3-111 |

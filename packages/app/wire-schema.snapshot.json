@@ -200,7 +200,7 @@
               },
               "model": {
                 "type": "string",
-                "const": "gemini-2.5-flash"
+                "minLength": 1
               },
               "fromCache": {
                 "type": "boolean"
@@ -318,7 +318,7 @@
                     },
                     "model": {
                       "type": "string",
-                      "const": "gemini-2.5-flash"
+                      "minLength": 1
                     },
                     "fromCache": {
                       "type": "boolean"

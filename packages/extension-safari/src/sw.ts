@@ -3,6 +3,8 @@ import {
   DEFAULT_TEMPLATE,
   type Settings,
   GeminiLookupClient,
+  OpenAILookupClient,
+  createLookupClientSelector,
   buildRouter,
   WriteQueue,
   SUPPRESS,
@@ -23,14 +25,26 @@ async function readFullSettings(): Promise<Settings> {
       cacheEnabled: true,
       saveHistory: true,
       theme: 'light',
+      provider: 'gemini',
+      openaiApiKey: '',
     }
   );
 }
 
 const router = buildRouter({
-  client: new GeminiLookupClient({
-    fetch: (u, i) => fetch(u, i),
-    getApiKey: async () => (await readFullSettings()).apiKey,
+  client: createLookupClientSelector({
+    clients: {
+      gemini: new GeminiLookupClient({
+        fetch: (u, i) => fetch(u, i),
+        getApiKey: async () => (await readFullSettings()).apiKey,
+      }),
+      openai: new OpenAILookupClient({
+        fetch: (u, i) => fetch(u, i),
+        getApiKey: async () => (await readFullSettings()).openaiApiKey ?? '',
+      }),
+    },
+    // Settings stored before the provider field existed have no `provider` → Gemini.
+    getProvider: async () => (await readFullSettings()).provider ?? 'gemini',
   }),
   settings: new SafariStorageStore(browser.storage.local),
   kv: new SafariKvStore(browser.storage.local),

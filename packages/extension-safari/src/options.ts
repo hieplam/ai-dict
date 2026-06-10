@@ -2,6 +2,7 @@ import {
   registerSettingsForm,
   DEFAULT_TEMPLATE,
   buildHistoryExport,
+  hasKeyFor,
   type Settings,
   type SettingsForm,
   type SettingsFormValue,
@@ -18,6 +19,8 @@ const DEFAULTS: Settings = {
   cacheEnabled: true,
   saveHistory: true,
   theme: 'light',
+  provider: 'gemini',
+  openaiApiKey: '',
 };
 
 async function load(): Promise<Settings> {
@@ -51,7 +54,7 @@ form.addEventListener('save', (e) => {
   const next = (e as CustomEvent<SettingsFormValue>).detail;
   void load()
     .then((cur) =>
-      browser.storage.local.set({ settings: { ...cur, ...next, hasKey: Boolean(next.apiKey) } }),
+      browser.storage.local.set({ settings: { ...cur, ...next, hasKey: hasKeyFor(next) } }),
     )
     .then(
       () => {

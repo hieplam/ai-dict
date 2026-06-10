@@ -1,7 +1,7 @@
 import { adoptStyles } from './styles/adopt';
 import { LIGHT_VARS, THEME_DARK_CSS, HOLLY_SVG } from './styles/tokens';
 import { DEFAULT_TEMPLATE } from '../domain/default-template';
-import type { Theme } from '../domain/types';
+import type { Provider, Theme } from '../domain/types';
 
 // Restated locally to keep this component self-contained — the codebase already
 // duplicates this small shield across side-panel-view.ts and lookup-card.ts;
@@ -10,16 +10,25 @@ const ICON_SHIELD =
   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8l5 2v3.4c0 3-2.1 5.2-5 6.2-2.9-1-5-3.2-5-6.2V3.8l5-2z"/></svg>';
 
 export interface SettingsFormValue {
+  provider: Provider;
   apiKey: string;
+  openaiApiKey: string;
   targetLang: string;
   promptTemplate: string;
   cacheEnabled: boolean;
   saveHistory: boolean;
   theme: Theme;
-  // NOTE: `hasKey` is intentionally absent — it is a derived field computed by
-  // the storage adapter as `Boolean(apiKey)` on read and is never emitted by
-  // the form's 'save' event.
+  // NOTE: `hasKey` is intentionally absent — it is a derived field computed
+  // from the selected provider's key (`hasKeyFor`) on save/read and is never
+  // emitted by the form's 'save' event.
 }
+
+// Per-provider copy for the single key row; the row morphs as the select changes
+// so both keys are kept and switching providers never wipes the other key.
+const KEY_LABEL: Record<Provider, string> = {
+  gemini: 'Gemini API key',
+  openai: 'OpenAI API key',
+};
 
 // Single source of truth for the "key comes from the build env" wording, shared
 // by the inline hint here and the options-page banner so the two never drift.
@@ -76,7 +85,12 @@ const MARKUP = `<div class="ribbon"></div>
     <h1 class="title">Settings</h1>
     <section class="sec" aria-labelledby="sec-conn">
       <h2 class="sec-h" id="sec-conn">Connection</h2>
-      <label for="key">Gemini API key</label>
+      <label for="provider">AI provider</label>
+      <select id="provider">
+        <option value="gemini">Gemini (Google)</option>
+        <option value="openai">ChatGPT (OpenAI)</option>
+      </select>
+      <label for="key" id="key-label">Gemini API key</label>
       <div class="keyrow">
         <input id="key" type="password" autocomplete="off" aria-describedby="key-help" />
         <button type="button" id="reveal" aria-label="Reveal API key">Show</button>
@@ -128,11 +142,15 @@ const MARKUP = `<div class="ribbon"></div>
 export class SettingsForm extends HTMLElement {
   private root!: ShadowRoot;
   private _pendingValue: SettingsFormValue | null = null;
-  // When the build baked in GEMINI_API_KEY the stored key is irrelevant (the SW
-  // ignores it), so the field is locked. We still echo the stored key back on
-  // save so toggling this state never silently wipes what the user had entered.
+  // When the build baked in GEMINI_API_KEY the stored Gemini key is irrelevant
+  // (the SW ignores it), so the field is locked while Gemini is selected. We
+  // still echo the stored key back on save so toggling this state never
+  // silently wipes what the user had entered.
   private _keyFromEnv = false;
-  private _storedApiKey = '';
+  private _provider: Provider = 'gemini';
+  // One stash per provider; the visible #key field shows only the selected
+  // provider's key and is committed back into the stash before any switch/save.
+  private _keys: Record<Provider, string> = { gemini: '', openai: '' };
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -152,10 +170,15 @@ export class SettingsForm extends HTMLElement {
     const key = this.q<HTMLInputElement>('#key');
     const help = this.q<HTMLElement>('#key-help');
     key.addEventListener('focus', () => {
-      if (this._keyFromEnv) help.textContent = ENV_KEY_NOTICE;
+      if (this.isKeyLocked()) help.textContent = ENV_KEY_NOTICE;
     });
     key.addEventListener('blur', () => {
-      if (this._keyFromEnv) help.textContent = ENV_KEY_HINT;
+      if (this.isKeyLocked()) help.textContent = ENV_KEY_HINT;
+    });
+    this.q<HTMLSelectElement>('#provider').addEventListener('change', () => {
+      this.commitKeyField();
+      this._provider = this.q<HTMLSelectElement>('#provider').value as Provider;
+      this.syncKeyField();
     });
     this.q<HTMLFormElement>('form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -180,24 +203,36 @@ export class SettingsForm extends HTMLElement {
       this._pendingValue = null;
     }
     // Enforce the lock last so it wins over any value just hydrated above.
-    this.applyKeyLock();
+    this.syncKeyField();
   }
 
-  /** Lock the key field because the build supplies GEMINI_API_KEY itself. */
+  /** Lock the Gemini key field because the build supplies GEMINI_API_KEY itself. */
   set keyFromEnv(on: boolean) {
     this._keyFromEnv = on;
-    if (this.shadowRoot) this.applyKeyLock();
+    if (this.shadowRoot) this.syncKeyField();
   }
   get keyFromEnv(): boolean {
     return this._keyFromEnv;
   }
 
-  private applyKeyLock(): void {
+  /** The env lock applies to the Gemini key only — OpenAI keys always come from the user. */
+  private isKeyLocked(): boolean {
+    return this._keyFromEnv && this._provider === 'gemini';
+  }
+
+  /** Stash the visible key into the selected provider's slot (locked field never overwrites). */
+  private commitKeyField(): void {
+    if (!this.isKeyLocked()) this._keys[this._provider] = this.q<HTMLInputElement>('#key').value;
+  }
+
+  /** Re-render the key row for the selected provider, including the env lock state. */
+  private syncKeyField(): void {
     const key = this.q<HTMLInputElement>('#key');
     const reveal = this.q<HTMLButtonElement>('#reveal');
     const help = this.q<HTMLElement>('#key-help');
     const envNotice = this.q<HTMLElement>('#env-notice');
-    if (this._keyFromEnv) {
+    this.q<HTMLElement>('#key-label').textContent = KEY_LABEL[this._provider];
+    if (this.isKeyLocked()) {
       key.readOnly = true;
       key.value = '';
       key.type = 'text';
@@ -210,7 +245,9 @@ export class SettingsForm extends HTMLElement {
       envNotice.hidden = false;
     } else {
       key.readOnly = false;
-      key.value = this._storedApiKey;
+      key.type = 'password';
+      this.q<HTMLButtonElement>('#reveal').setAttribute('aria-label', 'Reveal API key');
+      key.value = this._keys[this._provider];
       key.placeholder = '';
       key.classList.remove('locked');
       key.removeAttribute('aria-readonly');
@@ -266,9 +303,13 @@ export class SettingsForm extends HTMLElement {
   }
 
   private collect(): SettingsFormValue {
+    // Stash the visible field first; a locked field never overwrites, so the
+    // stored (env-superseded) Gemini key is echoed back unchanged.
+    this.commitKeyField();
     return {
-      // Locked → the input is blanked for display, so echo the stored key back.
-      apiKey: this._keyFromEnv ? this._storedApiKey : this.q<HTMLInputElement>('#key').value,
+      provider: this._provider,
+      apiKey: this._keys.gemini,
+      openaiApiKey: this._keys.openai,
       targetLang: this.q<HTMLSelectElement>('#target').value,
       promptTemplate: this.q<HTMLTextAreaElement>('#tpl').value,
       cacheEnabled: this.q<HTMLInputElement>('#cache').checked,
@@ -283,14 +324,16 @@ export class SettingsForm extends HTMLElement {
       this._pendingValue = v;
       return;
     }
-    this._storedApiKey = v.apiKey;
-    this.q<HTMLInputElement>('#key').value = v.apiKey;
+    // Settings saved before the provider field existed lack provider/openaiApiKey.
+    this._provider = v.provider ?? 'gemini';
+    this._keys = { gemini: v.apiKey, openai: v.openaiApiKey ?? '' };
+    this.q<HTMLSelectElement>('#provider').value = this._provider;
     this.q<HTMLSelectElement>('#target').value = v.targetLang;
     this.q<HTMLTextAreaElement>('#tpl').value = v.promptTemplate;
     this.q<HTMLInputElement>('#cache').checked = v.cacheEnabled;
     this.q<HTMLInputElement>('#history').checked = v.saveHistory;
     this.q<HTMLSelectElement>('#theme').value = v.theme;
-    // Re-assert the lock if the key arrived after keyFromEnv was set.
-    if (this._keyFromEnv) this.applyKeyLock();
+    // Render the key row for the (possibly changed) provider + lock state.
+    this.syncKeyField();
   }
 }

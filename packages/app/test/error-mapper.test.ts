@@ -69,6 +69,45 @@ describe('mapError (spec §6.9)', () => {
   });
 });
 
+describe('mapError — provider-aware wording', () => {
+  it('defaults (no provider) keep the original Gemini wording', () => {
+    expect(mapError({ kind: 'no-key' }).message).toBe('Add your Gemini API key in Settings.');
+    expect(mapError({ kind: 'parse' }).message).toBe('Gemini returned unexpected output.');
+    expect(mapError({ kind: 'http', status: 401 }).message).toBe('Google rejected the API key.');
+    expect(mapError({ kind: 'http', status: 429 }).message).toBe('Hit Gemini rate limit.');
+    expect(mapError({ kind: 'http', status: 500 }).message).toBe('Gemini server error. Retry.');
+  });
+
+  it("provider 'openai' names OpenAI in every vendor-specific message", () => {
+    expect(mapError({ kind: 'no-key', provider: 'openai' }).message).toBe(
+      'Add your OpenAI API key in Settings.',
+    );
+    expect(mapError({ kind: 'parse', provider: 'openai' }).message).toBe(
+      'OpenAI returned unexpected output.',
+    );
+    expect(mapError({ kind: 'http', status: 401, provider: 'openai' }).message).toBe(
+      'OpenAI rejected the API key.',
+    );
+    expect(mapError({ kind: 'http', status: 429, provider: 'openai' }).message).toBe(
+      'Hit OpenAI rate limit.',
+    );
+    expect(mapError({ kind: 'http', status: 503, provider: 'openai' }).message).toBe(
+      'OpenAI server error. Retry.',
+    );
+  });
+
+  it('provider does not change the error codes, only the wording', () => {
+    expect(mapError({ kind: 'http', status: 401, provider: 'openai' }).code).toBe('INVALID_KEY');
+    expect(mapError({ kind: 'http', status: 429, provider: 'openai' }).code).toBe('RATE_LIMIT');
+  });
+
+  it('thrown message scrubs OpenAI-shaped sk- tokens', () => {
+    const e = mapError({ kind: 'thrown', error: new Error('bad key sk-' + 'a'.repeat(40)) });
+    expect(e.message).not.toContain('sk-a');
+    expect(e.message).toContain('[redacted]');
+  });
+});
+
 // Helper: read a fixture file and parse JSON (or return raw string for non-JSON)
 function fixture(name: string): string {
   return readFileSync(resolve(__dirname, 'fixtures/gemini-responses', name), 'utf-8');

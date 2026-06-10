@@ -39,9 +39,10 @@ actually used. Every result gives you:
 - **English → your language** — a translation (Vietnamese by default)
 - **An example** sentence, in both languages
 
-It runs on **your own** [Google Gemini](https://ai.google.dev/) API key. There's
-no account, no server, and no tracking — your lookups go straight from your
-browser to Google and nowhere else.
+It runs on **your own** [Google Gemini](https://ai.google.dev/) API key — or, if
+you prefer, an [OpenAI (ChatGPT)](https://platform.openai.com/) key: pick the
+provider in Settings. There's no account, no server, and no tracking — your
+lookups go straight from your browser to the provider you chose and nowhere else.
 
 ---
 
@@ -210,6 +211,14 @@ Constraints:
 
 You only pay Google for your own usage, and Gemini has a free tier that's plenty
 for everyday reading. The default model is `gemini-2.5-flash`.
+
+### Prefer ChatGPT?
+
+Open the extension's settings, switch **AI provider** to **ChatGPT (OpenAI)**,
+and paste an [OpenAI API key](https://platform.openai.com/api-keys). Lookups
+then use OpenAI's `gpt-4o-mini` model with the same prompt template. Each
+provider keeps its own key, so you can switch back and forth without re-entering
+anything.
 
 ---
 
