@@ -48,6 +48,17 @@ export async function historyList(
   return next !== undefined ? { entries, nextCursor: next } : { entries };
 }
 
+export async function historyGet(deps: HistoryDeps, id: string): Promise<HistoryEntry | null> {
+  const raw = await deps.storage.getItem(`history:${id}`);
+  return raw ? (JSON.parse(raw) as HistoryEntry) : null;
+}
+
+export async function historyDelete(deps: HistoryDeps, id: string): Promise<void> {
+  await deps.storage.removeItem(`history:${id}`);
+  const idx = (await readIndex(deps.storage)).filter((x) => x !== id);
+  await deps.storage.setItem(INDEX_KEY, JSON.stringify(idx));
+}
+
 export async function historyClear(deps: HistoryDeps): Promise<void> {
   for (const k of await deps.storage.keys('history:')) await deps.storage.removeItem(k);
 }

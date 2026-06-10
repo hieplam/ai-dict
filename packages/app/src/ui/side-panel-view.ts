@@ -12,6 +12,9 @@ import { renderCardState, ICON_SETTINGS, type CardState } from './lookup-card';
  */
 export type PanelFocusState = CardState | { kind: 'empty' };
 
+const ICON_TRASH =
+  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.2h11M6.3 4.2V3a1 1 0 0 1 1-1h1.4a1 1 0 0 1 1 1v1.2M3.9 4.2l.6 8.9a1.2 1.2 0 0 0 1.2 1.1h4.6a1.2 1.2 0 0 0 1.2-1.1l.6-8.9M6.6 7v4.4M9.4 7v4.4"/></svg>';
+
 const ICON_SHIELD =
   '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8l5 2v3.4c0 3-2.1 5.2-5 6.2-2.9-1-5-3.2-5-6.2V3.8l5-2z"/></svg>';
 
@@ -66,9 +69,14 @@ main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padd
 .recent[hidden]{display:none}
 .recent-head{margin:0;padding:14px 0 8px;border-top:1px solid var(--ad-line);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ad-ink-soft)}
 .recent-list{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:2px}
-.recent-item{display:block;width:100%;text-align:left;border:0;background:transparent;cursor:pointer;font:inherit;color:var(--ad-ink);padding:8px 10px;margin:0 -10px;border-radius:8px}
+.recent-row{display:flex;align-items:center;gap:2px;margin:0 -10px}
+.recent-item{display:block;flex:1 1 auto;min-width:0;text-align:left;border:0;background:transparent;cursor:pointer;font:inherit;color:var(--ad-ink);padding:8px 10px;border-radius:8px}
 .recent-item:hover{background:var(--ad-surface-soft)}
 .recent-item:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
+.recent-del{display:inline-grid;place-items:center;width:28px;height:28px;flex:none;border:0;background:transparent;color:var(--ad-ink-soft);border-radius:8px;cursor:pointer;font:inherit}
+.recent-del:hover{background:var(--ad-surface-soft);color:var(--ad-cranberry)}
+.recent-del:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
+.recent-del svg{width:14px;height:14px;pointer-events:none}
 .recent-word{font-size:14px;font-weight:600;color:var(--ad-ink)}
 .recent-context{display:block;margin-top:1px;font-size:12px;line-height:1.4;color:var(--ad-ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 footer{display:flex;align-items:center;gap:6px;flex:none;margin:0 18px;padding:11px 0 14px;border-top:1px solid var(--ad-line);font-size:11px;color:var(--ad-ink-soft)}
@@ -184,6 +192,7 @@ export class SidePanelView extends HTMLElement {
 
   private recentRow(e: HistoryEntry): HTMLLIElement {
     const li = document.createElement('li');
+    li.className = 'recent-row';
     const b = document.createElement('button');
     b.type = 'button';
     b.className = 'recent-item';
@@ -203,7 +212,20 @@ export class SidePanelView extends HTMLElement {
         new CustomEvent('select', { detail: { id: e.id }, bubbles: true, composed: true }),
       ),
     );
-    li.append(b);
+    // A sibling (a button may not nest a button) that removes the entry AND its cached
+    // definition, so the next lookup of this word re-fetches with the current template.
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'recent-del';
+    del.setAttribute('aria-label', `Delete ${e.word} from history and cache`);
+    del.title = 'Delete — the next lookup fetches a fresh definition';
+    del.innerHTML = ICON_TRASH; // decorative aria-hidden SVG; name comes from aria-label
+    del.addEventListener('click', () =>
+      this.dispatchEvent(
+        new CustomEvent('delete', { detail: { id: e.id }, bubbles: true, composed: true }),
+      ),
+    );
+    li.append(b, del);
     return li;
   }
 }

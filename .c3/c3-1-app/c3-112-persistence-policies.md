@@ -1,6 +1,6 @@
 ---
 id: c3-112
-c3-seal: db29d66205b7d91ed3b19e84e0fc7a0db82ba82549a185cead97e790f2e06c4a
+c3-seal: ee59d0b5308365ed44599f6190fe3ecbc986daf3955363c4896a44012f245e7a
 title: persistence-policies
 type: component
 category: feature
@@ -23,10 +23,10 @@ Provide pure, KV-backed domain policies for result caching (LRU, cap 1000) and l
 | Parent container | c3-1 (app) |
 | Category | Feature |
 | Runtime | service worker |
-| Public surface | cacheGet, cachePut, cacheClear, CacheDeps, deriveCacheKey, fnv1a64Hex (cache-policy); historyAppend, historyList, historyClear, HistoryDeps, HistoryPage (history-policy) |
+| Public surface | cacheGet, cachePut, cacheClear, cacheDelete, CacheDeps, deriveCacheKey, fnv1a64Hex (cache-policy); historyAppend, historyList, historyClear, historyGet, historyDelete, HistoryDeps, HistoryPage (history-policy) |
 | Bundled into | packages/app/src/domain/cache-policy.ts and packages/app/src/domain/history-policy.ts |
 | Depends on | c3-102 Storage port; c3-101 LookupResult and HistoryEntry types |
-| Consumed by | c3-111 (lookup-router) which calls these functions after a successful lookup |
+| Consumed by | c3-111 (lookup-router) which calls these functions after a successful lookup and for single-entry deletion (history.delete) |
 
 ## Purpose
 
@@ -50,8 +50,10 @@ Owns the KV key-space under `cache:*` and `history:*` prefixes over the `Storage
 | Cache miss | cacheGet returns null; the router then calls the Gemini client and follows with cachePut (verified in packages/app/test/cache-policy.test.ts) | c3-111 |
 | LRU eviction | After cachePut with 1001 entries (default cap 1000), the entry with the smallest atime is removed from storage and dropped from the index (verified in packages/app/test/cache-policy.test.ts) | rule-domain-purity |
 | Cache clear | cacheClear calls storage.keys('cache:') and removes every matching key including cache:index (verified in packages/app/test/cache-policy.test.ts) | ref-kv-storage-prefixes |
+| Cache delete | cacheDelete hashes the request with the same normalisation as cacheGet, removes cache:<hash>, and prunes the hash from cache:index; missing entries are a no-op (verified in packages/app/test/cache-policy.test.ts) | ref-kv-storage-prefixes |
 | History append | historyAppend writes history:<id>, prepends the id to the index, and pops the oldest id when the index exceeds cap (default 500) (verified in packages/app/test/history-policy.test.ts) | ref-kv-storage-prefixes |
 | History paginate | historyList reads the index newest-first, slices by limit from cursor position; returns nextCursor when more entries remain (verified in packages/app/test/history-policy.test.ts) | c3-111 |
+| History get/delete | historyGet reads one history:<id> record (null on miss); historyDelete removes the record and prunes the id from history:index, idempotent on unknown ids (verified in packages/app/test/history-policy.test.ts) | ref-kv-storage-prefixes |
 | Stale cursor | A cursor that no longer appears in the index (evicted or cleared) returns an empty page without error (verified in packages/app/test/history-policy.test.ts) | c3-1 |
 
 ## Governance
@@ -69,8 +71,11 @@ Owns the KV key-space under `cache:*` and `history:*` prefixes over the `Storage
 | cacheGet(deps, req) | OUT | Returns LookupResult with fromCache: true on hit, null on miss; updates atime in index | Service worker / router | packages/app/src/domain/cache-policy.ts — export async function cacheGet |
 | cachePut(deps, req, result) | IN | Writes result under cache:<hash>, appends to index, evicts LRU entries beyond cap | Service worker / router | packages/app/src/domain/cache-policy.ts — export async function cachePut |
 | cacheClear(deps) | IN | Removes all cache:* keys including cache:index | Extension options page or router | packages/app/src/domain/cache-policy.ts — export async function cacheClear |
+| cacheDelete(deps, req) | IN | Removes the single cache:<hash> for the normalised word/context/target and prunes it from cache:index; no-op when absent | Service worker / router (history.delete) | packages/app/src/domain/cache-policy.ts — export async function cacheDelete |
 | historyAppend(deps, entry) | IN | Persists HistoryEntry under history:<id>, maintains newest-first index, evicts oldest beyond cap | Service worker / router | packages/app/src/domain/history-policy.ts — export async function historyAppend |
 | historyList(deps, opts) | OUT | Returns HistoryPage with entries and caller-supplied cursor for pagination; reads index newest-first | Extension options / popup page | packages/app/src/domain/history-policy.ts — export async function historyList |
+| historyGet(deps, id) | OUT | Returns the stored HistoryEntry for an id, or null when missing | Service worker / router (history.delete) | packages/app/src/domain/history-policy.ts — export async function historyGet |
+| historyDelete(deps, id) | IN | Removes history:<id> and prunes the id from history:index; idempotent on unknown ids | Service worker / router (history.delete) | packages/app/src/domain/history-policy.ts — export async function historyDelete |
 | historyClear(deps) | IN | Removes all history:* keys including history:index | Extension options page | packages/app/src/domain/history-policy.ts — export async function historyClear |
 
 ## Change Safety

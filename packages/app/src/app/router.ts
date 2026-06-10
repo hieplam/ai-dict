@@ -4,9 +4,12 @@ import {
   cacheGet,
   cachePut,
   cacheClear,
+  cacheDelete,
   historyAppend,
   historyList,
   historyClear,
+  historyGet,
+  historyDelete,
   type WireMessage,
   type WireReply,
   type LookupError,
@@ -159,6 +162,22 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       case 'history.clear':
         await historyClear({ storage: deps.kv });
         return { ok: true, type: 'ack' };
+      case 'history.delete': {
+        // Resolve the entry server-side so the cache key comes from the stored record, not the
+        // client. Deleting the cache copy too is the point: the next lookup of this selection
+        // misses and re-queries with the current prompt template. Unknown id → idempotent ack.
+        const entry = await historyGet({ storage: deps.kv }, msg.id);
+        if (entry) {
+          await deps.queue.run(async () => {
+            await cacheDelete(
+              { storage: deps.kv },
+              { word: entry.word, context: entry.context, target: entry.result.target },
+            );
+            await historyDelete({ storage: deps.kv }, entry.id);
+          });
+        }
+        return { ok: true, type: 'ack' };
+      }
       case 'cache.clear':
         await cacheClear({ storage: deps.kv });
         return { ok: true, type: 'ack' };

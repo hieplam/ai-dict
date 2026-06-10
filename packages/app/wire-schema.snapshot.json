@@ -119,6 +119,23 @@
         "properties": {
           "type": {
             "type": "string",
+            "const": "history.delete"
+          },
+          "id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "id"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
             "const": "cache.clear"
           }
         },
@@ -378,6 +395,7 @@
               "settings.get",
               "history.list",
               "history.clear",
+              "history.delete",
               "cache.clear",
               "connection.test",
               "open-options"

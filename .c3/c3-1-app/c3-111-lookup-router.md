@@ -1,6 +1,6 @@
 ---
 id: c3-111
-c3-seal: cb25b580299105c1be379fc6389dfd6e30f111607f4a073d0fc9e1a1568540c8
+c3-seal: 9b268510152d2cf2b421a41496e68bff57119ea1285b5f432671d8dc016500ec
 title: lookup-router
 type: component
 category: feature
@@ -26,7 +26,7 @@ Dispatch validated `WireMessage` frames to the appropriate handler inside the se
 | Runtime | service worker |
 | Public surface | buildRouter, WriteQueue, SUPPRESS, RouterDeps, RouterReply |
 | Bundled into | packages/app/src/app/router.ts + composition roots sw.ts |
-| Depends on | c3-112 persistence-policies (cacheGet, cachePut, cacheClear, historyAppend, historyList, historyClear) |
+| Depends on | c3-112 persistence-policies (cacheGet, cachePut, cacheClear, cacheDelete, historyAppend, historyList, historyClear, historyGet, historyDelete) |
 | Companion | inbound.ts classifyInbound — gates messages before they reach the router |
 
 ## Purpose
@@ -41,7 +41,7 @@ Dispatch validated `WireMessage` frames to the appropriate handler inside the se
 | Input | WireMessage — a discriminated union validated by WireMessageSchema, defined in packages/app/src/app/router.ts line 58 | c3-103 |
 | Internal state | inflight: Map<string, AbortController>, cancelled: Set<string>, WriteQueue.tail: Promise<unknown> — all in packages/app/src/app/router.ts | c3-1 |
 | Shared dependencies | RouterDeps — client: LookupClient, settings: SettingsStore, kv: Storage, readToggles, queue: WriteQueue injected by composition root | ref-dependency-injection |
-| Persistence orchestration | cacheGet/cachePut/cacheClear, historyAppend/historyList/historyClear from packages/app/src/index.ts — delegated to c3-112 | c3-112 |
+| Persistence orchestration | cacheGet/cachePut/cacheClear/cacheDelete, historyAppend/historyList/historyClear/historyGet/historyDelete from packages/app/src/index.ts — delegated to c3-112 | c3-112 |
 | Write serialization | WriteQueue.run(task) in packages/app/src/app/router.ts chains each write onto a promise tail, preventing concurrent RMW races on c3-112 storage | c3-112 |
 
 ## Business Flow
@@ -52,9 +52,10 @@ Dispatch validated `WireMessage` frames to the appropriate handler inside the se
 | Primary path (lookup miss) | readToggles → cacheGet miss → client.lookup → cachePut + historyAppend via queue → return {ok:true, result}; see handleLookup in packages/app/src/app/router.ts | c3-112 |
 | Cancellation path | lookup.cancel finds controller in inflight, adds to cancelled, calls controller.abort(); if cancelled contains requestId at any checkpoint the handler returns SUPPRESS; tested in packages/app/test/app/router.test.ts | rule-typed-errors |
 | Pre-inflight cancel window | AbortController registered synchronously before first await so a cancel arriving during readToggles still populates cancelled and returns SUPPRESS; regression test in packages/app/test/app/router.test.ts | rule-gate-runtime-messages |
+| Single-entry delete | history.delete resolves the stored entry via historyGet, then inside one queue.run removes the cached definition (cacheDelete with the entry's word/context/result.target) and the history record (historyDelete); unknown ids reply ack idempotently; tested in packages/app/test/app/router.test.ts | c3-112 |
 | Failure path | Any thrown error is caught; if cancelled contains requestId → SUPPRESS; otherwise → toLookupError(err) → {ok:false, type:'lookup', error, requestId}; in packages/app/src/app/router.ts catch block | rule-typed-errors |
 | Wire-boundary normalization | toLookupError spreads code/message/retryable/retryAfterSec into a plain object so Error.message (non-enumerable) survives JSON serialization; regression test in packages/app/test/app/router.test.ts | ref-wire-protocol-validation |
-| Other message types | settings.get, history.list, history.clear, cache.clear, connection.test, lookup.cancel each handled by a dedicated internal function in the switch in packages/app/src/app/router.ts | c3-103 |
+| Other message types | settings.get, history.list, history.clear, history.delete, cache.clear, connection.test, lookup.cancel each handled in the switch in packages/app/src/app/router.ts | c3-103 |
 
 ## Governance
 

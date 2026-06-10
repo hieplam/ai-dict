@@ -53,6 +53,10 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
     cursor: z.string().optional(),
   }),
   z.object({ type: z.literal('history.clear') }),
+  // Delete ONE history entry and the cached definition derived from it (the router reads the
+  // stored entry's word/context/target to derive the cache key), so the next lookup of the same
+  // selection re-queries Gemini with the current prompt template. Sent by the side panel.
+  z.object({ type: z.literal('history.delete'), id: z.string() }),
   z.object({ type: z.literal('cache.clear') }),
   z.object({ type: z.literal('connection.test') }),
   // Open the extension's options page. Sent by a content script (which cannot call
@@ -67,6 +71,7 @@ const MessageTypeEnum = z.enum([
   'settings.get',
   'history.list',
   'history.clear',
+  'history.delete',
   'cache.clear',
   'connection.test',
   'open-options',
