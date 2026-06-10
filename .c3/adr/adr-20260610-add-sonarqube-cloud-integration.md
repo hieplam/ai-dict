@@ -1,6 +1,6 @@
 ---
 id: adr-20260610-add-sonarqube-cloud-integration
-c3-seal: de6a55d626b61a5820c83e1af16d6ae376318a50374017fdf66c1c78de26d76f
+c3-seal: 5cce82e7c93b5760b8849001ff00954c87c7b7cd10d170e811ec2fb0e48b28bc
 title: add-sonarqube-cloud-integration
 type: adr
 goal: Wire SonarQube Cloud static analysis (bugs, code smells, security hotspots, duplication) into this public repo's CI with Vitest lcov coverage from all three test packages, make the quality gate block PRs, and add a manually-triggered, one-time importer that seeds a GitHub Issues backlog from the first scan's findings (Bugs + Vulnerabilities + Security Hotspots, severity ≥ Major). Implements the approved spec `docs/superpowers/specs/2026-06-09-sonarqube-cloud-integration-design.md`.
@@ -46,12 +46,12 @@ CI-based analysis folded into the existing `ci.yml` as a `sonarcloud` job (same 
 | Area | Detail | Evidence |
 | --- | --- | --- |
 | Coverage reporters | Add reporter: ['text', 'lcov'] to coverage in packages/app/vitest.config.ts, packages/extension-chrome/vitest.config.ts, packages/extension-safari/vitest.config.ts (thresholds/include/exclude unchanged) | bun run --filter '*' test -- --coverage emits packages/<pkg>/coverage/lcov.info ×3 |
-| Sonar config | New root sonar-project.properties: org hieplam, key hieplam_ai-dict, sources = three src dirs, tests = three test dirs, sonar.test.inclusions=**/*.test.ts, sonar.exclusions=**/*.test.ts,**/dist/**,**/*.d.ts, three lcov report paths | file present; first-scan tuning documented in spec |
+| Sonar config | New root sonar-project.properties: org hieplam, key hieplam_ai-dict, sources = three src dirs, tests = three test dirs, sonar.test.inclusions=/*.test.ts, sonar.exclusions=/.test.ts,/dist/,**/.d.ts, three lcov report paths | file present; first-scan tuning documented in spec |
 | CI scan job | New sonarcloud job in .github/workflows/ci.yml: checkout fetch-depth: 0, bun setup + cache (sibling-job pattern), non-blocking coverage run, SonarSource/sonarqube-scan-action pinned to commit SHA with -Dsonar.qualitygate.wait=true, env SONAR_TOKEN | job YAML matches sibling pin/cache conventions |
 | Backlog importer | New scripts/sonar-issues.mjs: fetches api/issues/search (BUG,VULNERABILITY; MAJOR,CRITICAL,BLOCKER; unresolved; paginated) + api/hotspots/search (TO_REVIEW; paginated), Bearer auth, host from SONAR_HOST_URL default https://sonarcloud.io; pure exported sonarFindingToIssue / filterNewFindings; --dry-run flag; GitHub writes via REST + GITHUB_TOKEN | unit tests green; --dry-run sample output |
 | Importer tests | New scripts/sonar-issues.test.ts (mapping both finding shapes, dedup marker, labels, dedup filter) + scripts/vitest.config.ts (node env, name scripts); root vitest.config.ts registers scripts as an additional project | bun run test includes and passes the scripts project |
 | Backlog workflow | New .github/workflows/sonar-backlog-to-issues.yml: workflow_dispatch only, issues: write / contents: read, checkout → setup-bun → bun scripts/sonar-issues.mjs with SONAR_TOKEN/GITHUB_TOKEN/SONAR_HOST_URL | workflow file present, actions pinned |
-| Lint accommodation | eslint.config.mjs: add scripts/*.ts to projectService.allowDefaultProject; add fetch to the Node-globals block for scripts/**/*.mjs | bun run lint green |
+| Lint accommodation | eslint.config.mjs: add scripts/.ts to projectService.allowDefaultProject; add fetch to the Node-globals block for scripts/**/.mjs | bun run lint green |
 
 ## Underlay C3 Changes
 
@@ -87,7 +87,7 @@ CI-based analysis folded into the existing `ci.yml` as a `sonarcloud` job (same 
 | Monorepo lcov SF: paths don't resolve against repo root, coverage shows 0% | Inspect generated lcov.info paths during implementation; if package-relative, normalise paths in the CI step before scanning | local bun run --filter '*' test -- --coverage then inspect SF: lines in all three lcov files |
 | First scan floods the backlog | Importer filters to Bugs/Vulns/Hotspots ≥ Major; can tighten to CRITICAL,BLOCKER at run time via flag/env | --dry-run count before real run |
 | Quality gate blocks day-one PRs on pre-existing issues | Accepted by user (chose "block"); gate tunable in the Sonar dashboard | first live scan after owner adds token |
-| || true on coverage swallows real test failures inside the sonarcloud job | Only this job swallows; test-unit/test-component/test-contract/coverage-gate still fail the PR on genuine breakage | existing jobs unchanged in ci.yml |
+|  |  | true on coverage swallows real test failures inside the sonarcloud job |
 | Importer creates duplicate issues on re-run | Dedup via hidden <!-- sonar-key: <key> --> marker matched against all existing sonarqube-labelled issues (any state) | unit test for filterNewFindings + idempotency test |
 
 ## Verification
