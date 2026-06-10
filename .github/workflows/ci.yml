@@ -1,7 +1,7 @@
 name: CI
 on:
   push:
-    branches: [main]
+    branches: [master] # the repo's default branch — [main] never fired, so merges went unscanned
   pull_request:
   schedule:
     - cron: '0 3 * * *' # nightly: dep-audit + gitleaks become blocking
