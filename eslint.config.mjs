@@ -88,6 +88,9 @@ export default tseslint.config(
   },
   // JS config files (eslint.config.mjs etc.) have no type info — turn off type-checked rules
   { files: ['**/*.{js,mjs,cjs}'], extends: [tseslint.configs.disableTypeChecked] },
+  // scripts/ TS files (tooling tests/configs) sit outside every tsconfig project,
+  // so type-aware linting cannot resolve them — same treatment as JS configs.
+  { files: ['scripts/**/*.ts'], extends: [tseslint.configs.disableTypeChecked] },
   // Node-runtime scripts: declare Node globals so process/console/URL etc. are defined.
   // Scoped to scripts/ and esbuild configs — does NOT affect browser/extension source.
   {
@@ -96,6 +99,7 @@ export default tseslint.config(
       globals: {
         process: 'readonly',
         console: 'readonly',
+        fetch: 'readonly',
         URL: 'readonly',
         URLSearchParams: 'readonly',
         Buffer: 'readonly',

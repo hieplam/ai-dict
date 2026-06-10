@@ -7,6 +7,9 @@ export default defineConfig({
     include: ['test/**/*.test.ts', 'src/**/*.test.ts'],
     coverage: {
       provider: 'v8',
+      // lcov for SonarQube Cloud; text keeps the CI log summary. projectRoot
+      // makes SF: paths repo-relative so Sonar can map them from the repo root.
+      reporter: ['text', ['lcov', { projectRoot: '../..' }]],
       include: ['src/adapters/**', 'src/router.ts', 'src/inbound.ts'],
       exclude: [
         'src/content.ts',
