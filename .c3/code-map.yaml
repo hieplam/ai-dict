@@ -28,7 +28,8 @@ c3-113:
   - packages/app/test/prompt-template.test.ts
 c3-114:
   - packages/app/src/app/gemini-lookup-client.ts
-  - packages/app/test/app/gemini-lookup-client.test.ts
+  - packages/app/src/app/lookup-client-selector.ts
+  - packages/app/src/app/openai-lookup-client.ts
 c3-115:
   - packages/app/src/app/dom-selection-source.ts
   - packages/app/src/app/inline-bottom-sheet-renderer.ts
