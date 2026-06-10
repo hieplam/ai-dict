@@ -6,7 +6,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build": "bun esbuild.config.mjs",
+    "build": "bun ../../scripts/check-dep-direction.mjs && bun esbuild.config.mjs",
     "e2e": "playwright test"
   },
   "dependencies": {

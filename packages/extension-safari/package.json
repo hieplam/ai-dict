@@ -6,7 +6,7 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "build": "bun esbuild.config.mjs",
+    "build": "bun ../../scripts/check-dep-direction.mjs && bun esbuild.config.mjs",
     "xcode:sync": "bash xcode/sync-dist.sh"
   },
   "dependencies": {

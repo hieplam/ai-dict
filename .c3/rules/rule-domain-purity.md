@@ -1,6 +1,6 @@
 ---
 id: rule-domain-purity
-c3-seal: 396dd7855fdea3005e0e82a521092d60c9f1807b23c3690bdf52b0a5401bbf7e
+c3-seal: d66b2ba48307e6982ab8da4431069184c7343f82c2bae3d3f7c29b10bd6be07e
 title: domain-purity
 type: rule
 goal: Enforce the inward-only dependency direction at the domain edge so the core stays portable and unit-testable — the load-bearing half of the architecture (`ref-core-dependency-rule`).
@@ -44,4 +44,7 @@ import { mapError } from './error-mapper';
 
 To reach outward, add a port to `packages/app/src/ports.ts` and inject an adapter — never import the dependency directly.
 
-**Known drift:** `eslint.config.mjs` still enforces this via `import-x/no-restricted-paths` zones targeting the pre-flatten package paths (`packages/core/src`, `packages/adapters-shared`, `packages/shared-ui`), which no longer hold source. Until those zones are repointed at `packages/app/src/{domain,app,ui}`, the rule is upheld by this directory-edge convention rather than by lint.
+**Enforcement (mechanical, two surfaces — ADR `adr-20260610-dep-direction-build-gate`):**
+
+1. **Build gate:** `scripts/check-dep-direction.mjs` enforces the full allowlist matrix (domain → `./` + `../ports` only; `ports.ts` → domain types only; `wire.ts` → domain + `zod` only; core never imports a shell; shells never import each other). It runs as the first command of both extension `build` scripts and of `bun run lint`, exits 1 with the violated rule and fix hint, so a violating tree cannot produce a bundle or pass CI. Matrix locked by `scripts/check-dep-direction.test.ts`.
+2. **IDE/lint feedback:** `eslint.config.mjs` `import-x/no-restricted-paths` zones, repointed at the post-flatten paths (`packages/app/src/{domain,app,ui}` and the extension packages).
