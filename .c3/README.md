@@ -1,6 +1,6 @@
 ---
 id: c3-0
-c3-seal: dfd5adf7d1777ea4002367de2ea0ea349bbb27ac69a1c8ee2d3e285f2c9c57db
+c3-seal: fe68fbe8fd8157ef63c0c3c18bff7c67d8da6af28a746629d3067052181db6de
 title: ai-dict
 goal: Look up any word or phrase you select on a page via Google's Gemini API, shown in an in-page card or side panel, on Chrome and Safari/iOS.
 ---
@@ -12,6 +12,10 @@ Manifest V3 browser extension (Chrome + Safari/iOS) that looks up the word or ph
 ## Architecture
 
 **One portable core, two thin browser shells.** All lookup logic lives once in `@ai-dict/app` (`packages/app`) and is reused verbatim by the Chrome and Safari extensions, which add only platform glue.
+
+![Component relations & dependency direction — one core, two shells, dependencies point inward](../docs/diagrams/architecture-dependencies.svg)
+
+*Diagram source: `docs/diagrams/architecture-dependencies.svg` — components per container, the ports ring around the domain core, and the inward-only dependency arrows (solid = compile-time import, dashed = runtime injection at the composition roots).*
 
 The core follows a **lean dependency rule** — the testable heart of hexagonal ("ports & adapters") architecture, with the heavyweight packaging deliberately removed. An earlier design split the code across five packages (`core` / `adapters-shared` / `shared-ui` / …); that was judged overengineered for a two-surface extension and flattened to three packages (commit *"Flatten hexagon: 5 packages → 3, kill duplication"*). What survived the cut is the part that pays for itself:
 
