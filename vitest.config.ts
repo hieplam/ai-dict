@@ -10,9 +10,15 @@ const packageDirs = existsSync('packages')
       .map((d) => `packages/${d}`)
   : [];
 
+// scripts/ holds repo-tooling tests (e.g. the Sonar backlog importer) outside the workspace
+const projectDirs = [
+  ...packageDirs,
+  ...(existsSync('scripts/vitest.config.ts') ? ['scripts'] : []),
+];
+
 export default defineConfig({
   test: {
     passWithNoTests: true,
-    projects: packageDirs.length > 0 ? packageDirs : [{ test: { include: [] } }],
+    projects: projectDirs.length > 0 ? projectDirs : [{ test: { include: [] } }],
   },
 });
