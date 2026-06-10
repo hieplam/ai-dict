@@ -74,6 +74,16 @@ export async function cachePut(
   await writeIndex(deps.storage, idx);
 }
 
+export async function cacheDelete(
+  deps: CacheDeps,
+  req: { word: string; context: string; target: string },
+): Promise<void> {
+  const hash = deriveCacheKey(req);
+  await deps.storage.removeItem(`cache:${hash}`);
+  const idx = (await readIndex(deps.storage)).filter((e) => e.key !== hash);
+  await writeIndex(deps.storage, idx);
+}
+
 export async function cacheClear(deps: CacheDeps): Promise<void> {
   for (const k of await deps.storage.keys('cache:')) await deps.storage.removeItem(k);
 }

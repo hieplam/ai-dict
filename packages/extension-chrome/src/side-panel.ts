@@ -63,6 +63,20 @@ view.addEventListener('select', (e) => {
   if (entry) view.focusState = resultToFocus(entry.result);
 });
 
+// A row's delete button removes the stored entry AND its cached definition (the SW derives the
+// cache key from the stored record), so re-selecting the word fetches a fresh result with the
+// current prompt template. Recent is re-pulled afterwards either way — worst case it's a no-op.
+view.addEventListener('delete', (e) => {
+  const { id } = (e as CustomEvent<{ id: string }>).detail;
+  void (async () => {
+    try {
+      await chrome.runtime.sendMessage({ type: 'history.delete', id });
+    } finally {
+      await refreshRecent();
+    }
+  })();
+});
+
 // The no-key setup invite's "Open Settings" button bubbles `open-settings` out of the focus
 // region. The panel is an extension page, so it can open the options page directly.
 view.addEventListener('open-settings', () => {

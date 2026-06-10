@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { historyAppend, historyList, historyClear } from '../src/domain/history-policy';
+import {
+  historyAppend,
+  historyList,
+  historyClear,
+  historyGet,
+  historyDelete,
+} from '../src/domain/history-policy';
 import type { Storage, HistoryEntry } from '../src';
 
 function memStorage(): Storage {
@@ -94,6 +100,30 @@ describe('history-policy', () => {
     // id='501' (the newest) must be present
     expect(entries[0]!.id).toBe('501');
   }, 15000);
+
+  it('historyGet returns the stored entry, or null on miss', async () => {
+    const s = memStorage();
+    await historyAppend({ storage: s }, entry('1'));
+    expect(await historyGet({ storage: s }, '1')).toEqual(entry('1'));
+    expect(await historyGet({ storage: s }, 'ghost')).toBeNull();
+  });
+
+  it('historyDelete removes only the targeted entry (value + index id)', async () => {
+    const s = memStorage();
+    await historyAppend({ storage: s }, entry('1'));
+    await historyAppend({ storage: s }, entry('2'));
+    await historyDelete({ storage: s }, '1');
+    expect(await s.getItem('history:1')).toBeNull();
+    const { entries } = await historyList({ storage: s }, {});
+    expect(entries.map((e) => e.id)).toEqual(['2']);
+  });
+
+  it('historyDelete on an unknown id is a no-op', async () => {
+    const s = memStorage();
+    await historyAppend({ storage: s }, entry('1'));
+    await expect(historyDelete({ storage: s }, 'ghost')).resolves.toBeUndefined();
+    expect((await historyList({ storage: s }, {})).entries).toHaveLength(1);
+  });
 
   it('clear removes all', async () => {
     const s = memStorage();

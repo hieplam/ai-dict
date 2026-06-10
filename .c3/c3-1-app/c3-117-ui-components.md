@@ -1,6 +1,6 @@
 ---
 id: c3-117
-c3-seal: 8c54440527afa3b85ac711d4f8555bf12c13125304f9fd9ddf9ebf25b1e6240a
+c3-seal: 70955b5d4002349658b5bec6591fb259290576268252d19d7bed218b9ca120bb
 title: ui-components
 type: component
 category: feature
@@ -51,6 +51,7 @@ This component owns all user-visible elements used by the ai-dict extension. It 
 | Result display | InlineBottomSheetRenderer calls renderCardState({ kind: 'result', safeHtml, word, target }) and passes the returned nodes to card.replaceChildren(...); the <slot> in the card's shadow projects them into the visible region; see packages/app/src/ui/lookup-card.ts | c3-115 |
 | Sheet dismissal | <bottom-sheet> emits CustomEvent('dismiss', { bubbles: true, composed: true }) on Escape keydown or scrim click; the renderer's registered listener calls close() which removes the sheet from the host; see packages/app/src/ui/bottom-sheet.ts | ref-web-components-shadow-dom |
 | Settings action | The lookup-card header gear (left of Close) and the side-panel-view header gear dispatch CustomEvent('open-settings', { bubbles: true, composed: true }) — the same frozen event name as the setup CTA; content-script shells relay it as the validated open-options wire message, trusted pages call openOptionsPage directly; see packages/app/src/ui/lookup-card.ts — actionButton and packages/app/src/ui/side-panel-view.ts | ref-web-components-shadow-dom |
+| Recent-entry delete | Each Recent row in <side-panel-view> pairs the select button with a sibling .recent-del icon button (a button must not nest a button) that dispatches CustomEvent('delete', { detail: { id }, bubbles: true, composed: true }); the trusted side-panel page relays it as the history.delete wire message so the SW removes the stored entry and its cached definition; see packages/app/src/ui/side-panel-view.ts — recentRow() | ref-web-components-shadow-dom |
 | Settings save | <settings-form> intercepts form submit, collects SettingsFormValue via collect(), and emits CustomEvent<SettingsFormValue>('save', { detail, bubbles: true, composed: true }); the options-page composition root persists the value via the SettingsStore port; see packages/app/src/ui/settings-form.ts | rule-api-key-isolation |
 | Env-key lock | When keyFromEnv = true, the API key <input> is set to readOnly, #reveal is hidden, and on focus the field shows ENV_KEY_NOTICE; collect() echoes back the stored key so locking never wipes it; see packages/app/src/ui/settings-form.ts — applyKeyLock() | rule-api-key-isolation |
 | Failure — missing element in shadow | SettingsForm.q<T>(sel) throws 'settings-form: missing <sel>' if an expected shadow child is absent, preventing silent no-ops on a broken DOM; see packages/app/src/ui/settings-form.ts — private q<T>() | ref-web-components-shadow-dom |

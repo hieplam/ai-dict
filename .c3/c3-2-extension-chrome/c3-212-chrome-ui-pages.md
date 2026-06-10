@@ -1,6 +1,6 @@
 ---
 id: c3-212
-c3-seal: 5691ecbf525c655307d280f7a343b9de917d700f82245391ec915ea3ac31fe6f
+c3-seal: 32ec2e6134b5d6f9c5a7845bafd46f5c929cf2d567c0cd9c6b267787a5d9ec14
 title: chrome-ui-pages
 type: component
 category: feature
@@ -49,9 +49,10 @@ The **options page** (`options.ts` + `options.html`) hosts the `<settings-form>`
 | Outcome — options | User saves API key and preferences; full Settings written atomically to chrome.storage.local; hasKey derived from Boolean(apiKey) | rule-api-key-isolation |
 | Primary path — options | load() reads current Settings → maps to SettingsFormValue → sets form.value; user edits and submits → save event fires → load() re-reads base → merged object written via chrome.storage.local.set; see packages/extension-chrome/src/options.ts lines 33-57 | rule-api-key-isolation |
 | Alternate path — env key | GEMINI_KEY_FROM_ENV true → form.keyFromEnv = true + banner inserted; key field locked; stored key ignored at lookup time because SW prefers env key; see packages/extension-chrome/src/options.ts lines 16-23 | rule-api-key-isolation |
-| Outcome — side panel | <lookup-card> reflects the latest lookup state (loading spinner, rendered markdown, or error message) in sync with the inline card | c3-117 |
-| Primary path — side panel | chrome.runtime.onMessage receives message → sender and to fields validated → card.state updated with { kind, ... }; see packages/extension-chrome/src/side-panel.ts lines 26-48 | ref-wire-protocol-validation |
-| Failure — side panel receives malformed result | isLookupResult guard returns false → console.warn logged; card state not updated; no crash; see packages/extension-chrome/src/side-panel.ts lines 36-40 | ref-wire-protocol-validation |
+| Outcome — side panel | <side-panel-view> reflects the latest lookup state (loading spinner, rendered markdown, or error message) in sync with the inline card, plus a Recent list of stored lookups | c3-117 |
+| Primary path — side panel | chrome.runtime.onMessage receives message → sender and to fields validated → view.focusState updated with { kind, ... }; see packages/extension-chrome/src/side-panel.ts | ref-wire-protocol-validation |
+| Primary path — recent delete | A Recent row's delete button bubbles the composed 'delete' event out of <side-panel-view>; the panel sends { type: 'history.delete', id } over chrome.runtime.sendMessage and re-pulls Recent afterwards; the SW also drops the cached definition, so re-selecting the word fetches fresh with the current prompt template; see packages/extension-chrome/src/side-panel.ts | ref-wire-protocol-validation |
+| Failure — side panel receives malformed result | isLookupResult guard returns false → console.warn logged; view state not updated; no crash; see packages/extension-chrome/src/side-panel.ts | ref-wire-protocol-validation |
 | Failure — options action forwarding | clear-cache, clear-history, test-connection events fire chrome.runtime.sendMessage; errors suppressed via void; see packages/extension-chrome/src/options.ts lines 59-67 | c3-210 |
 
 ## Governance

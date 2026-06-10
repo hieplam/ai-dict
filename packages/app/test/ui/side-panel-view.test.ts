@@ -172,6 +172,45 @@ describe('<side-panel-view>', () => {
     expect(detail).toEqual({ id: 'b' });
   });
 
+  it('every recent row carries a delete button naming the word', () => {
+    const el = mount();
+    el.recent = [entry({ id: 'a', word: 'bank' }), entry({ id: 'b', word: 'ledger' })];
+    const dels = el.shadowRoot!.querySelectorAll<HTMLButtonElement>('.recent button.recent-del');
+    expect(dels.length).toBe(2);
+    expect(dels[0]!.getAttribute('aria-label')).toBe('Delete bank from history and cache');
+    expect(dels[1]!.getAttribute('aria-label')).toBe('Delete ledger from history and cache');
+  });
+
+  it('clicking delete emits a composed "delete" event with the entry id — and no "select"', () => {
+    const el = mount();
+    el.recent = [entry({ id: 'a', word: 'bank' }), entry({ id: 'b', word: 'ledger' })];
+    let deleted: { id: string } | null = null;
+    let selected = false;
+    document.body.addEventListener('delete', (e) => {
+      deleted = (e as CustomEvent<{ id: string }>).detail;
+    });
+    document.body.addEventListener('select', () => {
+      selected = true;
+    });
+    el.shadowRoot!.querySelectorAll<HTMLButtonElement>('button.recent-del')[1]!.click();
+    expect(deleted).toEqual({ id: 'b' });
+    // Deleting must not also re-open the entry being removed.
+    expect(selected).toBe(false);
+  });
+
+  it('the delete button is a sibling of the row button (no invalid button nesting)', () => {
+    const el = mount();
+    el.recent = [entry({ id: 'a', word: 'bank' })];
+    const del = el.shadowRoot!.querySelector('button.recent-del')!;
+    expect(del.closest('button.recent-item')).toBeNull();
+  });
+
+  it('has no axe violations (recent rows with delete buttons)', async () => {
+    const el = mount();
+    el.recent = [entry({ id: 'a', word: 'bank' }), entry({ id: 'b', word: 'ledger' })];
+    expect(await axeViolations(el)).toEqual([]);
+  });
+
   it('the recent list never uses the editorial serif (One Serif Rule: headword only)', () => {
     const el = mount();
     el.recent = [entry({ id: 'a', word: 'bank' })];

@@ -292,6 +292,53 @@ describe('buildRouter', () => {
     expect(await route({ type: 'cache.clear' })).toMatchObject({ ok: true, type: 'ack' });
   });
 
+  it('history.delete removes the entry and invalidates its cache (next lookup re-fetches)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route(lookupMsg('a')); // miss → fetch, cache, history
+    const { entries } = await historyList({ storage: d.kv }, {});
+    expect(entries).toHaveLength(1);
+    d.client.lookup.mockClear();
+
+    const reply = await route({ type: 'history.delete', id: entries[0]!.id });
+    expect(reply).toMatchObject({ ok: true, type: 'ack' });
+    expect((await historyList({ storage: d.kv }, {})).entries).toHaveLength(0);
+
+    // The cached definition is gone too: the same request must hit the client again.
+    await route(lookupMsg('b'));
+    expect(d.client.lookup).toHaveBeenCalledTimes(1);
+  });
+
+  it('history.delete only touches the targeted entry', async () => {
+    const other: LookupResult = { ...result, word: 'pier' };
+    const d = deps({
+      client: {
+        lookup: makeLookupMock((r) => Promise.resolve(r.word === 'pier' ? other : result)),
+      },
+    });
+    const route = buildRouter(d);
+    await route(lookupMsg('a'));
+    await route({ type: 'lookup', req: { ...req, word: 'pier' }, requestId: 'b' });
+    const before = await historyList({ storage: d.kv }, {});
+    const bankEntry = before.entries.find((e) => e.word === 'bank')!;
+
+    await route({ type: 'history.delete', id: bankEntry.id });
+
+    const after = await historyList({ storage: d.kv }, {});
+    expect(after.entries.map((e) => e.word)).toEqual(['pier']);
+    // 'pier' is still cached: re-requesting it must NOT call the client.
+    d.client.lookup.mockClear();
+    const hit = await route({ type: 'lookup', req: { ...req, word: 'pier' }, requestId: 'c' });
+    expect(hit).toMatchObject({ ok: true, type: 'lookup', result: { fromCache: true } });
+    expect(d.client.lookup).not.toHaveBeenCalled();
+  });
+
+  it('history.delete with an unknown id is an idempotent ack', async () => {
+    const route = buildRouter(deps());
+    const reply = await route({ type: 'history.delete', id: 'ghost' });
+    expect(reply).toMatchObject({ ok: true, type: 'ack' });
+  });
+
   it('lookup.cancel with no inflight request still returns ack (no crash)', async () => {
     const route = buildRouter(deps());
     const ack = await route({ type: 'lookup.cancel', requestId: 'nonexistent' });

@@ -103,6 +103,12 @@ describe('wire-schema', () => {
   it('accepts open-options message', () => {
     expect(WireMessageSchema.safeParse({ type: 'open-options' }).success).toBe(true);
   });
+  it('accepts history.delete message with an id', () => {
+    expect(WireMessageSchema.safeParse({ type: 'history.delete', id: 'h1' }).success).toBe(true);
+  });
+  it('rejects history.delete missing its id', () => {
+    expect(WireMessageSchema.safeParse({ type: 'history.delete' }).success).toBe(false);
+  });
 
   // Rejection test: lookup message missing required field
   it('rejects a lookup message missing requestId', () => {

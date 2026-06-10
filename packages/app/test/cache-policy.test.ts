@@ -5,6 +5,7 @@ import {
   cacheGet,
   cachePut,
   cacheClear,
+  cacheDelete,
 } from '../src/domain/cache-policy';
 import type { Storage, LookupResult } from '../src';
 
@@ -78,6 +79,39 @@ describe('cache-policy', () => {
     expect(await cacheGet(deps, { word: 'b', context: '', target: 'vi' })).toBeNull();
     // index key must also be gone
     expect(await s.getItem('cache:index')).toBeNull();
+  });
+
+  it('cacheDelete removes only the targeted entry (value + index row)', async () => {
+    const s = memStorage();
+    const deps = { storage: s };
+    await cachePut(deps, { word: 'a', context: '', target: 'vi' }, result('a'));
+    await cachePut(deps, { word: 'b', context: '', target: 'vi' }, result('b'));
+    await cacheDelete(deps, { word: 'a', context: '', target: 'vi' });
+    expect(await cacheGet(deps, { word: 'a', context: '', target: 'vi' })).toBeNull();
+    expect(await cacheGet(deps, { word: 'b', context: '', target: 'vi' })).not.toBeNull();
+    // the index must no longer reference the deleted hash
+    const idx = JSON.parse((await s.getItem('cache:index'))!) as { key: string }[];
+    expect(idx.map((e) => e.key)).toEqual([
+      deriveCacheKey({ word: 'b', context: '', target: 'vi' }),
+    ]);
+  });
+
+  it('cacheDelete on a missing entry is a no-op', async () => {
+    const s = memStorage();
+    const deps = { storage: s };
+    await cachePut(deps, { word: 'a', context: '', target: 'vi' }, result('a'));
+    await expect(
+      cacheDelete(deps, { word: 'ghost', context: '', target: 'vi' }),
+    ).resolves.toBeUndefined();
+    expect(await cacheGet(deps, { word: 'a', context: '', target: 'vi' })).not.toBeNull();
+  });
+
+  it('cacheDelete normalizes the key like cacheGet (case/trim)', async () => {
+    const s = memStorage();
+    const deps = { storage: s };
+    await cachePut(deps, { word: 'bank', context: 'x', target: 'vi' }, result('bank'));
+    await cacheDelete(deps, { word: ' Bank ', context: 'x', target: 'vi' });
+    expect(await cacheGet(deps, { word: 'bank', context: 'x', target: 'vi' })).toBeNull();
   });
 
   it('evicts at the default cap of 1000 (D4 gate: regression guard on DEFAULT_CAP)', async () => {
