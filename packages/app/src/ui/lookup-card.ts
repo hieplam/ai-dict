@@ -51,11 +51,23 @@ ${THEME_DARK_CSS}
 .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px 2px 16px}
 .brand{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.01em;color:var(--ad-pine)}
 .holly{width:21px;height:21px;flex:none}
-.actions{display:inline-flex;gap:2px}
-button[data-act]{display:inline-grid;place-items:center;width:28px;height:28px;border:0;background:transparent;color:var(--ad-ink-soft);border-radius:8px;cursor:pointer;font:inherit}
+.actions{display:inline-flex;align-items:center;gap:4px}
+button[data-act]{display:inline-grid;place-items:center;height:28px;border:0;background:transparent;color:var(--ad-ink-soft);border-radius:8px;cursor:pointer;font:inherit}
 button[data-act]:hover{background:var(--ad-surface-soft);color:var(--ad-ink)}
 button[data-act]:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
-button[data-act] svg{width:15px;height:15px;pointer-events:none}
+button[data-act] svg{pointer-events:none;flex:none}
+/* Close stays a bare icon — its X is universally understood and keeps the right-most spot. */
+button[data-act="close"]{width:28px}
+button[data-act="close"] svg{width:15px;height:15px}
+/* Settings is the only labeled control in the bar: an icon+word pill with a hairline at rest
+   (a quiet "I'm a button" cue) that fills on hover like Close. The visible word removes the
+   icon ambiguity that made it indistinguishable from Close; the outline gives it presence
+   without a saturated accent on an inactive control. */
+button[data-act="settings"]{display:inline-flex;align-items:center;gap:5px;padding:0 11px 0 9px;border:1px solid var(--ad-line);border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.01em;transition:background .15s ease,color .15s ease,border-color .15s ease}
+button[data-act="settings"]:hover{border-color:transparent}
+button[data-act="settings"] svg{width:14px;height:14px}
+button[data-act="settings"] .lbl{line-height:1}
+@media (prefers-reduced-motion:reduce){button[data-act="settings"]{transition:none}}
 .region{padding:2px 16px 2px}
 .footer{display:flex;align-items:center;gap:6px;margin:8px 16px 0;padding:10px 0 13px;border-top:1px solid var(--ad-line);font-size:11px;color:var(--ad-ink-soft)}
 .footer svg{width:13px;height:13px;flex:none}
@@ -221,6 +233,14 @@ export class LookupCard extends HTMLElement {
     b.dataset['act'] = act;
     b.setAttribute('aria-label', label);
     b.innerHTML = icon; // decorative aria-hidden SVG; accessible name comes from aria-label
+    // Settings carries a visible "Settings" word so it reads as a control, not a twin of the
+    // bare X. aria-label still wins as the accessible name, so this never double-announces.
+    if (act === 'settings') {
+      const lbl = document.createElement('span');
+      lbl.className = 'lbl';
+      lbl.textContent = label;
+      b.append(lbl);
+    }
     // The settings action reuses the `open-settings` event name the shells already route to
     // the options page (content script → service worker; side panel directly) — see settingsCta.
     const event = act === 'settings' ? 'open-settings' : act;
