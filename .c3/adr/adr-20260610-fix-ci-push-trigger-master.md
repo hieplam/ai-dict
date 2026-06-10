@@ -1,10 +1,10 @@
 ---
 id: adr-20260610-fix-ci-push-trigger-master
-c3-seal: 8a6b1df171f372aada52595fc78ed85f2e5d40c947e878dfb6030e141738eb2a
+c3-seal: 6752b684596321adfbdb3df963a30eba979c8eda01fb8a9ba6c230d2313768f5
 title: fix-ci-push-trigger-master
 type: adr
 goal: Make `.github/workflows/ci.yml` run on pushes to **master** (the repo's real default branch) instead of `main`, which does not exist. Today the push trigger never fires, so merged code is only re-validated by the nightly cron, and the just-merged SonarQube Cloud job (`adr-20260610-add-sonarqube-cloud-integration`) cannot produce its master-branch baseline analysis until the nightly run.
-status: accepted
+status: implemented
 date: "2026-06-10"
 ---
 
