@@ -43,7 +43,12 @@ function deps(over: DepsOverrides = {}) {
   const kv = fakeStorage();
   const lookupFn = over.client?.lookup ?? makeLookupMock();
   const getFn = vi.fn<() => Promise<PublicSettings>>(() =>
-    Promise.resolve({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true }),
+    Promise.resolve({
+      targetLang: 'vi',
+      promptTemplate: 'tpl',
+      hasKey: true,
+      theme: 'light' as const,
+    }),
   );
   return {
     kv,
@@ -198,7 +203,12 @@ describe('buildRouter', () => {
       client: { lookup: makeLookupMock() },
       settings: {
         get: vi.fn(() =>
-          Promise.resolve({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true }),
+          Promise.resolve({
+            targetLang: 'vi',
+            promptTemplate: 'tpl',
+            hasKey: true,
+            theme: 'light' as const,
+          }),
         ),
         set: vi.fn(),
       },
@@ -245,7 +255,7 @@ describe('buildRouter', () => {
     expect(reply).toEqual({
       ok: true,
       type: 'settings',
-      settings: { targetLang: 'vi', promptTemplate: 'tpl', hasKey: true },
+      settings: { targetLang: 'vi', promptTemplate: 'tpl', hasKey: true, theme: 'light' as const },
     });
   });
 

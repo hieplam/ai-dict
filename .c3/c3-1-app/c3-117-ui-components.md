@@ -1,6 +1,6 @@
 ---
 id: c3-117
-c3-seal: 35c2c5363f5ccad99087d2f17d2e80640292be399141766ccabeaf5c09afc1a1
+c3-seal: 4e7876d228401a6243c3c4433a0f7cf844390af0c1f2167f6a37207ab458b9f3
 title: ui-components
 type: component
 category: feature
@@ -69,8 +69,9 @@ This component owns all user-visible elements used by the ai-dict extension. It 
 | renderCardState(state: CardState): Node[] | OUT | Pure function; returns light-DOM nodes for the given CardState; the 'result' branch writes state.safeHtml into body.innerHTML | No side effects; designed for cross-world invocation from the content-script isolated world | packages/app/src/ui/lookup-card.ts — export function renderCardState |
 | registerContentElements(): void | OUT | Idempotently defines lookup-trigger, lookup-card, bottom-sheet in the custom-element registry | Called once at content-script startup; safe to call multiple times | packages/app/src/ui/register.ts — export function registerContentElements |
 | registerSettingsForm(): void | OUT | Idempotently defines settings-form in the custom-element registry | Called only from trusted extension-page contexts | packages/app/src/ui/register.ts — export function registerSettingsForm |
-| SettingsForm.value setter | IN | Accepts SettingsFormValue; if the shadow root is not yet built, defers hydration to connectedCallback via _pendingValue | Only meaningful in an extension-page context; never called from the content script | packages/app/src/ui/settings-form.ts — set value(v: SettingsFormValue) |
+| SettingsForm.value setter | IN | Accepts SettingsFormValue (incl. theme); if the shadow root is not yet built, defers hydration to connectedCallback via _pendingValue | Only meaningful in an extension-page context; never called from the content script | packages/app/src/ui/settings-form.ts — set value(v: SettingsFormValue) |
 | SettingsForm.keyFromEnv setter | IN | When true, locks the API key field to read-only and hides the reveal button | Prevents users from accidentally overwriting a build-time key | packages/app/src/ui/settings-form.ts — set keyFromEnv(on: boolean) |
+| theme host attribute | IN | Every themed element (lookup-trigger, lookup-card, settings-form, onboarding-view, side-panel-view) is light by default; theme="dark" applies DARK_VARS unconditionally and theme="system" applies them only under prefers-color-scheme: dark (THEME_DARK_CSS in tokens.ts) | Stamped by composition roots from stored settings; an ATTRIBUTE (not a JS property) so it crosses the MV3 MAIN/isolated world boundary and survives the trigger's all:initial | packages/app/test/ui/lookup-trigger.test.ts — theme contract test |
 
 ## Change Safety
 

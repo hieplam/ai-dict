@@ -1,6 +1,6 @@
 import type { HistoryEntry } from '../domain/types';
 import { adoptStyles } from './styles/adopt';
-import { LIGHT_VARS, DARK_VARS, HOLLY_SVG } from './styles/tokens';
+import { LIGHT_VARS, THEME_DARK_CSS, HOLLY_SVG } from './styles/tokens';
 import { renderCardState, type CardState } from './lookup-card';
 
 /**
@@ -30,8 +30,8 @@ const ICON_SHIELD =
 // explicit `min-height:0` to override a flex item's default `min-height:auto`, which would
 // otherwise refuse to shrink below its content and let a long definition overflow the host (the
 // scroll then lands on the whole document) instead of scrolling inside `main`.
-const CSS = `:host{${LIGHT_VARS};display:flex;flex-direction:column;height:100dvh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light dark}
-@media (prefers-color-scheme:dark){:host{${DARK_VARS}}.focus .setup-cta{background:color-mix(in oklab,var(--ad-pine) 86%,white)}}
+const CSS = `:host{${LIGHT_VARS};display:flex;flex-direction:column;height:100dvh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light}
+${THEME_DARK_CSS}
 *{box-sizing:border-box}
 .ribbon{height:4px;flex:none;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
 header{display:flex;align-items:center;gap:8px;padding:13px 18px 11px;flex:none}
@@ -50,7 +50,7 @@ main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padd
 .focus .holly{display:block;width:34px;height:34px;margin:20px auto 2px}
 .focus .setup-title{text-align:center;margin:10px 0 0;font-size:17px;font-weight:600;color:var(--ad-ink)}
 .focus .setup-text{text-align:center;margin:7px auto 0;max-width:32ch;font-size:14px;line-height:1.55;color:var(--ad-ink-soft)}
-.focus .setup-cta{display:block;margin:18px auto 6px;padding:10px 20px;border:0;border-radius:9px;background:var(--ad-pine);color:var(--ad-surface);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
+.focus .setup-cta{display:block;margin:18px auto 6px;padding:10px 20px;border:0;border-radius:9px;background:var(--ad-cta);color:var(--ad-surface);font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .focus .setup-cta:hover{filter:brightness(1.06)}
 .focus .setup-cta:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
 .empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:48px 12px 40px;color:var(--ad-ink-soft)}

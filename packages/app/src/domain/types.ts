@@ -54,10 +54,17 @@ export interface HistoryEntry {
   createdAt: number;
 }
 
+/**
+ * Colour theme for every UI surface. 'light' is the default; 'system' follows
+ * the OS via prefers-color-scheme (the behavior before the setting existed).
+ */
+export type Theme = 'light' | 'dark' | 'system';
+
 export interface PublicSettings {
   targetLang: string;
   promptTemplate: string;
   hasKey: boolean;
+  theme: Theme;
 }
 
 export function isLookupError(e: unknown): e is LookupError {

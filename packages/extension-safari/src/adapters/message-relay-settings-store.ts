@@ -23,6 +23,7 @@ export class MessageRelaySettingsStore implements SettingsStore {
         targetLang: reply.settings.targetLang,
         promptTemplate: reply.settings.promptTemplate,
         hasKey: reply.settings.hasKey,
+        theme: reply.settings.theme,
       };
       this.cache = stripped;
       return stripped;

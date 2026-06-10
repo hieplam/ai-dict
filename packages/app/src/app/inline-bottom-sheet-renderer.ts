@@ -1,20 +1,35 @@
-import type { ResultRenderer, LookupResult, LookupError } from '../index';
+import type { ResultRenderer, LookupResult, LookupError, Theme } from '../index';
 import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '../ui/index';
 import { sanitizeMarkdown } from './markdown-sanitize';
 
 export class InlineBottomSheetRenderer implements ResultRenderer {
   private sheet: HTMLElement | null = null;
   private card: LookupCard | null = null;
+  private _theme: Theme = 'light';
 
   constructor(
     private readonly host: HTMLElement,
     private readonly sanitize: (md: string) => SafeHtml = sanitizeMarkdown,
   ) {}
 
+  /**
+   * The reader's stored theme preference, stamped as a `theme` ATTRIBUTE on the card —
+   * an attribute (shared DOM) crosses the MAIN/isolated world boundary, a JS property
+   * write would not (see setState below). Set by the composition root from settings.
+   */
+  set theme(t: Theme) {
+    this._theme = t;
+    this.card?.setAttribute('theme', t);
+  }
+  get theme(): Theme {
+    return this._theme;
+  }
+
   private ensureCard(): LookupCard {
     if (this.card && this.sheet) return this.card;
     const sheet = document.createElement('bottom-sheet');
     const card = document.createElement('lookup-card') as LookupCard;
+    card.setAttribute('theme', this._theme);
     sheet.append(card);
     sheet.addEventListener('dismiss', () => this.close());
     card.addEventListener('close', () => this.close());

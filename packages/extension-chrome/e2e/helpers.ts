@@ -14,6 +14,7 @@ export interface SettingsOverrides {
   cacheEnabled?: boolean;
   saveHistory?: boolean;
   hasKey?: boolean;
+  theme?: 'light' | 'dark' | 'system';
 }
 
 /** Write a full settings object to storage. Overrides merge onto sensible defaults. */
@@ -27,6 +28,7 @@ export async function seedSettings(page: Page, overrides: SettingsOverrides = {}
         cacheEnabled: true,
         saveHistory: true,
         hasKey: true,
+        theme: 'light',
         ...o,
       },
     });

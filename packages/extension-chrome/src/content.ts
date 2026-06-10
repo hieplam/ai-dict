@@ -3,6 +3,7 @@ import {
   InlineBottomSheetRenderer,
   DomSelectionSource,
   MessageRelayLookupClient,
+  type SettingsStore,
 } from '@ai-dict/app';
 // Custom elements are defined by content-elements.ts (world:MAIN) — see manifest.json.
 // Do NOT re-import them here; the page's registry is shared between worlds via the DOM.
@@ -12,10 +13,27 @@ import { ChromeSidePanelMirror } from './adapters/chrome-side-panel-mirror';
 
 const inline = new InlineBottomSheetRenderer(document.body);
 const mirror = new ChromeSidePanelMirror(chrome.runtime);
+const trigger = new ChromeFloatingTrigger();
+
+// Decorate the settings store so every fetch also re-applies the reader's theme to the
+// in-page surfaces (bubble + card). The workflow fetches settings on each Define click and
+// the relay store drops its cache on storage changes, so a theme saved on the options page
+// reaches already-open tabs on their next lookup — plus once at startup for the bubble.
+const settings = new MessageRelaySettingsStore(chrome.runtime);
+const themedSettings: SettingsStore = {
+  get: () =>
+    settings.get().then((s) => {
+      trigger.theme = s.theme;
+      inline.theme = s.theme;
+      return s;
+    }),
+  set: (patch) => settings.set(patch),
+};
+void themedSettings.get().catch(() => undefined); // seed before the first lookup; light until known
 
 runLookupWorkflow({
   selection: new DomSelectionSource(document),
-  trigger: new ChromeFloatingTrigger(),
+  trigger,
   renderer: {
     renderLoading(word) {
       inline.renderLoading(word);
@@ -35,7 +53,7 @@ runLookupWorkflow({
     },
   },
   client: new MessageRelayLookupClient(chrome.runtime),
-  settings: new MessageRelaySettingsStore(chrome.runtime),
+  settings: themedSettings,
 });
 
 // The no-key card's "Open Settings" button dispatches a composed `open-settings` event that
