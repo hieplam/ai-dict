@@ -30,11 +30,36 @@ describe('wire-schema', () => {
     const ok = WireReplySchema.safeParse({
       ok: true,
       type: 'settings',
-      settings: { targetLang: 'vi', promptTemplate: 't', hasKey: true },
+      settings: { targetLang: 'vi', promptTemplate: 't', hasKey: true, theme: 'light' },
       apiKey: 'leaked',
     });
     expect(ok.success).toBe(true);
     expect('apiKey' in (ok.data as object)).toBe(false);
+  });
+
+  it('accepts each of the three theme values in a settings reply', () => {
+    for (const theme of ['light', 'dark', 'system']) {
+      const ok = WireReplySchema.safeParse({
+        ok: true,
+        type: 'settings',
+        settings: { targetLang: 'vi', promptTemplate: 't', hasKey: true, theme },
+      });
+      expect(ok.success, `theme=${theme} must parse`).toBe(true);
+    }
+  });
+
+  it('rejects a settings reply with an unknown or missing theme', () => {
+    const base = { targetLang: 'vi', promptTemplate: 't', hasKey: true };
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'settings',
+        settings: { ...base, theme: 'sepia' },
+      }).success,
+    ).toBe(false);
+    expect(WireReplySchema.safeParse({ ok: true, type: 'settings', settings: base }).success).toBe(
+      false,
+    );
   });
   it('extra top-level field on inbound WireMessage is stripped (strip policy)', () => {
     // WireMessageSchema arms use z.object (strip mode) — a spurious apiKey at the top level

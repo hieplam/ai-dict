@@ -30,13 +30,18 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
       hasKey: true,
     });
     const pub = await new SafariStorageStore(area).get();
-    expect(pub).toEqual({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true });
+    expect(pub).toEqual({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true, theme: 'light' });
     expect('apiKey' in pub).toBe(false);
   });
 
   it('get() derives hasKey + fills defaults when unset', async () => {
     const empty = await new SafariStorageStore(fakeArea(undefined)).get();
-    expect(empty).toEqual({ targetLang: 'vi', promptTemplate: DEFAULT_TEMPLATE, hasKey: false });
+    expect(empty).toEqual({
+      targetLang: 'vi',
+      promptTemplate: DEFAULT_TEMPLATE,
+      hasKey: false,
+      theme: 'light',
+    });
   });
 
   it('set() merges only targetLang/promptTemplate, preserving apiKey + toggles', async () => {

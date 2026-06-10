@@ -1,17 +1,18 @@
 import { adoptStyles } from './styles/adopt';
-import { LIGHT_VARS, DARK_VARS, HOLLY_SVG } from './styles/tokens';
+import { LIGHT_VARS, THEME_DARK_CSS, HOLLY_SVG } from './styles/tokens';
 
 // `all:initial` isolates the host from arbitrary page CSS; it does NOT reset custom
-// properties, so the cozy --ad-* tokens declared alongside it survive. `color-scheme:
-// light dark` lets the pill adapt to the page/OS theme, and because every colour is set
+// properties, so the cozy --ad-* tokens declared alongside it survive. The pill is light
+// by default; THEME_DARK_CSS swaps the palette when the composition root stamps
+// theme="dark" (or theme="system" on a dark OS). Because every colour is set
 // explicitly from the warm token palette, the old `canvastext` regression (an invisible
 // "Define" on dark-theme pages) cannot recur. `z-index:2147483647` lifts the host above
 // page stacking contexts — `all:initial` would otherwise reset it to `auto`, letting a
 // positioned, positive-z ancestor of the selection occlude the trigger (support.claude.com
 // wraps headings in a `z-3` container).
 // @keyframes spin is duplicated per shadow root — keyframes are scoped per shadow tree.
-const CSS = `:host{all:initial;${LIGHT_VARS};z-index:2147483647;color-scheme:light dark}
-@media (prefers-color-scheme:dark){:host{${DARK_VARS}}}
+const CSS = `:host{all:initial;${LIGHT_VARS};z-index:2147483647;color-scheme:light}
+${THEME_DARK_CSS}
 button{display:inline-flex;align-items:center;gap:7px;font:600 13px/1 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-surface);border:1px solid var(--ad-line);padding:7px 12px 7px 9px;border-radius:999px;box-shadow:0 2px 5px oklch(0.4 0.05 50 / 0.16),0 10px 22px -10px oklch(0.4 0.06 45 / 0.4);cursor:pointer}
 button:hover{background:var(--ad-surface-soft)}
 button:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}

@@ -1,5 +1,5 @@
 import { adoptStyles } from './styles/adopt';
-import { LIGHT_VARS, DARK_VARS, HOLLY_SVG } from './styles/tokens';
+import { LIGHT_VARS, THEME_DARK_CSS, HOLLY_SVG } from './styles/tokens';
 
 // Where a reader creates a free Gemini key. Surfaced as the first onboarding step so a
 // first-time user is never left wondering where the key comes from.
@@ -23,8 +23,8 @@ const ICON_EXTERNAL =
 // row wrapping rather than overflowing. The single blocking step is the API key — language has
 // a sensible default — so the checklist shows what is already done (language) and what is still
 // missing (the key), and the progress count moves the moment a key is pasted.
-const CSS = `:host{${LIGHT_VARS};display:block;min-height:100vh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light dark}
-@media (prefers-color-scheme:dark){:host{${DARK_VARS}}button.primary{background:color-mix(in oklab,var(--ad-pine) 86%,white)}}
+const CSS = `:host{${LIGHT_VARS};display:block;min-height:100vh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light}
+${THEME_DARK_CSS}
 *{box-sizing:border-box}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
 .ribbon{height:4px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
@@ -62,7 +62,7 @@ input:focus,select:focus{outline:2px solid var(--ad-amber);outline-offset:1px;bo
 #reveal:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
 #key-help{margin:8px 0 0;font-size:12px;color:var(--ad-ink-soft)}
 .actions{margin-top:18px}
-button.primary{font:inherit;font-weight:600;font-size:14px;width:100%;padding:12px 18px;border-radius:11px;cursor:pointer;border:1px solid transparent;background:var(--ad-pine);color:var(--ad-surface)}
+button.primary{font:inherit;font-weight:600;font-size:14px;width:100%;padding:12px 18px;border-radius:11px;cursor:pointer;border:1px solid transparent;background:var(--ad-cta);color:var(--ad-surface)}
 button.primary:hover{filter:brightness(1.06)}
 button.primary:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
 #status{margin:13px 0 0;padding:9px 12px;border-radius:8px;border-left:3px solid var(--ad-pine);background:var(--ad-surface);color:var(--ad-ink);font-size:13px;font-weight:600}

@@ -24,7 +24,12 @@ const okResult: LookupResult = {
   fromCache: false,
   fetchedAt: 1,
 };
-const pub = (hasKey: boolean) => ({ targetLang: 'vi', promptTemplate: 'tpl', hasKey });
+const pub = (hasKey: boolean) => ({
+  targetLang: 'vi',
+  promptTemplate: 'tpl',
+  hasKey,
+  theme: 'light' as const,
+});
 
 function harness(opts: { hasKey?: boolean; impl?: FakeLookupClient['lookup'] }) {
   const selection = new FakeSelectionSource();

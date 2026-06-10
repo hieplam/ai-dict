@@ -1,6 +1,6 @@
 ---
 id: c3-101
-c3-seal: fd5cb58db7f13584edacffaa3555af5da10fca781de4fc835166412334eb2f7f
+c3-seal: 8e400a5cfbea307bdf264d01d72b34570b2d50dcab91b6868e4f66649279b808
 title: domain-types
 type: component
 category: foundation
@@ -64,7 +64,8 @@ Owns all shared domain interfaces and the canonical error pipeline. `types.ts` d
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
 | Settings | OUT | Extends PublicSettings; adds apiKey: string, cacheEnabled: boolean, saveHistory: boolean | Trusted contexts only (options page, storage adapter) | packages/app/src/domain/types.ts:74 |
-| PublicSettings | OUT | { targetLang: string; promptTemplate: string; hasKey: boolean } — no apiKey field | Safe for wire and port boundaries | packages/app/test/types.test.ts — [type-level] apiKey is NOT a key of PublicSettings |
+| PublicSettings | OUT | { targetLang: string; promptTemplate: string; hasKey: boolean; theme: Theme } — no apiKey field | Safe for wire and port boundaries | packages/app/test/types.test.ts — [type-level] apiKey is NOT a key of PublicSettings |
+| Theme | OUT | Union 'light' \| 'dark' \| 'system'; 'light' is the default everywhere a stored value is absent; 'system' follows prefers-color-scheme | Non-secret reader preference; safe on the wire | packages/app/src/domain/types.ts — export type Theme |
 | mapError | OUT | Pure function (ErrorInput) => LookupError; never throws; retryAfterSec absent (not undefined) when not provided by the server | Adapters (chrome, safari) only | packages/app/test/error-mapper.test.ts — HTTP 429 without retryAfterSec → retryAfterSec field is ABSENT |
 | isLookupError | OUT | Type guard (unknown) => e is LookupError; checks code, message, retryable presence | All catch sites in the codebase | packages/app/src/domain/types.ts:63 |
 | LookupErrorCode | OUT | Enum union: NO_KEY, INVALID_KEY, RATE_LIMIT, NETWORK, PARSE, UNKNOWN | Mirrored verbatim in WireMessageSchema error arm in c3-103 | packages/app/src/domain/types.ts:34 |

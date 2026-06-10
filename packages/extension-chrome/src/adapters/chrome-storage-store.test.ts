@@ -26,13 +26,18 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       hasKey: true,
     });
     const pub = await new ChromeStorageStore(area).get();
-    expect(pub).toEqual({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true });
+    expect(pub).toEqual({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true, theme: 'light' });
     expect('apiKey' in pub).toBe(false);
   });
 
   it('get() derives hasKey from a non-empty apiKey + fills defaults when unset', async () => {
     const empty = await new ChromeStorageStore(fakeArea(undefined)).get();
-    expect(empty).toEqual({ targetLang: 'vi', promptTemplate: DEFAULT_TEMPLATE, hasKey: false });
+    expect(empty).toEqual({
+      targetLang: 'vi',
+      promptTemplate: DEFAULT_TEMPLATE,
+      hasKey: false,
+      theme: 'light',
+    });
     const noKey = await new ChromeStorageStore(
       fakeArea({ targetLang: 'en', promptTemplate: 't', apiKey: '' }),
     ).get();

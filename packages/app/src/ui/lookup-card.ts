@@ -1,6 +1,6 @@
 import type { LookupError } from '../index';
 import { adoptStyles } from './styles/adopt';
-import { LIGHT_VARS, DARK_VARS, HOLLY_SVG } from './styles/tokens';
+import { LIGHT_VARS, THEME_DARK_CSS, HOLLY_SVG } from './styles/tokens';
 
 /**
  * A branded string type that marks HTML which has already passed the
@@ -29,16 +29,16 @@ const ICON_SHIELD =
 // Content lives in the card's LIGHT DOM, projected through a <slot>, so the shadow rules
 // target slotted nodes via ::slotted(). `color`/`font` are inherited and cross the slot
 // boundary from :host automatically. The card carries the full cozy surface (the
-// <bottom-sheet> panel is neutralised so this is the single visible surface), adapting to
-// light/dark via prefers-color-scheme.
+// <bottom-sheet> panel is neutralised so this is the single visible surface). Light by
+// default; THEME_DARK_CSS swaps the palette per the stamped theme attribute.
 // @keyframes spin is also defined in lookup-trigger.ts; each shadow root needs its own copy
 // because CSS @keyframes are scoped per shadow tree — they cannot be shared across roots.
 // The loading spinner is the ::before pseudo-element of the slotted .loadrow caption (styled
 // via ::slotted(.loadrow)::before); per CSS Scoping Level 1, @keyframes defined in a shadow
 // tree are not reliably in scope for light-DOM nodes, so we also inject the rule into the
 // document stylesheet once on element registration as a belt-and-suspenders fallback.
-const CSS = `:host{${LIGHT_VARS};display:block;box-sizing:border-box;width:100%;max-width:420px;margin:0 auto;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);border-radius:16px;box-shadow:var(--ad-shadow);overflow:hidden;color-scheme:light dark}
-@media (prefers-color-scheme:dark){:host{${DARK_VARS}}::slotted(.setup-cta){background:color-mix(in oklab,var(--ad-pine) 86%,white)}}
+const CSS = `:host{${LIGHT_VARS};display:block;box-sizing:border-box;width:100%;max-width:420px;margin:0 auto;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);border-radius:16px;box-shadow:var(--ad-shadow);overflow:hidden;color-scheme:light}
+${THEME_DARK_CSS}
 .ribbon{height:4px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
 .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px 2px 16px}
 .brand{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.01em;color:var(--ad-pine)}
@@ -56,7 +56,7 @@ button[data-act] svg{width:15px;height:15px;pointer-events:none}
 ::slotted(.holly){display:block;width:30px;height:30px;margin:16px auto 2px}
 ::slotted(.setup-title){text-align:center;margin:8px 0 0;font-size:16px;font-weight:600;color:var(--ad-ink)}
 ::slotted(.setup-text){text-align:center;margin:6px auto 0;max-width:32ch;font-size:13.5px;line-height:1.55;color:var(--ad-ink-soft)}
-::slotted(.setup-cta){display:block;margin:15px auto 6px;padding:9px 18px;border:0;border-radius:8px;background:var(--ad-pine);color:var(--ad-surface);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
+::slotted(.setup-cta){display:block;margin:15px auto 6px;padding:9px 18px;border:0;border-radius:8px;background:var(--ad-cta);color:var(--ad-surface);font:inherit;font-size:13px;font-weight:600;cursor:pointer}
 ::slotted(.setup-cta:hover){filter:brightness(1.06)}
 ::slotted(.setup-cta:focus-visible){outline:2px solid var(--ad-amber);outline-offset:2px}
 @keyframes spin{to{transform:rotate(360deg)}}

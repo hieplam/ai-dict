@@ -1,6 +1,7 @@
 import { adoptStyles } from './styles/adopt';
-import { LIGHT_VARS, DARK_VARS, HOLLY_SVG } from './styles/tokens';
+import { LIGHT_VARS, THEME_DARK_CSS, HOLLY_SVG } from './styles/tokens';
 import { DEFAULT_TEMPLATE } from '../domain/default-template';
+import type { Theme } from '../domain/types';
 
 // Restated locally to keep this component self-contained — the codebase already
 // duplicates this small shield across side-panel-view.ts and lookup-card.ts;
@@ -14,6 +15,7 @@ export interface SettingsFormValue {
   promptTemplate: string;
   cacheEnabled: boolean;
   saveHistory: boolean;
+  theme: Theme;
   // NOTE: `hasKey` is intentionally absent — it is a derived field computed by
   // the storage adapter as `Boolean(apiKey)` on read and is never emitted by
   // the form's 'save' event.
@@ -28,8 +30,8 @@ const ENV_KEY_HINT = 'Locked — supplied by this build. Click to learn more.';
 const DEFAULT_KEY_HELP = 'Stored locally on this device only.';
 const ENV_KEY_PLACEHOLDER = 'Loaded from GEMINI_API_KEY build env';
 
-const CSS = `:host{${LIGHT_VARS};display:block;min-height:100vh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light dark}
-@media (prefers-color-scheme:dark){:host{${DARK_VARS}}button.primary{background:color-mix(in oklab,var(--ad-pine) 86%,white)}}
+const CSS = `:host{${LIGHT_VARS};display:block;min-height:100vh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light}
+${THEME_DARK_CSS}
 *{box-sizing:border-box}
 .ribbon{height:4px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
 header{display:flex;align-items:center;gap:8px;max-width:640px;margin:0 auto;padding:14px 18px 6px}
@@ -58,8 +60,8 @@ button.sm{padding:6px 11px;font-size:12px}
 button.link{border:none;background:none;color:var(--ad-pine);padding:6px 4px;text-decoration:underline;text-underline-offset:2px}
 button.link:hover{background:none;text-decoration:none}
 .savebar{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:2px}
-button.primary{background:var(--ad-pine);border-color:transparent;color:var(--ad-surface)}
-button.primary:hover{background:var(--ad-pine);filter:brightness(1.06)}
+button.primary{background:var(--ad-cta);border-color:transparent;color:var(--ad-surface)}
+button.primary:hover{background:var(--ad-cta);filter:brightness(1.06)}
 .savebar .muted{font-size:12px;color:var(--ad-ink-soft)}
 #status{margin:14px 0 0;padding:9px 12px;border-radius:8px;border-left:3px solid var(--ad-pine);background:var(--ad-surface-soft);color:var(--ad-ink);font-size:13px;font-weight:600}
 #status.error{border-left-color:var(--ad-err);color:var(--ad-err)}
@@ -94,6 +96,15 @@ const MARKUP = `<div class="ribbon"></div>
       <div class="inline-actions">
         <button type="button" id="reset-tpl" class="sm">Restore default</button>
       </div>
+    </section>
+    <section class="sec" aria-labelledby="sec-look">
+      <h2 class="sec-h" id="sec-look">Appearance</h2>
+      <label for="theme">Theme</label>
+      <select id="theme">
+        <option value="light">Light</option>
+        <option value="dark">Dark</option>
+        <option value="system">Match system</option>
+      </select>
     </section>
     <section class="sec" aria-labelledby="sec-priv">
       <h2 class="sec-h" id="sec-priv">Privacy &amp; data</h2>
@@ -262,6 +273,7 @@ export class SettingsForm extends HTMLElement {
       promptTemplate: this.q<HTMLTextAreaElement>('#tpl').value,
       cacheEnabled: this.q<HTMLInputElement>('#cache').checked,
       saveHistory: this.q<HTMLInputElement>('#history').checked,
+      theme: this.q<HTMLSelectElement>('#theme').value as Theme,
     };
   }
 
@@ -277,6 +289,7 @@ export class SettingsForm extends HTMLElement {
     this.q<HTMLTextAreaElement>('#tpl').value = v.promptTemplate;
     this.q<HTMLInputElement>('#cache').checked = v.cacheEnabled;
     this.q<HTMLInputElement>('#history').checked = v.saveHistory;
+    this.q<HTMLSelectElement>('#theme').value = v.theme;
     // Re-assert the lock if the key arrived after keyFromEnv was set.
     if (this._keyFromEnv) this.applyKeyLock();
   }

@@ -35,6 +35,7 @@ describe('<settings-form>', () => {
       promptTemplate: 'T',
       cacheEnabled: true,
       saveHistory: true,
+      theme: 'light',
     };
     let captured: SettingsFormValue | undefined;
     el.addEventListener('save', (e) => {
@@ -142,6 +143,7 @@ describe('<settings-form>', () => {
       promptTemplate: 'P',
       cacheEnabled: false,
       saveHistory: false,
+      theme: 'light',
     };
     document.body.append(el); // connectedCallback flushes pending value
     expect(el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.value).toBe('deferred-key');
@@ -220,6 +222,7 @@ describe('<settings-form> restore default prompt', () => {
       promptTemplate: 'my custom prompt',
       cacheEnabled: true,
       saveHistory: true,
+      theme: 'light',
     };
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
@@ -239,6 +242,7 @@ describe('<settings-form> restore default prompt', () => {
       promptTemplate: 'my custom prompt',
       cacheEnabled: true,
       saveHistory: true,
+      theme: 'light',
     };
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
     el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
@@ -258,6 +262,7 @@ describe('<settings-form> restore default prompt', () => {
       promptTemplate: DEFAULT_TEMPLATE,
       cacheEnabled: true,
       saveHistory: true,
+      theme: 'light',
     };
     const confirmSpy = vi.spyOn(window, 'confirm');
     el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
@@ -301,6 +306,7 @@ describe('<settings-form> env-key lock', () => {
       promptTemplate: 'T',
       cacheEnabled: true,
       saveHistory: true,
+      theme: 'light',
     };
     el.keyFromEnv = true;
     let captured: SettingsFormValue | undefined;
@@ -321,6 +327,7 @@ describe('<settings-form> env-key lock', () => {
       promptTemplate: 'T',
       cacheEnabled: true,
       saveHistory: true,
+      theme: 'light',
     };
     el.keyFromEnv = true;
     const key = el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
@@ -353,10 +360,10 @@ describe('<settings-form> themed chrome', () => {
     expect(r.querySelector('footer')!.textContent).toContain('Stays on your device');
   });
 
-  it('groups controls into Connection, Translation, and Privacy & data sections', () => {
+  it('groups controls into Connection, Translation, Appearance, and Privacy & data sections', () => {
     const el = mountForm();
     const heads = [...el.shadowRoot!.querySelectorAll('.sec .sec-h')].map((h) => h.textContent);
-    expect(heads).toEqual(['Connection', 'Translation', 'Privacy & data']);
+    expect(heads).toEqual(['Connection', 'Translation', 'Appearance', 'Privacy & data']);
   });
 
   it('keeps every required control (incl. #status) inside the redesigned markup', () => {
@@ -368,6 +375,7 @@ describe('<settings-form> themed chrome', () => {
       '#target',
       '#tpl',
       '#reset-tpl',
+      '#theme',
       '#cache',
       '#history',
       '#save',
@@ -385,6 +393,34 @@ describe('<settings-form> themed chrome', () => {
   it('uses a single adopted stylesheet', () => {
     const el = mountForm();
     expect(el.shadowRoot!.adoptedStyleSheets.length).toBe(1);
+  });
+
+  it('defaults the theme select to light and offers dark + system', () => {
+    const el = mountForm();
+    const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#theme')!;
+    expect(select.value).toBe('light');
+    expect([...select.options].map((o) => o.value)).toEqual(['light', 'dark', 'system']);
+  });
+
+  it('round-trips the theme through value and the save event', () => {
+    const el = mountForm();
+    el.value = {
+      apiKey: '',
+      targetLang: 'vi',
+      promptTemplate: 'T',
+      cacheEnabled: true,
+      saveHistory: true,
+      theme: 'dark',
+    };
+    expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#theme')!.value).toBe('dark');
+    let captured: SettingsFormValue | undefined;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(captured!.theme).toBe('dark');
   });
 
   it('keeps the env notice hidden until keyFromEnv is set', () => {

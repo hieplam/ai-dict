@@ -236,12 +236,21 @@
               },
               "hasKey": {
                 "type": "boolean"
+              },
+              "theme": {
+                "type": "string",
+                "enum": [
+                  "light",
+                  "dark",
+                  "system"
+                ]
               }
             },
             "required": [
               "targetLang",
               "promptTemplate",
-              "hasKey"
+              "hasKey",
+              "theme"
             ],
             "additionalProperties": false
           }

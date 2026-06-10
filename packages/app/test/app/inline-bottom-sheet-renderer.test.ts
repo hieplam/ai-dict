@@ -48,6 +48,18 @@ describe('InlineBottomSheetRenderer', () => {
     expect(c.textContent).toContain('Looking up');
   });
 
+  it('stamps the theme as an ATTRIBUTE on the card (crosses the MAIN/isolated world boundary)', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderLoading(); // default theme
+    expect(card(h).getAttribute('theme')).toBe('light');
+    r.theme = 'dark'; // late theme arrival re-stamps the live card
+    expect(card(h).getAttribute('theme')).toBe('dark');
+    r.close();
+    r.renderLoading(); // a re-created card keeps the stored preference
+    expect(card(h).getAttribute('theme')).toBe('dark');
+  });
+
   it('renderResult feeds SANITIZED html (no <script>) into the card light DOM', () => {
     const h = host();
     const r = new InlineBottomSheetRenderer(h);

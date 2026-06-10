@@ -18,6 +18,19 @@ describe('ChromeFloatingTrigger (TriggerUI via <lookup-trigger>)', () => {
     expect(host.querySelector('lookup-trigger')).toBeNull();
   });
 
+  it('stamps the stored theme as an attribute on the bubble, live and across remounts', () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const trigger = new ChromeFloatingTrigger(host);
+    trigger.show({ x: 0, y: 0, w: 1, h: 1 }, () => {});
+    expect(host.querySelector('lookup-trigger')!.getAttribute('theme')).toBe('light');
+    trigger.theme = 'dark'; // settings arrive after the bubble is already up
+    expect(host.querySelector('lookup-trigger')!.getAttribute('theme')).toBe('dark');
+    trigger.hide();
+    trigger.show({ x: 0, y: 0, w: 1, h: 1 }, () => {});
+    expect(host.querySelector('lookup-trigger')!.getAttribute('theme')).toBe('dark');
+  });
+
   it('show() twice reuses a single trigger element (re-anchors, no duplicates)', () => {
     const host = document.createElement('div');
     document.body.append(host);

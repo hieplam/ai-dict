@@ -1,10 +1,11 @@
-import { registerContentElements, type TriggerUI, type AnchorRect } from '@ai-dict/app';
+import { registerContentElements, type TriggerUI, type AnchorRect, type Theme } from '@ai-dict/app';
 registerContentElements();
 
 const DISMISS_EVENTS = ['mousedown', 'touchstart'] as const;
 
 export class SafariFloatingTrigger implements TriggerUI {
   private el: HTMLElement | null = null;
+  private _theme: Theme = 'light';
   private onClick: (() => void) | null = null;
   private readonly handler = (): void => this.onClick?.();
   // Dismiss the bubble when the user starts an interaction anywhere but on it.
@@ -16,10 +17,20 @@ export class SafariFloatingTrigger implements TriggerUI {
 
   constructor(private readonly host: HTMLElement = document.body) {}
 
+  /** Stored theme preference, stamped as an attribute on the bubble (set by content.ts). */
+  set theme(t: Theme) {
+    this._theme = t;
+    this.el?.setAttribute('theme', t);
+  }
+  get theme(): Theme {
+    return this._theme;
+  }
+
   show(anchor: AnchorRect, onClick: () => void): void {
     this.onClick = onClick;
     if (!this.el) {
       this.el = document.createElement('lookup-trigger');
+      this.el.setAttribute('theme', this._theme);
       this.el.addEventListener('lookup-click', this.handler);
       this.host.append(this.el);
       // Capture phase so pages that stopPropagation can't trap the dismissal.

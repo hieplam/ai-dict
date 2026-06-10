@@ -2,9 +2,10 @@
 //
 // These are SELECTOR-LESS declaration strings so each component can fold them into its
 // own single adopted stylesheet (preserving adoptedStyleSheets.length === 1, which a
-// regression test pins). They are applied on each component's :host rule for light, and
-// re-applied inside a nested `@media (prefers-color-scheme: dark)` block for dark — the
-// card and trigger therefore adapt to the host page / OS theme. Custom properties survive
+// regression test pins). They are applied on each component's :host rule for light (the
+// default — no attribute means light), and re-applied by THEME_DARK_CSS when the host
+// carries theme="dark", or theme="system" with a dark OS (the reader's stored theme
+// preference, stamped on the host by each composition root). Custom properties survive
 // `all: initial` (the `all` shorthand does not reset `--*`), so the trigger can isolate
 // its host and still read these.
 //
@@ -28,6 +29,7 @@ export const LIGHT_VARS = [
   '--ad-err:oklch(0.5 0.17 25)',
   '--ad-glow:radial-gradient(130% 85% at 50% -14%, oklch(0.95 0.075 88 / 0.78), transparent 72%)',
   '--ad-shadow:0 1px 1px oklch(0.45 0.05 60 / 0.05),0 12px 26px -10px oklch(0.5 0.05 60 / 0.18),0 28px 56px -24px oklch(0.5 0.05 55 / 0.22)',
+  '--ad-cta:var(--ad-pine)',
 ].join(';');
 
 export const DARK_VARS = [
@@ -42,7 +44,17 @@ export const DARK_VARS = [
   '--ad-err:oklch(0.72 0.15 25)',
   '--ad-glow:radial-gradient(130% 85% at 50% -14%, oklch(0.78 0.13 78 / 0.5), transparent 72%)',
   '--ad-shadow:0 1px 1px oklch(0 0 0 / 0.3),0 16px 32px -10px oklch(0 0 0 / 0.52),0 40px 70px -28px oklch(0 0 0 / 0.58)',
+  // On a dark surface the deep pine CTA loses contrast; lift it toward white.
+  '--ad-cta:color-mix(in oklab,var(--ad-pine) 86%,white)',
 ].join(';');
+
+// The shared dark-theme block every themed component appends to its single stylesheet.
+// No attribute → light (LIGHT_VARS on :host). theme="dark" → dark unconditionally.
+// theme="system" → dark only when the OS prefers it (the pre-setting behavior).
+// `color-scheme` rides along so native widgets (scrollbars, selects) match the surface;
+// hosts set `color-scheme:light` in their base :host rule.
+export const THEME_DARK_CSS = `:host([theme="dark"]){${DARK_VARS};color-scheme:dark}
+@media (prefers-color-scheme:dark){:host([theme="system"]){${DARK_VARS};color-scheme:dark}}`;
 
 // A clean, geometric holly sprig (two pine leaves + a cranberry berry cluster). CSP-safe
 // markup with presentation-attribute fills bound to the token palette — deliberately NOT

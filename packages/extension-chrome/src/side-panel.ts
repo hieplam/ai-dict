@@ -69,21 +69,22 @@ view.addEventListener('open-settings', () => {
   void chrome.runtime.openOptionsPage();
 });
 
-// On open, if no key is configured the panel can't look anything up — so instead of the
-// "Select a word…" teaching state (which would mislead), show the same setup invite the card
-// shows, pointing the reader straight at Settings. A later lookup mirroring in overrides it.
-async function showSetupIfNoKey(): Promise<void> {
-  // An env-key build (GEMINI_API_KEY baked in) is always usable even with no stored key, so it
-  // must never show the setup nag — mirrors how the options page treats the env key as set up.
-  if (__GEMINI_KEY_FROM_ENV__) return;
+// On open, one settings probe drives two things: stamp the reader's theme on the panel,
+// and — if no key is configured — swap the teaching empty state for the same setup invite
+// the card shows, pointing the reader straight at Settings. A later lookup overrides it.
+async function initFromSettings(): Promise<void> {
   try {
     const raw: unknown = await chrome.runtime.sendMessage({ type: 'settings.get' });
     const reply = raw as WireReply | undefined;
-    if (reply && reply.ok && reply.type === 'settings' && !reply.settings.hasKey) {
+    if (!reply || !reply.ok || reply.type !== 'settings') return;
+    view.setAttribute('theme', reply.settings.theme);
+    // An env-key build (GEMINI_API_KEY baked in) is always usable even with no stored key, so
+    // it must never show the setup nag — mirrors how the options page treats the env key.
+    if (!__GEMINI_KEY_FROM_ENV__ && !reply.settings.hasKey) {
       view.focusState = { kind: 'error', error: mapError({ kind: 'no-key' }) };
     }
   } catch {
-    // Best-effort probe; the empty teaching state is a fine fallback if it fails.
+    // Best-effort probe; light theme + the empty teaching state are a fine fallback.
   }
 }
 
@@ -114,6 +115,6 @@ chrome.runtime.onMessage.addListener(
 
 // On open, populate Recent from stored history. The focus region stays on its teaching empty
 // state until the first lookup mirrors in or a recent row is clicked — unless no key is set,
-// in which case showSetupIfNoKey swaps it for the setup invite.
+// in which case initFromSettings swaps it for the setup invite (and stamps the theme).
 void refreshRecent();
-void showSetupIfNoKey();
+void initFromSettings();

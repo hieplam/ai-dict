@@ -52,6 +52,27 @@ describe('<lookup-trigger>', () => {
     expect(parseInt(hostRule!.style.zIndex, 10)).toBeGreaterThanOrEqual(2147483647);
   });
 
+  it('theme contract: light needs no attribute; [theme="dark"] and dark-OS [theme="system"] swap the palette', () => {
+    const el = mount('lookup-trigger');
+    const sheet = el.shadowRoot!.adoptedStyleSheets[0]!;
+    const rules = [...sheet.cssRules];
+    const styleRules = rules.filter((r): r is CSSStyleRule => r instanceof CSSStyleRule);
+    // Unconditional dark override for the explicit setting.
+    expect(styleRules.some((r) => r.selectorText === ':host([theme="dark"])')).toBe(true);
+    // OS-following dark only inside the media query, and only for theme="system" —
+    // a host WITHOUT the attribute (or with theme="light") must never go dark.
+    const media = rules.find(
+      (r): r is CSSMediaRule =>
+        r instanceof CSSMediaRule && r.conditionText.includes('prefers-color-scheme'),
+    );
+    expect(media).toBeTruthy();
+    const mediaSelectors = [...media!.cssRules]
+      .filter((r): r is CSSStyleRule => r instanceof CSSStyleRule)
+      .map((r) => r.selectorText);
+    expect(mediaSelectors).toContain(':host([theme="system"])');
+    expect(mediaSelectors).not.toContain(':host');
+  });
+
   it('emits a composed "lookup-click" on activation', () => {
     const el = mount('lookup-trigger');
     const spy = vi.fn();

@@ -15,6 +15,7 @@ function defaults(): Settings {
     apiKey: '',
     cacheEnabled: true,
     saveHistory: true,
+    theme: 'light',
   };
 }
 
@@ -32,6 +33,8 @@ export class ChromeStorageStore implements SettingsStore {
       targetLang: s?.targetLang ?? DEFAULT_TARGET,
       promptTemplate: s?.promptTemplate ?? DEFAULT_TEMPLATE,
       hasKey: Boolean(s?.apiKey),
+      // Settings stored before the theme setting existed have no `theme` — default light.
+      theme: s?.theme ?? 'light',
     };
   }
 

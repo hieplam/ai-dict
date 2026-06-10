@@ -17,14 +17,17 @@ const DEFAULTS: Settings = {
   apiKey: '',
   cacheEnabled: true,
   saveHistory: true,
+  theme: 'light',
 };
 
 async function load(): Promise<Settings> {
   const { settings } = (await browser.storage.local.get('settings')) as { settings?: Settings };
-  return settings ?? DEFAULTS;
+  // Settings stored before the theme setting existed have no `theme` — DEFAULTS fills it.
+  return settings ? { ...DEFAULTS, ...settings } : DEFAULTS;
 }
 
 void load().then((s) => {
+  (form as unknown as HTMLElement).setAttribute('theme', s.theme);
   (form as unknown as { value: Settings }).value = s;
 });
 
@@ -51,7 +54,11 @@ form.addEventListener('save', (e) => {
       browser.storage.local.set({ settings: { ...cur, ...next, hasKey: Boolean(next.apiKey) } }),
     )
     .then(
-      () => form.setStatus('Settings saved'),
+      () => {
+        // Re-stamp so the page itself reflects a theme change immediately on save.
+        (form as unknown as HTMLElement).setAttribute('theme', next.theme);
+        form.setStatus('Settings saved');
+      },
       () => form.setStatus('Could not save settings', 'error'),
     );
 });
