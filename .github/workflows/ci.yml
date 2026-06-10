@@ -208,6 +208,8 @@ jobs:
   sonarcloud: # static analysis + coverage upload; gate blocks PR via qualitygate.wait
     needs: install
     runs-on: ubuntu-latest
+    env:
+      SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }} # secrets ctx is unavailable in step `if`; env is
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4.3.1
         with:
@@ -226,14 +228,12 @@ jobs:
       # Non-blocking coverage on purpose: coverage-gate enforces thresholds and
       # the test-* jobs catch real failures; this job only needs the lcov files
       # to exist so a threshold miss never prevents the scan from running.
-      - if: ${{ secrets.SONAR_TOKEN != '' }}
+      - if: ${{ env.SONAR_TOKEN != '' }}
         run: bun run --filter '*' test -- --coverage || true
-      - if: ${{ secrets.SONAR_TOKEN != '' }}
+      - if: ${{ env.SONAR_TOKEN != '' }}
         uses: SonarSource/sonarqube-scan-action@713881670b6b3676cda39549040e2d88c70d582e # v8.2.0
         with:
           args: -Dsonar.qualitygate.wait=true
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
 
   secret-scan: # gitleaks on PR + nightly (§8.6)
     runs-on: ubuntu-latest
