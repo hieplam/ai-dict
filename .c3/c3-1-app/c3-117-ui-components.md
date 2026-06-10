@@ -1,6 +1,6 @@
 ---
 id: c3-117
-c3-seal: 8c54440527afa3b85ac711d4f8555bf12c13125304f9fd9ddf9ebf25b1e6240a
+c3-seal: 40b6d31ae6c598dd6c8a6da2f4a134064f5edbcac9d006c17c58172730aa55d2
 title: ui-components
 type: component
 category: feature
@@ -30,7 +30,7 @@ Provide the complete set of framework-free custom elements and their supporting 
 
 ## Purpose
 
-This component owns all user-visible elements used by the ai-dict extension. It exposes four custom elements: `<lookup-trigger>` renders a floating "Define" button in open shadow DOM with `z-index: 2147483647` (pinned explicitly because `all: initial` resets z-index to `auto`, causing the trigger to be occluded by page stacking contexts); `<lookup-card>` renders dictionary results in three states (loading, result, error) with content placed in the element's **light DOM** projected through a `<slot>` so that the content-script renderer can drive it across the Chrome MV3 isolated-world boundary (Chromium 390807); `<bottom-sheet>` provides an accessible modal overlay with ARIA `role="dialog"`, focus trapping (Tab / Shift+Tab), Escape dismiss, scrim-click dismiss, reduced-motion support, and focus restoration on disconnect; `<settings-form>` renders the full options form in a trusted extension page only, collecting API key, target language, prompt template, and cache/history toggles, and supporting an env-key lock mode when `GEMINI_API_KEY` is baked into the build. The `SafeHtml` branded type is exported from this component and is the type contract that forces all rendering code to obtain sanitized HTML through c3-116. This component does NOT perform any sanitization itself, does NOT communicate with the service worker, and does NOT own any business logic.
+This component owns all user-visible elements used by the ai-dict extension. It exposes four custom elements: `<lookup-trigger>` renders a floating "Define" button in open shadow DOM with `z-index: 2147483647` (pinned explicitly because `all: initial` resets z-index to `auto`, causing the trigger to be occluded by page stacking contexts); `<lookup-card>` renders dictionary results in three states (loading, result, error) with content placed in the element's **light DOM** projected through a `<slot>` so that the content-script renderer can drive it across the Chrome MV3 isolated-world boundary (Chromium 390807); `<bottom-sheet>` provides an accessible modal overlay with ARIA `role="dialog"`, focus trapping (Tab / Shift+Tab), Escape dismiss, scrim-click dismiss, reduced-motion support, and focus restoration on disconnect; `<settings-form>` renders the full options form (AI-provider picker with one key row per provider, env-key lock for Gemini) in a trusted extension page only, collecting API key, target language, prompt template, and cache/history toggles, and supporting an env-key lock mode when `GEMINI_API_KEY` is baked into the build. The `SafeHtml` branded type is exported from this component and is the type contract that forces all rendering code to obtain sanitized HTML through c3-116. This component does NOT perform any sanitization itself, does NOT communicate with the service worker, and does NOT own any business logic.
 
 ## Foundational Flow
 

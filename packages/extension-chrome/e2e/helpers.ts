@@ -7,6 +7,13 @@ export const GEMINI_OK_BODY = JSON.stringify({
   candidates: [{ content: { parts: [{ text: '## bank\nA financial institution.' }] } }],
 });
 
+export const OPENAI_GLOB = 'https://api.openai.com/**';
+
+/** Default OK OpenAI chat-completions body for the canonical "bank" fixture. */
+export const OPENAI_OK_BODY = JSON.stringify({
+  choices: [{ message: { content: '## bank\nA financial institution (via OpenAI).' } }],
+});
+
 export interface SettingsOverrides {
   targetLang?: string;
   promptTemplate?: string;
@@ -15,6 +22,8 @@ export interface SettingsOverrides {
   saveHistory?: boolean;
   hasKey?: boolean;
   theme?: 'light' | 'dark' | 'system';
+  provider?: 'gemini' | 'openai';
+  openaiApiKey?: string;
 }
 
 /** Write a full settings object to storage. Overrides merge onto sensible defaults. */
@@ -29,6 +38,8 @@ export async function seedSettings(page: Page, overrides: SettingsOverrides = {}
         saveHistory: true,
         hasKey: true,
         theme: 'light',
+        provider: 'gemini',
+        openaiApiKey: '',
         ...o,
       },
     });
@@ -68,6 +79,31 @@ export async function mockGemini(
       contentType: 'application/json',
       headers: opts.headers ?? {},
       body: opts.body ?? GEMINI_OK_BODY,
+    });
+  });
+  return calls;
+}
+
+/**
+ * Fake the OpenAI chat-completions endpoint and count hits. Routes on the CONTEXT for the
+ * same reason as mockGemini: the fetch originates in the extension's service worker.
+ */
+export async function mockOpenAI(
+  context: BrowserContext,
+  opts: MockGeminiOpts = {},
+): Promise<{ count: number }> {
+  const calls = { count: 0 };
+  await context.route(OPENAI_GLOB, async (route) => {
+    calls.count++;
+    if (opts.abort) {
+      await route.abort('failed');
+      return;
+    }
+    await route.fulfill({
+      status: opts.status ?? 200,
+      contentType: 'application/json',
+      headers: opts.headers ?? {},
+      body: opts.body ?? OPENAI_OK_BODY,
     });
   });
   return calls;

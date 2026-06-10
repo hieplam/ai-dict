@@ -3,6 +3,7 @@ import {
   registerOnboarding,
   DEFAULT_TEMPLATE,
   buildHistoryExport,
+  hasKeyFor,
   type Settings,
   type SettingsForm,
   type SettingsFormValue,
@@ -33,6 +34,8 @@ const DEFAULTS: Settings = {
   cacheEnabled: true,
   saveHistory: true,
   theme: 'light',
+  provider: 'gemini',
+  openaiApiKey: '',
 };
 
 async function load(): Promise<Settings> {
@@ -59,7 +62,9 @@ function download(filename: string, content: string): void {
 // Map full Settings to the form value shape (SettingsFormValue has no hasKey).
 function toFormValue(s: Settings): SettingsFormValue {
   return {
+    provider: s.provider,
     apiKey: s.apiKey,
+    openaiApiKey: s.openaiApiKey,
     targetLang: s.targetLang,
     promptTemplate: s.promptTemplate,
     cacheEnabled: s.cacheEnabled,
@@ -85,7 +90,7 @@ function wireSettings(form: SettingsForm): void {
     const next = (e as CustomEvent<SettingsFormValue>).detail;
     void load()
       .then((cur) =>
-        chrome.storage.local.set({ settings: { ...cur, ...next, hasKey: Boolean(next.apiKey) } }),
+        chrome.storage.local.set({ settings: { ...cur, ...next, hasKey: hasKeyFor(next) } }),
       )
       .then(
         () => {
@@ -172,6 +177,6 @@ function mountOnboarding(initial: Settings): void {
 
 // Route once on load: no usable key → onboarding; otherwise the full settings screen.
 void load().then((s) => {
-  if (KEY_FROM_ENV || Boolean(s.apiKey)) mountSettings(s);
+  if (KEY_FROM_ENV || hasKeyFor(s)) mountSettings(s);
   else mountOnboarding(s);
 });

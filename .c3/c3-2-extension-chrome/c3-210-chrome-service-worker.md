@@ -1,6 +1,6 @@
 ---
 id: c3-210
-c3-seal: e9e578a4b67e279a7d0a67ec44655fd0a127286cf06a3a196b6282040b21edaa
+c3-seal: e7a35793432be4307f88b6988aeecbb041299ed69f32a2c965f6b268a0697407
 title: chrome-service-worker
 type: component
 category: feature
@@ -26,12 +26,12 @@ Act as the extension's service-worker composition root: wire concrete adapters i
 | Runtime | service worker |
 | Public surface | N.A - sw.ts is an entry point; it exports no symbols |
 | Bundled into | sw.js (declared as background.service_worker in manifest.json) |
-| Depends on | buildRouter (c3-111), GeminiLookupClient (c3-114), ChromeStorageStore (c3-201), ChromeKvStore (c3-201), classifyInbound, mapError, WriteQueue, SUPPRESS from @ai-dict/app |
+| Depends on | buildRouter (c3-111), GeminiLookupClient + OpenAILookupClient + createLookupClientSelector (c3-114), ChromeStorageStore (c3-201), ChromeKvStore (c3-201), classifyInbound, mapError, WriteQueue, SUPPRESS from @ai-dict/app |
 | Build-time define | GEMINI_API_KEY injected by esbuild; declared in packages/extension-chrome/src/build-defines.d.ts |
 
 ## Purpose
 
-`sw.ts` is the sole composition root for the service-worker world. It constructs a `GeminiLookupClient` with a `getApiKey` resolver that prefers the build-time constant `__GEMINI_API_KEY__` over the stored key — allowing personal builds that skip the options page entirely. It passes concrete adapters (`ChromeStorageStore`, `ChromeKvStore`, `WriteQueue`) into `buildRouter` to produce a typed message handler. The `chrome.runtime.onMessage` listener runs every inbound message through `classifyInbound` first; only messages classified as `'process'` reach the router, all others are either ignored or answered with a rejection reply. `readFullSettings()` is the **only place** the full `Settings` object (including `apiKey`) is ever read — no other file in the extension bundle receives the raw key. The SW also configures the side panel to open exclusively on toolbar click via `chrome.sidePanel.setPanelBehavior`. This component does NOT render any UI, does NOT own port interface definitions, and does NOT persist data directly (that is delegated to the adapters).
+`sw.ts` is the sole composition root for the service-worker world. It constructs a `GeminiLookupClient` and an `OpenAILookupClient`, wraps both in `createLookupClientSelector` (the provider is read from stored settings per lookup, defaulting to gemini), and gives the Gemini client a `getApiKey` resolver that prefers the build-time constant `__GEMINI_API_KEY__` over the stored key — allowing personal builds that skip the options page entirely. It passes concrete adapters (`ChromeStorageStore`, `ChromeKvStore`, `WriteQueue`) into `buildRouter` to produce a typed message handler. The `chrome.runtime.onMessage` listener runs every inbound message through `classifyInbound` first; only messages classified as `'process'` reach the router, all others are either ignored or answered with a rejection reply. `readFullSettings()` is the **only place** the full `Settings` object (including `apiKey`) is ever read — no other file in the extension bundle receives the raw key. The SW also configures the side panel to open exclusively on toolbar click via `chrome.sidePanel.setPanelBehavior`. This component does NOT render any UI, does NOT own port interface definitions, and does NOT persist data directly (that is delegated to the adapters).
 
 ## Foundational Flow
 
@@ -61,8 +61,8 @@ Act as the extension's service-worker composition root: wire concrete adapters i
 | Reference | Type | Governs | Precedence | Notes |
 | --- | --- | --- | --- | --- |
 | rule-gate-runtime-messages | rule | classifyInbound check before every router() call; sender.id compared to chrome.runtime.id | Mandatory | Prevents foreign pages from invoking the Gemini client |
-| ref-dependency-injection | ref | buildRouter(...) is the single composition point for c3-111 and c3-114; no adapter is constructed elsewhere in SW scope | Primary | GeminiLookupClient and all storage adapters are passed in, not imported by the router |
-| rule-api-key-isolation | rule | readFullSettings() is the only call site that reads full Settings including apiKey; no other module in this bundle receives it | Mandatory | getApiKey lambda is captured in the GeminiLookupClient closure; key never serialised into a reply |
+| ref-dependency-injection | ref | buildRouter(...) is the single composition point for c3-111 and c3-114; no adapter is constructed elsewhere in SW scope | Primary | The lookup clients, selector, and all storage adapters are passed in, not imported by the router |
+| rule-api-key-isolation | rule | readFullSettings() is the only call site that reads full Settings including apiKey; no other module in this bundle receives it | Mandatory | getApiKey lambdas are captured in the client closures (Gemini env-define wins for Gemini only; the OpenAI key always comes from stored settings); keys never serialised into a reply |
 | rule-typed-errors | rule | Thrown errors are converted via mapError before being sent as wire replies | Mandatory | Ensures content script receives a structured WireReply not a raw exception |
 
 ## Contract

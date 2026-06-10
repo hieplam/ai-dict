@@ -1,6 +1,6 @@
 ---
 id: c3-113
-c3-seal: 89be819fc328276cec98f94a0a9e5e1d4826ea1b692eee779bb0337bde15334d
+c3-seal: f0a0a9769f798fdac16d07694a4dc0b1b3510dec59f9cedc9aec16039c5301c7
 title: prompt-builder
 type: component
 category: feature
@@ -25,7 +25,7 @@ Substitute named placeholders in a prompt template string and ship the default b
 | Public surface | renderTemplate(template, vars): string, TemplateVars (prompt-template); DEFAULT_TEMPLATE: string (default-template) |
 | Bundled into | packages/app/src/domain/prompt-template.ts and packages/app/src/domain/default-template.ts |
 | Depends on | No port or external import — pure string transformation |
-| Consumed by | c3-114 (gemini-client) which calls renderTemplate to build the final prompt body before sending to the API |
+| Consumed by | c3-114 (lookup-clients) whose provider clients call renderTemplate to build the final prompt body before sending to the API |
 
 ## Purpose
 
@@ -62,8 +62,8 @@ Owns prompt construction: `renderTemplate` replaces only the supported placehold
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
 | TemplateVars | IN | Interface: required word, context, target_lang; caller-supplied source_lang, url, title (all defaulted or nullable) | Domain/Gemini client | packages/app/src/domain/prompt-template.ts — export interface TemplateVars |
-| renderTemplate(template, vars) | OUT | Pure function: returns the template with supported placeholders substituted; unknown placeholders untouched; no side effects | c3-114 gemini-client | packages/app/src/domain/prompt-template.ts — export function renderTemplate |
-| DEFAULT_TEMPLATE | OUT | Constant string with {word}, {context}, {target_lang} placeholders; omits {url} and {title} by spec | c3-114 gemini-client, settings store default | packages/app/src/domain/default-template.ts — export const DEFAULT_TEMPLATE |
+| renderTemplate(template, vars) | OUT | Pure function: returns the template with supported placeholders substituted; unknown placeholders untouched; no side effects | c3-114 lookup-clients | packages/app/src/domain/prompt-template.ts — export function renderTemplate |
+| DEFAULT_TEMPLATE | OUT | Constant string with {word}, {context}, {target_lang} placeholders; omits {url} and {title} by spec | c3-114 lookup-clients, settings store default | packages/app/src/domain/default-template.ts — export const DEFAULT_TEMPLATE |
 
 ## Change Safety
 
@@ -72,7 +72,7 @@ Owns prompt construction: `renderTemplate` replaces only the supported placehold
 | {url} or {title} added to DEFAULT_TEMPLATE | Editing default-template.ts to include page-metadata placeholders | Test does NOT reference {url} or {title} fails | bun run --filter @ai-dict/app test packages/app/test/default-template.test.ts |
 | Unknown-placeholder leakage | Changing the SUPPORTED tuple or the regex fallback | Test leaves unknown placeholders untouched fails | packages/app/test/prompt-template.test.ts |
 | source_lang default removed | Removing the ?? 'English' fallback in renderTemplate | Test defaults {source_lang} to English when not supplied fails | bun run --filter @ai-dict/app test packages/app/test/prompt-template.test.ts |
-| TemplateVars interface drift | Adding or removing required fields | TypeScript compile error in c3-114 gemini-client call sites | bun run --filter @ai-dict/app typecheck |
+| TemplateVars interface drift | Adding or removing required fields | TypeScript compile error in c3-114 lookup-clients call sites | bun run --filter @ai-dict/app typecheck |
 
 ## Derived Materials
 

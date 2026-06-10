@@ -1,18 +1,18 @@
 ---
 id: c3-312
-c3-seal: ecbedb3e4c0bb9752a66a89784ff13d48bd6bd7a0eb718c69ffc755fc24783d1
+c3-seal: 0cc90ffb262448e1c1f9ac0a99aaf8e0e838ac681df0b05aad1d91c17d7fe960
 title: safari-options-page
 type: component
 category: feature
 parent: c3-3
-goal: Provide the trusted Safari extension page where the user enters and saves their Gemini API key and adjusts settings directly into `browser.storage.local`.
+goal: Provide the trusted Safari extension page where the user picks the AI provider (Gemini or OpenAI), enters and saves the matching API key, and adjusts settings directly into `browser.storage.local`.
 uses:
     - rule-api-key-isolation
 ---
 
 ## Goal
 
-Provide the trusted Safari extension page where the user enters and saves their Gemini API key and adjusts settings directly into `browser.storage.local`.
+Provide the trusted Safari extension page where the user picks the AI provider (Gemini or OpenAI), enters and saves the matching API key, and adjusts settings directly into `browser.storage.local`.
 
 ## Parent Fit
 
@@ -44,7 +44,7 @@ Owns the settings page lifecycle in the trusted extension-page context where dir
 
 | Aspect | Detail | Reference |
 | --- | --- | --- |
-| Outcome | User can enter a Gemini API key, change target language and prompt template, and clear cache or history; changes persist to browser.storage.local immediately | rule-api-key-isolation |
+| Outcome | User can pick a provider and enter its API key, change target language and prompt template, and clear cache or history; changes persist to browser.storage.local immediately | rule-api-key-isolation |
 | Primary path (save) | User submits form → save event fires → load() re-reads current settings → merged object written via browser.storage.local.set({settings: {...cur, ...next}}) (see packages/extension-safari/src/options.ts) | rule-api-key-isolation |
 | Primary path (key entry) | apiKey is part of Settings; <settings-form> collects it and fires it in the save event detail; it is written directly to storage in this trusted context (see packages/extension-safari/src/options.ts) | rule-api-key-isolation |
 | Alternate path (clear ops) | clear-cache / clear-history / test-connection events send messages to SW via browser.runtime.sendMessage; options page does not wait for or display the SW reply | c3-310 |

@@ -30,7 +30,9 @@ describe('<settings-form>', () => {
   it('emits "save" with the collected form value', () => {
     const el = mountForm();
     el.value = {
+      provider: 'gemini',
       apiKey: '',
+      openaiApiKey: '',
       targetLang: 'vi',
       promptTemplate: 'T',
       cacheEnabled: true,
@@ -138,7 +140,9 @@ describe('<settings-form>', () => {
     const el = document.createElement('settings-form') as SettingsForm;
     // Set value before appending to DOM (no shadowRoot yet) — must not throw
     el.value = {
+      provider: 'gemini',
       apiKey: 'deferred-key',
+      openaiApiKey: '',
       targetLang: 'es',
       promptTemplate: 'P',
       cacheEnabled: false,
@@ -217,7 +221,9 @@ describe('<settings-form> restore default prompt', () => {
   it('restores the default after confirm when the field was customized', () => {
     const el = mountForm();
     el.value = {
+      provider: 'gemini',
       apiKey: '',
+      openaiApiKey: '',
       targetLang: 'vi',
       promptTemplate: 'my custom prompt',
       cacheEnabled: true,
@@ -237,7 +243,9 @@ describe('<settings-form> restore default prompt', () => {
   it('leaves the template unchanged when the confirm is cancelled', () => {
     const el = mountForm();
     el.value = {
+      provider: 'gemini',
       apiKey: '',
+      openaiApiKey: '',
       targetLang: 'vi',
       promptTemplate: 'my custom prompt',
       cacheEnabled: true,
@@ -257,7 +265,9 @@ describe('<settings-form> restore default prompt', () => {
   it('does not prompt when the template already equals the default', () => {
     const el = mountForm();
     el.value = {
+      provider: 'gemini',
       apiKey: '',
+      openaiApiKey: '',
       targetLang: 'vi',
       promptTemplate: DEFAULT_TEMPLATE,
       cacheEnabled: true,
@@ -301,7 +311,9 @@ describe('<settings-form> env-key lock', () => {
   it('preserves the stored key on save so locking never wipes it', () => {
     const el = mountForm();
     el.value = {
+      provider: 'gemini',
       apiKey: 'AIza-stored',
+      openaiApiKey: '',
       targetLang: 'vi',
       promptTemplate: 'T',
       cacheEnabled: true,
@@ -322,7 +334,9 @@ describe('<settings-form> env-key lock', () => {
   it('does not display the stored key value while locked', () => {
     const el = mountForm();
     el.value = {
+      provider: 'gemini',
       apiKey: 'AIza-stored',
+      openaiApiKey: '',
       targetLang: 'vi',
       promptTemplate: 'T',
       cacheEnabled: true,
@@ -346,6 +360,108 @@ describe('<settings-form> env-key lock', () => {
   it('has no axe violations while locked', async () => {
     const el = mountForm();
     el.keyFromEnv = true;
+    expect(await axeViolations(el)).toEqual([]);
+  });
+});
+
+describe('<settings-form> provider selection', () => {
+  function valueWith(over: Partial<SettingsFormValue>): SettingsFormValue {
+    return {
+      provider: 'gemini',
+      apiKey: '',
+      openaiApiKey: '',
+      targetLang: 'vi',
+      promptTemplate: 'T',
+      cacheEnabled: true,
+      saveHistory: true,
+      theme: 'light',
+      ...over,
+    };
+  }
+
+  it('offers Gemini and OpenAI and defaults to Gemini', () => {
+    const el = mountForm();
+    const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#provider')!;
+    expect(select.value).toBe('gemini');
+    expect([...select.options].map((o) => o.value)).toEqual(['gemini', 'openai']);
+    expect(el.shadowRoot!.querySelector('#key-label')!.textContent).toBe('Gemini API key');
+  });
+
+  it('switching provider swaps the key field label and value without losing either key', () => {
+    const el = mountForm();
+    el.value = valueWith({ apiKey: 'AIza-g', openaiApiKey: 'sk-o' });
+    const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#provider')!;
+    const key = el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
+    expect(key.value).toBe('AIza-g');
+    select.value = 'openai';
+    select.dispatchEvent(new Event('change'));
+    expect(el.shadowRoot!.querySelector('#key-label')!.textContent).toBe('OpenAI API key');
+    expect(key.value).toBe('sk-o');
+    select.value = 'gemini';
+    select.dispatchEvent(new Event('change'));
+    expect(key.value).toBe('AIza-g');
+  });
+
+  it('edits made before a switch are stashed and emitted on save', () => {
+    const el = mountForm();
+    el.value = valueWith({});
+    const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#provider')!;
+    const key = el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
+    key.value = 'AIza-typed';
+    select.value = 'openai';
+    select.dispatchEvent(new Event('change'));
+    key.value = 'sk-typed';
+    let captured: SettingsFormValue | undefined;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(captured).toMatchObject({
+      provider: 'openai',
+      apiKey: 'AIza-typed',
+      openaiApiKey: 'sk-typed',
+    });
+  });
+
+  it('hydrating with provider openai renders the OpenAI key', () => {
+    const el = mountForm();
+    el.value = valueWith({ provider: 'openai', apiKey: 'AIza-g', openaiApiKey: 'sk-o' });
+    expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#provider')!.value).toBe('openai');
+    expect(el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.value).toBe('sk-o');
+    expect(el.shadowRoot!.querySelector('#key-label')!.textContent).toBe('OpenAI API key');
+  });
+
+  it('env-key lock applies to Gemini only — switching to OpenAI unlocks the field', () => {
+    const el = mountForm();
+    el.value = valueWith({ apiKey: 'AIza-stored', openaiApiKey: 'sk-o' });
+    el.keyFromEnv = true;
+    const key = el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
+    const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#provider')!;
+    expect(key.readOnly).toBe(true);
+    select.value = 'openai';
+    select.dispatchEvent(new Event('change'));
+    expect(key.readOnly).toBe(false);
+    expect(key.value).toBe('sk-o');
+    expect(el.shadowRoot!.querySelector<HTMLElement>('#env-notice')!.hidden).toBe(true);
+    // back to gemini → locked again, stored key still echoed on save
+    select.value = 'gemini';
+    select.dispatchEvent(new Event('change'));
+    expect(key.readOnly).toBe(true);
+    let captured: SettingsFormValue | undefined;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(captured!.apiKey).toBe('AIza-stored');
+    expect(captured!.openaiApiKey).toBe('sk-o');
+  });
+
+  it('has no axe violations with the provider select present', async () => {
+    const el = mountForm();
     expect(await axeViolations(el)).toEqual([]);
   });
 });
@@ -405,7 +521,9 @@ describe('<settings-form> themed chrome', () => {
   it('round-trips the theme through value and the save event', () => {
     const el = mountForm();
     el.value = {
+      provider: 'gemini',
       apiKey: '',
+      openaiApiKey: '',
       targetLang: 'vi',
       promptTemplate: 'T',
       cacheEnabled: true,

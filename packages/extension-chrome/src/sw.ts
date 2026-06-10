@@ -3,6 +3,8 @@ import {
   DEFAULT_TEMPLATE,
   type Settings,
   GeminiLookupClient,
+  OpenAILookupClient,
+  createLookupClientSelector,
   buildRouter,
   WriteQueue,
   SUPPRESS,
@@ -23,6 +25,8 @@ async function readFullSettings(): Promise<Settings> {
       cacheEnabled: true,
       saveHistory: true,
       theme: 'light',
+      provider: 'gemini',
+      openaiApiKey: '',
     }
   );
 }
@@ -30,12 +34,23 @@ async function readFullSettings(): Promise<Settings> {
 // Build-time key (esbuild `define`) wins over the stored settings key. Lets you
 // ship a personal build with GEMINI_API_KEY in the env and skip the options
 // page entirely; empty string => fall through to whatever the user entered.
+// Applies to the Gemini key only — OpenAI keys always come from settings.
 const ENV_API_KEY = __GEMINI_API_KEY__;
 
 const router = buildRouter({
-  client: new GeminiLookupClient({
-    fetch: (u, i) => fetch(u, i),
-    getApiKey: async () => ENV_API_KEY || (await readFullSettings()).apiKey,
+  client: createLookupClientSelector({
+    clients: {
+      gemini: new GeminiLookupClient({
+        fetch: (u, i) => fetch(u, i),
+        getApiKey: async () => ENV_API_KEY || (await readFullSettings()).apiKey,
+      }),
+      openai: new OpenAILookupClient({
+        fetch: (u, i) => fetch(u, i),
+        getApiKey: async () => (await readFullSettings()).openaiApiKey ?? '',
+      }),
+    },
+    // Settings stored before the provider field existed have no `provider` → Gemini.
+    getProvider: async () => (await readFullSettings()).provider ?? 'gemini',
   }),
   settings: new ChromeStorageStore(chrome.storage.local),
   kv: new ChromeKvStore(chrome.storage.local),
