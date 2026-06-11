@@ -4,16 +4,21 @@ import { adoptStyles } from './styles/adopt';
 // cozy surface (bg, radius, shadow), so the sheet never frames it in a second card. A warm
 // dim scrim sets the focus; the slide-up easing is an ease-out curve (no bounce).
 //
-// The panel caps at 88vh and is the scroll container (`overflow-y:auto`); a long definition
-// scrolls inside it instead of growing the sheet past the viewport. It is deliberately a BLOCK,
+// The panel caps at 88dvh (with an 88vh fallback for older browsers) and is the scroll
+// container (`overflow-y:auto`); a long definition scrolls inside it instead of growing the
+// sheet past the viewport. `dvh` tracks the DYNAMIC visual viewport, so on mobile browsers whose
+// collapsible address bar makes `100vh` taller than the visible screen (iOS Safari, some Android),
+// the sheet stays fully on-screen — `88vh` there could push the panel's top (anchored to
+// bottom:0) above the visible area and clip the header when content is long (issue #52).
+// It is deliberately a BLOCK,
 // not a flex box: as a flex item the card would inherit `flex-shrink:1` and get squashed to the
-// 88vh cap, and since the card is `overflow:hidden` the overflow would be clipped (no scroll).
+// 88dvh cap, and since the card is `overflow:hidden` the overflow would be clipped (no scroll).
 // As a block the card keeps its natural height, overflows the cap, and the panel scrolls. The
 // card centres itself horizontally via `::slotted(*){margin:0 auto}` (it sets its own max-width).
 const CSS = `:host{position:fixed;inset:0;z-index:2147483647}
 .scrim{position:absolute;inset:0;background:oklch(0.18 0.02 50 / 0.46)}
 .panel{position:absolute;left:0;right:0;bottom:0;
-  max-height:88vh;overflow-y:auto;overscroll-behavior:contain;padding:0 14px max(14px, env(safe-area-inset-bottom));
+  max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;padding:0 14px max(14px, env(safe-area-inset-bottom));
   transition:transform .28s cubic-bezier(.22,1,.36,1)}
 ::slotted(*){display:block;margin:0 auto}
 :host([reduced]) .panel{transition:none}
