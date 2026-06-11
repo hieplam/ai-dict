@@ -126,6 +126,20 @@ describe('<bottom-sheet>', () => {
     expect(capturedEvent!.composed).toBe(true);
   });
 
+  it('caps the panel with dynamic viewport height so long content never spills off-screen on mobile', () => {
+    // Issue #52: on browsers with a collapsible address bar (iOS Safari, some Android), `vh`
+    // counts the layout viewport — taller than the visible area — so an 88vh panel anchored to
+    // bottom:0 can push its top (header + close button) above the screen when content is long.
+    // `dvh` tracks the dynamic visual viewport, keeping the whole sheet on-screen and scrollable.
+    const el = mountSheet();
+    const sheet = el.shadowRoot!.adoptedStyleSheets[0]!;
+    const panelRule = [...sheet.cssRules]
+      .map((r) => r.cssText)
+      .find((t) => t.includes('.panel') && t.includes('max-height'))!;
+    expect(panelRule).toBeDefined();
+    expect(panelRule).toMatch(/max-height:\s*88dvh/);
+  });
+
   it('has no axe violations', async () => {
     const el = mountSheet();
     expect(await axeViolations(el)).toEqual([]);
