@@ -1,5 +1,24 @@
 # Changelog
 
+## [1.4.0](https://github.com/hieplam/ai-dict/compare/v1.3.0...v1.4.0) (2026-06-11)
+
+
+### Features
+
+* choose your AI provider — Gemini (default) or ChatGPT (OpenAI) ([#44](https://github.com/hieplam/ai-dict/issues/44)) ([f1233cc](https://github.com/hieplam/ai-dict/commit/f1233cc3eab60a340dbf41f9facbf997100d3e72))
+* **prompt:** switch default template to a sense-aware structured format ([#53](https://github.com/hieplam/ai-dict/issues/53)) ([940ad9b](https://github.com/hieplam/ai-dict/commit/940ad9bb31604ecb834bb0070b996753813bd53e)), closes [#50](https://github.com/hieplam/ai-dict/issues/50)
+* **side-panel:** per-entry delete in Recent removes the word from history and cache ([#46](https://github.com/hieplam/ai-dict/issues/46)) ([a64d9c0](https://github.com/hieplam/ai-dict/commit/a64d9c08fa41cb9b69f9969ec4aafb7515e44c05))
+* **tooling:** hard dependency-direction gate before every build and lint ([#49](https://github.com/hieplam/ai-dict/issues/49)) ([83464f4](https://github.com/hieplam/ai-dict/commit/83464f453fc15e6272eade345042805112bd5e05))
+* **ui:** always-available Settings action; harden setup card against host-page CSS resets ([#39](https://github.com/hieplam/ai-dict/issues/39)) ([a69d97f](https://github.com/hieplam/ai-dict/commit/a69d97f52fec5c4da409d9f62909e585843da3a0))
+* **ui:** make the result card's Settings action discoverable ([#43](https://github.com/hieplam/ai-dict/issues/43)) ([ebfc730](https://github.com/hieplam/ai-dict/commit/ebfc7303506510b807de27d1dff9d750f2906f22))
+
+
+### Bug Fixes
+
+* **bottom-sheet:** cap panel at 88dvh so long content stays on-screen on mobile ([#55](https://github.com/hieplam/ai-dict/issues/55)) ([87ff590](https://github.com/hieplam/ai-dict/commit/87ff590866680f8bbc754387b31b95614dcc932e)), closes [#52](https://github.com/hieplam/ai-dict/issues/52)
+* **ci:** push trigger targeted 'main' but the default branch is 'master' ([#36](https://github.com/hieplam/ai-dict/issues/36)) ([75587e0](https://github.com/hieplam/ai-dict/commit/75587e08a63be2fe7329e9cdafc100121164089f))
+* **settings:** apply theme on select change for live preview ([#54](https://github.com/hieplam/ai-dict/issues/54)) ([0b42574](https://github.com/hieplam/ai-dict/commit/0b4257479a2854825205da15db9d1d0a0f9dbdbf)), closes [#51](https://github.com/hieplam/ai-dict/issues/51)
+
 ## [1.3.0](https://github.com/hieplam/ai-dict/compare/v1.2.0...v1.3.0) (2026-06-10)
 
 
