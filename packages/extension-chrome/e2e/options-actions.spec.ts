@@ -145,7 +145,7 @@ test('Restore default repopulates the prompt template after confirm', async ({
   page.once('dialog', (d) => d.accept());
   await page.locator('settings-form #reset-tpl').click();
   // Assert on a stable substring of DEFAULT_TEMPLATE, not the whole multi-line string.
-  await expect(tpl).toHaveValue(/bilingual dictionary/);
+  await expect(tpl).toHaveValue(/Sense selection/);
   await expect(page.locator(status)).toHaveText(
     'Prompt template restored — Save settings to apply.',
   );
