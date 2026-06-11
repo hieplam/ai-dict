@@ -180,6 +180,12 @@ export class SettingsForm extends HTMLElement {
       this._provider = this.q<HTMLSelectElement>('#provider').value as Provider;
       this.syncKeyField();
     });
+    // Live theme preview: the shadow CSS keys off :host([theme="…"]) (tokens.ts), so stamping the
+    // host attribute the instant the select changes re-themes the page immediately. Persistence
+    // still happens only on Save (the composition root re-stamps the same attribute then).
+    this.q<HTMLSelectElement>('#theme').addEventListener('change', () => {
+      this.setAttribute('theme', this.q<HTMLSelectElement>('#theme').value);
+    });
     this.q<HTMLFormElement>('form').addEventListener('submit', (e) => {
       e.preventDefault();
       this.dispatchEvent(

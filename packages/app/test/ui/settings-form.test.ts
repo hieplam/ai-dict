@@ -549,4 +549,16 @@ describe('<settings-form> themed chrome', () => {
     expect(notice.hidden).toBe(false);
     expect(notice.textContent).toBe(ENV_KEY_NOTICE);
   });
+
+  it('applies the picked theme to the host immediately on change — live preview, before Save (issue #51)', () => {
+    // The shadow CSS keys off :host([theme="…"]) (tokens.ts), so stamping the host attribute the
+    // instant the select changes gives a live preview. Persistence still happens only on Save.
+    const el = mountForm();
+    const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#theme')!;
+    for (const value of ['dark', 'system', 'light'] as const) {
+      select.value = value;
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+      expect(el.getAttribute('theme')).toBe(value);
+    }
+  });
 });
