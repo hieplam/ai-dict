@@ -11,7 +11,7 @@ follow-up** — its own spec.
 ## Problem
 
 Today there is **no real install path**. The only way a user can run the extension is
-*sideloading*: download `dist-chrome.zip` from a GitHub Release → `chrome://extensions` →
+_sideloading_: download `dist-chrome.zip` from a GitHub Release → `chrome://extensions` →
 Developer mode → **Load unpacked**. That flow is fine for testing but is not a genuine
 install — it never auto-updates, shows scary warnings, and is hostile to non-technical users.
 The README still says "Safari and iPhone/iPad are not supported yet."
@@ -33,12 +33,12 @@ the extension installs with **native auto-updates**. Every subsequent `release-p
 
 ## Decisions locked (from brainstorming)
 
-| Decision | Choice |
-| --- | --- |
-| Target channel | **Chrome Web Store** for PC now; iOS (Safari + App Store) is a planned follow-up. |
-| Publishing model | **Automated from v1** — CI uploads + publishes via the Chrome Web Store API. |
-| App icon | **Generated** in the existing brand-green "winter-morning" theme. |
-| CI publish mechanism | **`chrome-webstore-upload-cli`** (option A), pinned + invoked in CI. |
+| Decision               | Choice                                                                                       |
+| ---------------------- | -------------------------------------------------------------------------------------------- |
+| Target channel         | **Chrome Web Store** for PC now; iOS (Safari + App Store) is a planned follow-up.            |
+| Publishing model       | **Automated from v1** — CI uploads + publishes via the Chrome Web Store API.                 |
+| App icon               | **Generated** in the existing brand-green "winter-morning" theme.                            |
+| CI publish mechanism   | **`chrome-webstore-upload-cli`** (option A), pinned + invoked in CI.                         |
 | Privacy policy hosting | **`PRIVACY.md`** in the repo, referenced by its `github.com/.../blob/master/PRIVACY.md` URL. |
 
 ## The honest boundary of "automate from v1"
@@ -59,7 +59,7 @@ runbook for the one-time steps you own.
 
 ## Design
 
-### 1. Make the extension store-eligible — icons + manifest + build *(c3-2 / c3-210)*
+### 1. Make the extension store-eligible — icons + manifest + build _(c3-2 / c3-210)_
 
 - **Generate a brand-green icon set**: `16`, `32`, `48`, `128` px PNGs, legible at 16px,
   matching the existing winter-morning palette (the README's `#2f6f4e` family). Source from a
@@ -81,12 +81,12 @@ runbook for the one-time steps you own.
   options page. The release job never sets that env var today; we keep it that way and add a
   guard (below).
 
-### 2. Store listing assets *(content — repo-versioned, not shipped in the extension)*
+### 2. Store listing assets _(content — repo-versioned, not shipped in the extension)_
 
 Stored under `docs/store/chrome/` so they are reviewed in-repo and reusable:
 
 - **Screenshots** — 1–5 PNGs at **1280×800**, captured with **agent-browser driving a
-  *bundled/standalone Chromium*** (per the repo guardrail — never the installed Google Chrome).
+  _bundled/standalone Chromium_** (per the repo guardrail — never the installed Google Chrome).
   Scenes: (a) select-a-word → **Define** trigger on a real article; (b) the in-page result card
   (IPA, POS, EN→EN, translation, example); (c) the side panel with lookup history; (d) the
   Settings/options page (provider + API key).
@@ -112,7 +112,7 @@ Stored under `docs/store/chrome/` so they are reviewed in-repo and reusable:
   and **sells/​shares nothing**; data sent to Google/OpenAI is governed by **their** policies
   (linked). Aligns with the existing data-minimization rule (no `{url}`/`{title}` in prompts).
 
-### 3. Automated publish pipeline — extend `release-please.yml` *(uncharted / repo-level)*
+### 3. Automated publish pipeline — extend `release-please.yml` _(uncharted / repo-level)_
 
 Add the publish into the workflow that **actually runs** — `release-please.yml`, gated on
 `steps.release.outputs.release_created` — immediately **after** the existing
@@ -162,7 +162,7 @@ A precise, click-by-click runbook:
    language, **privacy URL**, **data-use form**), **Save draft**, and copy the **App ID**.
 4. **Google Cloud**: create a project → **enable the Chrome Web Store API** → configure the
    **OAuth consent screen** → create an **OAuth client ID** (type **Desktop app**).
-   - ⚠️ **Gotcha (must do):** set the consent screen to **In production**, *not* Testing —
+   - ⚠️ **Gotcha (must do):** set the consent screen to **In production**, _not_ Testing —
      refresh tokens for a "Testing" app **expire after 7 days**, which would silently break CI
      publishing weekly. This app only calls the Web Store API for your own account, so no Google
      verification is required to publish the consent screen.
@@ -203,14 +203,14 @@ A precise, click-by-click runbook:
 
 ## Risks & mitigations
 
-| # | Risk | Mitigation |
-| --- | --- | --- |
-| R1 | Google review latency / rejection for broad `<all_urls>` | Tight single-purpose + per-permission justification + privacy policy; expect hours–days, first review longest. |
-| R2 | OAuth **refresh token expires in 7 days** (Testing consent screen) | Runbook mandates **In production** consent screen. |
-| R3 | Chicken-and-egg: API upload needs an existing **App ID** | One-time dashboard item creation (runbook §4.3); unavoidable. |
-| R4 | Secrets absent → release CI fails | Publish step **guarded** to skip when unconfigured (§3). |
-| R5 | `--auto-publish` goes live immediately after review | Intended ("automate from v1"); to stage, drop the flag and publish manually. |
-| R6 | Re-upload of same version rejected | `release-please` bumps the version every release. |
+| #   | Risk                                                               | Mitigation                                                                                                     |
+| --- | ------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------- |
+| R1  | Google review latency / rejection for broad `<all_urls>`           | Tight single-purpose + per-permission justification + privacy policy; expect hours–days, first review longest. |
+| R2  | OAuth **refresh token expires in 7 days** (Testing consent screen) | Runbook mandates **In production** consent screen.                                                             |
+| R3  | Chicken-and-egg: API upload needs an existing **App ID**           | One-time dashboard item creation (runbook §4.3); unavoidable.                                                  |
+| R4  | Secrets absent → release CI fails                                  | Publish step **guarded** to skip when unconfigured (§3).                                                       |
+| R5  | `--auto-publish` goes live immediately after review                | Intended ("automate from v1"); to stage, drop the flag and publish manually.                                   |
+| R6  | Re-upload of same version rejected                                 | `release-please` bumps the version every release.                                                              |
 
 ## Definition of done
 
