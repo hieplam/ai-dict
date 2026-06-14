@@ -104,7 +104,7 @@ const MARKUP = `<div class="ribbon"></div>
     <section class="sec" aria-labelledby="sec-trans">
       <h2 class="sec-h" id="sec-trans">Translation</h2>
       <label for="target">Target language</label>
-      <select id="target"><option value="vi">Vietnamese</option><option value="es">Spanish</option></select>
+      <select id="target"><option value="vi">Vietnamese</option><option value="en">English</option></select>
       <label for="tpl">Prompt template</label>
       <textarea id="tpl" rows="6"></textarea>
       <div class="inline-actions">

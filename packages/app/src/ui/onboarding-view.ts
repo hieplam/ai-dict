@@ -92,7 +92,7 @@ const MARKUP = `<div class="ribbon"></div>
             <p class="step-title">Reading language</p>
             <p class="step-sub">Definitions are translated into this language. Change it anytime.</p>
             <label class="sr-only" for="target">Reading language</label>
-            <select id="target"><option value="vi">Vietnamese</option><option value="es">Spanish</option></select>
+            <select id="target"><option value="vi">Vietnamese</option><option value="en">English</option></select>
           </div>
         </li>
         <li class="step todo" id="step-key">
