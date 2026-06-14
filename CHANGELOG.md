@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.5.0](https://github.com/hieplam/ai-dict/compare/v1.4.0...v1.5.0) (2026-06-14)
+
+
+### Features
+
+* **prompt:** default template injects {word}+{context}; add English target language ([#56](https://github.com/hieplam/ai-dict/issues/56)) ([4ebaaf3](https://github.com/hieplam/ai-dict/commit/4ebaaf3ebdc75b6a42c2c9a78894e48d850c13f4))
+
 ## [1.4.0](https://github.com/hieplam/ai-dict/compare/v1.3.0...v1.4.0) (2026-06-11)
 
 
