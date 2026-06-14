@@ -4,8 +4,9 @@ import { DEFAULT_TEMPLATE } from '../src/domain/default-template';
 describe('DEFAULT_TEMPLATE', () => {
   it('references the minimal placeholders and ordered sections', () => {
     expect(DEFAULT_TEMPLATE).toContain('{word}');
+    expect(DEFAULT_TEMPLATE).toContain('{context}');
     expect(DEFAULT_TEMPLATE).toContain('{target_lang}');
-    expect(DEFAULT_TEMPLATE).toContain('Sense selection');
+    expect(DEFAULT_TEMPLATE).toContain('bilingual dictionary');
   });
   it('does NOT reference {url} or {title} (data minimization — spec P2)', () => {
     expect(DEFAULT_TEMPLATE).not.toContain('{url}');

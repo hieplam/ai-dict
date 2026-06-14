@@ -1,6 +1,6 @@
 ---
 id: c3-113
-c3-seal: f0a0a9769f798fdac16d07694a4dc0b1b3510dec59f9cedc9aec16039c5301c7
+c3-seal: 832bec1e1ebab2e0931551798bf16f4823b4a55d69ee2a655fb7a94d4e913e9c
 title: prompt-builder
 type: component
 category: feature
@@ -48,7 +48,7 @@ Owns prompt construction: `renderTemplate` replaces only the supported placehold
 | Happy path | renderTemplate regex-replaces all {supported_key} occurrences with the corresponding vars value; caller-absent keys preserve the literal placeholder (verified in packages/app/test/prompt-template.test.ts) | rule-domain-purity |
 | Data-minimisation path | When the template does not contain {url} or {title}, those values from vars are never injected; DEFAULT_TEMPLATE enforces this by design (verified in packages/app/test/default-template.test.ts) | ref-core-dependency-rule |
 | Absent var boundary | A supported placeholder whose key is absent from vars (e.g. {url} when url is undefined) is preserved as-is rather than emitting "undefined" (verified in packages/app/test/prompt-template.test.ts) | rule-domain-purity |
-| Default template structure | DEFAULT_TEMPLATE contains {word}, {context}, {target_lang} and the five ordered output sections (IPA, POS, Eng→Eng, Eng→target_lang, Example) (verified in packages/app/test/default-template.test.ts) | c3-114 |
+| Default template structure | DEFAULT_TEMPLATE is a bilingual-dictionary prompt that injects {word}, {context}, {target_lang} and asks for two ordered Markdown sections (Eng -> Eng full explanation, Eng -> {target_lang} full translation); it omits {url}/{title} by design (verified in packages/app/test/default-template.test.ts) | c3-114 |
 
 ## Governance
 

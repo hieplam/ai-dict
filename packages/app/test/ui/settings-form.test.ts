@@ -143,7 +143,7 @@ describe('<settings-form>', () => {
       provider: 'gemini',
       apiKey: 'deferred-key',
       openaiApiKey: '',
-      targetLang: 'es',
+      targetLang: 'en',
       promptTemplate: 'P',
       cacheEnabled: false,
       saveHistory: false,
@@ -151,7 +151,7 @@ describe('<settings-form>', () => {
     };
     document.body.append(el); // connectedCallback flushes pending value
     expect(el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.value).toBe('deferred-key');
-    expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('es');
+    expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('en');
   });
 
   it('four action events cross shadow boundary (composed: true)', () => {

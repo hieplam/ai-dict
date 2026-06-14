@@ -62,7 +62,7 @@ describe('<onboarding-view>', () => {
     const el = mount();
     const r = el.shadowRoot!;
     r.querySelector<HTMLInputElement>('#key')!.value = '  AIza-real  ';
-    r.querySelector<HTMLSelectElement>('#target')!.value = 'es';
+    r.querySelector<HTMLSelectElement>('#target')!.value = 'en';
     let captured: OnboardingValue | undefined;
     el.addEventListener('save', (e) => {
       captured = (e as CustomEvent<OnboardingValue>).detail;
@@ -70,7 +70,7 @@ describe('<onboarding-view>', () => {
     r.querySelector('form')!.dispatchEvent(
       new Event('submit', { bubbles: true, cancelable: true }),
     );
-    expect(captured).toEqual({ apiKey: 'AIza-real', targetLang: 'es' });
+    expect(captured).toEqual({ apiKey: 'AIza-real', targetLang: 'en' });
   });
 
   it('blocks activation with an error when the key is empty (no save emitted)', () => {
@@ -106,16 +106,16 @@ describe('<onboarding-view>', () => {
 
   it('value setter hydrates the language select and key field', () => {
     const el = mount();
-    el.value = { apiKey: 'AIza-seed', targetLang: 'es' };
-    expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('es');
+    el.value = { apiKey: 'AIza-seed', targetLang: 'en' };
+    expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('en');
     expect(el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.value).toBe('AIza-seed');
   });
 
   it('value set before connect defers hydration until connectedCallback', () => {
     const el = document.createElement('onboarding-view') as OnboardingView;
-    el.value = { apiKey: '', targetLang: 'es' };
+    el.value = { apiKey: '', targetLang: 'en' };
     document.body.append(el);
-    expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('es');
+    expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('en');
   });
 
   it('setStatus shows, errors, and hides the status line', () => {
