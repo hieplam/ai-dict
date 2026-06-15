@@ -11,6 +11,8 @@ await mkdir('dist', { recursive: true });
 // with this env var as personal/dev artefacts, not for distribution.
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? '';
 const HAS_ENV_KEY = GEMINI_API_KEY.length > 0;
+const GA4_MEASUREMENT_ID = process.env.GA4_MEASUREMENT_ID ?? '';
+const GA4_API_SECRET = process.env.GA4_API_SECRET ?? '';
 
 const common = {
   bundle: true,
@@ -25,7 +27,11 @@ await esbuild.build({
   entryPoints: ['src/sw.ts'],
   outfile: 'dist/sw.js',
   format: 'esm',
-  define: { __GEMINI_API_KEY__: JSON.stringify(GEMINI_API_KEY) },
+  define: {
+    __GEMINI_API_KEY__: JSON.stringify(GEMINI_API_KEY),
+    __GA4_MEASUREMENT_ID__: JSON.stringify(GA4_MEASUREMENT_ID),
+    __GA4_API_SECRET__: JSON.stringify(GA4_API_SECRET),
+  },
 });
 
 // content-elements.js: runs in world:"MAIN" (manifest content_scripts.world).
