@@ -27,7 +27,7 @@
               "target": {
                 "type": "string"
               },
-              "promptTemplate": {
+              "outputFormat": {
                 "type": "string"
               }
             },
@@ -37,7 +37,7 @@
               "url",
               "title",
               "target",
-              "promptTemplate"
+              "outputFormat"
             ],
             "additionalProperties": false
           },
@@ -248,7 +248,7 @@
               "targetLang": {
                 "type": "string"
               },
-              "promptTemplate": {
+              "outputFormat": {
                 "type": "string"
               },
               "hasKey": {
@@ -265,7 +265,7 @@
             },
             "required": [
               "targetLang",
-              "promptTemplate",
+              "outputFormat",
               "hasKey",
               "theme"
             ],

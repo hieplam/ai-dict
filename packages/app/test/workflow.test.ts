@@ -26,7 +26,7 @@ const okResult: LookupResult = {
 };
 const pub = (hasKey: boolean) => ({
   targetLang: 'vi',
-  promptTemplate: 'tpl',
+  outputFormat: 'tpl',
   hasKey,
   theme: 'light' as const,
 });
@@ -56,7 +56,7 @@ describe('runLookupWorkflow', () => {
       word: 'bank',
       context: 'river bank',
       target: 'vi',
-      promptTemplate: 'tpl',
+      outputFormat: 'tpl',
     });
   });
 

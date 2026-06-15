@@ -7,7 +7,7 @@ describe('Settings public shape (FIX 1 — contract lock)', () => {
     // Constructs a value matching the full Settings interface to lock the shape.
     const s: Settings = {
       targetLang: 'vi',
-      promptTemplate: '{word}',
+      outputFormat: '{word}',
       hasKey: true,
       apiKey: 'AIzaFake',
       cacheEnabled: true,
@@ -17,7 +17,7 @@ describe('Settings public shape (FIX 1 — contract lock)', () => {
       openaiApiKey: '',
     };
     expect(s.targetLang).toBe('vi');
-    expect(s.promptTemplate).toBe('{word}');
+    expect(s.outputFormat).toBe('{word}');
     expect(s.hasKey).toBe(true);
     expect(s.apiKey).toBe('AIzaFake');
     expect(s.cacheEnabled).toBe(true);

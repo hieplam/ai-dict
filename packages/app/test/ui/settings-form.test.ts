@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
 import { SettingsForm, ENV_KEY_NOTICE, type SettingsFormValue } from '../../src/ui/settings-form';
 import { registerSettingsForm } from '../../src/ui/register';
-import { DEFAULT_TEMPLATE } from '../../src/domain/default-template';
+import { DEFAULT_OUTPUT_FORMAT } from '../../src/domain/default-template';
 
 beforeAll(() => {
   registerSettingsForm();
@@ -34,7 +34,7 @@ describe('<settings-form>', () => {
       apiKey: '',
       openaiApiKey: '',
       targetLang: 'vi',
-      promptTemplate: 'T',
+      outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
       theme: 'light',
@@ -50,7 +50,7 @@ describe('<settings-form>', () => {
     expect(captured).toMatchObject({
       apiKey: 'AIza-test',
       targetLang: 'vi',
-      promptTemplate: 'T',
+      outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
     });
@@ -144,7 +144,7 @@ describe('<settings-form>', () => {
       apiKey: 'deferred-key',
       openaiApiKey: '',
       targetLang: 'en',
-      promptTemplate: 'P',
+      outputFormat: 'P',
       cacheEnabled: false,
       saveHistory: false,
       theme: 'light',
@@ -225,7 +225,7 @@ describe('<settings-form> restore default prompt', () => {
       apiKey: '',
       openaiApiKey: '',
       targetLang: 'vi',
-      promptTemplate: 'my custom prompt',
+      outputFormat: 'my custom prompt',
       cacheEnabled: true,
       saveHistory: true,
       theme: 'light',
@@ -233,10 +233,10 @@ describe('<settings-form> restore default prompt', () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
     const tpl = el.shadowRoot!.querySelector<HTMLTextAreaElement>('#tpl')!;
-    expect(tpl.value).toBe(DEFAULT_TEMPLATE);
+    expect(tpl.value).toBe(DEFAULT_OUTPUT_FORMAT);
     expect(confirmSpy).toHaveBeenCalledOnce();
     const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
-    expect(status.textContent).toBe('Prompt template restored — Save settings to apply.');
+    expect(status.textContent).toBe('Card format restored — Save settings to apply.');
     confirmSpy.mockRestore();
   });
 
@@ -247,7 +247,7 @@ describe('<settings-form> restore default prompt', () => {
       apiKey: '',
       openaiApiKey: '',
       targetLang: 'vi',
-      promptTemplate: 'my custom prompt',
+      outputFormat: 'my custom prompt',
       cacheEnabled: true,
       saveHistory: true,
       theme: 'light',
@@ -269,7 +269,7 @@ describe('<settings-form> restore default prompt', () => {
       apiKey: '',
       openaiApiKey: '',
       targetLang: 'vi',
-      promptTemplate: DEFAULT_TEMPLATE,
+      outputFormat: DEFAULT_OUTPUT_FORMAT,
       cacheEnabled: true,
       saveHistory: true,
       theme: 'light',
@@ -278,7 +278,7 @@ describe('<settings-form> restore default prompt', () => {
     el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
     expect(confirmSpy).not.toHaveBeenCalled();
     const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
-    expect(status.textContent).toBe('Prompt template is already the default.');
+    expect(status.textContent).toBe('Card format is already the default.');
     confirmSpy.mockRestore();
   });
 });
@@ -315,7 +315,7 @@ describe('<settings-form> env-key lock', () => {
       apiKey: 'AIza-stored',
       openaiApiKey: '',
       targetLang: 'vi',
-      promptTemplate: 'T',
+      outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
       theme: 'light',
@@ -338,7 +338,7 @@ describe('<settings-form> env-key lock', () => {
       apiKey: 'AIza-stored',
       openaiApiKey: '',
       targetLang: 'vi',
-      promptTemplate: 'T',
+      outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
       theme: 'light',
@@ -371,7 +371,7 @@ describe('<settings-form> provider selection', () => {
       apiKey: '',
       openaiApiKey: '',
       targetLang: 'vi',
-      promptTemplate: 'T',
+      outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
       theme: 'light',
@@ -525,7 +525,7 @@ describe('<settings-form> themed chrome', () => {
       apiKey: '',
       openaiApiKey: '',
       targetLang: 'vi',
-      promptTemplate: 'T',
+      outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
       theme: 'dark',

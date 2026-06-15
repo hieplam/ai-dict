@@ -16,7 +16,7 @@ export const OPENAI_OK_BODY = JSON.stringify({
 
 export interface SettingsOverrides {
   targetLang?: string;
-  promptTemplate?: string;
+  outputFormat?: string;
   apiKey?: string;
   cacheEnabled?: boolean;
   saveHistory?: boolean;
@@ -32,7 +32,7 @@ export async function seedSettings(page: Page, overrides: SettingsOverrides = {}
     return chrome.storage.local.set({
       settings: {
         targetLang: 'vi',
-        promptTemplate: 'Define {word}',
+        outputFormat: 'Define {word}',
         apiKey: 'AIza-test',
         cacheEnabled: true,
         saveHistory: true,
@@ -109,16 +109,22 @@ export async function mockOpenAI(
   return calls;
 }
 
-/** Navigate to a synthetic http page so the content script injects on <all_urls>. */
+/**
+ * Navigate to a synthetic http page so the content script injects on <all_urls>.
+ * An optional `title` sets the page's <title> (i.e. document.title), which the
+ * lookup wires into the prompt — used by the {title}/PII-redaction specs.
+ */
 export async function gotoFixture(
   page: Page,
   paragraph = 'The bank by the river is steep.',
+  title?: string,
 ): Promise<void> {
+  const head = title === undefined ? '' : `<head><title>${title}</title></head>`;
   await page.route('http://test.fixture/', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'text/html',
-      body: `<html><body><p id="t">${paragraph}</p></body></html>`,
+      body: `<html>${head}<body><p id="t">${paragraph}</p></body></html>`,
     }),
   );
   await page.goto('http://test.fixture/');

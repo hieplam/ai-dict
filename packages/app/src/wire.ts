@@ -14,7 +14,7 @@ const LookupRequestSchema = z.strictObject({
   url: z.string(),
   title: z.string(),
   target: z.string(),
-  promptTemplate: z.string(),
+  outputFormat: z.string(),
 });
 
 const LookupResultSchema = z.strictObject({
@@ -30,7 +30,7 @@ const LookupResultSchema = z.strictObject({
 
 const PublicSettingsSchema = z.strictObject({
   targetLang: z.string(),
-  promptTemplate: z.string(),
+  outputFormat: z.string(),
   hasKey: z.boolean(),
   theme: z.enum(['light', 'dark', 'system']),
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]

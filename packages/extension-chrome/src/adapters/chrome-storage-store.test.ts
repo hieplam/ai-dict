@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { ChromeStorageStore } from './chrome-storage-store';
-import { DEFAULT_TEMPLATE } from '@ai-dict/app';
+import { DEFAULT_OUTPUT_FORMAT } from '@ai-dict/app';
 
 function fakeArea(seed?: unknown) {
   let stored = seed;
@@ -19,14 +19,14 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
   it('get() returns PublicSettings only — apiKey is never exposed', async () => {
     const area = fakeArea({
       targetLang: 'vi',
-      promptTemplate: 'tpl',
+      outputFormat: 'tpl',
       apiKey: 'AIza-secret',
       cacheEnabled: true,
       saveHistory: true,
       hasKey: true,
     });
     const pub = await new ChromeStorageStore(area).get();
-    expect(pub).toEqual({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true, theme: 'light' });
+    expect(pub).toEqual({ targetLang: 'vi', outputFormat: 'tpl', hasKey: true, theme: 'light' });
     expect('apiKey' in pub).toBe(false);
   });
 
@@ -34,28 +34,28 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
     const empty = await new ChromeStorageStore(fakeArea(undefined)).get();
     expect(empty).toEqual({
       targetLang: 'vi',
-      promptTemplate: DEFAULT_TEMPLATE,
+      outputFormat: DEFAULT_OUTPUT_FORMAT,
       hasKey: false,
       theme: 'light',
     });
     const noKey = await new ChromeStorageStore(
-      fakeArea({ targetLang: 'en', promptTemplate: 't', apiKey: '' }),
+      fakeArea({ targetLang: 'en', outputFormat: 't', apiKey: '' }),
     ).get();
     expect(noKey.hasKey).toBe(false);
   });
 
-  it('set() merges only targetLang/promptTemplate, preserving apiKey + toggles', async () => {
+  it('set() merges only targetLang/outputFormat, preserving apiKey + toggles', async () => {
     const area = fakeArea({
       targetLang: 'vi',
-      promptTemplate: 'old',
+      outputFormat: 'old',
       apiKey: 'AIza',
       cacheEnabled: false,
       saveHistory: true,
       hasKey: true,
     });
-    await new ChromeStorageStore(area).set({ promptTemplate: 'new' });
+    await new ChromeStorageStore(area).set({ outputFormat: 'new' });
     expect(area._peek()).toMatchObject({
-      promptTemplate: 'new',
+      outputFormat: 'new',
       apiKey: 'AIza',
       cacheEnabled: false,
     });

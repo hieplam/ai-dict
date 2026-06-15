@@ -16,7 +16,7 @@ const req = {
   url: '',
   title: '',
   target: 'vi',
-  promptTemplate: 'tpl',
+  outputFormat: 'tpl',
 };
 
 describe('MessageRelayLookupClient', () => {

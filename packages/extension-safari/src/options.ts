@@ -1,6 +1,6 @@
 import {
   registerSettingsForm,
-  DEFAULT_TEMPLATE,
+  DEFAULT_OUTPUT_FORMAT,
   buildHistoryExport,
   hasKeyFor,
   type Settings,
@@ -13,7 +13,7 @@ registerSettingsForm();
 const form = document.querySelector('settings-form')! as unknown as SettingsForm;
 const DEFAULTS: Settings = {
   targetLang: 'vi',
-  promptTemplate: DEFAULT_TEMPLATE,
+  outputFormat: DEFAULT_OUTPUT_FORMAT,
   hasKey: false,
   apiKey: '',
   cacheEnabled: true,

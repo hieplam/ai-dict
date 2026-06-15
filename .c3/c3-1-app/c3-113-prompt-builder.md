@@ -1,6 +1,6 @@
 ---
 id: c3-113
-c3-seal: 832bec1e1ebab2e0931551798bf16f4823b4a55d69ee2a655fb7a94d4e913e9c
+c3-seal: 53bfde4fbebc9dfb2b795396db5615f35d2436b2aaa92d9a2683c515726d266c
 title: prompt-builder
 type: component
 category: feature
@@ -44,11 +44,13 @@ Owns prompt construction: `renderTemplate` replaces only the supported placehold
 
 | Aspect | Detail | Reference |
 | --- | --- | --- |
-| Primary outcome | Returns a fully-substituted prompt string ready to send to the Gemini API (verified in packages/app/test/prompt-template.test.ts) | c3-114 |
+| Primary outcome | buildPrompt(outputFormat, vars) returns a fully-assembled prompt string ready to send to the AI provider; renderTemplate remains the lower-level substitution primitive (verified in packages/app/test/prompt-template.test.ts) | c3-114 |
+| Two-part assembly | The prompt is split into a code-owned PROMPT_ENVELOPE (persona + {word}/{context}/{title} + safety constraints + one {output_format} slot) and a user-editable outputFormat (the card's section layout). buildPrompt inserts outputFormat into the envelope FIRST, then runs renderTemplate over the combined string so a {target_lang} written inside the user's format still resolves (verified in packages/app/test/prompt-template.test.ts) | rule-domain-purity |
+| Constraints are non-deletable | Because the constraints live in the envelope (not the user field), an empty outputFormat still emits them — a user cannot strip the safety rules (verified in packages/app/test/prompt-template.test.ts) | rule-sanitize-model-output |
+| PII redaction (input side) | buildPrompt passes vars.title through redactPII (packages/app/src/domain/pii.ts) before composing it in, so email/phone/credit-card/ssn/ip patterns in the page title are masked to [redact] before leaving the device (verified in packages/app/test/pii.test.ts and prompt-template.test.ts) | rule-sanitize-model-output |
 | Happy path | renderTemplate regex-replaces all {supported_key} occurrences with the corresponding vars value; caller-absent keys preserve the literal placeholder (verified in packages/app/test/prompt-template.test.ts) | rule-domain-purity |
-| Data-minimisation path | When the template does not contain {url} or {title}, those values from vars are never injected; DEFAULT_TEMPLATE enforces this by design (verified in packages/app/test/default-template.test.ts) | ref-core-dependency-rule |
-| Absent var boundary | A supported placeholder whose key is absent from vars (e.g. {url} when url is undefined) is preserved as-is rather than emitting "undefined" (verified in packages/app/test/prompt-template.test.ts) | rule-domain-purity |
-| Default template structure | DEFAULT_TEMPLATE is a bilingual-dictionary prompt that injects {word}, {context}, {target_lang} and asks for two ordered Markdown sections (Eng -> Eng full explanation, Eng -> {target_lang} full translation); it omits {url}/{title} by design (verified in packages/app/test/default-template.test.ts) | c3-114 |
+| Data-minimisation path | The envelope references {title} (PII-redacted) but NOT {url}; the page URL is never injected (verified in packages/app/test/default-template.test.ts) | ref-core-dependency-rule |
+| Default format structure | DEFAULT_OUTPUT_FORMAT is the shipped card layout: two ordered Markdown sections (Eng -> Eng full explanation, Eng -> {target_lang} full translation), holding only layout — no persona or constraints (verified in packages/app/test/default-template.test.ts) | c3-114 |
 
 ## Governance
 

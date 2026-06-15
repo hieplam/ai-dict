@@ -9,7 +9,7 @@ const req: LookupRequest = {
   url: 'https://x',
   title: 'T',
   target: 'vi',
-  promptTemplate: 'Define {word} in {target_lang}: {context}',
+  outputFormat: 'Define {word} in {target_lang}: {context}',
 };
 
 function res(
@@ -86,11 +86,17 @@ describe('OpenAILookupClient', () => {
     expect(captured!.init.headers['Content-Type']).toBe('application/json');
     expect(captured!.url).not.toContain('sk-key');
     expect(captured!.init.body).not.toContain('sk-key');
-    // prompt rendered from template (data-minimization: only placeholders present)
-    expect(JSON.parse(captured!.init.body)).toMatchObject({
-      model: 'gpt-4o-mini',
-      messages: [{ role: 'user', content: 'Define bank in vi: river bank' }],
-    });
+    // Prompt assembled by buildPrompt: the user's outputFormat is rendered AND wrapped
+    // in the code-owned envelope (persona + constraints always present).
+    const parsed = JSON.parse(captured!.init.body) as {
+      model: string;
+      messages: { role: string; content: string }[];
+    };
+    expect(parsed.model).toBe('gpt-4o-mini');
+    const content = parsed.messages[0]?.content ?? '';
+    expect(content).toContain('Define bank in vi: river bank');
+    expect(content).toContain('You are a bilingual dictionary');
+    expect(content).toContain('Do not include any HTML');
   });
 
   it('configured model overrides the default and is echoed in the result', async () => {

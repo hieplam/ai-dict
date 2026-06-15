@@ -80,7 +80,7 @@ test('settings stored before the provider field existed still look up via Gemini
     chrome.storage.local.set({
       settings: {
         targetLang: 'vi',
-        promptTemplate: 'Define {word}',
+        outputFormat: 'Define {word}',
         apiKey: 'AIza-legacy',
         cacheEnabled: false,
         saveHistory: true,

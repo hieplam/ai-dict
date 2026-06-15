@@ -46,7 +46,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
       url: e.url,
       title: e.title,
       target: settings.targetLang,
-      promptTemplate: settings.promptTemplate,
+      outputFormat: settings.outputFormat,
     };
     try {
       const result = await deps.client.lookup(req, { signal: controller.signal });

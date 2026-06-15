@@ -34,7 +34,7 @@ export interface LookupClient {
 
 export interface SettingsStore {
   get(): Promise<PublicSettings>;
-  set(patch: Partial<Pick<PublicSettings, 'targetLang' | 'promptTemplate'>>): Promise<void>;
+  set(patch: Partial<Pick<PublicSettings, 'targetLang' | 'outputFormat'>>): Promise<void>;
 }
 
 export interface Storage {

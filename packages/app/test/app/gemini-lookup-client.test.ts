@@ -12,7 +12,7 @@ const req: LookupRequest = {
   url: 'https://x',
   title: 'T',
   target: 'vi',
-  promptTemplate: 'Define {word} in {target_lang}: {context}',
+  outputFormat: 'Define {word} in {target_lang}: {context}',
 };
 
 function res(
@@ -89,10 +89,14 @@ describe('GeminiLookupClient', () => {
     expect(captured!.url).toContain('gemini-2.5-flash:generateContent');
     expect(captured!.init.headers['X-Goog-Api-Key']).toBe('AIza-key');
     expect(captured!.init.headers['Content-Type']).toBe('application/json');
-    // prompt rendered from template (data-minimization: only placeholders present)
-    expect(JSON.parse(captured!.init.body)).toMatchObject({
-      contents: [{ parts: [{ text: 'Define bank in vi: river bank' }] }],
-    });
+    // Prompt assembled by buildPrompt: the user's outputFormat is rendered AND wrapped
+    // in the code-owned envelope (persona + constraints always present).
+    const sent =
+      (JSON.parse(captured!.init.body) as { contents: { parts: { text: string }[] }[] }).contents[0]
+        ?.parts[0]?.text ?? '';
+    expect(sent).toContain('Define bank in vi: river bank'); // user format rendered
+    expect(sent).toContain('You are a bilingual dictionary'); // envelope persona
+    expect(sent).toContain('Do not include any HTML'); // envelope constraints
   });
 
   it('empty key → NO_KEY (defensive; not retryable), no fetch', async () => {

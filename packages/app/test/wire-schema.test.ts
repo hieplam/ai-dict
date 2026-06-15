@@ -7,7 +7,7 @@ describe('wire-schema', () => {
       WireMessageSchema.safeParse({
         type: 'lookup',
         requestId: 'r1',
-        req: { word: 'a', context: 'b', url: '', title: '', target: 'vi', promptTemplate: 't' },
+        req: { word: 'a', context: 'b', url: '', title: '', target: 'vi', outputFormat: 't' },
       }).success,
     ).toBe(true);
   });
@@ -19,7 +19,7 @@ describe('wire-schema', () => {
     const ok = WireReplySchema.safeParse({
       ok: true,
       type: 'settings',
-      settings: { targetLang: 'vi', promptTemplate: 't', hasKey: true, apiKey: 'x' },
+      settings: { targetLang: 'vi', outputFormat: 't', hasKey: true, apiKey: 'x' },
     });
     expect(ok.success).toBe(false);
   });
@@ -30,7 +30,7 @@ describe('wire-schema', () => {
     const ok = WireReplySchema.safeParse({
       ok: true,
       type: 'settings',
-      settings: { targetLang: 'vi', promptTemplate: 't', hasKey: true, theme: 'light' },
+      settings: { targetLang: 'vi', outputFormat: 't', hasKey: true, theme: 'light' },
       apiKey: 'leaked',
     });
     expect(ok.success).toBe(true);
@@ -42,14 +42,14 @@ describe('wire-schema', () => {
       const ok = WireReplySchema.safeParse({
         ok: true,
         type: 'settings',
-        settings: { targetLang: 'vi', promptTemplate: 't', hasKey: true, theme },
+        settings: { targetLang: 'vi', outputFormat: 't', hasKey: true, theme },
       });
       expect(ok.success, `theme=${theme} must parse`).toBe(true);
     }
   });
 
   it('rejects a settings reply with an unknown or missing theme', () => {
-    const base = { targetLang: 'vi', promptTemplate: 't', hasKey: true };
+    const base = { targetLang: 'vi', outputFormat: 't', hasKey: true };
     expect(
       WireReplySchema.safeParse({
         ok: true,
@@ -67,7 +67,7 @@ describe('wire-schema', () => {
     const ok = WireMessageSchema.safeParse({
       type: 'lookup',
       requestId: 'r1',
-      req: { word: 'a', context: 'b', url: '', title: '', target: 'vi', promptTemplate: 't' },
+      req: { word: 'a', context: 'b', url: '', title: '', target: 'vi', outputFormat: 't' },
       apiKey: 'leaked',
     });
     expect(ok.success).toBe(true);
@@ -115,7 +115,7 @@ describe('wire-schema', () => {
     expect(
       WireMessageSchema.safeParse({
         type: 'lookup',
-        req: { word: 'a', context: 'b', url: '', title: '', target: 'vi', promptTemplate: 't' },
+        req: { word: 'a', context: 'b', url: '', title: '', target: 'vi', outputFormat: 't' },
         // requestId intentionally omitted
       }).success,
     ).toBe(false);
@@ -125,7 +125,7 @@ describe('wire-schema', () => {
       WireMessageSchema.safeParse({
         type: 'lookup',
         requestId: 'r1',
-        req: { context: 'b', url: '', title: '', target: 'vi', promptTemplate: 't' },
+        req: { context: 'b', url: '', title: '', target: 'vi', outputFormat: 't' },
       }).success,
     ).toBe(false);
   });

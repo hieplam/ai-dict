@@ -78,7 +78,7 @@ export class FakeSettingsStore implements SettingsStore {
   get(): Promise<PublicSettings> {
     return Promise.resolve(this.value);
   }
-  set(patch: Partial<Pick<PublicSettings, 'targetLang' | 'promptTemplate'>>): Promise<void> {
+  set(patch: Partial<Pick<PublicSettings, 'targetLang' | 'outputFormat'>>): Promise<void> {
     Object.assign(this.value, patch);
     return Promise.resolve();
   }
