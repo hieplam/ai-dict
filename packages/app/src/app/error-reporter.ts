@@ -62,6 +62,11 @@ export class ErrorReporter {
     }
   }
 
+  // Known limitation: capture() is not serialized. The SW fires it as `void reporter.capture(...)`
+  // and Chrome can process error replies concurrently, so two overlapping captures under standing
+  // consent could each flush the same buffer — sending a few records to GA4 twice (inflated counts
+  // only; no record is lost or double-stored, the last writeBuffer([]) wins). Acceptable for an
+  // anonymous-diagnostics sink; serialize via a WriteQueue if GA4 counts ever need to be exact.
   async capture(input: CaptureInput): Promise<ReportDecision> {
     const meta = await this.deps.meta();
     const rec = toErrorRecord(input, { now: this.deps.now(), ...meta });

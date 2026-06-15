@@ -30,8 +30,9 @@ is **off by default** and **nothing is sent unless you agree**:
   Each report is a **signature**, not your activity: the error type, a **redacted** error message
   (API keys, emails, phone numbers and similar are masked), the page's **domain only**
   (e.g. `example.com` — never the full URL or path), which provider you use, and the extension
-  and browser versions. A random, anonymous id ties one session's reports together; it is **not**
-  linked to your identity.
+  and browser versions. A random, anonymous id — generated once per installation and stored
+  locally — lets reports from the same install be correlated; it is **not** linked to your
+  identity or any account, and clearing the extension's storage resets it.
 - We **never** send the page's content, the full URL, the text you selected, the definitions you
   receive, or your API key.
 
