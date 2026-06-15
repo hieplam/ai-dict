@@ -13,51 +13,64 @@
   <img alt="Safari" src="https://img.shields.io/badge/Safari-not%20yet%20supported-9b9b9b">
 </p>
 
+## Ordinary dictionaries look up the _word_. This one reads the _sentence_.
+
+Most dictionary apps and browser extensions — including Google's — take the word
+you selected, **throw away everything around it**, and hand you back a list of
+_every meaning that word has ever had_. You scroll and guess which one fits. Look
+up _bank_ and it comes back as a riverside **and** a money business **and** a
+slope — every time, no matter what you were actually reading.
+
+**AI Dictionary keeps the sentence.** It reads the words around your selection,
+works out which sense is actually in play, and gives you **only that one** —
+already explained and translated into your language:
+
+| You're reading…                               | A word-only dictionary gives you             | AI Dictionary gives you                          |
+| --------------------------------------------- | -------------------------------------------- | ------------------------------------------------ |
+| "I sit on the grassy **bank** of the river."  | _every_ sense: riverside · money · slope… 🤷 | 🌊 _the land along a river_ → **Bờ sông**        |
+| "The next day the **bank** approved my loan." | _every_ sense: riverside · money · slope… 🤷 | 🏦 _a business that holds money_ → **Ngân hàng** |
+
+Same word, opposite meanings — **picked from context, not guessed.** That's the
+one thing a word-only dictionary can't do, and it's why AI Dictionary fits how
+you actually read.
+
 <p align="center">
-  <a href="docs/demos/define-bubble/define-bubble-demo.mp4">
-    <img src="docs/demos/define-bubble/define-bubble-demo.gif" alt="Selecting the word serendipity in an article, clicking the Define button, and reading the definition card with IPA, part of speech, an English explanation, a Vietnamese translation, and an example" width="760">
+  <a href="docs/demos/context-bank/context-bank-demo.mp4">
+    <img src="docs/demos/context-bank/context-bank-demo.gif" alt="The same word 'bank' selected in two different sentences — 'the grassy bank of the river' returns the riverside meaning, while 'the bank approved my loan' returns the money-business meaning — each translated to Vietnamese" width="760">
   </a>
 </p>
 
-<p align="center"><em>Select a word → click <strong>Define</strong> → read the meaning, right on the page. (<a href="docs/demos/define-bubble/define-bubble-demo.mp4">watch the video</a>)</em></p>
-
----
-
-## What it is
-
-You're reading an article in English and hit a word you only half-know. Normally
-that means opening a new tab, finding a dictionary, dodging ads, and losing your
-place. AI Dictionary removes all of that.
-
-**Select the word, click _Define_, and the meaning appears on the page** — built
-from the word _plus the sentence around it_, so the answer fits how the word is
-actually used. Every result gives you:
-
-- **IPA** pronunciation
-- **Part of speech**
-- **English → English** — a plain, learner-friendly explanation
-- **English → your language** — a translation (Vietnamese by default)
-- **An example** sentence, in both languages
-
-It runs on **your own** [Google Gemini](https://ai.google.dev/) API key — or, if
-you prefer, an [OpenAI (ChatGPT)](https://platform.openai.com/) key: pick the
-provider in Settings. There's no account, no server, and no tracking — your
-lookups go straight from your browser to the provider you chose and nowhere else.
+<p align="center"><em>The same word in two sentences → two correct meanings, each chosen from its context. (<a href="docs/demos/context-bank/context-bank-demo.mp4">watch the video</a>)</em></p>
 
 ---
 
 ## Install (Chrome)
 
 > [!NOTE]
-> AI Dictionary currently works on **Google Chrome** on a computer (and
-> Chrome-like browsers such as Edge or Brave). **Safari and iPhone/iPad are not
-> supported yet** — a Safari version is planned, so please check back later.
+> AI Dictionary works on **Google Chrome** on a computer (and Chrome-like
+> browsers such as Edge or Brave). **Safari and iPhone/iPad are not supported
+> yet** — a Safari version is planned, so please check back later.
 
-Installing takes about **three minutes** and three steps: **download** the
-extension, **add it to Chrome**, and **paste in a free key from Google**.
-There's no account to create and nothing to pay for.
+There are two ways to install — pick one, then
+[add your free Google key](#add-your-free-google-key).
 
-### 1 — Download the extension
+### Option A — Chrome Web Store (recommended, for everyone)
+
+One click, **automatic updates**, and no developer mode. This is the install for
+day-to-day users.
+
+> **Coming soon.** The Chrome Web Store listing is being set up — once it's live,
+> the **Add to Chrome** button will appear here. Until then, use **Option B**
+> below. _(Maintainers: the publish steps are in
+> `docs/runbooks/chrome-web-store.md`.)_
+
+### Option B — Load a build yourself (developers / early access)
+
+The built extension is attached to every
+[GitHub Release](https://github.com/hieplam/ai-dict/releases/latest) as
+**`dist-chrome.zip`** — a developer artifact you can sideload before (or instead
+of) the Web Store listing. It's the same build the store gets; it just doesn't
+auto-update.
 
 **[⬇️ Download AI Dictionary (dist-chrome.zip)](https://github.com/hieplam/ai-dict/releases/latest/download/dist-chrome.zip)**
 
@@ -71,7 +84,7 @@ so don't delete it later.
 <summary>Comfortable with the terminal? One command does the download for you.</summary>
 
 This downloads the same files into `~/.ai-dict/dist`; re-run it any time to
-update to the newest version:
+update to the newest build:
 
 ```bash
 curl -fsSL https://github.com/hieplam/ai-dict/raw/master/scripts/install-chrome.sh | bash
@@ -79,25 +92,22 @@ curl -fsSL https://github.com/hieplam/ai-dict/raw/master/scripts/install-chrome.
 
 </details>
 
-### 2 — Add it to Chrome
-
-AI Dictionary isn't in the Chrome Web Store, so you add it yourself — three
-clicks, no tools needed:
+Then add it to Chrome — three clicks, no tools needed:
 
 1. In Chrome's address bar, type `chrome://extensions` and press Enter.
 2. Turn on the **Developer mode** switch in the top-right corner. (That's just
    Chrome's name for "let me add extensions from my own computer" — it doesn't
    change anything else about your browser.)
-3. Click **Load unpacked** and choose the folder from step 1 — the unzipped
+3. Click **Load unpacked** and choose the folder from above — the unzipped
    folder, or `~/.ai-dict/dist` if you used the terminal command.
 
 AI Dictionary now shows up in your list of extensions.
 
-### 3 — Add your free Google key
+### Add your free Google key
 
-One last thing: the extension needs a **Gemini API key** — a personal code from
-Google that lets it ask Google's AI for definitions. It's **free**, and getting
-one takes about a minute — see
+Whichever way you installed, the extension needs a **Gemini API key** — a
+personal code from Google that lets it ask Google's AI for definitions. It's
+**free**, and getting one takes about a minute — see
 [Getting a Gemini API key](#getting-a-gemini-api-key) just below.
 
 Open the extension's **settings** page (it opens by itself the first time),

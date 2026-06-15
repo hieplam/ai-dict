@@ -46,9 +46,17 @@ c3-117:
 c3-201:
   - packages/extension-chrome/src/adapters/**
 c3-210:
+  - packages/extension-chrome/e2e/store-screenshots.spec.ts
+  - packages/extension-chrome/esbuild.config.mjs
+  - packages/extension-chrome/scripts/generate-brand-assets.mjs
   - packages/extension-chrome/src/build-defines.d.ts
+  - packages/extension-chrome/src/icons/icon-128.png
+  - packages/extension-chrome/src/icons/icon-16.png
+  - packages/extension-chrome/src/icons/icon-32.png
+  - packages/extension-chrome/src/icons/icon-48.png
   - packages/extension-chrome/src/manifest.json
   - packages/extension-chrome/src/sw.ts
+  - packages/extension-chrome/test/manifest.test.ts
 c3-211:
   - packages/extension-chrome/src/content-elements.ts
   - packages/extension-chrome/src/content.ts

@@ -11,6 +11,8 @@ permissions:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    env:
+      CWS_EXTENSION_ID: ${{ secrets.CWS_EXTENSION_ID }}
     permissions:
       contents: write # push the version-bump commit and the vX.Y.Z tag
       pull-requests: write # open and update the Release PR
@@ -48,6 +50,10 @@ jobs:
         if: ${{ steps.release.outputs.release_created }}
         run: bun install --frozen-lockfile
 
+      - name: Guard — no API key baked into the release build (rule-api-key-isolation / S1)
+        if: ${{ steps.release.outputs.release_created }}
+        run: test -z "${GEMINI_API_KEY:-}"
+
       - name: Build Chrome extension
         if: ${{ steps.release.outputs.release_created }}
         run: bun run --filter @ai-dict/extension-chrome build
@@ -61,3 +67,14 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: gh release upload "${{ steps.release.outputs.tag_name }}" dist-chrome.zip --clobber
+
+      - name: Publish to Chrome Web Store
+        # Skips (does not fail) until the four CWS_* secrets are configured, so releases still
+        # attach dist-chrome.zip before store setup is done. v4 CLI: omitting the `upload`
+        # subcommand uploads AND publishes; auth comes from CLIENT_ID/CLIENT_SECRET/REFRESH_TOKEN.
+        if: ${{ steps.release.outputs.release_created && env.CWS_EXTENSION_ID != '' }}
+        env:
+          CLIENT_ID: ${{ secrets.CWS_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.CWS_CLIENT_SECRET }}
+          REFRESH_TOKEN: ${{ secrets.CWS_REFRESH_TOKEN }}
+        run: ./node_modules/.bin/chrome-webstore-upload --source dist-chrome.zip --extension-id "$CWS_EXTENSION_ID"

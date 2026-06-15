@@ -28,4 +28,14 @@ describe('manifest.json (S5 CSP + S8 permissions — exact)', () => {
     expect(script1).toMatchObject({ js: ['content.js'] });
     expect('world' in script1).toBe(false);
   });
+  it('declares icons + action.default_icon (16/32/48/128) for toolbar and store', () => {
+    const expected = {
+      '16': 'icons/icon-16.png',
+      '32': 'icons/icon-32.png',
+      '48': 'icons/icon-48.png',
+      '128': 'icons/icon-128.png',
+    };
+    expect(manifest.icons).toEqual(expected);
+    expect(manifest.action.default_icon).toEqual(expected);
+  });
 });
