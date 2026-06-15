@@ -1,10 +1,10 @@
 ---
 id: adr-20260615-chrome-web-store-publish
-c3-seal: f76c4b27a9ced68caadcf4176a4fcd40b7ec4c9b8f469883d1c488416c440ca6
+c3-seal: 411df2f2eca34c23b47e7295cf436867a8e01c1eead6b395ca23763ddbfb2335
 title: chrome-web-store-publish
 type: adr
 goal: 'Publish the existing Chrome MV3 extension (`c3-2`) to the Chrome Web Store so desktop users can one-click "Add to Chrome" and receive automatic OTA updates via Google''s hosting. Every subsequent `release-please` release must upload and publish itself through CI — no manual drag-drop. The concrete work order: add a 16/32/48/128 icon set + `action.default_icon` to `packages/extension-chrome/src/manifest.json`; wire icon copies into the esbuild build; create store listing assets (screenshots, promo tile, `listing.md`, `PRIVACY.md`); add a guarded `chrome-webstore-upload-cli` publish step to `.github/workflows/release-please.yml`; and write a one-time setup runbook. iOS/Safari App Store is an explicit follow-up in a separate spec.'
-status: accepted
+status: implemented
 date: "2026-06-15"
 ---
 
@@ -68,7 +68,8 @@ Publish to the Chrome Web Store using `chrome-webstore-upload-cli` invoked from 
 
 | Underlay area | Exact C3 change | Verification evidence |
 | --- | --- | --- |
-| N.A - no new C3 commands, validators, schema rows, or underlay tests required | N.A - existing c3-2 and c3-210 ownership covers all affected files; codemap updates map currently-uncharted files to c3-2 via c3 set during implementation | N.A - c3 check passes after codemap updates |
+| c3-210 codemap (component) | Added 8 exact-path codemap entries via c3 set --append: esbuild.config.mjs, test/manifest.test.ts, e2e/store-screenshots.spec.ts, src/icons/icon-16.png, src/icons/icon-32.png, src/icons/icon-48.png, src/icons/icon-128.png, scripts/generate-brand-assets.mjs — all mapped to c3-210 (chrome-service-worker), which already owns manifest.json and the esbuild bundle | c3 lookup on each path returns c3-210 via c3-2; no new component or responsibility change |
+| No new component or ref required | Existing c3-210 / c3-2 ownership covers all changed files; icon assets and build glue are packaging-only and belong to the Chrome service-worker component | c3 check --include-adr passes with 0 issues |
 
 ## Enforcement Surfaces
 
