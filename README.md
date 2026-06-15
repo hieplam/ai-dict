@@ -44,37 +44,6 @@ you actually read.
 
 ---
 
-## What it is
-
-<p align="center">
-  <a href="docs/demos/define-bubble/define-bubble-demo.mp4">
-    <img src="docs/demos/define-bubble/define-bubble-demo.gif" alt="Selecting the word serendipity in an article, clicking the Define button, and reading the definition card with IPA, part of speech, an English explanation, a Vietnamese translation, and an example" width="680">
-  </a>
-</p>
-
-<p align="center"><em>Select a word → click <strong>Define</strong> → read the meaning, right on the page. (<a href="docs/demos/define-bubble/define-bubble-demo.mp4">watch the video</a>)</em></p>
-
-You're reading an article in English and hit a word you only half-know. Normally
-that means opening a new tab, finding a dictionary, dodging ads, and losing your
-place. AI Dictionary removes all of that.
-
-**Select the word, click _Define_, and the meaning appears on the page** — built
-from the word _plus the sentence around it_, so the answer fits how the word is
-actually used. Every result gives you:
-
-- **IPA** pronunciation
-- **Part of speech**
-- **English → English** — a plain, learner-friendly explanation
-- **English → your language** — a translation (Vietnamese by default)
-- **An example** sentence, in both languages
-
-It runs on **your own** [Google Gemini](https://ai.google.dev/) API key — or, if
-you prefer, an [OpenAI (ChatGPT)](https://platform.openai.com/) key: pick the
-provider in Settings. There's no account, no server, and no tracking — your
-lookups go straight from your browser to the provider you chose and nowhere else.
-
----
-
 ## Install (Chrome)
 
 > [!NOTE]
