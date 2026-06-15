@@ -30,4 +30,10 @@ describe('classifyInbound (S3 sender guard + wire-schema gate)', () => {
   it('routes a valid same-origin message', () => {
     expect(classifyInbound(valid, 'my-id', 'my-id')).toEqual({ action: 'route', msg: valid });
   });
+  it('routes errlog.status and errlog.set-consent from the same extension', () => {
+    const msg1 = { type: 'errlog.status' };
+    expect(classifyInbound(msg1, 'ext-id', 'ext-id')).toEqual({ action: 'route', msg: msg1 });
+    const msg2 = { type: 'errlog.set-consent', state: 'declined' };
+    expect(classifyInbound(msg2, 'ext-id', 'ext-id')).toEqual({ action: 'route', msg: msg2 });
+  });
 });
