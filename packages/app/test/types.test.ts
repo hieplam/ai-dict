@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { hasKeyFor } from '../src';
-import type { Settings, PublicSettings } from '../src';
+import { hasKeyFor, normalizeTheme } from '../src';
+import type { Settings, PublicSettings, Theme } from '../src';
 
 describe('Settings public shape (FIX 1 — contract lock)', () => {
   it('Settings is importable from @ai-dict/app and has the full shape', () => {
@@ -56,5 +56,24 @@ describe('hasKeyFor — hasKey derives from the selected provider', () => {
   it('settings stored before the provider field existed read as Gemini', () => {
     expect(hasKeyFor({ apiKey: 'AIza' })).toBe(true);
     expect(hasKeyFor({})).toBe(false);
+  });
+});
+
+describe('normalizeTheme — coerce stored/unknown theme to a valid Paperlight theme', () => {
+  it('passes each valid theme through unchanged', () => {
+    for (const t of ['sepia', 'dark', 'contrast', 'system'] as const) {
+      expect(normalizeTheme(t)).toBe<Theme>(t);
+    }
+  });
+
+  it("maps the retired pre-Paperlight 'light' value to the 'sepia' default", () => {
+    expect(normalizeTheme('light')).toBe<Theme>('sepia');
+  });
+
+  it("falls back to 'sepia' for missing or unrecognised values", () => {
+    expect(normalizeTheme(undefined)).toBe<Theme>('sepia');
+    expect(normalizeTheme(null)).toBe<Theme>('sepia');
+    expect(normalizeTheme('midnight')).toBe<Theme>('sepia');
+    expect(normalizeTheme(42)).toBe<Theme>('sepia');
   });
 });
