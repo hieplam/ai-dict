@@ -9,9 +9,20 @@
 - ❌ Never use `https://raw.githubusercontent.com/...` — it is a _different origin_, gets no auth cookies, returns **404** for private repos, and renders as a broken image. (GitHub does not Camo-proxy GitHub-owned hosts, so the only thing that makes the image load is the same-origin cookie.)
 - Host evidence on a throwaway branch (e.g. `pr-assets/<slug>`) referenced by the `github.com/.../raw/...` URL, keeping binaries out of the merged source branch.
 
-# Screenshotting the Chrome extension
+# Browser testing & extension screenshots — use the Playwright e2e harness
 
-**Guardrail: don't drive your installed Google Chrome to capture extension screenshots** — Chrome 136+ silently ignores `--remote-debugging-port` (default profile) and `--load-extension`. Drive a **bundled/standalone Chromium** instead (not Google Chrome), which honors both.
+Anything that needs a real browser in this repo — e2e, manual verification, or capturing PR before/after evidence of the extension UI — goes through the **project's Playwright harness, which drives the Playwright-bundled Chromium with the unpacked extension loaded.**
+
+This is the **project-scoped exception to the global "prefer agent-browser for browser work" rule.** A Chrome MV3 extension needs `--load-extension` + a bundled Chromium + `chrome.storage` seeding + service-worker extension-id capture — all of which the e2e harness already encodes — so reach for it first instead of agent-browser when the target is this extension.
+
+- **Run it:** `bun run e2e:chrome`, or `cd packages/extension-chrome && bunx playwright test <spec>`. `HEADED=1` to watch the browser.
+- **Build first:** `bun run build:chrome` so `packages/extension-chrome/dist` is current before it's loaded.
+- **The harness** lives in `packages/extension-chrome/e2e/`:
+  - `fixtures.ts` launches `chromium.launchPersistentContext('', { args: ['--headless=new', '--load-extension=<dist>', ...] })` and derives the extension id from the registered service worker.
+  - `helpers.ts` gives you `seedSettings(page, { theme, … })` (writes `chrome.storage.local`), `gotoFixture`, `selectWord`, `openTrigger`, and `mockGemini` / `mockOpenAI`.
+- **Screenshots / evidence:** reuse the harness (`page.screenshot` / `locator.screenshot`); seed the theme with `seedSettings`. For before/after, capture BEFORE from a `master` build and AFTER from the branch build, then host the PNGs per the private-repo note above (`pr-assets/<slug>` branch + same-origin `github.com/.../raw/...` URLs).
+
+**Guardrail: never drive your installed Google Chrome** — Chrome 136+ silently ignores `--remote-debugging-port` (default profile) and `--load-extension`. The Playwright-managed Chromium (a bundled/standalone build, not Google Chrome) honors both, which is exactly why the harness uses it.
 
 # Architecture (C3)
 
