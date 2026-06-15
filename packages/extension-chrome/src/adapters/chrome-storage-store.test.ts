@@ -26,8 +26,18 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       hasKey: true,
     });
     const pub = await new ChromeStorageStore(area).get();
-    expect(pub).toEqual({ targetLang: 'vi', outputFormat: 'tpl', hasKey: true, theme: 'light' });
+    expect(pub).toEqual({ targetLang: 'vi', outputFormat: 'tpl', hasKey: true, theme: 'sepia' });
     expect('apiKey' in pub).toBe(false);
+  });
+
+  it('get() coerces a legacy stored "light" theme to the Paperlight "sepia" default', async () => {
+    const area = fakeArea({
+      targetLang: 'vi',
+      outputFormat: 'tpl',
+      apiKey: 'AIza',
+      theme: 'light',
+    });
+    expect((await new ChromeStorageStore(area).get()).theme).toBe('sepia');
   });
 
   it('get() derives hasKey from a non-empty apiKey + fills defaults when unset', async () => {
@@ -36,7 +46,7 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       targetLang: 'vi',
       outputFormat: DEFAULT_OUTPUT_FORMAT,
       hasKey: false,
-      theme: 'light',
+      theme: 'sepia',
     });
     const noKey = await new ChromeStorageStore(
       fakeArea({ targetLang: 'en', outputFormat: 't', apiKey: '' }),

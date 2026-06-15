@@ -30,7 +30,7 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
       hasKey: true,
     });
     const pub = await new SafariStorageStore(area).get();
-    expect(pub).toEqual({ targetLang: 'vi', outputFormat: 'tpl', hasKey: true, theme: 'light' });
+    expect(pub).toEqual({ targetLang: 'vi', outputFormat: 'tpl', hasKey: true, theme: 'sepia' });
     expect('apiKey' in pub).toBe(false);
   });
 
@@ -40,7 +40,7 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
       targetLang: 'vi',
       outputFormat: DEFAULT_OUTPUT_FORMAT,
       hasKey: false,
-      theme: 'light',
+      theme: 'sepia',
     });
   });
 

@@ -14,10 +14,11 @@ function mount(): OnboardingView {
 }
 
 describe('<onboarding-view>', () => {
-  it('renders the cozy chrome: ribbon, holly brand, welcome heading, privacy footer', () => {
+  it('renders the Paperlight chrome: accent strip, brand mark, welcome heading, privacy footer', () => {
     const r = mount().shadowRoot!;
-    expect(r.querySelector('.ribbon')).not.toBeNull();
+    expect(r.querySelector('.accent')).not.toBeNull();
     expect(r.querySelector('.brand')!.textContent).toContain('AI Dictionary');
+    expect(r.querySelector('.mark')).not.toBeNull();
     expect(r.querySelector('h1.title')!.textContent).toMatch(/welcome/i);
     expect(r.querySelector('footer')!.textContent).toContain('Stays on your device');
   });

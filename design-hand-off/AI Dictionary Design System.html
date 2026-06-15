@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en" data-ad-theme="sepia">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>AI Dictionary — Paperlight Design System</title>
+<link rel="stylesheet" href="tokens.css" />
+<style>
+  /* ---- Studio chrome (the page itself, theme-aware but neutral) ---------- */
+  *, *::before, *::after { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    font-family: var(--adp-font-sans);
+    background:
+      radial-gradient(120% 90% at 50% -10%, color-mix(in oklch, var(--ad-surface) 30%, transparent), transparent 60%),
+      var(--studio-bg);
+    color: var(--studio-ink);
+    line-height: var(--adp-leading-body);
+    transition: background var(--adp-dur-theme) var(--adp-ease-inout),
+                color var(--adp-dur-theme) var(--adp-ease-inout);
+  }
+  html[data-ad-theme="sepia"] { --studio-bg: oklch(0.915 0.012 78); --studio-ink: oklch(0.34 0.02 60); --studio-ink-soft: oklch(0.5 0.018 62); --studio-panel: oklch(0.95 0.012 80); --studio-line: oklch(0.86 0.012 78); }
+  html[data-ad-theme="dark"]  { --studio-bg: oklch(0.19 0.012 68);  --studio-ink: oklch(0.9 0.014 84);  --studio-ink-soft: oklch(0.7 0.016 80);  --studio-panel: oklch(0.225 0.013 70); --studio-line: oklch(0.32 0.014 68); }
+  html[data-ad-theme="contrast"] { --studio-bg: oklch(0.88 0.010 80); --studio-ink: oklch(0.2 0.015 60); --studio-ink-soft: oklch(0.36 0.018 62); --studio-panel: oklch(0.98 0.006 85); --studio-line: oklch(0.7 0.012 78); }
+
+  ::selection { background: var(--ad-selection); }
+
+  .wrap { max-width: 1180px; margin: 0 auto; padding: 0 32px; }
+
+  /* ---- Top bar ----------------------------------------------------------- */
+  header.bar {
+    position: sticky; top: 0; z-index: 50;
+    backdrop-filter: blur(14px);
+    background: color-mix(in oklch, var(--studio-bg) 78%, transparent);
+    border-bottom: 1px solid var(--studio-line);
+  }
+  .bar__in { display: flex; align-items: center; justify-content: space-between; gap: 20px; height: 64px; }
+  .bar__brand { display: flex; align-items: center; gap: 10px; font-weight: 700; letter-spacing: -0.01em; }
+  .bar__brand .name { font-size: 15px; }
+  .bar__brand .sub { font-size: 12px; font-weight: 500; color: var(--studio-ink-soft); padding-left: 10px; margin-left: 4px; border-left: 1px solid var(--studio-line); }
+  .toggle { display: inline-flex; padding: 3px; gap: 2px; background: var(--studio-panel); border: 1px solid var(--studio-line); border-radius: var(--adp-radius-pill); }
+  .toggle button {
+    appearance: none; border: 0; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600;
+    padding: 6px 16px; border-radius: var(--adp-radius-pill); color: var(--studio-ink-soft);
+    background: transparent; display: inline-flex; align-items: center; gap: 7px;
+    transition: background var(--adp-dur-fast) var(--adp-ease), color var(--adp-dur-fast) var(--adp-ease);
+  }
+  .toggle button[aria-pressed="true"] { background: var(--ad-accent); color: var(--ad-on-accent); }
+  .toggle button:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
+
+  /* ---- Section scaffolding ---------------------------------------------- */
+  section.block { padding: 64px 0; border-bottom: 1px solid var(--studio-line); }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ad-accent-ink); }
+  .eyebrow .num { font-variant-numeric: tabular-nums; opacity: 0.5; }
+  h1 { font-family: var(--adp-font-serif); font-weight: 400; font-size: clamp(2.4rem, 5vw, 3.6rem); line-height: 1.05; letter-spacing: -0.02em; margin: 18px 0 0; max-width: 16ch; }
+  h2 { font-family: var(--adp-font-serif); font-weight: 400; font-size: clamp(1.7rem, 3vw, 2.3rem); letter-spacing: -0.015em; margin: 12px 0 0; }
+  h3 { font-size: 15px; font-weight: 700; letter-spacing: -0.005em; margin: 0 0 10px; }
+  .lead { font-size: 18px; max-width: 62ch; color: var(--studio-ink-soft); margin: 18px 0 0; text-wrap: pretty; }
+  p.note { font-size: 14px; color: var(--studio-ink-soft); max-width: 64ch; text-wrap: pretty; }
+  .grid { display: grid; gap: 22px; margin-top: 32px; }
+  .cols-2 { grid-template-columns: repeat(2, 1fr); }
+  .cols-3 { grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 860px) { .cols-2, .cols-3 { grid-template-columns: 1fr; } }
+
+  .card-studio { background: var(--studio-panel); border: 1px solid var(--studio-line); border-radius: 16px; padding: 24px; }
+  .label { font-size: 12px; font-weight: 600; color: var(--studio-ink-soft); letter-spacing: 0.02em; }
+  .mono { font-family: var(--adp-font-mono); font-size: 11.5px; }
+
+  /* stage = a soft inset surface to float live components on */
+  .stage {
+    border-radius: 16px; border: 1px solid var(--studio-line);
+    background:
+      repeating-linear-gradient(45deg, transparent 0 11px, color-mix(in oklch, var(--studio-line) 26%, transparent) 11px 12px);
+    background-color: var(--studio-bg);
+    padding: 40px; display: flex; flex-wrap: wrap; gap: 32px; align-items: flex-start; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  .stage .mockpage { position: absolute; inset: 0; padding: 26px 30px; pointer-events: none; opacity: 0.5; }
+  .stage .mockpage h4 { font-family: var(--adp-font-serif); font-size: 22px; margin: 0 0 8px; color: var(--studio-ink); }
+  .stage .mockpage p { font-size: 14px; color: var(--studio-ink-soft); max-width: 52ch; margin: 0; }
+  .stage .mockpage mark { background: var(--ad-selection); color: inherit; padding: 0 1px; border-radius: 2px; }
+
+  /* ====================================================================== */
+  /*  THE COMPONENTS — these classes mirror what ships in the extension     */
+  /*  Every value reads from a --ad-* token. Re-theming touches nothing here */
+  /* ====================================================================== */
+
+  .ad-card {
+    width: var(--adp-card-width); max-width: 100%;
+    background: var(--ad-glow), var(--ad-surface);
+    color: var(--ad-ink);
+    border-radius: var(--adp-radius-card);
+    box-shadow: var(--ad-shadow-card);
+    overflow: hidden; position: relative; isolation: isolate;
+    font-size: var(--adp-text-body);
+    transition: background var(--adp-dur-theme) var(--adp-ease-inout), box-shadow var(--adp-dur-theme) var(--adp-ease-inout);
+  }
+  .ad-card__accent { height: 3px; background: linear-gradient(90deg, var(--ad-accent), var(--ad-warm) 92%); }
+  .ad-card__bar { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px 6px; }
+  .ad-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--ad-accent-ink); font-size: var(--adp-text-xs); font-weight: var(--adp-weight-bold); letter-spacing: var(--adp-tracking-label); }
+  .ad-actions { display: flex; align-items: center; gap: 4px; }
+  .ad-action {
+    width: var(--adp-action-size); height: var(--adp-action-size);
+    display: grid; place-items: center; border-radius: var(--adp-radius-control);
+    background: transparent; color: var(--ad-ink-faint); border: 0; cursor: pointer; padding: 0;
+    transition: background var(--adp-dur-fast) var(--adp-ease), color var(--adp-dur-fast) var(--adp-ease);
+  }
+  .ad-action:hover { background: var(--ad-surface-raised); color: var(--ad-ink); }
+  .ad-action:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
+  .ad-action.text { width: auto; gap: 6px; padding: 0 10px; font-size: 13px; font-weight: 600; color: var(--ad-ink-soft); }
+
+  .ad-body-region { padding: 6px 20px 18px; }
+  .ad-headword { font-family: var(--adp-font-serif); font-weight: var(--adp-weight-reg); font-size: var(--adp-text-headword); line-height: var(--adp-leading-tight); letter-spacing: var(--adp-tracking-head); color: var(--ad-ink); margin: 6px 0 0; display: inline-block; }
+  .ad-headword::after { content: ""; display: block; width: 44px; height: 3px; margin-top: 8px; border-radius: 2px; background: linear-gradient(90deg, var(--ad-accent), var(--ad-warm)); }
+  .ad-headword.sans { font-family: var(--adp-font-sans); font-weight: var(--adp-weight-bold); font-size: 1.5rem; letter-spacing: -0.02em; }
+  .ad-meta { color: var(--ad-ink-faint); font-size: var(--adp-text-sm); margin: 14px 0 0; }
+  .ad-meta .ipa { font-family: var(--adp-font-mono); }
+  .ad-row { margin: 13px 0 0; }
+  .ad-row .tag { font-weight: var(--adp-weight-bold); color: var(--ad-ink); }
+  .ad-example { margin: 14px 0 0; color: var(--ad-ink-soft); }
+  .ad-example .lead-in { font-style: italic; color: var(--ad-ink-faint); }
+  .ad-caption { display: flex; align-items: center; gap: 10px; color: var(--ad-ink-soft); font-size: var(--adp-text-sm); margin: 16px 0 4px; }
+
+  .ad-footer { display: flex; align-items: center; gap: 8px; padding: 11px 18px; border-top: 1px solid var(--ad-line); color: var(--ad-ink-faint); font-size: var(--adp-text-2xs); }
+
+  /* spinner — the one moment the accent "moves" */
+  .ad-spinner { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--ad-line); border-top-color: var(--ad-accent); animation: ad-spin 0.77s linear infinite; flex: none; }
+  @keyframes ad-spin { to { transform: rotate(360deg); } }
+
+  /* trigger pill */
+  .ad-trigger {
+    display: inline-flex; align-items: center; gap: 7px;
+    padding: 7px 13px 7px 10px; border-radius: var(--adp-radius-pill);
+    background: var(--ad-surface); color: var(--ad-ink); border: 1px solid var(--ad-line-strong);
+    box-shadow: var(--ad-shadow-trigger); font-size: var(--adp-text-sm); font-weight: var(--adp-weight-semi);
+    cursor: pointer; transition: background var(--adp-dur-fast) var(--adp-ease), transform var(--adp-dur-fast) var(--adp-ease);
+  }
+  .ad-trigger:hover { background: var(--ad-surface-raised); transform: translateY(-1px); }
+  .ad-trigger:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
+
+  /* primary + secondary buttons */
+  .ad-btn { appearance: none; border: 0; cursor: pointer; font: inherit; font-weight: var(--adp-weight-semi); font-size: 14px; padding: 11px 20px; border-radius: var(--adp-radius-control); background: var(--ad-accent); color: var(--ad-on-accent); transition: filter var(--adp-dur-fast) var(--adp-ease), transform var(--adp-dur-fast) var(--adp-ease); }
+  .ad-btn:hover { filter: brightness(1.06); transform: translateY(-1px); }
+  .ad-btn:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
+  .ad-btn.ghost { background: transparent; color: var(--ad-ink); border: 1px solid var(--ad-line-strong); }
+  .ad-btn.ghost:hover { background: var(--ad-surface-raised); filter: none; }
+
+  /* side panel */
+  .ad-panel { width: 360px; max-width: 100%; height: 540px; display: flex; flex-direction: column; background: var(--ad-glow), var(--ad-surface); color: var(--ad-ink); overflow: hidden; border: 1px solid var(--studio-line); border-radius: 10px; }
+  .ad-panel__accent { height: 3px; background: linear-gradient(90deg, var(--ad-accent), var(--ad-warm) 92%); }
+  .ad-panel__head { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; }
+  .ad-panel__body { flex: 1; overflow: auto; padding: 4px 16px 16px; }
+  .ad-empty { text-align: center; padding: 54px 16px; }
+  .ad-empty .mark { display: inline-flex; opacity: 0.9; }
+  .ad-empty h5 { font-size: 15px; font-weight: 700; margin: 16px 0 6px; color: var(--ad-ink); }
+  .ad-empty p { font-size: 13px; color: var(--ad-ink-soft); max-width: 30ch; margin: 0 auto; }
+  .ad-recent-h { font-size: 11px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ad-ink-faint); margin: 18px 4px 8px; }
+  .ad-recent { display: flex; flex-direction: column; }
+  .ad-recent button { all: unset; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 10px; border-radius: var(--adp-radius-control); cursor: pointer; }
+  .ad-recent button:hover { background: var(--ad-surface-sunken); }
+  .ad-recent button:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: -2px; }
+  .ad-recent .w { font-weight: 600; color: var(--ad-ink); font-size: 14px; }
+  .ad-recent .ctx { color: var(--ad-ink-faint); font-size: 12px; margin-top: 2px; }
+  .ad-recent .del { color: var(--ad-ink-faint); opacity: 0; transition: opacity var(--adp-dur-fast); }
+  .ad-recent button:hover .del { opacity: 1; }
+
+  /* bottom sheet */
+  .ad-sheet-frame { width: 300px; height: 540px; border-radius: 28px; background: var(--studio-panel); border: 1px solid var(--studio-line); padding: 10px; position: relative; overflow: hidden; }
+  .ad-sheet-frame .phonepage { padding: 18px 16px; font-size: 13px; color: var(--studio-ink-soft); }
+  .ad-sheet-frame .phonepage h4 { font-family: var(--adp-font-serif); color: var(--studio-ink); margin: 0 0 8px; font-size: 18px; }
+  .ad-scrim { position: absolute; inset: 0; background: var(--ad-scrim); border-radius: 18px; }
+  .ad-sheet { position: absolute; left: 8px; right: 8px; bottom: 8px; }
+  .ad-sheet .ad-card { width: 100%; }
+
+  /* color tokens display */
+  .swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin-top: 24px; }
+  .sw { border-radius: 12px; border: 1px solid var(--studio-line); overflow: hidden; background: var(--studio-panel); }
+  .sw .chip { height: 64px; }
+  .sw .meta { padding: 10px 12px; }
+  .sw .meta .n { font-size: 12.5px; font-weight: 700; }
+  .sw .meta .v { font-size: 10.5px; color: var(--studio-ink-soft); font-family: var(--adp-font-mono); margin-top: 3px; word-break: break-all; }
+
+  /* color wheel */
+  .wheel-wrap { display: flex; gap: 40px; align-items: center; flex-wrap: wrap; margin-top: 28px; }
+  .wheel { --size: 260px; width: var(--size); height: var(--size); border-radius: 50%; position: relative; flex: none;
+    background: conic-gradient(from 90deg in oklch longer hue,
+      oklch(0.7 0.13 0), oklch(0.7 0.13 60), oklch(0.7 0.13 120), oklch(0.7 0.13 180), oklch(0.7 0.13 240), oklch(0.7 0.13 300), oklch(0.7 0.13 360));
+    -webkit-mask: radial-gradient(circle, transparent 30%, #000 31%); mask: radial-gradient(circle, transparent 30%, #000 31%);
+    opacity: 0.92; }
+  .wheel-stage { position: relative; width: 300px; height: 300px; display: grid; place-items: center; }
+  .dot { position: absolute; width: 26px; height: 26px; border-radius: 50%; border: 3px solid var(--studio-panel); box-shadow: 0 2px 8px rgba(0,0,0,0.25); transform: translate(-50%, -50%);
+    left: calc(50% + cos(var(--ang)) * var(--rad)); top: calc(50% - sin(var(--ang)) * var(--rad)); }
+  .dot::after { content: attr(data-label); position: absolute; left: 50%; top: 130%; transform: translateX(-50%); white-space: nowrap; font-size: 10.5px; font-weight: 700; color: var(--studio-ink); }
+  .wheel-note { max-width: 36ch; }
+
+  /* type specimen */
+  .specimen { border: 1px solid var(--studio-line); border-radius: 14px; padding: 26px; background: var(--studio-panel); }
+  .specimen + .specimen { margin-top: 18px; }
+  .specimen .row { display: flex; align-items: baseline; gap: 18px; padding: 10px 0; border-top: 1px dashed var(--studio-line); }
+  .specimen .row:first-of-type { border-top: 0; }
+  .specimen .row .k { width: 130px; flex: none; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--studio-ink-soft); }
+  .specimen .row .k small { display: block; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--studio-ink-soft); opacity: 0.8; margin-top: 3px; }
+
+  /* mark explorations */
+  .marks { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 28px; }
+  @media (max-width: 860px) { .marks { grid-template-columns: repeat(2, 1fr); } }
+  .markcell { border: 1px solid var(--studio-line); border-radius: 14px; padding: 26px 18px; background: var(--studio-panel); text-align: center; position: relative; }
+  .markcell.pick { border-color: var(--ad-accent); box-shadow: 0 0 0 3px var(--ad-accent-soft); }
+  .markcell .pick-tag { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); background: var(--ad-accent); color: var(--ad-on-accent); font-size: 10px; font-weight: 700; letter-spacing: 0.04em; padding: 3px 10px; border-radius: 999px; }
+  .markcell svg { display: block; margin: 0 auto 14px; }
+  .markcell .nm { font-size: 13px; font-weight: 700; }
+  .markcell .ds { font-size: 12px; color: var(--studio-ink-soft); margin-top: 4px; text-wrap: pretty; }
+
+  /* spacing / radius scale */
+  .scale-row { display: flex; align-items: center; gap: 16px; padding: 8px 0; }
+  .scale-row .bar-vis { background: var(--ad-accent-soft); border: 1px solid var(--ad-accent); height: 22px; border-radius: 4px; }
+  .radius-vis { width: 90px; height: 64px; background: var(--ad-accent-soft); border: 1px solid var(--ad-accent); }
+
+  .dod { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; margin-top: 28px; }
+  @media (max-width: 860px) { .dod { grid-template-columns: 1fr; } }
+  .dod ul { list-style: none; margin: 12px 0 0; padding: 0; }
+  .dod li { font-size: 14px; padding: 9px 0 9px 28px; position: relative; color: var(--studio-ink); border-top: 1px solid var(--studio-line); text-wrap: pretty; }
+  .dod li::before { position: absolute; left: 0; top: 9px; font-weight: 700; }
+  .dod .do li::before { content: "✓"; color: var(--ad-accent-ink); }
+  .dod .dont li::before { content: "✕"; color: var(--ad-error); }
+
+  .pillrow { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .minipill { font-size: 11.5px; font-weight: 600; padding: 5px 11px; border-radius: 999px; background: var(--studio-panel); border: 1px solid var(--studio-line); color: var(--studio-ink-soft); }
+
+  /* segmented control + options form — themed with --ad-* (Settings follows the theme) */
+  .seg { display: inline-flex; background: var(--ad-surface-sunken); border: 1px solid var(--ad-line); border-radius: 10px; padding: 3px; gap: 2px; }
+  .seg button { appearance: none; border: 0; cursor: pointer; font: inherit; font-size: 13px; font-weight: 600; color: var(--ad-ink-soft); background: transparent; padding: 7px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 7px; transition: background .14s, color .14s; }
+  .seg button[aria-pressed="true"] { background: var(--ad-accent); color: var(--ad-on-accent); }
+  .seg button:focus-visible { outline: 2px solid var(--ad-accent); outline-offset: 2px; }
+  .opt-card { background: var(--ad-surface); border: 1px solid var(--ad-line); border-radius: 12px; padding: 18px 20px; margin-bottom: 16px; }
+  .opt-sec { font-size: 11px; font-weight: 700; letter-spacing: .08em; color: var(--ad-ink-faint); text-transform: uppercase; margin-bottom: 14px; }
+  .opt-lbl { font-size: 13px; font-weight: 600; color: var(--ad-ink); margin: 0 0 7px; display: block; }
+  .opt-field { background: var(--ad-surface-sunken); border: 1px solid var(--ad-line-strong); border-radius: 8px; padding: 10px 12px; font-size: 14px; color: var(--ad-ink); }
+  .opt-help { font-size: 12px; color: var(--ad-ink-faint); margin-top: 7px; }
+  .opt-btn { background: transparent; border: 1px solid var(--ad-line-strong); border-radius: 8px; padding: 9px 16px; font-size: 14px; font-weight: 600; color: var(--ad-ink); cursor: pointer; }
+  .opt-btn:hover { background: var(--ad-surface-raised); }
+
+  footer.foot { padding: 48px 0 80px; color: var(--studio-ink-soft); font-size: 13px; }
+  footer.foot a { color: var(--ad-accent-ink); }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== TOP BAR ===================== -->
+<header class="bar">
+  <div class="wrap bar__in">
+    <div class="bar__brand">
+      <span id="bar-mark" aria-hidden="true"></span>
+      <span class="name">AI Dictionary</span>
+      <span class="sub">Paperlight Design System</span>
+    </div>
+    <div class="toggle" role="group" aria-label="Preview theme">
+      <button data-theme="sepia" aria-pressed="true">◐ Sepia</button>
+      <button data-theme="dark" aria-pressed="false">● Dark</button>
+      <button data-theme="contrast" aria-pressed="false">◑ Contrast</button>
+    </div>
+  </div>
+</header>
+
+<!-- ===================== HERO ===================== -->
+<section class="block" style="border-bottom:0; padding-bottom:32px;">
+  <div class="wrap">
+    <span class="eyebrow"><span class="num">00</span> · Creative north star</span>
+    <h1>Paperlight</h1>
+    <p class="lead">A calm sheet of paper-light in the margin of whatever you're reading. AI Dictionary explains a word <em>in this sentence, in your language</em>, then gets out of the way. The system is tuned for tired eyes on long reads: gentle, warm-shifted surfaces, type that's clear without being harsh, and a single quiet accent that signals rather than shouts.</p>
+    <div class="pillrow">
+      <span class="minipill">Eye-comfort first</span>
+      <span class="minipill">No pure white · no pure black</span>
+      <span class="minipill">Comfortable contrast, not maximal</span>
+      <span class="minipill">Low-chroma signature</span>
+      <span class="minipill">2 swappable themes</span>
+      <span class="minipill">One opaque, self-contained surface</span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== THEMES ===================== -->
+<section class="block">
+  <div class="wrap">
+    <span class="eyebrow"><span class="num">01</span> · Themes</span>
+    <h2>Two reading climates, one set of tokens</h2>
+    <p class="lead">Themes are token sets, not redesigns. Components read only semantic <code class="mono">--ad-*</code> names; a theme re-binds those names. Switching is a single attribute — <code class="mono">data-ad-theme</code> — driven by the picker in Settings and persisted. Use the toggle up top to flip this entire page.</p>
+    <div class="grid cols-2">
+      <div class="card-studio">
+        <h3>◐ &nbsp;Sepia — default, reading-warm</h3>
+        <p class="note">Aged-paper surface, warm brown-grey ink. The everyday climate: bright enough to read in daylight, warm enough that nothing glares. Body contrast ≈ 9.5:1 — crisp, never the eye-straining 21:1 of black-on-white.</p>
+      </div>
+      <div class="card-studio">
+        <h3>● &nbsp;Dark — warm low-glare night</h3>
+        <p class="note">Warm charcoal, never blue-black; warm off-white ink, never #fff. Built for night reading — low overall luminance, accents lifted just enough to stay AA, glow pulled almost to nothing.</p>
+      </div>
+    </div>
+    <div class="grid cols-2" style="margin-top:22px;">
+      <div>
+        <div class="label" style="margin-bottom:10px;">Result card — live, follows the toggle</div>
+        <div id="theme-demo-a"></div>
+      </div>
+      <div>
+        <div class="label" style="margin-bottom:10px;">Architecture</div>
+        <div class="card-studio mono" style="font-size:12px; line-height:1.7;">
+          <div style="color:var(--ad-accent-ink); font-weight:700;">/* the only thing that switches */</div>
+          &lt;html data-ad-theme="sepia"&gt;<br/>
+          &lt;html data-ad-theme="dark"&gt;<br/><br/>
+          .ad-card {<br/>
+          &nbsp;&nbsp;background: var(--ad-surface);<br/>
+          &nbsp;&nbsp;color: var(--ad-ink);<br/>
+          }<br/>
+          <span style="color:var(--studio-ink-soft)">// components never name a theme.<br/>// add a theme = add one token block.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== COLOR ===================== -->
+<section class="block">
+  <div class="wrap">
+    <span class="eyebrow"><span class="num">02</span> · Color</span>
+    <h2>Quiet color, disciplined chroma</h2>
+    <p class="lead">Every value is OKLCH. Neutrals are warm-shifted so the surface reads like paper, not a screen. The signature is a calm spruce-teal — green is the most eye-restful hue — kept at low chroma so it signals without glare. A clay warm accent appears only at the trim.</p>
+
+    <div class="wheel-wrap">
+      <div class="wheel-stage">
+        <div class="wheel"></div>
+        <span class="dot" data-label="Spruce · signature" style="--ang:168deg; --rad:96px; background:oklch(0.5 0.068 168);"></span>
+        <span class="dot" data-label="Clay · trim" style="--ang:48deg; --rad:118px; background:oklch(0.56 0.09 48);"></span>
+        <span class="dot" data-label="Error" style="--ang:28deg; --rad:132px; background:oklch(0.52 0.16 28);"></span>
+        <span class="dot" data-label="Ink (warm)" style="--ang:62deg; --rad:30px; background:oklch(0.345 0.022 60);"></span>
+      </div>
+      <div class="wheel-note">
+        <h3>The chroma rule</h3>
+        <p class="note">Distance from the centre is saturation. Notice the discipline: ink sits near the middle (barely-there warmth), the signature spruce is only moderately out, and the one high-chroma value in the whole system is <strong>error</strong> — so failure never reads as decoration. Hues cluster in two warm bands (28–62°) and one cool rest-point (168°). Nothing is loud.</p>
+      </div>
+    </div>
+
+    <div class="label" style="margin-top:38px;">Semantic tokens <span style="font-weight:500;">— current theme values (flip the toggle to compare)</span></div>
+    <div class="swatches" id="swatches"></div>
+
+    <div class="grid cols-3" style="margin-top:34px;">
+      <div class="card-studio"><h3>The Quiet-Accent Rule</h3><p class="note">The signature is the only color used for meaning — brand label, focus ring, spinner, links. It never fills a surface or tints body text.</p></div>
+      <div class="card-studio"><h3>The No-Color-Only Rule</h3><p class="note">English term vs. its translation is told apart by order, label and weight — never color. Primary users read in a second language.</p></div>
+      <div class="card-studio"><h3>The Comfort-Contrast Rule</h3><p class="note">Body text aims for ~8–11:1, not the maximal 21:1. Clearly legible, gentle on the eye over a long article. Verify in-browser, per theme.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== TYPE ===================== -->
+<section class="block">
+  <div class="wrap">
+    <span class="eyebrow"><span class="num">03</span> · Typography</span>
+    <h2>One editorial serif, one native sans</h2>
+    <p class="lead">The headword is the single moment of editorial authority — it reads like the head of a printed dictionary entry. Everything else is the host system's own UI font: zero load cost, perfectly familiar, never blocking the lookup. You asked to see both directions for the headword — here they are side by side.</p>
+
+    <div class="grid cols-2" style="margin-top:30px;">
+      <div class="specimen">
+        <div class="label" style="margin-bottom:6px;">Direction A — Serif headword <strong style="color:var(--ad-accent-ink);">(recommended)</strong></div>
+        <div style="font-family:var(--adp-font-serif); font-size:2.4rem; letter-spacing:-0.01em; color:var(--studio-ink);">serendipity</div>
+        <p class="note" style="margin-top:8px;">Georgia. Editorial, calm, unmistakably "a dictionary." The serif vs. sans contrast sits on a real axis so the two never compete.</p>
+      </div>
+      <div class="specimen">
+        <div class="label" style="margin-bottom:6px;">Direction B — Sans headword</div>
+        <div style="font-family:var(--adp-font-sans); font-weight:700; font-size:2.2rem; letter-spacing:-0.03em; color:var(--studio-ink);">serendipity</div>
+        <p class="note" style="margin-top:8px;">More modern / app-like, fully neutral. Available as a token flip (<code class="mono">--ad-font-headword</code>) if a future theme wants it.</p>
+      </div>
+    </div>
+
+    <div class="specimen" style="margin-top:18px;">
+      <div class="row"><div class="k">Headword<small>Georgia · 1.7rem · -0.01em</small></div><div style="font-family:var(--adp-font-serif); font-size:1.7rem; color:var(--studio-ink);">archive</div></div>
+      <div class="row"><div class="k">Sub-headword<small>system-ui · 17px · 700</small></div><div style="font-weight:700; font-size:17px; color:var(--studio-ink);">archive</div></div>
+      <div class="row"><div class="k">Body<small>system-ui · 15px · 1.62</small></div><div style="font-size:15px; color:var(--studio-ink); max-width:48ch;">the occurrence of events by chance in a happy or beneficial way.</div></div>
+      <div class="row"><div class="k">Brand label<small>system-ui · 12px · 700 · 0.02em</small></div><div style="font-size:12px; font-weight:700; letter-spacing:0.02em; color:var(--ad-accent-ink);">AI DICTIONARY</div></div>
+      <div class="row"><div class="k">Trigger / rows<small>system-ui · 13px · 600</small></div><div style="font-size:13px; font-weight:600; color:var(--studio-ink);">Define</div></div>
+      <div class="row"><div class="k">Footer<small>system-ui · 11px · 400</small></div><div style="font-size:11px; color:var(--studio-ink-soft);">Stays on your device</div></div>
+      <div class="row"><div class="k">IPA<small>mono · 13px</small></div><div class="mono" style="font-size:13px; color:var(--studio-ink-soft);">/ˌsɛr.ənˈdɪp.ɪ.ti/</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== SPACING / RADIUS / ELEVATION ===================== -->
+<section class="block">
+  <div class="wrap">
+    <span class="eyebrow"><span class="num">04</span> · Space, shape & light</span>
+    <h2>Soft corners, warm shadows, one lifted surface</h2>
+    <div class="grid cols-3">
+      <div class="card-studio">
+        <h3>Spacing — 4px base</h3>
+        <div class="scale-row"><span class="mono" style="width:48px;">2</span><span class="bar-vis" style="width:2px;"></span></div>
+        <div class="scale-row"><span class="mono" style="width:48px;">8</span><span class="bar-vis" style="width:8px;"></span></div>
+        <div class="scale-row"><span class="mono" style="width:48px;">12</span><span class="bar-vis" style="width:12px;"></span></div>
+        <div class="scale-row"><span class="mono" style="width:48px;">16</span><span class="bar-vis" style="width:16px;"></span></div>
+        <div class="scale-row"><span class="mono" style="width:48px;">20</span><span class="bar-vis" style="width:20px;"></span></div>
+        <div class="scale-row"><span class="mono" style="width:48px;">24</span><span class="bar-vis" style="width:24px;"></span></div>
+        <div class="scale-row"><span class="mono" style="width:48px;">32</span><span class="bar-vis" style="width:32px;"></span></div>
+      </div>
+      <div class="card-studio">
+        <h3>Radius</h3>
+        <div style="display:flex; gap:18px; align-items:flex-end; margin-top:14px; flex-wrap:wrap;">
+          <div style="text-align:center;"><div class="radius-vis" style="border-radius:9px;"></div><div class="mono" style="margin-top:8px;">control · 9</div></div>
+          <div style="text-align:center;"><div class="radius-vis" style="border-radius:18px;"></div><div class="mono" style="margin-top:8px;">card · 18</div></div>
+          <div style="text-align:center;"><div class="radius-vis" style="border-radius:999px; width:64px;"></div><div class="mono" style="margin-top:8px;">pill · 999</div></div>
+        </div>
+      </div>
+      <div class="card-studio">
+        <h3>Elevation</h3>
+        <p class="note" style="margin-top:0;">Exactly one cozy surface is ever visible. The card owns background, radius and shadow; any container around it (the bottom sheet) stays transparent. Shadows are tinted warm (45–60° hue), never neutral grey — a grey shadow under a paper card reads cold.</p>
+        <div style="display:flex; gap:16px; margin-top:16px;">
+          <div style="width:64px; height:48px; border-radius:12px; background:var(--ad-surface); box-shadow:var(--ad-shadow-trigger);"></div>
+          <div style="width:64px; height:48px; border-radius:12px; background:var(--ad-glow), var(--ad-surface); box-shadow:var(--ad-shadow-card);"></div>
+        </div>
+        <div class="mono" style="margin-top:10px; color:var(--studio-ink-soft);">trigger-lift · card-lift+glow</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MOTION ===================== -->
+<section class="block">
+  <div class="wrap">
+    <span class="eyebrow"><span class="num">05</span> · Motion</span>
+    <h2>Gentle, purposeful, never bouncy</h2>
+    <p class="lead">One easing curve (<code class="mono">cubic-bezier(0.22, 1, 0.36, 1)</code>), three durations. Motion confirms a transition or shows life during a wait — it never decorates. Everything degrades to no-transition under <code class="mono">prefers-reduced-motion</code>.</p>
+    <div class="grid cols-3" style="margin-top:28px;">
+      <div class="card-studio" style="text-align:center;">
+        <h3 style="text-align:left;">Card enter — 320ms</h3>
+        <div class="stage" style="padding:28px; min-height:150px; align-items:center;">
+          <div id="motion-card" style="background:var(--ad-glow),var(--ad-surface); border-radius:14px; box-shadow:var(--ad-shadow-card); padding:14px 18px; color:var(--ad-ink);">
+            <div style="font-family:var(--adp-font-serif); font-size:20px;">lucid</div>
+          </div>
+        </div>
+        <button class="ad-btn ghost" style="margin-top:14px;" onclick="replayCard()">Replay</button>
+      </div>
+      <div class="card-studio" style="text-align:center;">
+        <h3 style="text-align:left;">Loading spinner</h3>
+        <div class="stage" style="padding:28px; min-height:150px; align-items:center; justify-content:center;">
+          <div style="display:flex; align-items:center; gap:10px; color:var(--ad-ink-soft);">
+            <span class="ad-spinner"></span> Looking up the meaning…
+          </div>
+        </div>
+        <p class="note" style="text-align:left;">A 15px arc in the signature on a hairline track. The only thing that spins.</p>
+      </div>
+      <div class="card-studio" style="text-align:center;">
+        <h3 style="text-align:left;">Bottom-sheet slide</h3>
+        <div class="stage" style="padding:0; min-height:150px; overflow:hidden; align-items:stretch; position:relative;">
+          <div id="motion-sheet" style="position:absolute; left:14px; right:14px; bottom:14px; background:var(--ad-glow),var(--ad-surface); border-radius:14px; box-shadow:var(--ad-shadow-card); padding:14px 18px; color:var(--ad-ink); transform:translateY(0); transition:transform var(--adp-dur-slow) var(--adp-ease);">
+            <div style="font-family:var(--adp-font-serif); font-size:18px;">ephemeral</div>
+            <div style="font-size:12px; color:var(--ad-ink-soft); margin-top:2px;">lasting a very short time</div>
+          </div>
+        </div>
+        <button class="ad-btn ghost" style="margin-top:14px;" onclick="replaySheet()">Replay slide-up</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== MARK ===================== -->
+<section class="block">
+  <div class="wrap">
+    <span class="eyebrow"><span class="num">06</span> · Brand mark</span>
+    <h2>Retiring the holly — exploring a theme-neutral mark</h2>
+    <p class="lead">The holly is intrinsically festive, so it can't anchor a theme-able brand. These four explorations are all built from the system's own vocabulary — the headword rule and a diacritic accent — so the mark means "a defined word" in any climate. The accent dot is a quiet nod to the diacritics of the reader's own language.</p>
+    <div class="marks" id="marks"></div>
+    <p class="note" style="margin-top:20px;">All marks are CSP-safe SVG with fills bound to <code class="mono">--ad-accent</code> / <code class="mono">--ad-warm</code>, drawn at 18px (trigger) and 21px (card). Always <code class="mono">aria-hidden</code> — every placement carries its own text label.</p>
+  </div>
+</section>
+
+<!-- ===================== COMPONENTS / SURFACES ===================== -->
+<section class="block">
+  <div class="wrap">
+    <span class="eyebrow"><span class="num">07</span> · Surfaces</span>
+    <h2>Every surface, redesigned</h2>
+    <p class="lead">All eight states below are live and read from the tokens — flip the theme toggle to see each one re-clothe itself. This is the redesign: same information architecture as today, recomposed around eye-comfort and the new quiet palette.</p>
+
+    <!-- Trigger -->
+    <h3 style="margin-top:40px; font-size:13px; letter-spacing:0.06em; text-transform:uppercase; color:var(--studio-ink-soft);">Floating trigger</h3>
+    <div class="stage" style="min-height:180px; align-items:center;">
+      <div class="mockpage">
+        <h4>A Voyage of the Unplanned</h4>
+        <p>It was a fortunate stroke of <mark>serendipity</mark> that the two researchers, chasing unrelated questions, met in the same dim archive.</p>
+      </div>
+      <button class="ad-trigger"><span id="trig-mark" aria-hidden="true"></span> Define</button>
+      <button class="ad-trigger" disabled style="opacity:1;"><span class="ad-spinner"></span></button>
+    </div>
+    <p class="note">Rest · hover lifts 1px to <code class="mono">--ad-surface-raised</code> · loading swaps the label for the spinner, keeping a stable <code class="mono">aria-label="Look up selected text"</code>.</p>
+
+    <!-- Card states -->
+    <h3 style="margin-top:40px; font-size:13px; letter-spacing:0.06em; text-transform:uppercase; color:var(--studio-ink-soft);">Lookup card — four states</h3>
+    <div class="stage" style="min-height:200px;">
+      <!-- setup invite -->
+      <div class="ad-card">
+        <div class="ad-card__accent"></div>
+        <div class="ad-card__bar">
+          <span class="ad-brand"><span class="mk" aria-hidden="true"></span> AI Dictionary</span>
+          <div class="ad-actions"><button class="ad-action text">⚙ Settings</button><button class="ad-action" aria-label="Close">✕</button></div>
+        </div>
+        <div class="ad-body-region" style="text-align:center; padding-bottom:24px;">
+          <div style="display:inline-flex; margin:8px 0 2px;" class="mk-lg" aria-hidden="true"></div>
+          <div style="font-weight:700; font-size:17px; margin-top:10px;">Set up AI Dictionary</div>
+          <p style="color:var(--ad-ink-soft); font-size:14px; max-width:34ch; margin:8px auto 18px;">AI Dictionary uses your own free Google Gemini key. Add it once to start looking up words.</p>
+          <button class="ad-btn">Open Settings</button>
+        </div>
+        <div class="ad-footer"><span aria-hidden="true">🛡</span> Stays on your device</div>
+      </div>
+
+      <!-- loading -->
+      <div class="ad-card">
+        <div class="ad-card__accent"></div>
+        <div class="ad-card__bar">
+          <span class="ad-brand"><span class="mk" aria-hidden="true"></span> AI Dictionary</span>
+          <div class="ad-actions"><button class="ad-action text">⚙ Settings</button><button class="ad-action" aria-label="Close">✕</button></div>
+        </div>
+        <div class="ad-body-region">
+          <span class="ad-headword">serendipity</span>
+          <div class="ad-caption"><span class="ad-spinner"></span> Looking up the meaning…</div>
+        </div>
+        <div class="ad-footer"><span aria-hidden="true">🛡</span> Stays on your device</div>
+      </div>
+    </div>
+
+    <div class="stage" style="min-height:200px; margin-top:22px;">
+      <!-- result -->
+      <div class="ad-card" id="result-card">
+        <div class="ad-card__accent"></div>
+        <div class="ad-card__bar">
+          <span class="ad-brand"><span class="mk" aria-hidden="true"></span> AI Dictionary</span>
+          <div class="ad-actions"><button class="ad-action text">⚙ Settings</button><button class="ad-action" aria-label="Close">✕</button></div>
+        </div>
+        <div class="ad-body-region">
+          <span class="ad-headword">serendipity</span>
+          <div class="ad-meta"><span class="ipa">/ˌsɛr.ənˈdɪp.ɪ.ti/</span> · noun</div>
+          <div class="ad-row"><span class="tag">English</span> — the occurrence of events by chance in a happy or beneficial way.</div>
+          <div class="ad-row"><span class="tag">Tiếng Việt</span> — sự tình cờ may mắn.</div>
+          <div class="ad-example"><span class="lead-in">Example:</span> “A fortunate stroke of serendipity brought them together.” — “Một sự tình cờ may mắn đã đưa họ đến với nhau.”</div>
+        </div>
+        <div class="ad-footer"><span aria-hidden="true">🛡</span> Stays on your device</div>
+      </div>
+
+      <!-- error -->
+      <div class="ad-card">
+        <div class="ad-card__accent"></div>
+        <div class="ad-card__bar">
+          <span class="ad-brand"><span class="mk" aria-hidden="true"></span> AI Dictionary</span>
+          <div class="ad-actions"><button class="ad-action text">⚙ Settings</button><button class="ad-action" aria-label="Close">✕</button></div>
+        </div>
+        <div class="ad-body-region">
+          <span class="ad-headword">Lookup failed</span>
+          <div class="ad-row" style="color:var(--ad-error);">Network failed. Check your connection and try again.</div>
+          <div style="margin-top:16px;"><button class="ad-btn ghost">Retry</button></div>
+        </div>
+        <div class="ad-footer"><span aria-hidden="true">🛡</span> Stays on your device</div>
+      </div>
+    </div>
+
+    <!-- side panel + bottom sheet -->
+    <h3 style="margin-top:40px; font-size:13px; letter-spacing:0.06em; text-transform:uppercase; color:var(--studio-ink-soft);">Side panel &amp; bottom sheet</h3>
+    <div class="stage" style="min-height:200px; gap:40px;">
+      <!-- side panel history -->
+      <div class="ad-panel">
+        <div class="ad-panel__accent"></div>
+        <div class="ad-panel__head">
+          <span class="ad-brand"><span class="mk" aria-hidden="true"></span> AI Dictionary</span>
+          <button class="ad-action" aria-label="Settings">⚙</button>
+        </div>
+        <div class="ad-panel__body">
+          <span class="ad-headword" style="font-size:1.5rem;">serendipity</span>
+          <div class="ad-meta"><span class="ipa">/ˌsɛr.ənˈdɪp.ɪ.ti/</span> · noun</div>
+          <div class="ad-row"><span class="tag">English</span> — chance, happy events.</div>
+          <div class="ad-row"><span class="tag">Tiếng Việt</span> — sự tình cờ may mắn.</div>
+          <div class="ad-recent-h">Recent</div>
+          <div class="ad-recent">
+            <button><span><span class="w">ephemeral</span><div class="ctx">A sentence with ephemeral in it.</div></span><span class="del" aria-hidden="true">🗑</span></button>
+            <button><span><span class="w">lucid</span><div class="ctx">A sentence with lucid in it.</div></span><span class="del" aria-hidden="true">🗑</span></button>
+            <button><span><span class="w">archive</span><div class="ctx">met in the same dim archive…</div></span><span class="del" aria-hidden="true">🗑</span></button>
+          </div>
+        </div>
+        <div class="ad-footer"><span aria-hidden="true">🛡</span> Stays on your device</div>
+      </div>
+
+      <!-- side panel empty -->
+      <div class="ad-panel">
+        <div class="ad-panel__accent"></div>
+        <div class="ad-panel__head">
+          <span class="ad-brand"><span class="mk" aria-hidden="true"></span> AI Dictionary</span>
+          <button class="ad-action" aria-label="Settings">⚙</button>
+        </div>
+        <div class="ad-panel__body">
+          <div class="ad-empty">
+            <span class="mk-lg mark" aria-hidden="true"></span>
+            <h5>Select a word on any page</h5>
+            <p>Highlight a word while you read and choose <strong>Define</strong>. Its meaning shows up here, with a translation in your language.</p>
+          </div>
+        </div>
+        <div class="ad-footer"><span aria-hidden="true">🛡</span> Stays on your device</div>
+      </div>
+
+      <!-- bottom sheet -->
+      <div class="ad-sheet-frame">
+        <div class="phonepage">
+          <h4>A Voyage of the Unplanned</h4>
+          <p>It was a fortunate stroke of serendipity that the two researchers met in the same dim archive and changed each other's work forever.</p>
+        </div>
+        <div class="ad-scrim"></div>
+        <div class="ad-sheet">
+          <div class="ad-card">
+            <div class="ad-card__accent"></div>
+            <div class="ad-card__bar">
+              <span class="ad-brand"><span class="mk" aria-hidden="true"></span> AI Dictionary</span>
+              <div class="ad-actions"><button class="ad-action" aria-label="Close">✕</button></div>
+            </div>
+            <div class="ad-body-region">
+              <span class="ad-headword" style="font-size:1.4rem;">serendipity</span>
+              <div class="ad-meta"><span class="ipa">/ˌsɛr.ənˈdɪp.ɪ.ti/</span> · noun</div>
+              <div class="ad-row"><span class="tag">Tiếng Việt</span> — sự tình cờ may mắn.</div>
+            </div>
+            <div class="ad-footer"><span aria-hidden="true">🛡</span> Stays on your device</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings — now adopts the themed palette (per your call) -->
+    <h3 style="margin-top:40px; font-size:13px; letter-spacing:0.06em; text-transform:uppercase; color:var(--studio-ink-soft);">Settings — now follows the theme</h3>
+    <p class="note" style="margin-top:6px;">Updated per your call: the options page now wears the <code class="mono">--ad-*</code> palette like every other surface, so it re-themes with the toggle above (try Dark / High&nbsp;Contrast). It still keeps a plain, restful form — calm, not a dashboard. The <strong>Appearance → Theme</strong> control at the top is the user-facing picker that writes <code class="mono">data-ad-theme</code> and persists it.</p>
+    <div class="stage" style="background:var(--ad-surface-sunken); padding:30px; display:block;">
+      <div style="max-width:600px; margin:0 auto; font-family:var(--adp-font-sans); color:var(--ad-ink);">
+        <div style="display:flex; align-items:center; gap:8px; font-size:13px; font-weight:700; color:var(--ad-accent-ink);">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="6.5" cy="6.5" r="2.4" fill="var(--ad-warm)"/><rect x="3" y="14.5" width="18" height="3.2" rx="1.6" fill="var(--ad-accent)"/></svg>
+          AI Dictionary
+        </div>
+        <div style="font-size:26px; font-weight:700; margin:8px 0 22px; color:var(--ad-ink);">Settings</div>
+
+        <div class="opt-card">
+          <div class="opt-sec">Appearance</div>
+          <span class="opt-lbl">Theme</span>
+          <div class="seg" role="group" aria-label="Theme">
+            <button data-pref="sepia" aria-pressed="true">◐ Sepia</button>
+            <button data-pref="dark" aria-pressed="false">● Dark</button>
+            <button data-pref="contrast" aria-pressed="false">◑ High&nbsp;Contrast</button>
+            <button data-pref="system" aria-pressed="false">⚙ Match&nbsp;system</button>
+          </div>
+          <div class="opt-help">Changes how the lookup card and side panel look. Saved on this device only.</div>
+        </div>
+
+        <div class="opt-card">
+          <div class="opt-sec">Connection</div>
+          <span class="opt-lbl">AI provider</span>
+          <div class="opt-field" style="display:flex; justify-content:space-between; align-items:center;">Gemini (Google) <span style="color:var(--ad-ink-faint);">▾</span></div>
+          <span class="opt-lbl" style="margin-top:16px;">Gemini API key</span>
+          <div style="display:flex; gap:10px;">
+            <div class="opt-field" style="flex:1; letter-spacing:2px;">•••••••••••</div>
+            <button class="opt-btn">Show</button>
+          </div>
+          <div class="opt-help">Stored locally on this device only.</div>
+          <button class="opt-btn" style="margin-top:14px;">Test connection</button>
+        </div>
+
+        <div class="opt-card" style="margin-bottom:0;">
+          <div class="opt-sec">Translation</div>
+          <span class="opt-lbl">Target language</span>
+          <div class="opt-field" style="display:flex; justify-content:space-between; align-items:center;">Vietnamese <span style="color:var(--ad-ink-faint);">▾</span></div>
+          <span class="opt-lbl" style="margin-top:16px;">Prompt template</span>
+          <div class="opt-field" style="min-height:66px; font-family:var(--adp-font-mono); font-size:13px; color:var(--ad-ink-soft);">Define {word}</div>
+          <button class="opt-btn" style="margin-top:14px;">Restore default</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ===================== DO / DON'T ===================== -->
+<section class="block">
+  <div class="wrap">
+    <span class="eyebrow"><span class="num">08</span> · Principles</span>
+    <h2>Do &amp; Don't</h2>
+    <div class="dod">
+      <div class="card-studio do">
+        <h3 style="color:var(--ad-accent-ink);">Do</h3>
+        <ul>
+          <li>Keep one quiet accent for meaning — focus ring, spinner, brand, links.</li>
+          <li>Warm-shift every neutral; reach for paper, not white, and charcoal, not black.</li>
+          <li>Aim body contrast at ~8–11:1 — clear but gentle. Verify per theme, in-browser.</li>
+          <li>Keep the card fully opaque & self-contained: own shadow root, own tokens.</li>
+          <li>Read only <code class="mono">--ad-*</code> semantic tokens in components.</li>
+          <li>Distinguish the two languages by order, label and weight — never color.</li>
+          <li>Tint shadows warm (45–60° hue); degrade motion under reduced-motion.</li>
+        </ul>
+      </div>
+      <div class="card-studio dont">
+        <h3 style="color:var(--ad-error);">Don't</h3>
+        <ul>
+          <li>Don't reintroduce seasonal/festive trim into the default themes.</li>
+          <li>Don't use pure #fff or #000 anywhere — they glare and fatigue.</li>
+          <li>Don't push the accent to high chroma or let it glow aggressively.</li>
+          <li>Don't fill a surface or tint body text with the accent.</li>
+          <li>Don't nest the card inside a second visible card or frame.</li>
+          <li>Don't hard-code a hex value in a component — add a token instead.</li>
+          <li>Don't sprawl Settings into a dashboard — keep it a calm, restful form even when themed.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="foot">
+  <div class="wrap">
+    AI Dictionary — “Paperlight” v1 · Tokens in <a href="tokens.css">tokens.css</a> · Full spec in <a href="IMPLEMENTATION_GUIDE.md">IMPLEMENTATION_GUIDE.md</a>.<br/>
+    Eye-comfort reading · Sepia + Dark · theme-able by a single <code class="mono">data-ad-theme</code> attribute.
+  </div>
+</footer>
+
+<script>
+/* ---- Mark SVGs (theme-bound fills) -------------------------------------- */
+function markSVG(variant, size){
+  const s = size || 22;
+  const A = 'var(--ad-accent)', W = 'var(--ad-warm)';
+  if (variant === 'rule') return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><circle cx="6.5" cy="6.5" r="2.4" fill="${W}"/><rect x="3" y="14.5" width="18" height="3.2" rx="1.6" fill="${A}"/><rect x="3" y="14.5" width="9" height="3.2" rx="1.6" fill="${A}"/></svg>`;
+  if (variant === 'aperture') return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><path d="M4 6c4-1.6 7-1.6 8 .5C13 4.4 16 4.4 20 6v12c-4-1.6-7-1.6-8 .5-1-2.1-4-2.1-8-.5V6Z" stroke="${A}" stroke-width="1.8" stroke-linejoin="round"/><circle cx="12" cy="3.4" r="1.6" fill="${W}"/></svg>`;
+  if (variant === 'bracket') return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><path d="M9 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h3M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3" stroke="${A}" stroke-width="1.9" stroke-linecap="round"/><circle cx="12" cy="12" r="2.2" fill="${W}"/></svg>`;
+  if (variant === 'tab') return `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none"><path d="M6 3h12a1 1 0 0 1 1 1v16l-7-4-7 4V4a1 1 0 0 1 1-1Z" fill="${A}"/><circle cx="12" cy="9" r="2" fill="${W}"/></svg>`;
+  return '';
+}
+
+/* recommended mark used across the UI demos */
+const PRIMARY_MARK = 'rule';
+
+function paintMarks(){
+  // brand bar + trigger + every .mk / .mk-lg in the demos
+  document.getElementById('bar-mark').innerHTML = markSVG(PRIMARY_MARK, 20);
+  const t = document.getElementById('trig-mark'); if (t) t.innerHTML = markSVG(PRIMARY_MARK, 18);
+  document.querySelectorAll('.mk').forEach(el => el.innerHTML = markSVG(PRIMARY_MARK, 21));
+  document.querySelectorAll('.mk-lg').forEach(el => el.innerHTML = markSVG(PRIMARY_MARK, 34));
+
+  const defs = [
+    ['rule','Rule + accent','A defined word and its dictionary underline, topped by a diacritic dot.','pick'],
+    ['aperture','Open aperture','Two facing strokes — an open book / an open mind — with an accent above.',''],
+    ['bracket','Definition bracket','Editorial brackets enclosing the point of meaning.',''],
+    ['tab','Margin tab','A bookmark in the margin, marking the word in question.','']
+  ];
+  document.getElementById('marks').innerHTML = defs.map(([v,nm,ds,pick]) => `
+    <div class="markcell ${pick}">
+      ${pick ? '<span class="pick-tag">Recommended</span>' : ''}
+      ${markSVG(v, 40)}
+      <div class="nm">${nm}</div>
+      <div class="ds">${ds}</div>
+    </div>`).join('');
+}
+
+/* ---- Token swatches (read live from computed styles) -------------------- */
+const TOKENS = [
+  ['--ad-surface','Surface — paper'],
+  ['--ad-surface-raised','Surface raised — hover'],
+  ['--ad-surface-sunken','Surface sunken — wells'],
+  ['--ad-ink','Ink — body & headword'],
+  ['--ad-ink-soft','Ink soft — secondary'],
+  ['--ad-ink-faint','Ink faint — captions / icons'],
+  ['--ad-line','Line — hairline'],
+  ['--ad-line-strong','Line strong — inputs'],
+  ['--ad-accent','Accent — signature spruce'],
+  ['--ad-accent-ink','Accent ink — accent text'],
+  ['--ad-accent-soft','Accent soft — tint / halo'],
+  ['--ad-warm','Warm — clay trim'],
+  ['--ad-error','Error — failure only'],
+  ['--ad-on-accent','On-accent — text on fill']
+];
+function paintSwatches(){
+  const cs = getComputedStyle(document.documentElement);
+  document.getElementById('swatches').innerHTML = TOKENS.map(([t,label]) => {
+    const val = cs.getPropertyValue(t).trim();
+    return `<div class="sw"><div class="chip" style="background:var(${t});"></div><div class="meta"><div class="n">${label}</div><div class="v">${t}<br/>${val}</div></div></div>`;
+  }).join('');
+}
+
+/* ---- Theme demo result card -------------------------------------------- */
+function themeDemoCard(){
+  return `<div class="ad-card"><div class="ad-card__accent"></div>
+    <div class="ad-card__bar"><span class="ad-brand"><span class="mk" aria-hidden="true"></span> AI Dictionary</span>
+      <div class="ad-actions"><button class="ad-action text">⚙ Settings</button><button class="ad-action" aria-label="Close">✕</button></div></div>
+    <div class="ad-body-region"><span class="ad-headword">archive</span>
+      <div class="ad-meta"><span class="ipa">/ˈɑːr.kaɪv/</span> · noun</div>
+      <div class="ad-row"><span class="tag">English</span> — a collection of historical documents or records.</div>
+      <div class="ad-row"><span class="tag">Tiếng Việt</span> — kho lưu trữ.</div>
+      <div class="ad-example"><span class="lead-in">Example:</span> “They met in the same dim archive.”</div>
+    </div>
+    <div class="ad-footer"><span aria-hidden="true">🛡</span> Stays on your device</div></div>`;
+}
+
+/* ---- Theme switching (mirrors the real extension: a preference resolves to a theme) */
+function resolvePref(pref){
+  if (pref === 'system') return matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'sepia';
+  return pref;
+}
+function setTheme(pref){
+  const applied = resolvePref(pref);
+  document.documentElement.setAttribute('data-ad-theme', applied);
+  // top preview toggle reflects the APPLIED theme
+  document.querySelectorAll('.toggle button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.theme === applied)));
+  // Settings picker reflects the chosen PREFERENCE (so 'Match system' can stay lit)
+  document.querySelectorAll('.seg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.pref === pref)));
+  paintSwatches();
+}
+document.querySelectorAll('.toggle button').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.theme)));
+document.querySelectorAll('.seg button').forEach(b => b.addEventListener('click', () => setTheme(b.dataset.pref)));
+
+/* ---- Motion replays ----------------------------------------------------- */
+function replayCard(){
+  const el = document.getElementById('motion-card');
+  el.style.animation = 'none'; el.style.opacity = '0'; el.style.transform = 'translateY(10px) scale(0.98)';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.style.transition = 'opacity var(--adp-dur-slow) var(--adp-ease), transform var(--adp-dur-slow) var(--adp-ease)';
+    el.style.opacity = '1'; el.style.transform = 'none';
+  }));
+}
+function replaySheet(){
+  const el = document.getElementById('motion-sheet');
+  el.style.transition = 'none'; el.style.transform = 'translateY(140%)';
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    el.style.transition = 'transform var(--adp-dur-slow) var(--adp-ease)';
+    el.style.transform = 'translateY(0)';
+  }));
+}
+
+/* ---- Init --------------------------------------------------------------- */
+document.getElementById('theme-demo-a').innerHTML = themeDemoCard();
+paintMarks();
+paintSwatches();
+setTimeout(replayCard, 400);
+</script>
+</body>
+</html>

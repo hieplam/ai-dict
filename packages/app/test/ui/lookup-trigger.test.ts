@@ -49,18 +49,24 @@ describe('<lookup-trigger>', () => {
     const rules = [...el.shadowRoot!.adoptedStyleSheets[0]!.cssRules] as CSSStyleRule[];
     const hostRule = rules.find((r) => r.selectorText === ':host');
     expect(hostRule).toBeTruthy();
-    expect(parseInt(hostRule!.style.zIndex, 10)).toBeGreaterThanOrEqual(2147483647);
+    // z-index is bound to the overlay primitive, whose value is the int32 max so no page
+    // stacking context can occlude the bubble.
+    expect(hostRule!.style.zIndex).toBe('var(--adp-z-overlay)');
+    expect(hostRule!.cssText).toContain('2147483647');
   });
 
-  it('theme contract: light needs no attribute; [theme="dark"] and dark-OS [theme="system"] swap the palette', () => {
+  it('theme contract: sepia needs no attribute; [data-ad-theme="dark"|"contrast"] and dark-OS [data-ad-theme="system"] swap the palette', () => {
     const el = mount('lookup-trigger');
     const sheet = el.shadowRoot!.adoptedStyleSheets[0]!;
     const rules = [...sheet.cssRules];
     const styleRules = rules.filter((r): r is CSSStyleRule => r instanceof CSSStyleRule);
-    // Unconditional dark override for the explicit setting.
-    expect(styleRules.some((r) => r.selectorText === ':host([theme="dark"])')).toBe(true);
-    // OS-following dark only inside the media query, and only for theme="system" —
-    // a host WITHOUT the attribute (or with theme="light") must never go dark.
+    // Unconditional dark + contrast overrides for the explicit settings.
+    expect(styleRules.some((r) => r.selectorText === ':host([data-ad-theme="dark"])')).toBe(true);
+    expect(styleRules.some((r) => r.selectorText === ':host([data-ad-theme="contrast"])')).toBe(
+      true,
+    );
+    // OS-following dark only inside the media query, and only for data-ad-theme="system" —
+    // a host WITHOUT the attribute (default sepia) must never go dark.
     const media = rules.find(
       (r): r is CSSMediaRule =>
         r instanceof CSSMediaRule && r.conditionText.includes('prefers-color-scheme'),
@@ -69,7 +75,7 @@ describe('<lookup-trigger>', () => {
     const mediaSelectors = [...media!.cssRules]
       .filter((r): r is CSSStyleRule => r instanceof CSSStyleRule)
       .map((r) => r.selectorText);
-    expect(mediaSelectors).toContain(':host([theme="system"])');
+    expect(mediaSelectors).toContain(':host([data-ad-theme="system"])');
     expect(mediaSelectors).not.toContain(':host');
   });
 

@@ -12,7 +12,7 @@ describe('Settings public shape (FIX 1 — contract lock)', () => {
       apiKey: 'AIzaFake',
       cacheEnabled: true,
       saveHistory: false,
-      theme: 'light',
+      theme: 'sepia',
       provider: 'gemini',
       openaiApiKey: '',
     };

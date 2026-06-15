@@ -33,7 +33,7 @@ const DEFAULTS: Settings = {
   apiKey: '',
   cacheEnabled: true,
   saveHistory: true,
-  theme: 'light',
+  theme: 'sepia',
   provider: 'gemini',
   openaiApiKey: '',
 };
@@ -78,7 +78,7 @@ function toFormValue(s: Settings): SettingsFormValue {
 function mountSettings(initial: Settings, status?: string): void {
   const form = document.createElement('settings-form') as unknown as SettingsForm;
   if (KEY_FROM_ENV) form.keyFromEnv = true;
-  (form as unknown as HTMLElement).setAttribute('theme', initial.theme);
+  (form as unknown as HTMLElement).setAttribute('data-ad-theme', initial.theme);
   app.replaceChildren(form);
   (form as unknown as { value: SettingsFormValue }).value = toFormValue(initial);
   wireSettings(form);
@@ -95,7 +95,7 @@ function wireSettings(form: SettingsForm): void {
       .then(
         () => {
           // Re-stamp so the page itself reflects a theme change immediately on save.
-          (form as unknown as HTMLElement).setAttribute('theme', next.theme);
+          (form as unknown as HTMLElement).setAttribute('data-ad-theme', next.theme);
           form.setStatus('Settings saved');
         },
         () => form.setStatus('Could not save settings', 'error'),
@@ -149,7 +149,7 @@ function wireSettings(form: SettingsForm): void {
 
 function mountOnboarding(initial: Settings): void {
   const view = document.createElement('onboarding-view') as unknown as OnboardingView;
-  (view as unknown as HTMLElement).setAttribute('theme', initial.theme);
+  (view as unknown as HTMLElement).setAttribute('data-ad-theme', initial.theme);
   app.replaceChildren(view);
   (view as unknown as { value: OnboardingValue }).value = {
     apiKey: '',

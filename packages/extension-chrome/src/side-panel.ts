@@ -91,7 +91,7 @@ async function initFromSettings(): Promise<void> {
     const raw: unknown = await chrome.runtime.sendMessage({ type: 'settings.get' });
     const reply = raw as WireReply | undefined;
     if (!reply || !reply.ok || reply.type !== 'settings') return;
-    view.setAttribute('theme', reply.settings.theme);
+    view.setAttribute('data-ad-theme', reply.settings.theme);
     // An env-key build (GEMINI_API_KEY baked in) is always usable even with no stored key, so
     // it must never show the setup nag — mirrors how the options page treats the env key.
     if (!__GEMINI_KEY_FROM_ENV__ && !reply.settings.hasKey) {

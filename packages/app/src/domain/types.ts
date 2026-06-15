@@ -62,10 +62,24 @@ export interface HistoryEntry {
 }
 
 /**
- * Colour theme for every UI surface. 'light' is the default; 'system' follows
- * the OS via prefers-color-scheme (the behavior before the setting existed).
+ * Colour theme for every UI surface (the "Paperlight" system). 'sepia' is the
+ * warm-paper default; 'dark' is the warm low-glare night theme; 'contrast' is the
+ * high-contrast accessibility theme; 'system' follows the OS via prefers-color-scheme.
+ * Stamped on each component host as the `data-ad-theme` attribute.
  */
-export type Theme = 'light' | 'dark' | 'system';
+export type Theme = 'sepia' | 'dark' | 'contrast' | 'system';
+
+const THEMES: readonly Theme[] = ['sepia', 'dark', 'contrast', 'system'];
+
+/**
+ * Coerce a stored/unknown theme value to a valid Theme. Settings saved before
+ * Paperlight hold the legacy 'light' value — it maps to the new 'sepia' default.
+ * Anything else unrecognised also falls back to 'sepia'. Pure: safe in the domain.
+ */
+export function normalizeTheme(value: unknown): Theme {
+  if (value === 'light') return 'sepia';
+  return THEMES.includes(value as Theme) ? (value as Theme) : 'sepia';
+}
 
 export interface PublicSettings {
   targetLang: string;

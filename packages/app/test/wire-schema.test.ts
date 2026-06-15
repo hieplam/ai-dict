@@ -30,15 +30,15 @@ describe('wire-schema', () => {
     const ok = WireReplySchema.safeParse({
       ok: true,
       type: 'settings',
-      settings: { targetLang: 'vi', outputFormat: 't', hasKey: true, theme: 'light' },
+      settings: { targetLang: 'vi', outputFormat: 't', hasKey: true, theme: 'sepia' },
       apiKey: 'leaked',
     });
     expect(ok.success).toBe(true);
     expect('apiKey' in (ok.data as object)).toBe(false);
   });
 
-  it('accepts each of the three theme values in a settings reply', () => {
-    for (const theme of ['light', 'dark', 'system']) {
+  it('accepts each of the four theme values in a settings reply', () => {
+    for (const theme of ['sepia', 'dark', 'contrast', 'system']) {
       const ok = WireReplySchema.safeParse({
         ok: true,
         type: 'settings',
@@ -54,7 +54,9 @@ describe('wire-schema', () => {
       WireReplySchema.safeParse({
         ok: true,
         type: 'settings',
-        settings: { ...base, theme: 'sepia' },
+        // 'light' is the retired pre-Paperlight value — rejected at the wire (storage coerces
+        // any legacy 'light' to 'sepia' before it is ever serialized onto the wire).
+        settings: { ...base, theme: 'light' },
       }).success,
     ).toBe(false);
     expect(WireReplySchema.safeParse({ ok: true, type: 'settings', settings: base }).success).toBe(

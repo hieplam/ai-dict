@@ -21,7 +21,7 @@ export interface SettingsOverrides {
   cacheEnabled?: boolean;
   saveHistory?: boolean;
   hasKey?: boolean;
-  theme?: 'light' | 'dark' | 'system';
+  theme?: 'sepia' | 'dark' | 'contrast' | 'system';
   provider?: 'gemini' | 'openai';
   openaiApiKey?: string;
 }
@@ -37,7 +37,7 @@ export async function seedSettings(page: Page, overrides: SettingsOverrides = {}
         cacheEnabled: true,
         saveHistory: true,
         hasKey: true,
-        theme: 'light',
+        theme: 'sepia',
         provider: 'gemini',
         openaiApiKey: '',
         ...o,

@@ -31,7 +31,7 @@ for (const scheme of ['light', 'dark'] as const) {
 
     const { label, lum } = await page.evaluate(() => {
       const el = document.createElement('lookup-trigger');
-      el.setAttribute('theme', 'system'); // follow the emulated OS scheme
+      el.setAttribute('data-ad-theme', 'system'); // follow the emulated OS scheme
       document.body.append(el);
       const btn = (el as HTMLElement).shadowRoot!.querySelector('button')!;
       const ctx = document.createElement('canvas').getContext('2d')!;
@@ -54,7 +54,7 @@ for (const scheme of ['light', 'dark'] as const) {
 
     const { text, lum } = await page.evaluate(() => {
       const card = document.createElement('lookup-card');
-      card.setAttribute('theme', 'system'); // follow the emulated OS scheme
+      card.setAttribute('data-ad-theme', 'system'); // follow the emulated OS scheme
       document.body.append(card);
       // Drive the card via its public state setter (same world as the page).
       (card as unknown as { state: unknown }).state = {

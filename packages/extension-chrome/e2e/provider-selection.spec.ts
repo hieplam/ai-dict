@@ -85,7 +85,7 @@ test('settings stored before the provider field existed still look up via Gemini
         cacheEnabled: false,
         saveHistory: true,
         hasKey: true,
-        theme: 'light',
+        theme: 'sepia',
       },
     }),
   );

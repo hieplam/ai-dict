@@ -32,7 +32,7 @@ const PublicSettingsSchema = z.strictObject({
   targetLang: z.string(),
   outputFormat: z.string(),
   hasKey: z.boolean(),
-  theme: z.enum(['light', 'dark', 'system']),
+  theme: z.enum(['sepia', 'dark', 'contrast', 'system']),
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]
 
 const HistoryEntrySchema = z.strictObject({

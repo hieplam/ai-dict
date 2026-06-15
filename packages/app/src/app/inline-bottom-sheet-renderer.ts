@@ -5,7 +5,7 @@ import { sanitizeMarkdown } from './markdown-sanitize';
 export class InlineBottomSheetRenderer implements ResultRenderer {
   private sheet: HTMLElement | null = null;
   private card: LookupCard | null = null;
-  private _theme: Theme = 'light';
+  private _theme: Theme = 'sepia';
 
   constructor(
     private readonly host: HTMLElement,
@@ -13,13 +13,15 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   ) {}
 
   /**
-   * The reader's stored theme preference, stamped as a `theme` ATTRIBUTE on the card —
-   * an attribute (shared DOM) crosses the MAIN/isolated world boundary, a JS property
-   * write would not (see setState below). Set by the composition root from settings.
+   * The reader's stored theme preference, stamped as the `data-ad-theme` ATTRIBUTE on both the
+   * card and its bottom-sheet host — an attribute (shared DOM) crosses the MAIN/isolated world
+   * boundary, a JS property write would not (see setState below). The sheet is stamped too so
+   * its --ad-scrim resolves to the same theme. Set by the composition root from settings.
    */
   set theme(t: Theme) {
     this._theme = t;
-    this.card?.setAttribute('theme', t);
+    this.card?.setAttribute('data-ad-theme', t);
+    this.sheet?.setAttribute('data-ad-theme', t);
   }
   get theme(): Theme {
     return this._theme;
@@ -29,7 +31,8 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     if (this.card && this.sheet) return this.card;
     const sheet = document.createElement('bottom-sheet');
     const card = document.createElement('lookup-card') as LookupCard;
-    card.setAttribute('theme', this._theme);
+    card.setAttribute('data-ad-theme', this._theme);
+    sheet.setAttribute('data-ad-theme', this._theme);
     sheet.append(card);
     sheet.addEventListener('dismiss', () => this.close());
     card.addEventListener('close', () => this.close());

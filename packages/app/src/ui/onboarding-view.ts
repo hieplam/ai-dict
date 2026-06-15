@@ -1,5 +1,5 @@
 import { adoptStyles } from './styles/adopt';
-import { LIGHT_VARS, THEME_DARK_CSS, HOLLY_SVG } from './styles/tokens';
+import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG } from './styles/tokens';
 
 // Where a reader creates a free Gemini key. Surfaced as the first onboarding step so a
 // first-time user is never left wondering where the key comes from.
@@ -23,60 +23,61 @@ const ICON_EXTERNAL =
 // row wrapping rather than overflowing. The single blocking step is the API key — language has
 // a sensible default — so the checklist shows what is already done (language) and what is still
 // missing (the key), and the progress count moves the moment a key is pasted.
-const CSS = `:host{${LIGHT_VARS};display:block;min-height:100vh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light}
-${THEME_DARK_CSS}
+const CSS = `:host{${BASE_VARS};display:block;min-height:100vh;box-sizing:border-box;font:var(--adp-text-body)/var(--adp-leading-body) var(--adp-font-sans);color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light}
+${THEME_CSS}
 *{box-sizing:border-box}
+::selection{background:var(--ad-selection)}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
-.ribbon{height:4px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
+.accent{height:3px;background:linear-gradient(90deg,var(--ad-accent),var(--ad-warm) 92%)}
 header{display:flex;align-items:center;gap:8px;max-width:560px;margin:0 auto;padding:14px clamp(16px,5vw,22px) 6px}
-.brand{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.01em;color:var(--ad-pine)}
-.brand .holly{width:22px;height:22px;flex:none}
+.brand{display:inline-flex;align-items:center;gap:8px;font-size:var(--adp-text-sm);font-weight:var(--adp-weight-bold);letter-spacing:var(--adp-tracking-label);color:var(--ad-accent-ink)}
+.brand .mark{width:22px;height:22px;flex:none}
 main{max-width:560px;margin:0 auto;padding:6px clamp(16px,5vw,22px) 30px}
 .hero{text-align:center;padding:10px 0 4px}
-.mark{width:46px;height:46px;margin:0 auto 6px;display:block}
-h1.title{font-family:Georgia,"Times New Roman",serif;font-size:clamp(1.7rem,1.4rem + 1.4vw,2.1rem);line-height:1.12;letter-spacing:-.01em;margin:.1em 0 .3em;color:var(--ad-ink);text-wrap:balance}
+.mark.hero-mark{width:46px;height:46px;margin:0 auto 6px;display:block}
+h1.title{font-family:var(--adp-font-serif);font-size:clamp(1.7rem,1.4rem + 1.4vw,2.1rem);line-height:1.12;letter-spacing:var(--adp-tracking-head);margin:.1em 0 .3em;color:var(--ad-ink);text-wrap:balance}
 .lead{margin:0 auto;max-width:46ch;font-size:14.5px;line-height:1.6;color:var(--ad-ink-soft);text-wrap:pretty}
-.panel{margin:20px 0 0;border:1px solid var(--ad-line);border-radius:14px;padding:6px clamp(14px,4vw,20px) 18px;background:var(--ad-surface-soft)}
+.panel{margin:20px 0 0;border:1px solid var(--ad-line);border-radius:14px;padding:6px clamp(14px,4vw,20px) 18px;background:var(--ad-surface-raised)}
 .panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 0 4px;border-bottom:1px solid var(--ad-line)}
-.panel-h{margin:0;font-size:15px;font-weight:700;color:var(--ad-ink)}
-.progress{margin:0;font-size:12px;font-weight:600;color:var(--ad-pine)}
+.panel-h{margin:0;font-size:var(--adp-text-body);font-weight:var(--adp-weight-bold);color:var(--ad-ink)}
+.progress{margin:0;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);color:var(--ad-accent-ink)}
 .steps{list-style:none;margin:0;padding:0}
 .step{display:flex;gap:13px;padding:16px 0;border-bottom:1px solid var(--ad-line)}
 .step:last-child{border-bottom:0;padding-bottom:6px}
-.dot{width:21px;height:21px;border-radius:50%;flex:none;margin-top:1px;border:2px solid var(--ad-line);position:relative;background:var(--ad-surface);transition:background .15s ease,border-color .15s ease}
-.step.done .dot{background:var(--ad-pine);border-color:var(--ad-pine)}
-.step.done .dot::after{content:"";position:absolute;left:6px;top:2.5px;width:4px;height:9px;border:solid var(--ad-surface);border-width:0 2px 2px 0;transform:rotate(45deg)}
+.dot{width:21px;height:21px;border-radius:50%;flex:none;margin-top:1px;border:2px solid var(--ad-line-strong);position:relative;background:var(--ad-surface);transition:background var(--adp-dur-fast) var(--adp-ease),border-color var(--adp-dur-fast) var(--adp-ease)}
+.step.done .dot{background:var(--ad-accent);border-color:var(--ad-accent)}
+.step.done .dot::after{content:"";position:absolute;left:6px;top:2.5px;width:4px;height:9px;border:solid var(--ad-on-accent);border-width:0 2px 2px 0;transform:rotate(45deg)}
 .step-body{flex:1 1 auto;min-width:0}
-.step-title{margin:0;font-size:14.5px;font-weight:600;color:var(--ad-ink)}
-.step-sub{margin:2px 0 0;font-size:13px;line-height:1.5;color:var(--ad-ink-soft)}
-select{font:inherit;margin-top:10px;width:100%;max-width:240px;padding:9px 11px;border:1px solid var(--ad-line);border-radius:10px;background:var(--ad-surface);color:var(--ad-ink)}
-.getkey{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:13px;font-weight:600;color:var(--ad-pine);text-decoration:underline;text-underline-offset:2px}
+.step-title{margin:0;font-size:14.5px;font-weight:var(--adp-weight-semi);color:var(--ad-ink)}
+.step-sub{margin:2px 0 0;font-size:var(--adp-text-sm);line-height:1.5;color:var(--ad-ink-soft)}
+select{font:inherit;margin-top:10px;width:100%;max-width:240px;padding:9px 11px;border:1px solid var(--ad-line-strong);border-radius:10px;background:var(--ad-surface);color:var(--ad-ink)}
+.getkey{display:inline-flex;align-items:center;gap:6px;margin-top:10px;font-size:var(--adp-text-sm);font-weight:var(--adp-weight-semi);color:var(--ad-accent-ink);text-decoration:underline;text-underline-offset:2px}
 .getkey:hover{text-decoration:none}
-.getkey:focus-visible{outline:2px solid var(--ad-amber);outline-offset:3px;border-radius:4px}
+.getkey:focus-visible{outline:2px solid var(--ad-accent);outline-offset:3px;border-radius:4px}
 .getkey .ext{width:14px;height:14px;flex:none}
 .keyrow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin-top:11px}
-.keyrow input{flex:1 1 200px;min-width:0;font:inherit;padding:10px 12px;border:1px solid var(--ad-line);border-radius:10px;background:var(--ad-surface);color:var(--ad-ink)}
-input:focus,select:focus{outline:2px solid var(--ad-amber);outline-offset:1px;border-color:transparent}
-#reveal{font:inherit;font-weight:600;font-size:13px;padding:9px 14px;border-radius:10px;cursor:pointer;border:1px solid var(--ad-line);background:var(--ad-surface);color:var(--ad-ink)}
-#reveal:hover{background:var(--ad-surface-soft)}
-#reveal:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
-#key-help{margin:8px 0 0;font-size:12px;color:var(--ad-ink-soft)}
+.keyrow input{flex:1 1 200px;min-width:0;font:inherit;padding:10px 12px;border:1px solid var(--ad-line-strong);border-radius:10px;background:var(--ad-surface);color:var(--ad-ink)}
+input:focus,select:focus{outline:2px solid var(--ad-accent);outline-offset:1px;border-color:transparent}
+#reveal{font:inherit;font-weight:var(--adp-weight-semi);font-size:var(--adp-text-sm);padding:9px 14px;border-radius:10px;cursor:pointer;border:1px solid var(--ad-line-strong);background:var(--ad-surface);color:var(--ad-ink)}
+#reveal:hover{background:var(--ad-surface-raised)}
+#reveal:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+#key-help{margin:8px 0 0;font-size:var(--adp-text-xs);color:var(--ad-ink-soft)}
 .actions{margin-top:18px}
-button.primary{font:inherit;font-weight:600;font-size:14px;width:100%;padding:12px 18px;border-radius:11px;cursor:pointer;border:1px solid transparent;background:var(--ad-cta);color:var(--ad-surface)}
+button.primary{font:inherit;font-weight:var(--adp-weight-semi);font-size:14px;width:100%;padding:12px 18px;border-radius:11px;cursor:pointer;border:1px solid transparent;background:var(--ad-accent);color:var(--ad-on-accent)}
 button.primary:hover{filter:brightness(1.06)}
-button.primary:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
-#status{margin:13px 0 0;padding:9px 12px;border-radius:8px;border-left:3px solid var(--ad-pine);background:var(--ad-surface);color:var(--ad-ink);font-size:13px;font-weight:600}
-#status.error{border-left-color:var(--ad-err);color:var(--ad-err)}
-footer{display:flex;align-items:center;gap:6px;max-width:560px;margin:0 auto;padding:6px clamp(16px,5vw,22px) 20px;font-size:11px;color:var(--ad-ink-soft)}
+button.primary:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+#status{margin:13px 0 0;padding:9px 12px;border-radius:8px;border-left:3px solid var(--ad-accent);background:var(--ad-surface-sunken);color:var(--ad-ink);font-size:var(--adp-text-sm);font-weight:var(--adp-weight-semi)}
+#status.error{border-left-color:var(--ad-error);color:var(--ad-error)}
+footer{display:flex;align-items:center;gap:6px;max-width:560px;margin:0 auto;padding:6px clamp(16px,5vw,22px) 20px;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 footer svg{width:13px;height:13px;flex:none}
 [hidden]{display:none}`;
 
-const MARKUP = `<div class="ribbon"></div>
-<header><span class="brand">${HOLLY_SVG}<span>AI Dictionary</span></span></header>
+const MARKUP = `<div class="accent" aria-hidden="true"></div>
+<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary</span></span></header>
 <form novalidate>
   <main>
     <div class="hero">
-      ${HOLLY_SVG.replace('class="holly"', 'class="holly mark"')}
+      ${BRAND_MARK_SVG.replace('class="mark"', 'class="mark hero-mark"')}
       <h1 class="title">Welcome to AI Dictionary</h1>
       <p class="lead">Look up any English word right where you're reading, translated into your language, powered by your own free Google Gemini key. Nothing leaves your device but the word you choose.</p>
     </div>

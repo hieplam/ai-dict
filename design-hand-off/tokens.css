@@ -1,0 +1,251 @@
+/* ============================================================================
+   AI DICTIONARY — "PAPERLIGHT" DESIGN TOKENS
+   ----------------------------------------------------------------------------
+   One source of truth for every surface (trigger pill, lookup card, bottom
+   sheet, side panel, onboarding). Themes are swapped by setting the attribute
+   [data-ad-theme] on the shadow-root host (or :root). Nothing else changes.
+
+   THEME ARCHITECTURE
+   ------------------
+   1. PRIMITIVES (--adp-*)      raw, theme-agnostic values: type scale, spacing,
+                                radii, durations, easings. Never themed.
+   2. SEMANTIC TOKENS (--ad-*)  meaning-based: surface, ink, accent, line…
+                                Re-bound per theme. Components ONLY read these.
+   3. THEMES                    [data-ad-theme="sepia"]  (default, reading-warm)
+                                [data-ad-theme="dark"]    (warm low-glare night)
+                                Add a 4th theme = add one more block. No code
+                                touches the components.
+
+   EYE-COMFORT LAWS (encoded in the values below)
+   ----------------------------------------------
+   - No pure white, no pure black. Every neutral is warm-shifted.
+   - Body contrast lands ~8–11:1: clearly legible, never the harsh 21:1 of
+     #000-on-#fff that fatigues the eye over long reads.
+   - Accents are low-chroma. Color is a quiet signal, not a glare source.
+   ========================================================================== */
+
+/* ---------------------------------------------------------------------------
+   1. PRIMITIVES — never themed
+   ------------------------------------------------------------------------- */
+:root {
+  /* Type families */
+  --adp-font-serif: Georgia, "Iowan Old Style", "Times New Roman", serif;
+  --adp-font-sans:  system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --adp-font-mono:  ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace;
+
+  /* Type scale (px unless rem) */
+  --adp-text-headword: 1.7rem;   /* looked-up word                 */
+  --adp-text-lg:       17px;     /* sub-headword / panel headers    */
+  --adp-text-body:     15px;     /* definition body                 */
+  --adp-text-sm:       13px;     /* trigger label, recent rows      */
+  --adp-text-xs:       12px;     /* brand label                     */
+  --adp-text-2xs:      11px;     /* footer / captions               */
+
+  --adp-leading-tight: 1.15;
+  --adp-leading-body:  1.62;     /* generous — long-read comfort    */
+  --adp-tracking-head: -0.01em;
+  --adp-tracking-label: 0.02em;
+
+  --adp-weight-reg: 400;
+  --adp-weight-med: 500;
+  --adp-weight-semi: 600;
+  --adp-weight-bold: 700;
+
+  /* Spacing scale (4px base) */
+  --adp-space-2:  2px;
+  --adp-space-4:  4px;
+  --adp-space-6:  6px;
+  --adp-space-8:  8px;
+  --adp-space-12: 12px;
+  --adp-space-16: 16px;
+  --adp-space-20: 20px;
+  --adp-space-24: 24px;
+  --adp-space-32: 32px;
+
+  /* Radii */
+  --adp-radius-control: 9px;
+  --adp-radius-card:    18px;
+  --adp-radius-pill:    999px;
+
+  /* Sizing */
+  --adp-card-width:    420px;
+  --adp-action-size:   30px;
+  --adp-tap-min:       44px;   /* never smaller than this on touch */
+
+  /* Motion — gentle, no bounce */
+  --adp-ease:        cubic-bezier(0.22, 1, 0.36, 1);
+  --adp-ease-inout:  cubic-bezier(0.4, 0, 0.2, 1);
+  --adp-dur-fast:    140ms;
+  --adp-dur-base:    240ms;
+  --adp-dur-slow:    320ms;
+  --adp-dur-theme:   360ms;    /* surface cross-fade on theme change */
+
+  /* Stacking — must beat any host page */
+  --adp-z-overlay: 2147483647;
+}
+
+/* ---------------------------------------------------------------------------
+   2 + 3. SEMANTIC TOKENS, per theme
+   Components read ONLY these --ad-* names.
+   ------------------------------------------------------------------------- */
+
+/* ===== SEPIA — default, reading-warm =================================== */
+:root,
+[data-ad-theme="sepia"] {
+  color-scheme: light;
+
+  /* Surfaces */
+  --ad-surface:        oklch(0.962 0.016 80);   /* warm paper                    */
+  --ad-surface-raised: oklch(0.935 0.020 78);   /* hover fill / chips            */
+  --ad-surface-sunken: oklch(0.978 0.011 82);   /* input wells, recent hover     */
+
+  /* Ink (warm, not black — comfortable contrast) */
+  --ad-ink:       oklch(0.345 0.022 60);        /* body & headword  (~9.5:1)     */
+  --ad-ink-soft:  oklch(0.500 0.020 62);        /* secondary text   (~5:1)       */
+  --ad-ink-faint: oklch(0.610 0.018 65);        /* captions / icons (~3.3:1 UI)  */
+
+  /* Lines */
+  --ad-line:      oklch(0.895 0.012 78);        /* hairline divider              */
+  --ad-line-strong: oklch(0.855 0.014 76);      /* input borders                 */
+
+  /* Accent — signature spruce-teal (calm, low-chroma) */
+  --ad-accent:        oklch(0.500 0.068 168);   /* brand, focus, links, spinner  */
+  --ad-accent-ink:    oklch(0.430 0.072 168);   /* accent text on paper (~5.5:1) */
+  --ad-accent-soft:   oklch(0.925 0.030 168);   /* tint fill / selection halo    */
+  --ad-on-accent:     oklch(0.985 0.008 80);    /* text/icon on an accent fill   */
+
+  /* Warm secondary — clay (used only at the trim) */
+  --ad-warm:      oklch(0.560 0.090 48);
+  --ad-warm-ink:  oklch(0.500 0.092 46);
+
+  /* Feedback */
+  --ad-error:     oklch(0.520 0.160 28);
+
+  /* Light & depth */
+  --ad-glow: radial-gradient(120% 72% at 50% -12%,
+              oklch(0.91 0.038 78 / 0.36), transparent 70%);
+  --ad-scrim: oklch(0.28 0.020 60 / 0.42);
+  --ad-selection: oklch(0.80 0.06 168 / 0.45);
+
+  --ad-shadow-card:
+     0 1px 1px   oklch(0.42 0.04 60 / 0.05),
+     0 10px 24px -10px oklch(0.46 0.045 58 / 0.16),
+     0 26px 52px -26px oklch(0.46 0.045 55 / 0.20);
+  --ad-shadow-trigger:
+     0 2px 5px   oklch(0.40 0.045 50 / 0.14),
+     0 10px 22px -10px oklch(0.40 0.05 45 / 0.34);
+}
+
+/* ===== DARK — warm low-glare night ===================================== */
+[data-ad-theme="dark"] {
+  color-scheme: dark;
+
+  --ad-surface:        oklch(0.255 0.013 70);   /* warm charcoal, never blue-black */
+  --ad-surface-raised: oklch(0.305 0.015 68);
+  --ad-surface-sunken: oklch(0.225 0.012 70);
+
+  --ad-ink:       oklch(0.905 0.014 84);        /* warm off-white, not #fff (~11:1)*/
+  --ad-ink-soft:  oklch(0.740 0.016 80);        /* (~5.5:1)                        */
+  --ad-ink-faint: oklch(0.605 0.016 76);        /* (~3.2:1 UI)                     */
+
+  --ad-line:        oklch(0.360 0.016 68);
+  --ad-line-strong: oklch(0.420 0.018 66);
+
+  --ad-accent:        oklch(0.785 0.070 168);   /* lifted spruce, AA on charcoal   */
+  --ad-accent-ink:    oklch(0.810 0.072 168);
+  --ad-accent-soft:   oklch(0.385 0.040 168);
+  --ad-on-accent:     oklch(0.220 0.015 70);    /* dark ink on the lifted accent   */
+
+  --ad-warm:      oklch(0.760 0.085 50);
+  --ad-warm-ink:  oklch(0.785 0.085 52);
+
+  --ad-error:     oklch(0.720 0.140 28);
+
+  --ad-glow: radial-gradient(120% 72% at 50% -12%,
+              oklch(0.50 0.050 72 / 0.30), transparent 70%);
+  --ad-scrim: oklch(0.10 0.010 60 / 0.58);
+  --ad-selection: oklch(0.55 0.06 168 / 0.50);
+
+  --ad-shadow-card:
+     0 1px 1px   oklch(0 0 0 / 0.20),
+     0 9px 20px -14px oklch(0 0 0 / 0.34),
+     0 22px 42px -32px oklch(0 0 0 / 0.38);
+  --ad-shadow-trigger:
+     0 2px 6px   oklch(0 0 0 / 0.38),
+     0 12px 24px -10px oklch(0 0 0 / 0.50);
+}
+
+/* ===== HIGH CONTRAST — accessibility =====================================
+   Proof of the architecture: a whole new theme is THIS ONE BLOCK. No component
+   code changes — they already read only --ad-* tokens. Stronger contrast,
+   crisp defining edges, no decorative glow. ======================= */
+[data-ad-theme="contrast"] {
+  color-scheme: light;
+
+  --ad-surface:        oklch(0.985 0.006 85);   /* near-white, faintly warm        */
+  --ad-surface-raised: oklch(0.930 0.010 82);
+  --ad-surface-sunken: oklch(0.970 0.008 85);
+
+  --ad-ink:       oklch(0.200 0.015 60);        /* ~16:1 — maximum legibility      */
+  --ad-ink-soft:  oklch(0.340 0.018 62);        /* ~9:1                            */
+  --ad-ink-faint: oklch(0.430 0.018 64);        /* ~6:1 — "faint" stays strong     */
+
+  --ad-line:        oklch(0.720 0.012 78);      /* visible, not hairline           */
+  --ad-line-strong: oklch(0.560 0.014 76);
+
+  --ad-accent:        oklch(0.400 0.100 168);   /* deeper spruce, AAA on white     */
+  --ad-accent-ink:    oklch(0.360 0.100 168);
+  --ad-accent-soft:   oklch(0.900 0.040 168);
+  --ad-on-accent:     oklch(0.990 0.005 85);
+
+  --ad-warm:      oklch(0.450 0.120 45);
+  --ad-warm-ink:  oklch(0.420 0.120 44);
+
+  --ad-error:     oklch(0.450 0.180 28);
+
+  --ad-glow: linear-gradient(transparent, transparent);  /* no decorative glow     */
+  --ad-scrim: oklch(0.15 0.010 60 / 0.62);
+  --ad-selection: oklch(0.78 0.080 168 / 0.50);
+
+  --ad-shadow-card:
+     0 0 0 1px oklch(0.560 0.014 76 / 0.9),               /* crisp defining edge    */
+     0 6px 18px -8px oklch(0.30 0.02 60 / 0.22);
+  --ad-shadow-trigger:
+     0 0 0 1px oklch(0.560 0.014 76 / 0.9),
+     0 4px 12px -6px oklch(0.30 0.02 60 / 0.24);
+}
+
+/* Optional: honour the OS preference automatically when no explicit theme
+   has been chosen. The Settings picker overrides this by setting
+   [data-ad-theme] explicitly. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-ad-theme]) {
+    color-scheme: dark;
+    --ad-surface:        oklch(0.255 0.013 70);
+    --ad-surface-raised: oklch(0.305 0.015 68);
+    --ad-surface-sunken: oklch(0.225 0.012 70);
+    --ad-ink:       oklch(0.905 0.014 84);
+    --ad-ink-soft:  oklch(0.740 0.016 80);
+    --ad-ink-faint: oklch(0.605 0.016 76);
+    --ad-line:        oklch(0.360 0.016 68);
+    --ad-line-strong: oklch(0.420 0.018 66);
+    --ad-accent:        oklch(0.785 0.070 168);
+    --ad-accent-ink:    oklch(0.810 0.072 168);
+    --ad-accent-soft:   oklch(0.385 0.040 168);
+    --ad-on-accent:     oklch(0.220 0.015 70);
+    --ad-warm:      oklch(0.760 0.085 50);
+    --ad-warm-ink:  oklch(0.785 0.085 52);
+    --ad-error:     oklch(0.720 0.140 28);
+    --ad-glow: radial-gradient(120% 72% at 50% -12%,
+                oklch(0.50 0.050 72 / 0.30), transparent 70%);
+    --ad-scrim: oklch(0.10 0.010 60 / 0.58);
+    --ad-selection: oklch(0.55 0.06 168 / 0.50);
+    --ad-shadow-card:
+       0 1px 1px   oklch(0 0 0 / 0.30),
+       0 16px 32px -12px oklch(0 0 0 / 0.50),
+       0 40px 70px -30px oklch(0 0 0 / 0.56);
+    --ad-shadow-trigger:
+       0 2px 6px   oklch(0 0 0 / 0.38),
+       0 12px 24px -10px oklch(0 0 0 / 0.50);
+  }
+}

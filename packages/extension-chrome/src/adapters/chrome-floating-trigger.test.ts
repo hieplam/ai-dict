@@ -23,12 +23,12 @@ describe('ChromeFloatingTrigger (TriggerUI via <lookup-trigger>)', () => {
     document.body.append(host);
     const trigger = new ChromeFloatingTrigger(host);
     trigger.show({ x: 0, y: 0, w: 1, h: 1 }, () => {});
-    expect(host.querySelector('lookup-trigger')!.getAttribute('theme')).toBe('light');
+    expect(host.querySelector('lookup-trigger')!.getAttribute('data-ad-theme')).toBe('sepia');
     trigger.theme = 'dark'; // settings arrive after the bubble is already up
-    expect(host.querySelector('lookup-trigger')!.getAttribute('theme')).toBe('dark');
+    expect(host.querySelector('lookup-trigger')!.getAttribute('data-ad-theme')).toBe('dark');
     trigger.hide();
     trigger.show({ x: 0, y: 0, w: 1, h: 1 }, () => {});
-    expect(host.querySelector('lookup-trigger')!.getAttribute('theme')).toBe('dark');
+    expect(host.querySelector('lookup-trigger')!.getAttribute('data-ad-theme')).toBe('dark');
   });
 
   it('show() twice reuses a single trigger element (re-anchors, no duplicates)', () => {

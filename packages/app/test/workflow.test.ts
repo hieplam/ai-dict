@@ -28,7 +28,7 @@ const pub = (hasKey: boolean) => ({
   targetLang: 'vi',
   outputFormat: 'tpl',
   hasKey,
-  theme: 'light' as const,
+  theme: 'sepia' as const,
 });
 
 function harness(opts: { hasKey?: boolean; impl?: FakeLookupClient['lookup'] }) {
