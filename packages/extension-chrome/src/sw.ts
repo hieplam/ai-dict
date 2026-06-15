@@ -9,9 +9,11 @@ import {
   WriteQueue,
   SUPPRESS,
   classifyInbound,
+  ErrorReporter,
 } from '@ai-dict/app';
 import { ChromeKvStore } from './adapters/chrome-kv-store';
 import { ChromeStorageStore } from './adapters/chrome-storage-store';
+import { Ga4TelemetrySink } from './adapters/ga4-telemetry-sink';
 
 const DEFAULT_TARGET = 'vi';
 async function readFullSettings(): Promise<Settings> {
@@ -36,6 +38,26 @@ async function readFullSettings(): Promise<Settings> {
 // page entirely; empty string => fall through to whatever the user entered.
 // Applies to the Gemini key only — OpenAI keys always come from settings.
 const ENV_API_KEY = __GEMINI_API_KEY__;
+
+function browserVersion(): string {
+  const m = /Chrome\/[\d.]+/.exec(navigator.userAgent);
+  return m ? m[0] : navigator.userAgent.slice(0, 80);
+}
+
+const errlogKv = new ChromeKvStore(chrome.storage.local);
+const reporter = new ErrorReporter({
+  kv: errlogKv,
+  sink: new Ga4TelemetrySink(
+    { measurementId: __GA4_MEASUREMENT_ID__, apiSecret: __GA4_API_SECRET__ },
+    chrome.storage.local,
+  ),
+  now: () => Date.now(),
+  meta: async () => ({
+    extVersion: chrome.runtime.getManifest().version,
+    browserVersion: browserVersion(),
+    provider: (await readFullSettings()).provider ?? 'gemini',
+  }),
+});
 
 const router = buildRouter({
   client: createLookupClientSelector({
@@ -62,6 +84,7 @@ const router = buildRouter({
   // A content script can't open the options page itself; it sends `open-options` and we do it
   // here. This is the keyless reader's path from the in-page "Open Settings" button to setup.
   openOptions: () => chrome.runtime.openOptionsPage(),
+  errlog: reporter,
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -74,14 +97,30 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   router(decision.msg)
     .then((reply) => {
       if (reply !== SUPPRESS) sendResponse(reply);
+      if (reply !== SUPPRESS && reply.ok === false) {
+        const url = decision.msg.type === 'lookup' ? decision.msg.req.url : undefined;
+        const { code, message, retryable, retryAfterSec } = reply.error;
+        void reporter.capture({
+          source:
+            reply.type === 'lookup' || reply.type === 'connection.test' ? reply.type : 'thrown',
+          error: {
+            code,
+            message,
+            ...(retryable !== undefined ? { retryable } : {}),
+            ...(retryAfterSec !== undefined ? { retryAfterSec } : {}),
+          },
+          ...(url !== undefined ? { url } : {}),
+        });
+      }
     })
-    .catch((e: unknown) =>
-      sendResponse({
-        ok: false,
-        type: decision.msg.type,
-        error: mapError({ kind: 'thrown', error: e }),
-      }),
-    );
+    .catch((e: unknown) => {
+      const error = mapError({ kind: 'thrown', error: e });
+      sendResponse({ ok: false, type: decision.msg.type, error });
+      void reporter.capture({
+        source: 'thrown',
+        error: { code: error.code, message: error.message },
+      });
+    });
   return true; // async sendResponse → keep channel open
 });
 
