@@ -11,6 +11,7 @@
 **Spec:** `docs/superpowers/specs/2026-06-15-error-reporting-ga4-design.md`
 
 **Conventions in this repo (read before starting):**
+
 - Tests live under `packages/app/test/...` mirroring `src` (domain → `test/<name>.test.ts`, app-layer → `test/app/<name>.test.ts`, ui → `test/ui/<name>.test.ts`).
 - Run app tests from `packages/app`: `npm test -- <file>` (vitest) and `npm run typecheck`.
 - Domain files (`packages/app/src/domain/`) MUST be platform-free (`rule-domain-purity`): no `chrome.*`, no `fetch`, no `Date.now()` inside pure functions — inject a `now()` clock.
@@ -25,6 +26,7 @@ reporter must scrub keys from messages too. Extract it (DRY) without changing
 `error-mapper` behavior.
 
 **Files:**
+
 - Modify: `packages/app/src/domain/pii.ts`
 - Modify: `packages/app/src/domain/error-mapper.ts:26-30` (replace local `sanitize`)
 - Modify: `packages/app/src/index.ts` (export the new helper if barrel re-exports domain)
@@ -103,6 +105,7 @@ git commit -m "refactor(domain): extract shared scrubSecrets helper from error-m
 ## Task 2: Pure error-report domain — record shaping, Fibonacci policy, capped buffer
 
 **Files:**
+
 - Create: `packages/app/src/domain/error-report.ts`
 - Modify: `packages/app/src/index.ts` (export new symbols)
 - Test: `packages/app/test/error-report.test.ts`
@@ -122,24 +125,43 @@ import {
   type ErrorRecord,
 } from '../src/domain/error-report';
 
-const meta = { now: 1000, extVersion: '1.5.0', browserVersion: 'Chrome/124', provider: 'gemini' as const };
+const meta = {
+  now: 1000,
+  extVersion: '1.5.0',
+  browserVersion: 'Chrome/124',
+  provider: 'gemini' as const,
+};
 
 describe('toErrorRecord', () => {
   it('captures the distilled provider-error code and redacts the message', () => {
     const r = toErrorRecord(
-      { source: 'lookup', error: { code: 'INVALID_KEY', message: 'bad key AIzaSyABC123_-x', retryable: false }, url: 'https://www.nytimes.com/2024/article' },
+      {
+        source: 'lookup',
+        error: { code: 'INVALID_KEY', message: 'bad key AIzaSyABC123_-x', retryable: false },
+        url: 'https://www.nytimes.com/2024/article',
+      },
       meta,
     );
     expect(r).toMatchObject({
-      ts: 1000, source: 'lookup', code: 'INVALID_KEY', provider: 'gemini',
-      retryable: false, domain: 'www.nytimes.com', extVersion: '1.5.0', browserVersion: 'Chrome/124',
+      ts: 1000,
+      source: 'lookup',
+      code: 'INVALID_KEY',
+      provider: 'gemini',
+      retryable: false,
+      domain: 'www.nytimes.com',
+      extVersion: '1.5.0',
+      browserVersion: 'Chrome/124',
     });
     expect(r.message).toBe('bad key [redacted]'); // key scrubbed
   });
 
   it('redacts PII (email/phone) in the message and truncates to 150 chars', () => {
     const r = toErrorRecord(
-      { source: 'lookup', error: { code: 'UNKNOWN', message: 'fail for a@b.com '.repeat(20), retryable: true }, url: '' },
+      {
+        source: 'lookup',
+        error: { code: 'UNKNOWN', message: 'fail for a@b.com '.repeat(20), retryable: true },
+        url: '',
+      },
       meta,
     );
     expect(r.message).not.toContain('a@b.com');
@@ -150,7 +172,11 @@ describe('toErrorRecord', () => {
 
   it('carries retryAfterSec when present and maps a thrown source to code THROWN', () => {
     const r = toErrorRecord(
-      { source: 'thrown', error: { code: 'RATE_LIMIT', message: 'slow down', retryable: true, retryAfterSec: 30 }, url: 'http://x.test/p' },
+      {
+        source: 'thrown',
+        error: { code: 'RATE_LIMIT', message: 'slow down', retryable: true, retryAfterSec: 30 },
+        url: 'http://x.test/p',
+      },
       { ...meta, provider: undefined },
     );
     expect(r.retryAfterSec).toBe(30);
@@ -163,7 +189,14 @@ describe('appendCapped', () => {
   it('appends and keeps only the last ERROR_BUFFER_CAP, dropping oldest', () => {
     let buf: ErrorRecord[] = [];
     for (let i = 0; i < ERROR_BUFFER_CAP + 5; i++) {
-      buf = appendCapped(buf, { ts: i, source: 'lookup', code: 'UNKNOWN', message: String(i), extVersion: '1', browserVersion: 'c' });
+      buf = appendCapped(buf, {
+        ts: i,
+        source: 'lookup',
+        code: 'UNKNOWN',
+        message: String(i),
+        extVersion: '1',
+        browserVersion: 'c',
+      });
     }
     expect(buf.length).toBe(ERROR_BUFFER_CAP);
     expect(buf[0].ts).toBe(5); // first 5 dropped
@@ -337,6 +370,7 @@ git commit -m "feat(domain): error-report record shaping, Fibonacci policy, capp
 ## Task 3: Pure GA4 Measurement Protocol payload builder
 
 **Files:**
+
 - Create: `packages/app/src/app/ga4-payload.ts`
 - Modify: `packages/app/src/index.ts`
 - Test: `packages/app/test/app/ga4-payload.test.ts`
@@ -351,14 +385,24 @@ import { buildGa4Request, GA4_ENDPOINT } from '../../src/app/ga4-payload';
 import type { ErrorRecord } from '../../src/domain/error-report';
 
 const rec: ErrorRecord = {
-  ts: 1000, source: 'lookup', code: 'RATE_LIMIT', provider: 'gemini',
+  ts: 1000,
+  source: 'lookup',
+  code: 'RATE_LIMIT',
+  provider: 'gemini',
   message: 'quota exceeded for this key very long '.repeat(10),
-  retryable: true, retryAfterSec: 30, domain: 'nytimes.com',
-  extVersion: '1.5.0', browserVersion: 'Chrome/124',
+  retryable: true,
+  retryAfterSec: 30,
+  domain: 'nytimes.com',
+  extVersion: '1.5.0',
+  browserVersion: 'Chrome/124',
 };
 
 describe('buildGa4Request', () => {
-  const req = buildGa4Request([rec], { clientId: 'cid-1', measurementId: 'G-XXX', apiSecret: 'sek' });
+  const req = buildGa4Request([rec], {
+    clientId: 'cid-1',
+    measurementId: 'G-XXX',
+    apiSecret: 'sek',
+  });
 
   it('targets the GA4 collect endpoint with measurement_id + api_secret query', () => {
     expect(req.url).toBe(`${GA4_ENDPOINT}?measurement_id=G-XXX&api_secret=sek`);
@@ -372,8 +416,12 @@ describe('buildGa4Request', () => {
     const e = body.events[0];
     expect(e.name).toBe('extension_error');
     expect(e.params).toMatchObject({
-      code: 'RATE_LIMIT', provider: 'gemini', source: 'lookup',
-      domain: 'nytimes.com', ext_version: '1.5.0', browser_version: 'Chrome/124',
+      code: 'RATE_LIMIT',
+      provider: 'gemini',
+      source: 'lookup',
+      domain: 'nytimes.com',
+      ext_version: '1.5.0',
+      browser_version: 'Chrome/124',
       retry_after_sec: 30,
     });
   });
@@ -465,6 +513,7 @@ git commit -m "feat(app): pure GA4 Measurement Protocol payload builder"
 ## Task 4: Add the `TelemetrySink` port
 
 **Files:**
+
 - Modify: `packages/app/src/ports.ts`
 
 - [ ] **Step 1: Add the port interface**
@@ -508,6 +557,7 @@ Ties the pure domain to the `Storage` + `TelemetrySink` ports. Owns the
 `errlog:` KV keys. Injectable `now()` clock keeps it deterministic.
 
 **Files:**
+
 - Create: `packages/app/src/app/error-reporter.ts`
 - Modify: `packages/app/src/index.ts`
 - Test: `packages/app/test/app/error-reporter.test.ts`
@@ -538,7 +588,11 @@ function fakeSink(): TelemetrySink & { sent: ErrorRecord[][] } {
 }
 
 const meta = { extVersion: '1.5.0', browserVersion: 'Chrome/124', provider: 'gemini' as const };
-const lookupErr = { source: 'lookup' as const, error: { code: 'UNKNOWN', message: 'boom', retryable: true }, url: 'https://a.test/x' };
+const lookupErr = {
+  source: 'lookup' as const,
+  error: { code: 'UNKNOWN', message: 'boom', retryable: true },
+  url: 'https://a.test/x',
+};
 
 describe('ErrorReporter.capture', () => {
   let kv: Storage, sink: ReturnType<typeof fakeSink>, now: number, reporter: ErrorReporter;
@@ -625,7 +679,11 @@ export interface ErrorReporterDeps {
   sink: TelemetrySink;
   now: () => number;
   /** Per-capture metadata read from the platform (versions, active provider). */
-  meta: () => Promise<{ extVersion: string; browserVersion: string; provider?: 'gemini' | 'openai' }>;
+  meta: () => Promise<{
+    extVersion: string;
+    browserVersion: string;
+    provider?: 'gemini' | 'openai';
+  }>;
 }
 
 export interface ErrorLogStatus {
@@ -736,6 +794,7 @@ git commit -m "feat(app): ErrorReporter orchestrator (capture/status/consent ove
 ## Task 6: Wire protocol — `errlog.status` + `errlog.set-consent`
 
 **Files:**
+
 - Modify: `packages/app/src/wire.ts`
 - Test: `packages/app/test/wire-schema.test.ts`
 
@@ -749,8 +808,12 @@ import { WireMessageSchema, WireReplySchema } from '../src/wire';
 describe('errlog wire messages', () => {
   it('accepts errlog.status and errlog.set-consent', () => {
     expect(WireMessageSchema.safeParse({ type: 'errlog.status' }).success).toBe(true);
-    expect(WireMessageSchema.safeParse({ type: 'errlog.set-consent', state: 'granted' }).success).toBe(true);
-    expect(WireMessageSchema.safeParse({ type: 'errlog.set-consent', state: 'nope' }).success).toBe(false);
+    expect(
+      WireMessageSchema.safeParse({ type: 'errlog.set-consent', state: 'granted' }).success,
+    ).toBe(true);
+    expect(WireMessageSchema.safeParse({ type: 'errlog.set-consent', state: 'nope' }).success).toBe(
+      false,
+    );
   });
   it('accepts the errlog status reply', () => {
     const reply = { ok: true, type: 'errlog', consent: 'unset', pending: true, count: 3 };
@@ -812,6 +875,7 @@ git commit -m "feat(wire): errlog.status + errlog.set-consent messages"
 ## Task 7: Router handlers for the errlog messages
 
 **Files:**
+
 - Modify: `packages/app/src/app/router.ts`
 - Test: `packages/app/test/app/router.test.ts`
 
@@ -900,6 +964,7 @@ Confirm the new types are allowed (they route through the same `WireMessageSchem
 so validation already covers them — this task verifies, and adds an explicit test).
 
 **Files:**
+
 - Test: `packages/app/test/app/inbound.test.ts`
 - Modify (only if `classifyInbound` keeps its own allowlist): `packages/app/src/app/<inbound module>.ts`
 
@@ -936,6 +1001,7 @@ git commit -m "test(app): gate errlog.* inbound messages"
 ## Task 9: GA4 telemetry sink adapter (Chrome) + anonymous client id
 
 **Files:**
+
 - Create: `packages/extension-chrome/src/adapters/ga4-telemetry-sink.ts`
 - Modify: `packages/extension-chrome/src/build-defines.d.ts`
 - Modify: `packages/extension-chrome/esbuild.config.mjs` (the chrome build — the one with `chrome116` target)
@@ -1041,6 +1107,7 @@ git commit -m "feat(chrome): GA4 telemetry sink adapter + build-time GA4 config"
 ## Task 10: CSP — allow the GA4 endpoint
 
 **Files:**
+
 - Modify: `packages/extension-chrome/src/manifest.json`
 
 - [ ] **Step 1: Add the GA4 host to connect-src**
@@ -1072,6 +1139,7 @@ git commit -m "feat(chrome): allow GA4 endpoint in CSP connect-src"
 ## Task 11: Wire capture into the service worker composition root
 
 **Files:**
+
 - Modify: `packages/extension-chrome/src/sw.ts`
 
 - [ ] **Step 1: Construct the reporter and inject it**
@@ -1115,24 +1183,24 @@ Replace the `onMessage` listener body's `.then`/`.catch` so error replies and
 thrown errors are captured (keep the existing gating + `sendResponse` exactly):
 
 ```ts
-  router(decision.msg)
-    .then((reply) => {
-      if (reply !== SUPPRESS) sendResponse(reply);
-      if (reply !== SUPPRESS && reply.ok === false) {
-        const url = decision.msg.type === 'lookup' ? decision.msg.req.url : undefined;
-        void reporter.capture({
-          source: reply.type === 'lookup' || reply.type === 'connection.test' ? reply.type : 'thrown',
-          error: reply.error,
-          url,
-        });
-      }
-    })
-    .catch((e: unknown) => {
-      const error = mapError({ kind: 'thrown', error: e });
-      sendResponse({ ok: false, type: decision.msg.type, error });
-      void reporter.capture({ source: 'thrown', error, url: undefined });
-    });
-  return true;
+router(decision.msg)
+  .then((reply) => {
+    if (reply !== SUPPRESS) sendResponse(reply);
+    if (reply !== SUPPRESS && reply.ok === false) {
+      const url = decision.msg.type === 'lookup' ? decision.msg.req.url : undefined;
+      void reporter.capture({
+        source: reply.type === 'lookup' || reply.type === 'connection.test' ? reply.type : 'thrown',
+        error: reply.error,
+        url,
+      });
+    }
+  })
+  .catch((e: unknown) => {
+    const error = mapError({ kind: 'thrown', error: e });
+    sendResponse({ ok: false, type: decision.msg.type, error });
+    void reporter.capture({ source: 'thrown', error, url: undefined });
+  });
+return true;
 ```
 
 > `void` on `capture(...)` is deliberate: reporting must never delay or block the
@@ -1161,6 +1229,7 @@ for the consent footer nodes, then have the content script append it when the SW
 reports `pending`.
 
 **Files:**
+
 - Create: `packages/app/src/ui/error-consent.ts` (pure DOM-node builder; happy-dom-testable)
 - Modify: `packages/app/src/index.ts`
 - Test: `packages/app/test/ui/error-consent.test.ts`
@@ -1244,8 +1313,18 @@ In `packages/app/src/ui/lookup-card.ts`, append to the shadow stylesheet string
 world boundary:
 
 ```css
-::slotted(.errlog-consent){margin:10px 16px 0;padding-top:10px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
-::slotted(.errlog-consent) .errlog-consent-actions{display:flex;gap:8px;margin-top:8px}
+::slotted(.errlog-consent) {
+  margin: 10px 16px 0;
+  padding-top: 10px;
+  border-top: 1px solid var(--ad-line);
+  font-size: var(--adp-text-2xs);
+  color: var(--ad-ink-soft);
+}
+::slotted(.errlog-consent) .errlog-consent-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
 ```
 
 > Note: `::slotted()` cannot match descendants. Style the descendant buttons by
@@ -1253,7 +1332,7 @@ world boundary:
 > plus inherited properties; for the buttons, add explicit inline-safe classes
 > the card already styles (reuse `.setup-cta` for the Send button to inherit the
 > accent button styling). Update the builder: give `send` `className =
-> 'setup-cta errlog-consent-send'`. Verify visually in Task 14.
+'setup-cta errlog-consent-send'`. Verify visually in Task 14.
 
 - [ ] **Step 5: Export from barrel + run tests**
 
@@ -1278,6 +1357,7 @@ git commit -m "feat(ui): consent-footer builder + card slotted styling"
 ## Task 13: Content script — show footer on error, relay the choice
 
 **Files:**
+
 - Modify: `packages/extension-chrome/src/content.ts`
 
 - [ ] **Step 1: After rendering an error, query status and conditionally show the footer**
@@ -1353,6 +1433,7 @@ Give users an explicit toggle to turn reporting on/off — required for the Web
 Store privacy disclosure and to honor `disabled`.
 
 **Files:**
+
 - Modify: `packages/app/src/ui/settings-form.ts` (add a toggle row)
 - Modify: `packages/extension-chrome/src/options.ts` (read status on load, set on change)
 - Test: `packages/app/test/ui/onboarding-view.test.ts` pattern → add `packages/app/test/ui/settings-form.test.ts` assertions if the form has tests; otherwise verify in Task 15.
@@ -1375,7 +1456,8 @@ send `errlog.set-consent` with `'granted'` (checked) or `'disabled'` (unchecked)
 
 ```ts
 const statusReply = (await chrome.runtime.sendMessage({ type: 'errlog.status' })) as WireReply;
-const reportingOn = statusReply?.ok && statusReply.type === 'errlog' && statusReply.consent === 'granted';
+const reportingOn =
+  statusReply?.ok && statusReply.type === 'errlog' && statusReply.consent === 'granted';
 // set initial toggle state = reportingOn …
 
 // on toggle change:
@@ -1403,6 +1485,7 @@ git commit -m "feat(settings): error-reporting on/off toggle wired to consent"
 ## Task 15: End-to-end happy path (bundled Chromium)
 
 **Files:**
+
 - Create: `packages/extension-chrome/e2e/error-reporting.spec.ts`
 
 > Guardrail (repo CLAUDE.md): drive a bundled/standalone Chromium, NOT installed
@@ -1412,6 +1495,7 @@ git commit -m "feat(settings): error-reporting on/off toggle wired to consent"
 - [ ] **Step 1: Write the e2e spec**
 
 Create `packages/extension-chrome/e2e/error-reporting.spec.ts` covering:
+
 1. Force 3 lookup failures (stub the provider fetch to return 429/500) → the
    consent footer appears on the 3rd error card.
 2. Click "Not now" → footer dismissed; no GA4 request observed; a 4th error does
@@ -1442,6 +1526,7 @@ git commit -m "test(e2e): consent-gated error reporting happy path"
 ## Task 16: Privacy disclosure docs
 
 **Files:**
+
 - Modify: `README.md` (add a "Diagnostics & privacy" subsection)
 - Create: `docs/privacy.md` (or update existing privacy copy if present)
 
@@ -1474,6 +1559,9 @@ git commit -m "docs: disclose consent-gated anonymous error reporting"
   `TelemetrySink`, `ErrorReporter.{capture,status,setConsent}`, wire `errlog.status`/
   `errlog.set-consent` and `type:'errlog'` reply are used identically across tasks.
 - **Known follow-up (not in scope):** Safari shell does not inject `errlog` →
-  errlog.* messages ack as `disabled` (Task 7 default). Acceptable per spec
+  errlog.\* messages ack as `disabled` (Task 7 default). Acceptable per spec
   ("Chrome first").
+
+```
+
 ```

@@ -1,4 +1,5 @@
 import type { LookupError, Provider } from './types';
+import { scrubSecrets } from './pii';
 
 export type ErrorInput =
   | { kind: 'no-key'; provider?: Provider }
@@ -22,10 +23,7 @@ const NAMES: Record<Provider, { product: string; vendor: string }> = {
 };
 
 function sanitize(msg: string): string {
-  return msg
-    .replace(/AIza[0-9A-Za-z_-]+/g, '[redacted]') // scrub Google API-key shaped tokens
-    .replace(/sk-[0-9A-Za-z_-]{8,}/g, '[redacted]') // scrub OpenAI API-key shaped tokens
-    .slice(0, 200);
+  return scrubSecrets(msg).slice(0, 200);
 }
 
 export function mapError(input: ErrorInput): LookupError {

@@ -44,3 +44,18 @@ describe('PII_BLACKLIST', () => {
     }
   });
 });
+
+import { scrubSecrets } from '../src/domain/pii';
+
+describe('scrubSecrets', () => {
+  it('masks Google and OpenAI API-key shaped tokens', () => {
+    expect(scrubSecrets('key AIzaSyABC123_-def and sk-ABCD1234efgh')).toBe(
+      'key [redacted] and [redacted]',
+    );
+  });
+  it('leaves ordinary text untouched', () => {
+    expect(scrubSecrets('RESOURCE_EXHAUSTED quota exceeded')).toBe(
+      'RESOURCE_EXHAUSTED quota exceeded',
+    );
+  });
+});

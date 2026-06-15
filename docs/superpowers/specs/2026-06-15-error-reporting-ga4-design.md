@@ -22,16 +22,16 @@ the Measurement Protocol (no server, Google-native, free).
 
 ## Decisions (locked)
 
-| Decision | Choice |
-| --- | --- |
-| Scope | **Bug/error reports only** — no usage analytics. |
-| Trigger | **Silent local buffer + escalating consent prompts.** |
-| Transport | **GA4 Measurement Protocol** (`google-analytics.com/mp/collect`). |
-| Consent memory | **Standing consent.** First "Yes" → auto-send afterward; settings off-switch. |
+| Decision          | Choice                                                                                                              |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------- |
+| Scope             | **Bug/error reports only** — no usage analytics.                                                                    |
+| Trigger           | **Silent local buffer + escalating consent prompts.**                                                               |
+| Transport         | **GA4 Measurement Protocol** (`google-analytics.com/mp/collect`).                                                   |
+| Consent memory    | **Standing consent.** First "Yes" → auto-send afterward; settings off-switch.                                       |
 | Prompt thresholds | First prompt at **3** buffered unsent errors, then **Fibonacci**: 3 → 5 → 8 → 13 → 21 … (advances on each decline). |
-| Payload | **Signature only** (no full stack traces). Emphasis on the **provider error response**. |
-| Page identity | **Domain only** (hostname, never full URL/path) + PII-redacted context snippet. |
-| Buffer cap | **Last 100** errors (oldest dropped). |
+| Payload           | **Signature only** (no full stack traces). Emphasis on the **provider error response**.                             |
+| Page identity     | **Domain only** (hostname, never full URL/path) + PII-redacted context snippet.                                     |
+| Buffer cap        | **Last 100** errors (oldest dropped).                                                                               |
 
 ## Architecture (fits the C3 lean hexagon)
 
@@ -61,7 +61,7 @@ One-way deps; pure domain; communication only through ports
 ### Data model
 
 The achievable provider-error **signature**. Discovered during planning:
-`mapError()` *consumes* the raw HTTP status and `geminiStatus` to choose a
+`mapError()` _consumes_ the raw HTTP status and `geminiStatus` to choose a
 `LookupErrorCode`, so by the time an error reaches the message boundary only the
 distilled `code` survives. That enum **is** the Gemini-response signature
 (`INVALID_KEY` = bad/expired key, `RATE_LIMIT` = quota/429, `PARSE` = malformed
@@ -70,15 +70,15 @@ that — no plumbing of raw status, no wire-schema change.
 
 ```ts
 interface ErrorRecord {
-  ts: number;            // epoch ms
+  ts: number; // epoch ms
   source: 'lookup' | 'connection.test' | 'thrown'; // originating message type
-  code: string;          // LookupErrorCode ('NO_KEY'|'INVALID_KEY'|…) or 'THROWN'
+  code: string; // LookupErrorCode ('NO_KEY'|'INVALID_KEY'|…) or 'THROWN'
   provider?: 'gemini' | 'openai'; // active provider, read from settings at capture
-  message: string;       // redacted + key-scrubbed, ≤150 chars (provider-derived)
+  message: string; // redacted + key-scrubbed, ≤150 chars (provider-derived)
   retryable?: boolean;
   retryAfterSec?: number;
-  domain?: string;       // hostname only, e.g. 'nytimes.com' (from req.url)
-  extVersion: string;    // chrome.runtime.getManifest().version
+  domain?: string; // hostname only, e.g. 'nytimes.com' (from req.url)
+  extVersion: string; // chrome.runtime.getManifest().version
   browserVersion: string; // parsed from navigator.userAgent
 }
 ```
@@ -94,12 +94,12 @@ thrown — so the pure router and domain are untouched (`rule-domain-purity`,
 
 ### KV state (`errlog:` prefix)
 
-| Key | Value |
-| --- | --- |
-| `errlog:buffer` | JSON array of `ErrorRecord` (capped at 100). |
-| `errlog:consent` | `'unset' \| 'granted' \| 'disabled'`. `granted` = standing auto-send; `disabled` = user turned it off (never prompt/send). |
-| `errlog:threshold-index` | integer index into the Fibonacci ladder; advances on each decline. |
-| `errlog:client-id` | random UUID (anonymous GA4 `client_id`, persisted). |
+| Key                      | Value                                                                                                                      |
+| ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
+| `errlog:buffer`          | JSON array of `ErrorRecord` (capped at 100).                                                                               |
+| `errlog:consent`         | `'unset' \| 'granted' \| 'disabled'`. `granted` = standing auto-send; `disabled` = user turned it off (never prompt/send). |
+| `errlog:threshold-index` | integer index into the Fibonacci ladder; advances on each decline.                                                         |
+| `errlog:client-id`       | random UUID (anonymous GA4 `client_id`, persisted).                                                                        |
 
 ### New wire messages (extension surfaces ↔ SW)
 
@@ -203,6 +203,6 @@ Add `https://www.google-analytics.com` to `connect-src` in
 ## Open risks
 
 - **GA4 readability:** GA4 is built for aggregate metrics, not reading
-  individual bug reports. Expect to diagnose from *signatures and counts*
+  individual bug reports. Expect to diagnose from _signatures and counts_
   (which provider status spikes, on which version), not from rich repro detail.
   Accepted trade-off of choosing GA4 over a Google Form.
