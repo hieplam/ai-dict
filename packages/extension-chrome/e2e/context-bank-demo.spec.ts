@@ -46,15 +46,11 @@ const test = base.extend<{ context: BrowserContext }>({
   },
 });
 
-// The shipped default template: it injects {word} AND {context}, so the surrounding
-// sentence reaches the model — which is the whole point being demonstrated. Seeding
-// it here means the request body carries the sentence, which the mock routes on.
-const DEFAULT_TEMPLATE = [
-  'You are a bilingual dictionary for {target_lang} learners of English.',
-  'Word/phrase: "{word}"',
-  'Sentence context: "{context}"',
-  '',
-  'Output Markdown with sections in this exact order:',
+// A custom Card format (the only user-editable piece). buildPrompt wraps it in the
+// code-owned envelope, which always injects {word} AND {context}, so the surrounding
+// sentence reaches the model — the whole point being demonstrated. Seeding it means the
+// request body carries the sentence, which the context-aware mock routes on.
+const DEMO_OUTPUT_FORMAT = [
   '1. **IPA**',
   '2. **Part of Speech (POS)**',
   '3. **Eng -> Eng** (learner-style definition in simple English)',
@@ -222,7 +218,7 @@ test('context demo: same word "bank", two sentences, two correct senses', async 
   if (!sw) sw = await context.waitForEvent('serviceworker', { timeout: 10_000 });
   const seedPage = await context.newPage();
   await seedPage.goto(`chrome-extension://${new URL(sw.url()).hostname}/options.html`);
-  await seedSettings(seedPage, { promptTemplate: DEFAULT_TEMPLATE, targetLang: 'vi' });
+  await seedSettings(seedPage, { outputFormat: DEMO_OUTPUT_FORMAT, targetLang: 'vi' });
   await seedPage.close();
 
   const page = await context.newPage();
