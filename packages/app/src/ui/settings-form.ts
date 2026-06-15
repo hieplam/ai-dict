@@ -1,13 +1,7 @@
 import { adoptStyles } from './styles/adopt';
-import { BRAND_MARK_SVG } from './styles/tokens';
+import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG, ICON_SHIELD } from './styles/tokens';
 import { DEFAULT_OUTPUT_FORMAT } from '../domain/default-template';
 import type { Provider, Theme } from '../domain/types';
-
-// Restated locally to keep this component self-contained — the codebase already
-// duplicates this small shield across side-panel-view.ts and lookup-card.ts;
-// consolidating all three into tokens.ts is a separate, out-of-scope cleanup.
-const ICON_SHIELD =
-  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8l5 2v3.4c0 3-2.1 5.2-5 6.2-2.9-1-5-3.2-5-6.2V3.8l5-2z"/></svg>';
 
 export interface SettingsFormValue {
   provider: Provider;
@@ -39,50 +33,64 @@ const ENV_KEY_HINT = 'Locked — supplied by this build. Click to learn more.';
 const DEFAULT_KEY_HELP = 'Stored locally on this device only.';
 const ENV_KEY_PLACEHOLDER = 'Loaded from GEMINI_API_KEY build env';
 
-// Settings is DELIBERATELY NEUTRAL browser-chrome (hand-off §5.8): a configuration surface, not
-// a reading one, so native familiarity wins over the Paperlight --ad-* palette. It uses CSS
-// system color keywords (Canvas/CanvasText/Field/ButtonBorder/AccentColor…) and `color-scheme`,
-// which the OS resolves to real light/dark chrome — native scrollbars, selects, checkboxes. The
-// ONE themed element is the Theme control; its live preview flips `color-scheme` on the host so
-// the page reflects the chosen theme's light/dark nature immediately. The brand mark borrows the
-// native AccentColor/GrayText so even the logo stays native (no app palette leaks in).
-const CSS = `:host{--ad-accent:AccentColor;--ad-warm:GrayText;display:block;min-height:100vh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:CanvasText;background:Canvas;color-scheme:light}
-:host([data-ad-theme="dark"]){color-scheme:dark}
-@media (prefers-color-scheme:dark){:host([data-ad-theme="system"]){color-scheme:dark}}
+// The Theme options the segmented control offers, in display order. Each maps 1:1 to a Theme.
+const THEME_OPTIONS: ReadonlyArray<{ pref: Theme; label: string }> = [
+  { pref: 'sepia', label: 'Sepia' },
+  { pref: 'dark', label: 'Dark' },
+  { pref: 'contrast', label: 'High Contrast' },
+  { pref: 'system', label: 'Match system' },
+];
+
+// Settings is FULLY THEMED in Paperlight (hand-off §5.8, which supersedes any earlier "keep it
+// native" guidance): the whole options page wears the --ad-* palette and re-themes live with the
+// Theme picker, exactly like the card and side panel — there is no native browser-chrome surface
+// left. The host folds in BASE_VARS (sepia default) + THEME_CSS, so stamping data-ad-theme on the
+// host re-binds the entire page's semantic layer (not just color-scheme). Every control resolves to
+// a token from the §5.8 mapping table; nothing references a CSS system color keyword.
+const CSS = `:host{${BASE_VARS};display:block;min-height:100vh;box-sizing:border-box;font:var(--adp-text-body)/var(--adp-leading-body) var(--adp-font-sans);color:var(--ad-ink);background:var(--ad-surface-sunken);color-scheme:light}
+${THEME_CSS}
 *{box-sizing:border-box}
-header{display:flex;align-items:center;gap:8px;max-width:640px;margin:0 auto;padding:18px 18px 6px}
-.brand{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:CanvasText}
+::selection{background:var(--ad-selection)}
+header{display:flex;align-items:center;gap:8px;max-width:640px;margin:0 auto;padding:18px 22px 6px}
+.brand{display:inline-flex;align-items:center;gap:8px;font-size:var(--adp-text-sm);font-weight:var(--adp-weight-bold);letter-spacing:var(--adp-tracking-label);color:var(--ad-accent-ink)}
 .mark{width:22px;height:22px;flex:none}
-.col{max-width:640px;margin:0 auto;padding:2px 18px 26px}
-h1.title{font-size:1.7rem;line-height:1.2;margin:.2em 0 .6em;color:CanvasText}
-.sec{border:1px solid ButtonBorder;border-radius:10px;padding:15px 16px;margin:0 0 14px;background:Field}
-.sec-h{margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:GrayText}
-label{display:block;margin:12px 0 5px;font-weight:600;font-size:13px;color:CanvasText}
-label.check{display:flex;align-items:center;gap:9px;margin:9px 0;font-weight:400;font-size:14px}
-label.check input{width:16px;height:16px;flex:none;accent-color:AccentColor}
-input,select,textarea{font:inherit;width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid ButtonBorder;border-radius:8px;background:Field;color:FieldText}
-input:focus,select:focus,textarea:focus{outline:2px solid AccentColor;outline-offset:1px}
-textarea{resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
+.col{max-width:640px;margin:0 auto;padding:2px 22px 26px}
+h1.title{font-family:var(--adp-font-serif);font-weight:var(--adp-weight-reg);font-size:1.9rem;line-height:1.15;letter-spacing:var(--adp-tracking-head);margin:.2em 0 .6em;color:var(--ad-ink)}
+.sec{background:var(--ad-surface);border:1px solid var(--ad-line);border-radius:12px;padding:18px 20px;margin:0 0 16px}
+.sec-h{margin:0 0 14px;font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-bold);letter-spacing:.08em;text-transform:uppercase;color:var(--ad-ink-faint)}
+label{display:block;margin:16px 0 7px;font-weight:var(--adp-weight-semi);font-size:var(--adp-text-sm);color:var(--ad-ink)}
+.sec-h + label{margin-top:0}
+label.check{display:flex;align-items:center;gap:10px;margin:6px 0;font-weight:var(--adp-weight-med);font-size:14px;color:var(--ad-ink);cursor:pointer}
+label.check input{width:17px;height:17px;flex:none;accent-color:var(--ad-accent);cursor:pointer}
+input,select,textarea{font:inherit;width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--ad-line-strong);border-radius:8px;background:var(--ad-surface-sunken);color:var(--ad-ink)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--ad-accent);outline-offset:2px;border-color:var(--ad-accent)}
+select{appearance:none;cursor:pointer;padding-right:36px;background:var(--ad-surface-sunken);background-image:linear-gradient(45deg,transparent 50%,var(--ad-ink-faint) 50%),linear-gradient(135deg,var(--ad-ink-faint) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat}
+textarea{resize:vertical;font-family:var(--adp-font-mono);font-size:var(--adp-text-sm);line-height:1.55;color:var(--ad-ink-soft);min-height:72px}
 .keyrow{display:flex;gap:8px;align-items:stretch}
 .keyrow input{flex:1}
-input.locked{background:ButtonFace;color:GrayText;cursor:help}
-#key-help,#tpl-help{margin:6px 0 0;font-size:12px;color:GrayText}
-#tpl-help{margin:0 0 7px}
-.env-notice{margin:10px 0 0;padding:9px 12px;border-left:3px solid AccentColor;background:ButtonFace;border-radius:0 6px 6px 0;font-size:13px;line-height:1.5;color:CanvasText}
-.inline-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;padding-top:11px;border-top:1px dashed ButtonBorder}
-button{font:inherit;font-weight:600;font-size:13px;padding:9px 15px;border-radius:8px;cursor:pointer;border:1px solid ButtonBorder;background:ButtonFace;color:ButtonText}
-button:hover{filter:brightness(0.97)}
-button:focus-visible{outline:2px solid AccentColor;outline-offset:2px}
-button.sm{padding:6px 11px;font-size:12px}
-button.link{border:none;background:none;color:LinkText;padding:6px 4px;text-decoration:underline;text-underline-offset:2px}
-button.link:hover{background:none;filter:none;text-decoration:none}
-.savebar{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:2px}
-button.primary{background:AccentColor;border-color:transparent;color:AccentColorText}
-button.primary:hover{filter:brightness(1.06)}
-.savebar .muted{font-size:12px;color:GrayText}
-#status{margin:14px 0 0;padding:9px 12px;border-radius:8px;border-left:3px solid AccentColor;background:Field;color:CanvasText;font-size:13px;font-weight:600}
-#status.error{border-left-color:Mark;color:Mark}
-footer{display:flex;align-items:center;gap:6px;max-width:640px;margin:0 auto;padding:13px 18px 18px;border-top:1px solid ButtonBorder;font-size:11px;color:GrayText}
+input.locked{background:var(--ad-surface-sunken);color:var(--ad-ink-faint);cursor:help}
+#key-help,#tpl-help{margin:7px 0 0;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
+#tpl-help{margin:0 0 8px}
+.env-notice{display:flex;gap:9px;margin:12px 0 0;padding:10px 13px;background:var(--ad-accent-soft);border-left:3px solid var(--ad-accent);border-radius:6px;font-size:var(--adp-text-sm);line-height:1.5;color:var(--ad-ink)}
+.seg{display:inline-flex;flex-wrap:wrap;background:var(--ad-surface-sunken);border:1px solid var(--ad-line);border-radius:10px;padding:3px;gap:2px}
+.seg button{appearance:none;border:0;cursor:pointer;font:inherit;font-size:var(--adp-text-sm);font-weight:var(--adp-weight-semi);color:var(--ad-ink-soft);background:transparent;padding:7px 16px;border-radius:8px;white-space:nowrap;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease)}
+.seg button[aria-pressed="true"]{background:var(--ad-accent);color:var(--ad-on-accent)}
+.seg button:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+.seg-help{margin:10px 0 0;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
+@media (prefers-reduced-motion:reduce){.seg button{transition:none}}
+.inline-actions{display:flex;flex-wrap:wrap;align-items:center;gap:14px;margin-top:16px;padding-top:16px;border-top:1px dashed var(--ad-line-strong)}
+button{font:inherit;font-weight:var(--adp-weight-semi);font-size:14px;padding:9px 16px;border-radius:8px;cursor:pointer;border:1px solid var(--ad-line-strong);background:transparent;color:var(--ad-ink);white-space:nowrap}
+button:hover{background:var(--ad-surface-raised)}
+button:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+button.link{border:none;background:none;color:var(--ad-accent-ink);padding:0;font-size:14px;text-decoration:underline;text-underline-offset:2px}
+button.link:hover{background:none;text-decoration:none}
+.savebar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+button.primary{background:var(--ad-accent);border-color:transparent;color:var(--ad-on-accent);padding:11px 22px}
+button.primary:hover{filter:brightness(1.06);background:var(--ad-accent)}
+.savebar .muted{font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
+#status{margin:16px 0 0;padding:12px 14px;border-radius:6px;border-left:3px solid var(--ad-accent);background:var(--ad-accent-soft);color:var(--ad-ink);font-size:14px;font-weight:var(--adp-weight-semi)}
+#status.error{border-left-color:var(--ad-error);background:var(--ad-surface-raised);color:var(--ad-error)}
+footer{display:flex;align-items:center;gap:6px;max-width:640px;margin:0 auto;padding:13px 22px 18px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 footer svg{width:13px;height:13px;flex:none}
 [hidden]{display:none}`;
 
@@ -105,7 +113,7 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
       <p id="key-help">Stored locally on this device only.</p>
       <p id="env-notice" class="env-notice" hidden></p>
       <div class="inline-actions">
-        <button type="button" id="test" class="sm">Test connection</button>
+        <button type="button" id="test">Test connection</button>
       </div>
     </section>
     <section class="sec" aria-labelledby="sec-trans">
@@ -117,26 +125,28 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
         sentence, the page title, and the safety rules are always sent automatically.</p>
       <textarea id="tpl" rows="5"></textarea>
       <div class="inline-actions">
-        <button type="button" id="reset-tpl" class="sm">Restore default</button>
+        <button type="button" id="reset-tpl">Restore default</button>
       </div>
     </section>
     <section class="sec" aria-labelledby="sec-look">
       <h2 class="sec-h" id="sec-look">Appearance</h2>
-      <label for="theme">Theme</label>
-      <select id="theme">
-        <option value="sepia">Sepia</option>
-        <option value="dark">Dark</option>
-        <option value="contrast">High Contrast</option>
-        <option value="system">Match system</option>
-      </select>
+      <label id="theme-label">Theme</label>
+      <div class="seg" id="theme" role="group" aria-labelledby="theme-label">
+        ${THEME_OPTIONS.map(
+          (o) =>
+            // Sepia is the default pressed segment until value hydration presses the stored theme.
+            `<button type="button" data-pref="${o.pref}" aria-pressed="${o.pref === 'sepia'}">${o.label}</button>`,
+        ).join('')}
+      </div>
+      <p class="seg-help">Changes how the lookup card and side panel look. Saved on this device only.</p>
     </section>
     <section class="sec" aria-labelledby="sec-priv">
       <h2 class="sec-h" id="sec-priv">Privacy &amp; data</h2>
       <label class="check"><input type="checkbox" id="cache" /> Cache lookups</label>
       <label class="check"><input type="checkbox" id="history" /> Save history</label>
       <div class="inline-actions">
-        <button type="button" id="clear-cache" class="sm">Clear cache</button>
-        <button type="button" id="clear-history" class="sm">Clear history</button>
+        <button type="button" id="clear-cache">Clear cache</button>
+        <button type="button" id="clear-history">Clear history</button>
         <button type="button" id="export" class="link">Export history</button>
       </div>
     </section>
@@ -190,11 +200,14 @@ export class SettingsForm extends HTMLElement {
       this._provider = this.q<HTMLSelectElement>('#provider').value as Provider;
       this.syncKeyField();
     });
-    // Live theme preview: the shadow CSS keys off :host([theme="…"]) (tokens.ts), so stamping the
-    // host attribute the instant the select changes re-themes the page immediately. Persistence
-    // still happens only on Save (the composition root re-stamps the same attribute then).
-    this.q<HTMLSelectElement>('#theme').addEventListener('change', () => {
-      this.setAttribute('data-ad-theme', this.q<HTMLSelectElement>('#theme').value);
+    // Live theme preview: the shadow CSS folds in THEME_CSS keyed on :host([data-ad-theme="…"]),
+    // so stamping the host attribute the instant a segment is pressed re-themes the WHOLE page (the
+    // --ad-* palette, not just color-scheme). Persistence still happens only on Save (the
+    // composition root re-stamps the same attribute then).
+    this.q<HTMLElement>('#theme').addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-pref]');
+      if (!btn) return;
+      this.setThemePref(btn.dataset['pref'] as Theme);
     });
     this.q<HTMLFormElement>('form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -239,6 +252,22 @@ export class SettingsForm extends HTMLElement {
   /** Stash the visible key into the selected provider's slot (locked field never overwrites). */
   private commitKeyField(): void {
     if (!this.isKeyLocked()) this._keys[this._provider] = this.q<HTMLInputElement>('#key').value;
+  }
+
+  /** The Theme currently pressed in the segmented control (defaults to sepia if none is). */
+  private getThemePref(): Theme {
+    const pressed = this.root.querySelector<HTMLButtonElement>(
+      '#theme button[aria-pressed="true"]',
+    );
+    return (pressed?.dataset['pref'] as Theme) ?? 'sepia';
+  }
+
+  /** Press the segment for `pref` (clearing the others) and stamp it for the live preview. */
+  private setThemePref(pref: Theme): void {
+    for (const btn of this.root.querySelectorAll<HTMLButtonElement>('#theme button[data-pref]')) {
+      btn.setAttribute('aria-pressed', String(btn.dataset['pref'] === pref));
+    }
+    this.setAttribute('data-ad-theme', pref);
   }
 
   /** Re-render the key row for the selected provider, including the env lock state. */
@@ -330,7 +359,7 @@ export class SettingsForm extends HTMLElement {
       outputFormat: this.q<HTMLTextAreaElement>('#tpl').value,
       cacheEnabled: this.q<HTMLInputElement>('#cache').checked,
       saveHistory: this.q<HTMLInputElement>('#history').checked,
-      theme: this.q<HTMLSelectElement>('#theme').value as Theme,
+      theme: this.getThemePref(),
     };
   }
 
@@ -348,7 +377,7 @@ export class SettingsForm extends HTMLElement {
     this.q<HTMLTextAreaElement>('#tpl').value = v.outputFormat;
     this.q<HTMLInputElement>('#cache').checked = v.cacheEnabled;
     this.q<HTMLInputElement>('#history').checked = v.saveHistory;
-    this.q<HTMLSelectElement>('#theme').value = v.theme;
+    this.setThemePref(v.theme);
     // Render the key row for the (possibly changed) provider + lock state.
     this.syncKeyField();
   }
