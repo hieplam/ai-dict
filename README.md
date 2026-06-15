@@ -78,18 +78,30 @@ lookups go straight from your browser to the provider you chose and nowhere else
 ## Install (Chrome)
 
 > [!NOTE]
-> AI Dictionary currently works on **Google Chrome** on a computer (and
-> Chrome-like browsers such as Edge or Brave). **Safari and iPhone/iPad are not
-> supported yet** — a Safari version is planned, so please check back later.
+> AI Dictionary works on **Google Chrome** on a computer (and Chrome-like
+> browsers such as Edge or Brave). **Safari and iPhone/iPad are not supported
+> yet** — a Safari version is planned, so please check back later.
 
-> **One-click install via the Chrome Web Store is on the way.** Until the listing is approved,
-> use the manual steps below. (Maintainers: publish steps are in `docs/runbooks/chrome-web-store.md`.)
+There are two ways to install — pick one, then
+[add your free Google key](#add-your-free-google-key).
 
-Installing takes about **three minutes** and three steps: **download** the
-extension, **add it to Chrome**, and **paste in a free key from Google**.
-There's no account to create and nothing to pay for.
+### Option A — Chrome Web Store (recommended, for everyone)
 
-### 1 — Download the extension
+One click, **automatic updates**, and no developer mode. This is the install for
+day-to-day users.
+
+> **Coming soon.** The Chrome Web Store listing is being set up — once it's live,
+> the **Add to Chrome** button will appear here. Until then, use **Option B**
+> below. _(Maintainers: the publish steps are in
+> `docs/runbooks/chrome-web-store.md`.)_
+
+### Option B — Load a build yourself (developers / early access)
+
+The built extension is attached to every
+[GitHub Release](https://github.com/hieplam/ai-dict/releases/latest) as
+**`dist-chrome.zip`** — a developer artifact you can sideload before (or instead
+of) the Web Store listing. It's the same build the store gets; it just doesn't
+auto-update.
 
 **[⬇️ Download AI Dictionary (dist-chrome.zip)](https://github.com/hieplam/ai-dict/releases/latest/download/dist-chrome.zip)**
 
@@ -103,7 +115,7 @@ so don't delete it later.
 <summary>Comfortable with the terminal? One command does the download for you.</summary>
 
 This downloads the same files into `~/.ai-dict/dist`; re-run it any time to
-update to the newest version:
+update to the newest build:
 
 ```bash
 curl -fsSL https://github.com/hieplam/ai-dict/raw/master/scripts/install-chrome.sh | bash
@@ -111,25 +123,22 @@ curl -fsSL https://github.com/hieplam/ai-dict/raw/master/scripts/install-chrome.
 
 </details>
 
-### 2 — Add it to Chrome
-
-AI Dictionary isn't in the Chrome Web Store, so you add it yourself — three
-clicks, no tools needed:
+Then add it to Chrome — three clicks, no tools needed:
 
 1. In Chrome's address bar, type `chrome://extensions` and press Enter.
 2. Turn on the **Developer mode** switch in the top-right corner. (That's just
    Chrome's name for "let me add extensions from my own computer" — it doesn't
    change anything else about your browser.)
-3. Click **Load unpacked** and choose the folder from step 1 — the unzipped
+3. Click **Load unpacked** and choose the folder from above — the unzipped
    folder, or `~/.ai-dict/dist` if you used the terminal command.
 
 AI Dictionary now shows up in your list of extensions.
 
-### 3 — Add your free Google key
+### Add your free Google key
 
-One last thing: the extension needs a **Gemini API key** — a personal code from
-Google that lets it ask Google's AI for definitions. It's **free**, and getting
-one takes about a minute — see
+Whichever way you installed, the extension needs a **Gemini API key** — a
+personal code from Google that lets it ask Google's AI for definitions. It's
+**free**, and getting one takes about a minute — see
 [Getting a Gemini API key](#getting-a-gemini-api-key) just below.
 
 Open the extension's **settings** page (it opens by itself the first time),

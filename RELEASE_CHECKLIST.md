@@ -26,6 +26,9 @@ Run on the tagged commit (`vX.Y.Z` on `main`) before publishing.
 
 - [ ] Tag pushed; `release.yml` produced `dist-chrome.zip` + iOS `.ipa`/`.xcarchive`.
 - [ ] GitHub Release created with both assets + notes.
+  - **Channels:** the `dist-chrome.zip` Release asset is the **developer / sideload** artifact;
+    end users install from the **Chrome Web Store** (see _Store submission_, below). The same
+    build feeds both — only the audience differs.
 - [ ] Store-listing screenshots + copy current.
 
 ## Store submission
