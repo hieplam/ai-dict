@@ -13,17 +13,46 @@
   <img alt="Safari" src="https://img.shields.io/badge/Safari-not%20yet%20supported-9b9b9b">
 </p>
 
+## Ordinary dictionaries look up the _word_. This one reads the _sentence_.
+
+Most dictionary apps and browser extensions — including Google's — take the word
+you selected, **throw away everything around it**, and hand you back a list of
+_every meaning that word has ever had_. You scroll and guess which one fits. Look
+up _bank_ and it comes back as a riverside **and** a money business **and** a
+slope — every time, no matter what you were actually reading.
+
+**AI Dictionary keeps the sentence.** It reads the words around your selection,
+works out which sense is actually in play, and gives you **only that one** —
+already explained and translated into your language:
+
+| You're reading…                               | A word-only dictionary gives you             | AI Dictionary gives you                          |
+| --------------------------------------------- | -------------------------------------------- | ------------------------------------------------ |
+| "I sit on the grassy **bank** of the river."  | _every_ sense: riverside · money · slope… 🤷 | 🌊 _the land along a river_ → **Bờ sông**        |
+| "The next day the **bank** approved my loan." | _every_ sense: riverside · money · slope… 🤷 | 🏦 _a business that holds money_ → **Ngân hàng** |
+
+Same word, opposite meanings — **picked from context, not guessed.** That's the
+one thing a word-only dictionary can't do, and it's why AI Dictionary fits how
+you actually read.
+
 <p align="center">
-  <a href="docs/demos/define-bubble/define-bubble-demo.mp4">
-    <img src="docs/demos/define-bubble/define-bubble-demo.gif" alt="Selecting the word serendipity in an article, clicking the Define button, and reading the definition card with IPA, part of speech, an English explanation, a Vietnamese translation, and an example" width="760">
+  <a href="docs/demos/context-bank/context-bank-demo.mp4">
+    <img src="docs/demos/context-bank/context-bank-demo.gif" alt="The same word 'bank' selected in two different sentences — 'the grassy bank of the river' returns the riverside meaning, while 'the bank approved my loan' returns the money-business meaning — each translated to Vietnamese" width="760">
   </a>
 </p>
 
-<p align="center"><em>Select a word → click <strong>Define</strong> → read the meaning, right on the page. (<a href="docs/demos/define-bubble/define-bubble-demo.mp4">watch the video</a>)</em></p>
+<p align="center"><em>The same word in two sentences → two correct meanings, each chosen from its context. (<a href="docs/demos/context-bank/context-bank-demo.mp4">watch the video</a>)</em></p>
 
 ---
 
 ## What it is
+
+<p align="center">
+  <a href="docs/demos/define-bubble/define-bubble-demo.mp4">
+    <img src="docs/demos/define-bubble/define-bubble-demo.gif" alt="Selecting the word serendipity in an article, clicking the Define button, and reading the definition card with IPA, part of speech, an English explanation, a Vietnamese translation, and an example" width="680">
+  </a>
+</p>
+
+<p align="center"><em>Select a word → click <strong>Define</strong> → read the meaning, right on the page. (<a href="docs/demos/define-bubble/define-bubble-demo.mp4">watch the video</a>)</em></p>
 
 You're reading an article in English and hit a word you only half-know. Normally
 that means opening a new tab, finding a dictionary, dodging ads, and losing your
