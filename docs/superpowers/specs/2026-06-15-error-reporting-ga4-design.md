@@ -60,30 +60,64 @@ One-way deps; pure domain; communication only through ports
 
 ### Data model
 
+The achievable provider-error **signature**. Discovered during planning:
+`mapError()` *consumes* the raw HTTP status and `geminiStatus` to choose a
+`LookupErrorCode`, so by the time an error reaches the message boundary only the
+distilled `code` survives. That enum **is** the Gemini-response signature
+(`INVALID_KEY` = bad/expired key, `RATE_LIMIT` = quota/429, `PARSE` = malformed
+model output, `NETWORK` = offline/timeout, `UNKNOWN` = 5xx/other). We capture
+that — no plumbing of raw status, no wire-schema change.
+
 ```ts
 interface ErrorRecord {
   ts: number;            // epoch ms
-  code: string;          // LookupError code or 'thrown'
-  // Provider-response emphasis:
-  provider?: 'gemini' | 'openai';
-  httpStatus?: number;   // e.g. 429, 400
-  providerStatus?: string; // geminiStatus, e.g. 'RESOURCE_EXHAUSTED'
-  message: string;       // redacted + key-scrubbed, ≤ ~150 chars
-  domain?: string;       // hostname only, e.g. 'nytimes.com'
-  context?: string;      // PII-redacted snippet; provider-error emphasis
-  extVersion: string;
-  browserVersion: string;
+  source: 'lookup' | 'connection.test' | 'thrown'; // originating message type
+  code: string;          // LookupErrorCode ('NO_KEY'|'INVALID_KEY'|…) or 'THROWN'
+  provider?: 'gemini' | 'openai'; // active provider, read from settings at capture
+  message: string;       // redacted + key-scrubbed, ≤150 chars (provider-derived)
+  retryable?: boolean;
+  retryAfterSec?: number;
+  domain?: string;       // hostname only, e.g. 'nytimes.com' (from req.url)
+  extVersion: string;    // chrome.runtime.getManifest().version
+  browserVersion: string; // parsed from navigator.userAgent
 }
 ```
+
+### Capture mechanism (zero domain/wire change)
+
+All errors already funnel to the SW's `chrome.runtime.onMessage` handler as
+either a resolved `{ ok: false, type, error }` reply (lookup/connection.test
+provider errors) or a thrown rejection. The reporter hooks **there** — inspect
+`reply.ok === false` in the existing `.then`, and the existing `.catch` for
+thrown — so the pure router and domain are untouched (`rule-domain-purity`,
+`ref-core-dependency-rule` preserved).
 
 ### KV state (`errlog:` prefix)
 
 | Key | Value |
 | --- | --- |
 | `errlog:buffer` | JSON array of `ErrorRecord` (capped at 100). |
-| `errlog:consent` | `'unset' \| 'granted'`. |
+| `errlog:consent` | `'unset' \| 'granted' \| 'disabled'`. `granted` = standing auto-send; `disabled` = user turned it off (never prompt/send). |
 | `errlog:threshold-index` | integer index into the Fibonacci ladder; advances on each decline. |
 | `errlog:client-id` | random UUID (anonymous GA4 `client_id`, persisted). |
+
+### New wire messages (extension surfaces ↔ SW)
+
+- `errlog.status` → reply `{ ok, type: 'errlog', consent, pending, count }` —
+  read by the content script (to decide whether to show the card footer) and by
+  the settings toggle.
+- `errlog.set-consent { state: 'granted' | 'declined' | 'disabled' }` → ack.
+  `granted` flushes the buffer to GA4 + sets standing consent; `declined`
+  advances the Fibonacci rung (soft no); `disabled` is the settings off-switch.
+
+### Prompt surface: in-page error card footer
+
+When a lookup fails, the in-page result card is already rendering the error.
+After rendering, the content script sends `errlog.status`; if `pending` and
+`consent === 'unset'`, it appends a consent footer to the card
+("Seen a few errors — send anonymous reports to help fix them? [Send] [Not
+now]"). Contextual, no random popups, highest reach. Buttons send
+`errlog.set-consent`.
 
 ### Adapters / composition root — `packages/extension-chrome/src/`
 
