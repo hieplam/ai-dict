@@ -466,6 +466,35 @@ describe('<settings-form> provider selection', () => {
   });
 });
 
+describe('<settings-form> error-reporting toggle', () => {
+  it('reflects errorReporting consent and emits error-reporting-change on toggle', async () => {
+    const form = document.createElement('settings-form') as SettingsForm;
+    document.body.append(form);
+    // give it a minimal value so it renders
+    form.value = {
+      provider: 'gemini',
+      apiKey: '',
+      openaiApiKey: '',
+      targetLang: 'vi',
+      outputFormat: 'x',
+      cacheEnabled: true,
+      saveHistory: true,
+      theme: 'sepia',
+    };
+    form.errorReporting = true;
+    const checkbox = form.shadowRoot!.querySelector('#error-reporting') as HTMLInputElement;
+    expect(checkbox.checked).toBe(true);
+
+    let emitted: { enabled: boolean } | undefined;
+    form.addEventListener('error-reporting-change', (e: Event) => {
+      emitted = (e as CustomEvent<{ enabled: boolean }>).detail;
+    });
+    checkbox.checked = false;
+    checkbox.dispatchEvent(new Event('change'));
+    expect(emitted).toEqual({ enabled: false });
+  });
+});
+
 describe('<settings-form> neutral browser-chrome', () => {
   it('renders the neutral brand, mark, and device footer (no festive ribbon)', () => {
     const el = mountForm();
