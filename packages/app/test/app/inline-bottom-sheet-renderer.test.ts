@@ -52,12 +52,12 @@ describe('InlineBottomSheetRenderer', () => {
     const h = host();
     const r = new InlineBottomSheetRenderer(h);
     r.renderLoading(); // default theme
-    expect(card(h).getAttribute('theme')).toBe('light');
+    expect(card(h).getAttribute('data-ad-theme')).toBe('sepia');
     r.theme = 'dark'; // late theme arrival re-stamps the live card
-    expect(card(h).getAttribute('theme')).toBe('dark');
+    expect(card(h).getAttribute('data-ad-theme')).toBe('dark');
     r.close();
     r.renderLoading(); // a re-created card keeps the stored preference
-    expect(card(h).getAttribute('theme')).toBe('dark');
+    expect(card(h).getAttribute('data-ad-theme')).toBe('dark');
   });
 
   it('renderResult feeds SANITIZED html (no <script>) into the card light DOM', () => {

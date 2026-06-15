@@ -1,8 +1,11 @@
 import { adoptStyles } from './styles/adopt';
+import { BASE_VARS, THEME_CSS } from './styles/tokens';
 
 // The panel is a transparent, centring container — the slotted <lookup-card> carries the
-// cozy surface (bg, radius, shadow), so the sheet never frames it in a second card. A warm
-// dim scrim sets the focus; the slide-up easing is an ease-out curve (no bounce).
+// Paperlight surface (bg, radius, shadow), so the sheet never frames it in a second card
+// (the One Surface Rule). A warm dim --ad-scrim sets the focus; the slide-up easing is an
+// ease-out curve (no bounce). The host folds in the tokens and is stamped with data-ad-theme
+// (by the renderer, mirroring the card) so --ad-scrim resolves to the reader's theme.
 //
 // The panel caps at 88dvh (with an 88vh fallback for older browsers) and is the scroll
 // container (`overflow-y:auto`); a long definition scrolls inside it instead of growing the
@@ -15,11 +18,12 @@ import { adoptStyles } from './styles/adopt';
 // 88dvh cap, and since the card is `overflow:hidden` the overflow would be clipped (no scroll).
 // As a block the card keeps its natural height, overflows the cap, and the panel scrolls. The
 // card centres itself horizontally via `::slotted(*){margin:0 auto}` (it sets its own max-width).
-const CSS = `:host{position:fixed;inset:0;z-index:2147483647}
-.scrim{position:absolute;inset:0;background:oklch(0.18 0.02 50 / 0.46)}
+const CSS = `:host{${BASE_VARS};position:fixed;inset:0;z-index:var(--adp-z-overlay)}
+${THEME_CSS}
+.scrim{position:absolute;inset:0;background:var(--ad-scrim)}
 .panel{position:absolute;left:0;right:0;bottom:0;
   max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;padding:0 14px max(14px, env(safe-area-inset-bottom));
-  transition:transform .28s cubic-bezier(.22,1,.36,1)}
+  transition:transform var(--adp-dur-slow) var(--adp-ease)}
 ::slotted(*){display:block;margin:0 auto}
 :host([reduced]) .panel{transition:none}
 .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}`;

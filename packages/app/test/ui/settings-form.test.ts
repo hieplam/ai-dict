@@ -37,7 +37,7 @@ describe('<settings-form>', () => {
       outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
-      theme: 'light',
+      theme: 'sepia',
     };
     let captured: SettingsFormValue | undefined;
     el.addEventListener('save', (e) => {
@@ -147,7 +147,7 @@ describe('<settings-form>', () => {
       outputFormat: 'P',
       cacheEnabled: false,
       saveHistory: false,
-      theme: 'light',
+      theme: 'sepia',
     };
     document.body.append(el); // connectedCallback flushes pending value
     expect(el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.value).toBe('deferred-key');
@@ -228,7 +228,7 @@ describe('<settings-form> restore default prompt', () => {
       outputFormat: 'my custom prompt',
       cacheEnabled: true,
       saveHistory: true,
-      theme: 'light',
+      theme: 'sepia',
     };
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
     el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
@@ -250,7 +250,7 @@ describe('<settings-form> restore default prompt', () => {
       outputFormat: 'my custom prompt',
       cacheEnabled: true,
       saveHistory: true,
-      theme: 'light',
+      theme: 'sepia',
     };
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
     el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
@@ -272,7 +272,7 @@ describe('<settings-form> restore default prompt', () => {
       outputFormat: DEFAULT_OUTPUT_FORMAT,
       cacheEnabled: true,
       saveHistory: true,
-      theme: 'light',
+      theme: 'sepia',
     };
     const confirmSpy = vi.spyOn(window, 'confirm');
     el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
@@ -318,7 +318,7 @@ describe('<settings-form> env-key lock', () => {
       outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
-      theme: 'light',
+      theme: 'sepia',
     };
     el.keyFromEnv = true;
     let captured: SettingsFormValue | undefined;
@@ -341,7 +341,7 @@ describe('<settings-form> env-key lock', () => {
       outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
-      theme: 'light',
+      theme: 'sepia',
     };
     el.keyFromEnv = true;
     const key = el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
@@ -374,7 +374,7 @@ describe('<settings-form> provider selection', () => {
       outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
-      theme: 'light',
+      theme: 'sepia',
       ...over,
     };
   }
@@ -466,13 +466,15 @@ describe('<settings-form> provider selection', () => {
   });
 });
 
-describe('<settings-form> themed chrome', () => {
-  it('renders the ribbon, holly brand, and device footer', () => {
+describe('<settings-form> neutral browser-chrome', () => {
+  it('renders the neutral brand, mark, and device footer (no festive ribbon)', () => {
     const el = mountForm();
     const r = el.shadowRoot!;
-    expect(r.querySelector('.ribbon')).not.toBeNull();
+    // §5.8: the options form is deliberately native — no Paperlight accent strip.
+    expect(r.querySelector('.ribbon')).toBeNull();
+    expect(r.querySelector('.accent')).toBeNull();
     expect(r.querySelector('.brand')!.textContent).toContain('AI Dictionary');
-    expect(r.querySelector('.holly')).not.toBeNull();
+    expect(r.querySelector('.mark')).not.toBeNull();
     expect(r.querySelector('footer')!.textContent).toContain('Stays on your device');
   });
 
@@ -511,11 +513,16 @@ describe('<settings-form> themed chrome', () => {
     expect(el.shadowRoot!.adoptedStyleSheets.length).toBe(1);
   });
 
-  it('defaults the theme select to light and offers dark + system', () => {
+  it('defaults the theme select to sepia and offers dark + contrast + system', () => {
     const el = mountForm();
     const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#theme')!;
-    expect(select.value).toBe('light');
-    expect([...select.options].map((o) => o.value)).toEqual(['light', 'dark', 'system']);
+    expect(select.value).toBe('sepia');
+    expect([...select.options].map((o) => o.value)).toEqual([
+      'sepia',
+      'dark',
+      'contrast',
+      'system',
+    ]);
   });
 
   it('round-trips the theme through value and the save event', () => {
@@ -551,14 +558,14 @@ describe('<settings-form> themed chrome', () => {
   });
 
   it('applies the picked theme to the host immediately on change — live preview, before Save (issue #51)', () => {
-    // The shadow CSS keys off :host([theme="…"]) (tokens.ts), so stamping the host attribute the
+    // The host CSS keys off :host([data-ad-theme="…"]), so stamping the host attribute the
     // instant the select changes gives a live preview. Persistence still happens only on Save.
     const el = mountForm();
     const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#theme')!;
-    for (const value of ['dark', 'system', 'light'] as const) {
+    for (const value of ['dark', 'system', 'contrast', 'sepia'] as const) {
       select.value = value;
       select.dispatchEvent(new Event('change', { bubbles: true }));
-      expect(el.getAttribute('theme')).toBe(value);
+      expect(el.getAttribute('data-ad-theme')).toBe(value);
     }
   });
 });

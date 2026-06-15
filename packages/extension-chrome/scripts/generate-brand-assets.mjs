@@ -41,14 +41,15 @@ try {
     `<!doctype html><meta charset="utf8"><style>
        *{margin:0;padding:0;box-sizing:border-box}
        body{width:440px;height:280px;display:flex;align-items:center;gap:22px;
-            padding:0 34px;background:#2f6f4e;color:#fff;font-family:Georgia,'DejaVu Serif',serif}
-       .mark{flex:0 0 96px;height:96px;border-radius:22px;background:#26593f;
-             display:flex;align-items:center;justify-content:center;font-size:64px;font-weight:700}
-       .mark u{text-decoration:none;border-bottom:6px solid #bfe3cf;padding-bottom:2px}
+            padding:0 34px;background:#f4efe3;color:#3a2f24;font-family:Georgia,'DejaVu Serif',serif}
+       .mark{flex:0 0 96px;height:96px;border-radius:22px;background:#fbf8f1;border:1px solid #d8d0bd;
+             position:relative}
+       .mark .dot{position:absolute;left:26px;top:26px;width:20px;height:20px;border-radius:50%;background:#a9774f}
+       .mark .rule{position:absolute;left:18px;right:18px;bottom:30px;height:13px;border-radius:7px;background:#3c7b6b}
        h1{font-size:34px;line-height:1.1;margin-bottom:10px}
-       p{font-size:16px;color:#d8efe1;font-family:-apple-system,Segoe UI,Roboto,sans-serif}
+       p{font-size:16px;color:#5b4f40;font-family:-apple-system,Segoe UI,Roboto,sans-serif}
      </style>
-     <div class="mark"><u>A</u></div>
+     <div class="mark"><span class="dot"></span><span class="rule"></span></div>
      <div><h1>AI Dictionary</h1><p>Look up any word — right where you're reading.</p></div>`,
     { waitUntil: 'networkidle' },
   );

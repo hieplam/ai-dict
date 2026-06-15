@@ -40,32 +40,34 @@ test('theme select re-themes the settings page live, before Save', async ({
   const page = await context.newPage();
   await page.setViewportSize({ width: 1180, height: 820 });
   await page.goto(`chrome-extension://${extensionId}/options.html`);
-  await seedSettings(page, { theme: 'light' });
+  await seedSettings(page, { theme: 'sepia' });
   await page.reload();
   const form = page.locator('settings-form');
   await form.waitFor();
 
-  const surface = () =>
-    form.evaluate((el) => getComputedStyle(el).getPropertyValue('--ad-surface').trim());
+  // The neutral options form expresses its theme through the native color-scheme (§5.8),
+  // so the live preview is observed there rather than on an --ad-* surface token.
+  const scheme = () =>
+    form.evaluate((el) => getComputedStyle(el).getPropertyValue('color-scheme').trim());
 
-  // BEFORE: light default.
-  await expect(form).toHaveAttribute('theme', 'light');
-  expect(await surface()).toContain('0.992'); // near-white light surface
+  // BEFORE: sepia default → light native scheme.
+  await expect(form).toHaveAttribute('data-ad-theme', 'sepia');
+  expect(await scheme()).toContain('light');
   await page.waitForTimeout(700);
-  await page.screenshot({ path: path.join(out, 'before-light.png') });
+  await page.screenshot({ path: path.join(out, 'before-sepia.png') });
 
   // Change the Theme select to Dark — and DO NOT click Save.
   await form.locator('#theme').selectOption('dark');
   await page.waitForTimeout(700);
 
   // AFTER: the page is already dark, with NO Save click. This is the bug fix.
-  await expect(form).toHaveAttribute('theme', 'dark');
-  expect(await surface()).toContain('0.285'); // dark surface token applied live
+  await expect(form).toHaveAttribute('data-ad-theme', 'dark');
+  expect(await scheme()).toContain('dark'); // dark color-scheme applied live
   await page.screenshot({ path: path.join(out, 'after-dark-no-save.png') });
 
   // System tracks live too.
   await form.locator('#theme').selectOption('system');
-  await expect(form).toHaveAttribute('theme', 'system');
+  await expect(form).toHaveAttribute('data-ad-theme', 'system');
   await page.waitForTimeout(500);
 
   await page.close(); // flush the recorded video to disk

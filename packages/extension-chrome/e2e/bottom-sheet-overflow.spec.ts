@@ -30,7 +30,7 @@ test('long content stays bounded and scrolls within the sheet on a short viewpor
   await seedSettings(page, {
     apiKey: 'AIza-test',
     hasKey: true,
-    theme: 'light',
+    theme: 'sepia',
     cacheEnabled: false,
   });
   await gotoFixture(page, 'Before diving into the numbers we should align on goals.');

@@ -1,6 +1,6 @@
 import type { LookupError } from '../index';
 import { adoptStyles } from './styles/adopt';
-import { LIGHT_VARS, THEME_DARK_CSS, HOLLY_SVG } from './styles/tokens';
+import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG } from './styles/tokens';
 
 /**
  * A branded string type that marks HTML which has already passed the
@@ -45,43 +45,44 @@ export const ICON_SETTINGS =
 // via ::slotted(.loadrow)::before); per CSS Scoping Level 1, @keyframes defined in a shadow
 // tree are not reliably in scope for light-DOM nodes, so we also inject the rule into the
 // document stylesheet once on element registration as a belt-and-suspenders fallback.
-const CSS = `:host{${LIGHT_VARS};display:block;box-sizing:border-box;width:100%;max-width:420px;margin:0 auto;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);border-radius:16px;box-shadow:var(--ad-shadow);overflow:hidden;color-scheme:light}
-${THEME_DARK_CSS}
-.ribbon{height:4px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
+const CSS = `:host{${BASE_VARS};display:block;box-sizing:border-box;width:100%;max-width:var(--adp-card-width);margin:0 auto;font:var(--adp-text-body)/var(--adp-leading-body) var(--adp-font-sans);color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);border-radius:var(--adp-radius-card);box-shadow:var(--ad-shadow-card);overflow:hidden;color-scheme:light}
+${THEME_CSS}
+::selection{background:var(--ad-selection)}
+/* The 3px spruce→clay accent strip replaces the old festive rainbow ribbon: one quiet sweep,
+   clipped by the card's 18px radius. Decorative — aria-hidden on the element. */
+.accent{height:3px;background:linear-gradient(90deg,var(--ad-accent),var(--ad-warm) 92%)}
 .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px 2px 16px}
-.brand{display:inline-flex;align-items:center;gap:7px;font-size:12px;font-weight:700;letter-spacing:.01em;color:var(--ad-pine)}
-.holly{width:21px;height:21px;flex:none}
+.brand{display:inline-flex;align-items:center;gap:7px;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-bold);letter-spacing:var(--adp-tracking-label);color:var(--ad-accent-ink)}
+.mark{width:21px;height:21px;flex:none}
 .actions{display:inline-flex;align-items:center;gap:4px}
-button[data-act]{display:inline-grid;place-items:center;height:28px;border:0;background:transparent;color:var(--ad-ink-soft);border-radius:8px;cursor:pointer;font:inherit}
-button[data-act]:hover{background:var(--ad-surface-soft);color:var(--ad-ink)}
-button[data-act]:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
+button[data-act]{display:inline-grid;place-items:center;height:var(--adp-action-size);width:var(--adp-action-size);border:0;background:transparent;color:var(--ad-ink-faint);border-radius:var(--adp-radius-control);cursor:pointer;font:inherit;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease)}
+button[data-act]:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
+button[data-act]:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 button[data-act] svg{pointer-events:none;flex:none}
 /* Close stays a bare icon — its X is universally understood and keeps the right-most spot. */
-button[data-act="close"]{width:28px}
 button[data-act="close"] svg{width:15px;height:15px}
-/* Settings is the only labeled control in the bar: an icon+word pill with a hairline at rest
-   (a quiet "I'm a button" cue) that fills on hover like Close. The visible word removes the
-   icon ambiguity that made it indistinguishable from Close; the outline gives it presence
-   without a saturated accent on an inactive control. */
-button[data-act="settings"]{display:inline-flex;align-items:center;gap:5px;padding:0 11px 0 9px;border:1px solid var(--ad-line);border-radius:999px;font-size:12px;font-weight:600;letter-spacing:.01em;transition:background .15s ease,color .15s ease,border-color .15s ease}
-button[data-act="settings"]:hover{border-color:transparent}
+/* Settings is the labeled .text variant: gear + the word "Settings", widened, hover-fill like
+   the other icon buttons. The visible word removes the icon ambiguity with Close. */
+button[data-act="settings"]{display:inline-flex;align-items:center;gap:5px;width:auto;padding:0 11px 0 9px;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);letter-spacing:.01em}
 button[data-act="settings"] svg{width:14px;height:14px}
 button[data-act="settings"] .lbl{line-height:1}
-@media (prefers-reduced-motion:reduce){button[data-act="settings"]{transition:none}}
+@media (prefers-reduced-motion:reduce){button[data-act]{transition:none}}
 .region{padding:2px 16px 2px}
-.footer{display:flex;align-items:center;gap:6px;margin:8px 16px 0;padding:10px 0 13px;border-top:1px solid var(--ad-line);font-size:11px;color:var(--ad-ink-soft)}
+.footer{display:flex;align-items:center;gap:6px;margin:8px 16px 0;padding:10px 0 13px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 .footer svg{width:13px;height:13px;flex:none}
-::slotted(h2){font-family:Georgia,"Times New Roman",serif;font-size:1.7rem;line-height:1.15;letter-spacing:-.01em;margin:.1em 0 .4em;color:var(--ad-ink);display:inline-block;max-width:100%;overflow-wrap:anywhere;padding-bottom:5px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-cranberry)) left bottom/44px 3px no-repeat}
-::slotted(.err){color:var(--ad-err);font-weight:500}
-::slotted(.holly){display:block !important;width:30px !important;height:30px !important;margin:16px auto 2px !important}
-::slotted(.setup-title){text-align:center !important;margin:8px 0 0 !important;font-size:16px !important;font-weight:600 !important;color:var(--ad-ink) !important}
+/* The signature headword: one serif (Georgia), with a 44×3px spruce→clay underline swatch —
+   reads like a dictionary entry's rule. Georgia is the ONLY serif on the surface. */
+::slotted(h2){font-family:var(--adp-font-serif);font-size:var(--adp-text-headword);line-height:var(--adp-leading-tight);letter-spacing:var(--adp-tracking-head);margin:.1em 0 .4em;color:var(--ad-ink);display:inline-block;max-width:100%;overflow-wrap:anywhere;padding-bottom:5px;background:linear-gradient(90deg,var(--ad-accent),var(--ad-warm)) left bottom/44px 3px no-repeat}
+::slotted(.err){color:var(--ad-error);font-weight:500}
+::slotted(.mark){display:block !important;width:34px !important;height:34px !important;margin:16px auto 2px !important}
+::slotted(.setup-title){text-align:center !important;margin:8px 0 0 !important;font-size:var(--adp-text-lg) !important;font-weight:var(--adp-weight-bold) !important;color:var(--ad-ink) !important}
 ::slotted(.setup-text){text-align:center !important;margin:6px auto 0 !important;max-width:32ch !important;font-size:13.5px !important;line-height:1.55 !important;color:var(--ad-ink-soft) !important}
-::slotted(.setup-cta){display:block !important;margin:15px auto 6px !important;padding:9px 18px !important;border:0 !important;border-radius:8px !important;background:var(--ad-cta) !important;color:var(--ad-surface) !important;font:inherit !important;font-size:13px !important;font-weight:600 !important;text-align:center !important;cursor:pointer !important}
+::slotted(.setup-cta){display:block !important;margin:15px auto 6px !important;padding:9px 18px !important;border:0 !important;border-radius:var(--adp-radius-control) !important;background:var(--ad-accent) !important;color:var(--ad-on-accent) !important;font:inherit !important;font-size:var(--adp-text-sm) !important;font-weight:var(--adp-weight-semi) !important;text-align:center !important;cursor:pointer !important}
 ::slotted(.setup-cta:hover){filter:brightness(1.06)}
-::slotted(.setup-cta:focus-visible){outline:2px solid var(--ad-amber) !important;outline-offset:2px !important}
+::slotted(.setup-cta:focus-visible){outline:2px solid var(--ad-accent) !important;outline-offset:2px !important}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::slotted(.loadrow){display:flex;align-items:center;gap:9px;margin:4px 0 9px;color:var(--ad-ink-soft);font-size:14px}
-::slotted(.loadrow)::before{content:"";display:block;width:16px;height:16px;flex:none;border:2px solid var(--ad-line);border-top-color:var(--ad-amber);border-radius:50%;animation:spin .7s linear infinite}
+::slotted(.loadrow)::before{content:"";display:block;width:15px;height:15px;flex:none;border:2px solid var(--ad-line);border-top-color:var(--ad-accent);border-radius:50%;animation:spin .77s linear infinite}
 @media (prefers-reduced-motion:reduce){::slotted(.loadrow)::before{animation:none}}`;
 
 // Inject @keyframes spin into the document once so Firefox/Safari (which follow CSS
@@ -119,8 +120,8 @@ function settingsCta(label: string): HTMLButtonElement {
  */
 function renderSetupInvite(): Node[] {
   const tpl = document.createElement('template');
-  tpl.innerHTML = HOLLY_SVG; // decorative (aria-hidden inside HOLLY_SVG); the text carries meaning
-  const holly = tpl.content.firstElementChild as Element;
+  tpl.innerHTML = BRAND_MARK_SVG; // decorative (aria-hidden in BRAND_MARK_SVG); text carries meaning
+  const mark = tpl.content.firstElementChild as Element;
   const title = document.createElement('p');
   title.className = 'setup-title';
   title.textContent = 'Set up AI Dictionary';
@@ -128,7 +129,7 @@ function renderSetupInvite(): Node[] {
   text.className = 'setup-text';
   text.textContent =
     'AI Dictionary uses your own free Google Gemini key. Add it once to start looking up words.';
-  return [holly, title, text, settingsCta('Open Settings')];
+  return [mark, title, text, settingsCta('Open Settings')];
 }
 
 /**
@@ -197,7 +198,7 @@ export class LookupCard extends HTMLElement {
     bar.className = 'bar';
     const brand = document.createElement('span');
     brand.className = 'brand';
-    brand.innerHTML = `${HOLLY_SVG}<span>AI Dictionary</span>`;
+    brand.innerHTML = `${BRAND_MARK_SVG}<span>AI Dictionary</span>`;
     const actions = document.createElement('span');
     actions.className = 'actions';
     actions.append(
@@ -215,11 +216,12 @@ export class LookupCard extends HTMLElement {
     footer.className = 'footer';
     footer.innerHTML = `${ICON_SHIELD}<span>Stays on your device</span>`;
 
-    // festive top ribbon (pine → amber → cranberry); decorative, clipped by the rounded host
-    const ribbon = document.createElement('div');
-    ribbon.className = 'ribbon';
+    // 3px spruce → clay accent strip; decorative (aria-hidden), clipped by the rounded host
+    const accent = document.createElement('div');
+    accent.className = 'accent';
+    accent.setAttribute('aria-hidden', 'true');
 
-    root.append(ribbon, bar, region, footer);
+    root.append(accent, bar, region, footer);
     // Seed the default loading content only when nothing was provided before connection.
     // The content-script renderer writes light DOM directly across the world boundary;
     // overwriting it here (the MAIN-world upgrade can run after that write) would clobber

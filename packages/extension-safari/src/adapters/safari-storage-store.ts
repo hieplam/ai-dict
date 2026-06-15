@@ -1,6 +1,7 @@
 import {
   DEFAULT_OUTPUT_FORMAT,
   hasKeyFor,
+  normalizeTheme,
   type SettingsStore,
   type PublicSettings,
   type Settings,
@@ -16,7 +17,7 @@ function defaults(): Settings {
     apiKey: '',
     cacheEnabled: true,
     saveHistory: true,
-    theme: 'light',
+    theme: 'sepia',
     provider: 'gemini',
     openaiApiKey: '',
   };
@@ -36,8 +37,9 @@ export class SafariStorageStore implements SettingsStore {
       targetLang: s?.targetLang ?? DEFAULT_TARGET,
       outputFormat: s?.outputFormat ?? DEFAULT_OUTPUT_FORMAT,
       hasKey: hasKeyFor(s ?? {}),
-      // Settings stored before the theme setting existed have no `theme` — default light.
-      theme: s?.theme ?? 'light',
+      // Coerce: settings stored before the theme setting existed have no `theme`, and
+      // pre-Paperlight settings hold the legacy 'light' value → both normalise to 'sepia'.
+      theme: normalizeTheme(s?.theme),
     };
   }
 

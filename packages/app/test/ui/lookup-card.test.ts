@@ -129,7 +129,7 @@ describe('<lookup-card>', () => {
         /text-align:\s*center\s*!important/,
       );
     }
-    expect(rules.find((t) => t.includes('::slotted(.holly)'))).toMatch(
+    expect(rules.find((t) => t.includes('::slotted(.mark)'))).toMatch(
       /margin:\s*16px auto 2px\s*!important/,
     );
   });

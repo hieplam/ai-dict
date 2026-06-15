@@ -24,7 +24,7 @@ async function readFullSettings(): Promise<Settings> {
       apiKey: '',
       cacheEnabled: true,
       saveHistory: true,
-      theme: 'light',
+      theme: 'sepia',
       provider: 'gemini',
       openaiApiKey: '',
     }

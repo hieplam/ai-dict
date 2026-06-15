@@ -7,3 +7,6 @@ pnpm-lock.yaml
 CHANGELOG.md
 
 .c3/
+
+# External design hand-off (authored by Claude Design); keep its formatting verbatim.
+design-hand-off/

@@ -18,7 +18,7 @@ const DEFAULTS: Settings = {
   apiKey: '',
   cacheEnabled: true,
   saveHistory: true,
-  theme: 'light',
+  theme: 'sepia',
   provider: 'gemini',
   openaiApiKey: '',
 };
@@ -30,7 +30,7 @@ async function load(): Promise<Settings> {
 }
 
 void load().then((s) => {
-  (form as unknown as HTMLElement).setAttribute('theme', s.theme);
+  (form as unknown as HTMLElement).setAttribute('data-ad-theme', s.theme);
   (form as unknown as { value: Settings }).value = s;
 });
 
@@ -59,7 +59,7 @@ form.addEventListener('save', (e) => {
     .then(
       () => {
         // Re-stamp so the page itself reflects a theme change immediately on save.
-        (form as unknown as HTMLElement).setAttribute('theme', next.theme);
+        (form as unknown as HTMLElement).setAttribute('data-ad-theme', next.theme);
         form.setStatus('Settings saved');
       },
       () => form.setStatus('Could not save settings', 'error'),

@@ -1,5 +1,5 @@
 import { adoptStyles } from './styles/adopt';
-import { LIGHT_VARS, THEME_DARK_CSS, HOLLY_SVG } from './styles/tokens';
+import { BRAND_MARK_SVG } from './styles/tokens';
 import { DEFAULT_OUTPUT_FORMAT } from '../domain/default-template';
 import type { Provider, Theme } from '../domain/types';
 
@@ -39,48 +39,54 @@ const ENV_KEY_HINT = 'Locked — supplied by this build. Click to learn more.';
 const DEFAULT_KEY_HELP = 'Stored locally on this device only.';
 const ENV_KEY_PLACEHOLDER = 'Loaded from GEMINI_API_KEY build env';
 
-const CSS = `:host{${LIGHT_VARS};display:block;min-height:100vh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light}
-${THEME_DARK_CSS}
+// Settings is DELIBERATELY NEUTRAL browser-chrome (hand-off §5.8): a configuration surface, not
+// a reading one, so native familiarity wins over the Paperlight --ad-* palette. It uses CSS
+// system color keywords (Canvas/CanvasText/Field/ButtonBorder/AccentColor…) and `color-scheme`,
+// which the OS resolves to real light/dark chrome — native scrollbars, selects, checkboxes. The
+// ONE themed element is the Theme control; its live preview flips `color-scheme` on the host so
+// the page reflects the chosen theme's light/dark nature immediately. The brand mark borrows the
+// native AccentColor/GrayText so even the logo stays native (no app palette leaks in).
+const CSS = `:host{--ad-accent:AccentColor;--ad-warm:GrayText;display:block;min-height:100vh;box-sizing:border-box;font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif;color:CanvasText;background:Canvas;color-scheme:light}
+:host([data-ad-theme="dark"]){color-scheme:dark}
+@media (prefers-color-scheme:dark){:host([data-ad-theme="system"]){color-scheme:dark}}
 *{box-sizing:border-box}
-.ribbon{height:4px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-amber) 52%,var(--ad-cranberry))}
-header{display:flex;align-items:center;gap:8px;max-width:640px;margin:0 auto;padding:14px 18px 6px}
-.brand{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;letter-spacing:.01em;color:var(--ad-pine)}
-.holly{width:22px;height:22px;flex:none}
+header{display:flex;align-items:center;gap:8px;max-width:640px;margin:0 auto;padding:18px 18px 6px}
+.brand{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;color:CanvasText}
+.mark{width:22px;height:22px;flex:none}
 .col{max-width:640px;margin:0 auto;padding:2px 18px 26px}
-h1.title{font-family:Georgia,"Times New Roman",serif;font-size:1.8rem;line-height:1.15;letter-spacing:-.01em;margin:.1em 0 .55em;color:var(--ad-ink);display:inline-block;padding-bottom:6px;background:linear-gradient(90deg,var(--ad-pine),var(--ad-cranberry)) left bottom/46px 3px no-repeat}
-.sec{border:1px solid var(--ad-line);border-radius:13px;padding:15px 16px;margin:0 0 14px;background:var(--ad-surface-soft)}
-.sec-h{margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--ad-ink-soft)}
-label{display:block;margin:12px 0 5px;font-weight:600;font-size:13px;color:var(--ad-ink)}
-label.check{display:flex;align-items:center;gap:9px;margin:9px 0;font-weight:500;font-size:14px}
-label.check input{width:16px;height:16px;flex:none;accent-color:var(--ad-pine)}
-input,select,textarea{font:inherit;width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid var(--ad-line);border-radius:10px;background:var(--ad-surface);color:var(--ad-ink)}
-input:focus,select:focus,textarea:focus{outline:2px solid var(--ad-amber);outline-offset:1px;border-color:transparent}
+h1.title{font-size:1.7rem;line-height:1.2;margin:.2em 0 .6em;color:CanvasText}
+.sec{border:1px solid ButtonBorder;border-radius:10px;padding:15px 16px;margin:0 0 14px;background:Field}
+.sec-h{margin:0 0 2px;font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:GrayText}
+label{display:block;margin:12px 0 5px;font-weight:600;font-size:13px;color:CanvasText}
+label.check{display:flex;align-items:center;gap:9px;margin:9px 0;font-weight:400;font-size:14px}
+label.check input{width:16px;height:16px;flex:none;accent-color:AccentColor}
+input,select,textarea{font:inherit;width:100%;box-sizing:border-box;padding:9px 11px;border:1px solid ButtonBorder;border-radius:8px;background:Field;color:FieldText}
+input:focus,select:focus,textarea:focus{outline:2px solid AccentColor;outline-offset:1px}
 textarea{resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:13px}
 .keyrow{display:flex;gap:8px;align-items:stretch}
 .keyrow input{flex:1}
-input.locked{background:var(--ad-surface-soft);color:var(--ad-ink-soft);cursor:help}
-#key-help,#tpl-help{margin:6px 0 0;font-size:12px;color:var(--ad-ink-soft)}
+input.locked{background:ButtonFace;color:GrayText;cursor:help}
+#key-help,#tpl-help{margin:6px 0 0;font-size:12px;color:GrayText}
 #tpl-help{margin:0 0 7px}
-.env-notice{margin:10px 0 0;padding:9px 12px;border-left:3px solid var(--ad-amber);background:var(--ad-surface);border-radius:0 8px 8px 0;font-size:13px;line-height:1.5;color:var(--ad-ink)}
-.inline-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;padding-top:11px;border-top:1px dashed var(--ad-line)}
-button{font:inherit;font-weight:600;font-size:13px;padding:9px 15px;border-radius:10px;cursor:pointer;border:1px solid var(--ad-line);background:var(--ad-surface);color:var(--ad-ink)}
-button:hover{background:var(--ad-surface-soft)}
-button:focus-visible{outline:2px solid var(--ad-amber);outline-offset:2px}
+.env-notice{margin:10px 0 0;padding:9px 12px;border-left:3px solid AccentColor;background:ButtonFace;border-radius:0 6px 6px 0;font-size:13px;line-height:1.5;color:CanvasText}
+.inline-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;padding-top:11px;border-top:1px dashed ButtonBorder}
+button{font:inherit;font-weight:600;font-size:13px;padding:9px 15px;border-radius:8px;cursor:pointer;border:1px solid ButtonBorder;background:ButtonFace;color:ButtonText}
+button:hover{filter:brightness(0.97)}
+button:focus-visible{outline:2px solid AccentColor;outline-offset:2px}
 button.sm{padding:6px 11px;font-size:12px}
-button.link{border:none;background:none;color:var(--ad-pine);padding:6px 4px;text-decoration:underline;text-underline-offset:2px}
-button.link:hover{background:none;text-decoration:none}
+button.link{border:none;background:none;color:LinkText;padding:6px 4px;text-decoration:underline;text-underline-offset:2px}
+button.link:hover{background:none;filter:none;text-decoration:none}
 .savebar{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:2px}
-button.primary{background:var(--ad-cta);border-color:transparent;color:var(--ad-surface)}
-button.primary:hover{background:var(--ad-cta);filter:brightness(1.06)}
-.savebar .muted{font-size:12px;color:var(--ad-ink-soft)}
-#status{margin:14px 0 0;padding:9px 12px;border-radius:8px;border-left:3px solid var(--ad-pine);background:var(--ad-surface-soft);color:var(--ad-ink);font-size:13px;font-weight:600}
-#status.error{border-left-color:var(--ad-err);color:var(--ad-err)}
-footer{display:flex;align-items:center;gap:6px;max-width:640px;margin:0 auto;padding:13px 18px 18px;border-top:1px solid var(--ad-line);font-size:11px;color:var(--ad-ink-soft)}
+button.primary{background:AccentColor;border-color:transparent;color:AccentColorText}
+button.primary:hover{filter:brightness(1.06)}
+.savebar .muted{font-size:12px;color:GrayText}
+#status{margin:14px 0 0;padding:9px 12px;border-radius:8px;border-left:3px solid AccentColor;background:Field;color:CanvasText;font-size:13px;font-weight:600}
+#status.error{border-left-color:Mark;color:Mark}
+footer{display:flex;align-items:center;gap:6px;max-width:640px;margin:0 auto;padding:13px 18px 18px;border-top:1px solid ButtonBorder;font-size:11px;color:GrayText}
 footer svg{width:13px;height:13px;flex:none}
 [hidden]{display:none}`;
 
-const MARKUP = `<div class="ribbon"></div>
-<header><span class="brand">${HOLLY_SVG}<span>AI Dictionary</span></span></header>
+const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary</span></span></header>
 <form>
   <div class="col">
     <h1 class="title">Settings</h1>
@@ -118,8 +124,9 @@ const MARKUP = `<div class="ribbon"></div>
       <h2 class="sec-h" id="sec-look">Appearance</h2>
       <label for="theme">Theme</label>
       <select id="theme">
-        <option value="light">Light</option>
+        <option value="sepia">Sepia</option>
         <option value="dark">Dark</option>
+        <option value="contrast">High Contrast</option>
         <option value="system">Match system</option>
       </select>
     </section>
@@ -187,7 +194,7 @@ export class SettingsForm extends HTMLElement {
     // host attribute the instant the select changes re-themes the page immediately. Persistence
     // still happens only on Save (the composition root re-stamps the same attribute then).
     this.q<HTMLSelectElement>('#theme').addEventListener('change', () => {
-      this.setAttribute('theme', this.q<HTMLSelectElement>('#theme').value);
+      this.setAttribute('data-ad-theme', this.q<HTMLSelectElement>('#theme').value);
     });
     this.q<HTMLFormElement>('form').addEventListener('submit', (e) => {
       e.preventDefault();
