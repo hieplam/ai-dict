@@ -32,3 +32,4 @@ export * from './app/inbound';
 export * from './app/dom-selection-source';
 export * from './app/message-relay-lookup-client';
 export { buildGa4Request, GA4_ENDPOINT, type Ga4Config, type Ga4Request } from './app/ga4-payload';
+export { ErrorReporter, type ErrorReporterDeps, type ErrorLogStatus } from './app/error-reporter';
