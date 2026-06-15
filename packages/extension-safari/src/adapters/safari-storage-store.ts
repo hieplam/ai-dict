@@ -1,5 +1,5 @@
 import {
-  DEFAULT_TEMPLATE,
+  DEFAULT_OUTPUT_FORMAT,
   hasKeyFor,
   type SettingsStore,
   type PublicSettings,
@@ -11,7 +11,7 @@ const DEFAULT_TARGET = 'vi';
 function defaults(): Settings {
   return {
     targetLang: DEFAULT_TARGET,
-    promptTemplate: DEFAULT_TEMPLATE,
+    outputFormat: DEFAULT_OUTPUT_FORMAT,
     hasKey: false,
     apiKey: '',
     cacheEnabled: true,
@@ -34,14 +34,14 @@ export class SafariStorageStore implements SettingsStore {
     const s = await this.read();
     return {
       targetLang: s?.targetLang ?? DEFAULT_TARGET,
-      promptTemplate: s?.promptTemplate ?? DEFAULT_TEMPLATE,
+      outputFormat: s?.outputFormat ?? DEFAULT_OUTPUT_FORMAT,
       hasKey: hasKeyFor(s ?? {}),
       // Settings stored before the theme setting existed have no `theme` — default light.
       theme: s?.theme ?? 'light',
     };
   }
 
-  async set(patch: Partial<Pick<PublicSettings, 'targetLang' | 'promptTemplate'>>): Promise<void> {
+  async set(patch: Partial<Pick<PublicSettings, 'targetLang' | 'outputFormat'>>): Promise<void> {
     const base = (await this.read()) ?? defaults();
     await this.area.set({ settings: { ...base, ...patch } });
   }

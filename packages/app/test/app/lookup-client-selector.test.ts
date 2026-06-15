@@ -8,7 +8,7 @@ const req: LookupRequest = {
   url: 'https://x',
   title: 'T',
   target: 'vi',
-  promptTemplate: 't',
+  outputFormat: 't',
 };
 
 function stubClient(model: string): LookupClient & { lookup: ReturnType<typeof vi.fn> } {

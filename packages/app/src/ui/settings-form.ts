@@ -1,6 +1,6 @@
 import { adoptStyles } from './styles/adopt';
 import { LIGHT_VARS, THEME_DARK_CSS, HOLLY_SVG } from './styles/tokens';
-import { DEFAULT_TEMPLATE } from '../domain/default-template';
+import { DEFAULT_OUTPUT_FORMAT } from '../domain/default-template';
 import type { Provider, Theme } from '../domain/types';
 
 // Restated locally to keep this component self-contained — the codebase already
@@ -14,7 +14,7 @@ export interface SettingsFormValue {
   apiKey: string;
   openaiApiKey: string;
   targetLang: string;
-  promptTemplate: string;
+  outputFormat: string;
   cacheEnabled: boolean;
   saveHistory: boolean;
   theme: Theme;
@@ -59,7 +59,8 @@ textarea{resize:vertical;font-family:ui-monospace,SFMono-Regular,Menlo,monospace
 .keyrow{display:flex;gap:8px;align-items:stretch}
 .keyrow input{flex:1}
 input.locked{background:var(--ad-surface-soft);color:var(--ad-ink-soft);cursor:help}
-#key-help{margin:6px 0 0;font-size:12px;color:var(--ad-ink-soft)}
+#key-help,#tpl-help{margin:6px 0 0;font-size:12px;color:var(--ad-ink-soft)}
+#tpl-help{margin:0 0 7px}
 .env-notice{margin:10px 0 0;padding:9px 12px;border-left:3px solid var(--ad-amber);background:var(--ad-surface);border-radius:0 8px 8px 0;font-size:13px;line-height:1.5;color:var(--ad-ink)}
 .inline-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:11px;padding-top:11px;border-top:1px dashed var(--ad-line)}
 button{font:inherit;font-weight:600;font-size:13px;padding:9px 15px;border-radius:10px;cursor:pointer;border:1px solid var(--ad-line);background:var(--ad-surface);color:var(--ad-ink)}
@@ -105,8 +106,10 @@ const MARKUP = `<div class="ribbon"></div>
       <h2 class="sec-h" id="sec-trans">Translation</h2>
       <label for="target">Target language</label>
       <select id="target"><option value="vi">Vietnamese</option><option value="en">English</option></select>
-      <label for="tpl">Prompt template</label>
-      <textarea id="tpl" rows="6"></textarea>
+      <label for="tpl">Card format</label>
+      <p id="tpl-help">Describe how the answer card is laid out. The selected word, its
+        sentence, the page title, and the safety rules are always sent automatically.</p>
+      <textarea id="tpl" rows="5"></textarea>
       <div class="inline-actions">
         <button type="button" id="reset-tpl" class="sm">Restore default</button>
       </div>
@@ -276,7 +279,7 @@ export class SettingsForm extends HTMLElement {
   }
 
   /**
-   * Re-populate the prompt-template field with the shipped DEFAULT_TEMPLATE.
+   * Re-populate the card-format field with the shipped DEFAULT_OUTPUT_FORMAT.
    * Fills the field only — the user must still Save (matches the form's
    * "Changes apply after saving" contract). If the field already holds the
    * default there is nothing to lose, so we skip the confirm and just say so;
@@ -284,16 +287,16 @@ export class SettingsForm extends HTMLElement {
    */
   private restoreDefaultTemplate(): void {
     const tpl = this.q<HTMLTextAreaElement>('#tpl');
-    if (tpl.value === DEFAULT_TEMPLATE) {
-      this.setStatus('Prompt template is already the default.');
+    if (tpl.value === DEFAULT_OUTPUT_FORMAT) {
+      this.setStatus('Card format is already the default.');
       return;
     }
     const ok = window.confirm(
-      'Replace your prompt template with the default? Your current prompt will be lost.',
+      'Replace your card format with the default? Your current format will be lost.',
     );
     if (!ok) return;
-    tpl.value = DEFAULT_TEMPLATE;
-    this.setStatus('Prompt template restored — Save settings to apply.');
+    tpl.value = DEFAULT_OUTPUT_FORMAT;
+    this.setStatus('Card format restored — Save settings to apply.');
   }
 
   private q<T extends Element>(sel: string): T {
@@ -317,7 +320,7 @@ export class SettingsForm extends HTMLElement {
       apiKey: this._keys.gemini,
       openaiApiKey: this._keys.openai,
       targetLang: this.q<HTMLSelectElement>('#target').value,
-      promptTemplate: this.q<HTMLTextAreaElement>('#tpl').value,
+      outputFormat: this.q<HTMLTextAreaElement>('#tpl').value,
       cacheEnabled: this.q<HTMLInputElement>('#cache').checked,
       saveHistory: this.q<HTMLInputElement>('#history').checked,
       theme: this.q<HTMLSelectElement>('#theme').value as Theme,
@@ -335,7 +338,7 @@ export class SettingsForm extends HTMLElement {
     this._keys = { gemini: v.apiKey, openai: v.openaiApiKey ?? '' };
     this.q<HTMLSelectElement>('#provider').value = this._provider;
     this.q<HTMLSelectElement>('#target').value = v.targetLang;
-    this.q<HTMLTextAreaElement>('#tpl').value = v.promptTemplate;
+    this.q<HTMLTextAreaElement>('#tpl').value = v.outputFormat;
     this.q<HTMLInputElement>('#cache').checked = v.cacheEnabled;
     this.q<HTMLInputElement>('#history').checked = v.saveHistory;
     this.q<HTMLSelectElement>('#theme').value = v.theme;

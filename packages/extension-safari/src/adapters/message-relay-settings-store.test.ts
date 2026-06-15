@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { MessageRelaySettingsStore } from './message-relay-settings-store';
 
-const pub = { targetLang: 'vi', promptTemplate: 'tpl', hasKey: true };
+const pub = { targetLang: 'vi', outputFormat: 'tpl', hasKey: true };
 
 describe('MessageRelaySettingsStore', () => {
   it('round-trips settings.get once, then serves from tab cache', async () => {
@@ -43,7 +43,7 @@ describe('MessageRelaySettingsStore', () => {
   it('strips unknown extra fields from the SW settings reply (S1 defense-in-depth)', async () => {
     const settingsWithExtra = {
       targetLang: 'fr',
-      promptTemplate: 'tpl2',
+      outputFormat: 'tpl2',
       hasKey: true,
       apiKey: 'AIza-secret',
       unexpectedField: 'evil',
@@ -53,7 +53,7 @@ describe('MessageRelaySettingsStore', () => {
     );
     const store = new MessageRelaySettingsStore({ sendMessage }, () => {});
     const result = await store.get();
-    expect(result).toEqual({ targetLang: 'fr', promptTemplate: 'tpl2', hasKey: true });
+    expect(result).toEqual({ targetLang: 'fr', outputFormat: 'tpl2', hasKey: true });
     expect('apiKey' in result).toBe(false);
     expect('unexpectedField' in result).toBe(false);
   });

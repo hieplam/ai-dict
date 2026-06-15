@@ -84,9 +84,9 @@ This is the deliberately deferred part — see "Deferred work".
 The advanced full-prompt override (power users editing the entire envelope) is
 intentionally **not** built in this change. It is hidden, not deleted as a concept.
 
-- A GitHub issue tracks re-introduction: *"Re-introduce advanced full-prompt override
-  (power users)"*.
-- A `// TODO(advanced-prompt): see #<issue>` marker sits next to `buildPrompt` so the
+- GitHub issue #62 tracks re-introduction: _"Re-introduce advanced full-prompt override
+  (power users)"_.
+- A `// TODO(advanced-prompt): see #62` marker sits next to `buildPrompt` so the
   re-entry point is obvious in code.
 
 ## Tests

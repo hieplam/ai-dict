@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { SafariStorageStore } from './safari-storage-store';
-import { DEFAULT_TEMPLATE, buildRouter, WriteQueue } from '@ai-dict/app';
+import { DEFAULT_OUTPUT_FORMAT, buildRouter, WriteQueue } from '@ai-dict/app';
 import { fakeStorage } from '@ai-dict/app/test/fakes';
 
 function fakeArea(seed?: unknown) {
@@ -23,14 +23,14 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
   it('get() returns PublicSettings only — apiKey is never exposed', async () => {
     const area = fakeArea({
       targetLang: 'vi',
-      promptTemplate: 'tpl',
+      outputFormat: 'tpl',
       apiKey: 'AIza-secret',
       cacheEnabled: true,
       saveHistory: true,
       hasKey: true,
     });
     const pub = await new SafariStorageStore(area).get();
-    expect(pub).toEqual({ targetLang: 'vi', promptTemplate: 'tpl', hasKey: true, theme: 'light' });
+    expect(pub).toEqual({ targetLang: 'vi', outputFormat: 'tpl', hasKey: true, theme: 'light' });
     expect('apiKey' in pub).toBe(false);
   });
 
@@ -38,24 +38,24 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
     const empty = await new SafariStorageStore(fakeArea(undefined)).get();
     expect(empty).toEqual({
       targetLang: 'vi',
-      promptTemplate: DEFAULT_TEMPLATE,
+      outputFormat: DEFAULT_OUTPUT_FORMAT,
       hasKey: false,
       theme: 'light',
     });
   });
 
-  it('set() merges only targetLang/promptTemplate, preserving apiKey + toggles', async () => {
+  it('set() merges only targetLang/outputFormat, preserving apiKey + toggles', async () => {
     const area = fakeArea({
       targetLang: 'vi',
-      promptTemplate: 'old',
+      outputFormat: 'old',
       apiKey: 'AIza',
       cacheEnabled: false,
       saveHistory: true,
       hasKey: true,
     });
-    await new SafariStorageStore(area).set({ promptTemplate: 'new' });
+    await new SafariStorageStore(area).set({ outputFormat: 'new' });
     expect(area._peek()).toMatchObject({
-      promptTemplate: 'new',
+      outputFormat: 'new',
       apiKey: 'AIza',
       cacheEnabled: false,
     });
@@ -65,12 +65,12 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
     // Simulates a user who opens the options page before ever saving settings.
     // read() returns undefined → defaults() is called → patch is merged on top.
     const area = fakeArea(undefined);
-    await new SafariStorageStore(area).set({ promptTemplate: 'custom' });
+    await new SafariStorageStore(area).set({ outputFormat: 'custom' });
     expect(area._peek()).toMatchObject({
       apiKey: '',
       cacheEnabled: true,
       saveHistory: true,
-      promptTemplate: 'custom',
+      outputFormat: 'custom',
     });
   });
 });
@@ -85,7 +85,7 @@ describe('SafariStorageStore + buildRouter — S1 wire-layer proof (D3)', () => 
     // Seed the fake StorageArea with a full Settings object including apiKey
     let stored: unknown = {
       targetLang: 'en',
-      promptTemplate: 'tmpl',
+      outputFormat: 'tmpl',
       apiKey: 'AIza-secret',
       cacheEnabled: true,
       saveHistory: true,
@@ -116,7 +116,7 @@ describe('SafariStorageStore + buildRouter — S1 wire-layer proof (D3)', () => 
     expect('apiKey' in settings).toBe(false);
     // The known PublicSettings fields must be present and correct
     expect(settings['targetLang']).toBe('en');
-    expect(settings['promptTemplate']).toBe('tmpl');
+    expect(settings['outputFormat']).toBe('tmpl');
     expect(settings['hasKey']).toBe(true);
   });
 });

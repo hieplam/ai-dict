@@ -1,7 +1,7 @@
 import {
   registerSettingsForm,
   registerOnboarding,
-  DEFAULT_TEMPLATE,
+  DEFAULT_OUTPUT_FORMAT,
   buildHistoryExport,
   hasKeyFor,
   type Settings,
@@ -28,7 +28,7 @@ const KEY_FROM_ENV = __GEMINI_KEY_FROM_ENV__;
 
 const DEFAULTS: Settings = {
   targetLang: 'vi',
-  promptTemplate: DEFAULT_TEMPLATE,
+  outputFormat: DEFAULT_OUTPUT_FORMAT,
   hasKey: false,
   apiKey: '',
   cacheEnabled: true,
@@ -66,7 +66,7 @@ function toFormValue(s: Settings): SettingsFormValue {
     apiKey: s.apiKey,
     openaiApiKey: s.openaiApiKey,
     targetLang: s.targetLang,
-    promptTemplate: s.promptTemplate,
+    outputFormat: s.outputFormat,
     cacheEnabled: s.cacheEnabled,
     saveHistory: s.saveHistory,
     theme: s.theme,

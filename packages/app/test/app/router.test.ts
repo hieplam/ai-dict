@@ -23,7 +23,7 @@ const req = {
   url: '',
   title: '',
   target: 'vi',
-  promptTemplate: 'tpl',
+  outputFormat: 'tpl',
 };
 const lookupMsg = (requestId: string): WireMessage => ({ type: 'lookup', req, requestId });
 
@@ -45,7 +45,7 @@ function deps(over: DepsOverrides = {}) {
   const getFn = vi.fn<() => Promise<PublicSettings>>(() =>
     Promise.resolve({
       targetLang: 'vi',
-      promptTemplate: 'tpl',
+      outputFormat: 'tpl',
       hasKey: true,
       theme: 'light' as const,
     }),
@@ -56,7 +56,7 @@ function deps(over: DepsOverrides = {}) {
     settings: {
       get: getFn,
       set: vi.fn<
-        (patch: Partial<Pick<PublicSettings, 'targetLang' | 'promptTemplate'>>) => Promise<void>
+        (patch: Partial<Pick<PublicSettings, 'targetLang' | 'outputFormat'>>) => Promise<void>
       >(),
     },
     readToggles:
@@ -205,7 +205,7 @@ describe('buildRouter', () => {
         get: vi.fn(() =>
           Promise.resolve({
             targetLang: 'vi',
-            promptTemplate: 'tpl',
+            outputFormat: 'tpl',
             hasKey: true,
             theme: 'light' as const,
           }),
@@ -255,7 +255,7 @@ describe('buildRouter', () => {
     expect(reply).toEqual({
       ok: true,
       type: 'settings',
-      settings: { targetLang: 'vi', promptTemplate: 'tpl', hasKey: true, theme: 'light' as const },
+      settings: { targetLang: 'vi', outputFormat: 'tpl', hasKey: true, theme: 'light' as const },
     });
   });
 

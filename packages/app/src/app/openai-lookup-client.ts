@@ -1,6 +1,6 @@
 import {
   mapError,
-  renderTemplate,
+  buildPrompt,
   type LookupClient,
   type LookupRequest,
   type LookupResult,
@@ -40,7 +40,7 @@ export class OpenAILookupClient implements LookupClient {
     // compose this client, so no existence guard is needed (avoids a dead branch).
     if (navigator.onLine === false) rejectWith(mapError({ kind: 'offline' }));
 
-    const prompt = renderTemplate(req.promptTemplate, {
+    const prompt = buildPrompt(req.outputFormat, {
       word: req.word,
       context: req.context,
       target_lang: req.target,

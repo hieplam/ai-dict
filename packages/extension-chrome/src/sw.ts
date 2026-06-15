@@ -1,6 +1,6 @@
 import {
   mapError,
-  DEFAULT_TEMPLATE,
+  DEFAULT_OUTPUT_FORMAT,
   type Settings,
   GeminiLookupClient,
   OpenAILookupClient,
@@ -19,7 +19,7 @@ async function readFullSettings(): Promise<Settings> {
   return (
     settings ?? {
       targetLang: DEFAULT_TARGET,
-      promptTemplate: DEFAULT_TEMPLATE,
+      outputFormat: DEFAULT_OUTPUT_FORMAT,
       hasKey: false,
       apiKey: '',
       cacheEnabled: true,

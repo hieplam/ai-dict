@@ -19,7 +19,7 @@ export interface LookupRequest {
   url: string;
   title: string;
   target: string;
-  promptTemplate: string;
+  outputFormat: string;
 }
 
 export interface LookupResult {
@@ -69,7 +69,7 @@ export type Theme = 'light' | 'dark' | 'system';
 
 export interface PublicSettings {
   targetLang: string;
-  promptTemplate: string;
+  outputFormat: string;
   hasKey: boolean;
   theme: Theme;
 }

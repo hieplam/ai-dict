@@ -21,7 +21,7 @@ export class MessageRelaySettingsStore implements SettingsStore {
       // stray apiKey) regardless of what the SW sends over the wire.
       const stripped: PublicSettings = {
         targetLang: reply.settings.targetLang,
-        promptTemplate: reply.settings.promptTemplate,
+        outputFormat: reply.settings.outputFormat,
         hasKey: reply.settings.hasKey,
         theme: reply.settings.theme,
       };
@@ -35,7 +35,7 @@ export class MessageRelaySettingsStore implements SettingsStore {
   // Param is intentionally ignored — method exists only to satisfy the SettingsStore interface.
   set(
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    _patch: Partial<Pick<import('@ai-dict/app').PublicSettings, 'targetLang' | 'promptTemplate'>>,
+    _patch: Partial<Pick<import('@ai-dict/app').PublicSettings, 'targetLang' | 'outputFormat'>>,
   ): Promise<void> {
     return Promise.reject(
       new Error('Settings are edited on the options page, not over the content wire.'),

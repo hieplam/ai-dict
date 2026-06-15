@@ -130,7 +130,7 @@ test('Export with empty history reports nothing to export', async ({ context, ex
   await expect(page.locator(status)).toHaveText('No history to export');
 });
 
-test('Restore default repopulates the prompt template after confirm', async ({
+test('Restore default repopulates the card format after confirm', async ({
   context,
   extensionId,
 }) => {
@@ -144,10 +144,8 @@ test('Restore default repopulates the prompt template after confirm', async ({
   // A customized field guards the restore behind a confirm() dialog.
   page.once('dialog', (d) => d.accept());
   await page.locator('settings-form #reset-tpl').click();
-  // Assert on a stable substring of DEFAULT_TEMPLATE, not the whole multi-line string.
-  await expect(tpl).toHaveValue(/bilingual dictionary/);
-  await expect(page.locator(status)).toHaveText(
-    'Prompt template restored — Save settings to apply.',
-  );
+  // Assert on a stable substring of DEFAULT_OUTPUT_FORMAT, not the whole multi-line string.
+  await expect(tpl).toHaveValue(/Eng -> Eng/);
+  await expect(page.locator(status)).toHaveText('Card format restored — Save settings to apply.');
   await page.screenshot({ path: path.join(shots, 'restore-default.png') });
 });

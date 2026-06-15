@@ -141,7 +141,7 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
         url: '',
         title: '',
         target: s.targetLang,
-        promptTemplate: s.promptTemplate,
+        outputFormat: s.outputFormat,
       });
       return { ok: true, type: 'ack' };
     } catch (err) {

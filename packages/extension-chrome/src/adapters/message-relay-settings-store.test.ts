@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { MessageRelaySettingsStore } from './message-relay-settings-store';
 
-const pub = { targetLang: 'vi', promptTemplate: 'tpl', hasKey: true };
+const pub = { targetLang: 'vi', outputFormat: 'tpl', hasKey: true };
 
 describe('MessageRelaySettingsStore', () => {
   it('round-trips settings.get once, then serves from tab cache', async () => {
