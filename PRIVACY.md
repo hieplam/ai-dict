@@ -18,10 +18,29 @@ select on a web page. It is designed to collect as little as possible.
 - **Lookup history and cache.** Recent lookups are stored **locally** so you can see history and
   avoid repeat calls. You can delete individual entries or clear them from the extension.
 
+## Error reporting (opt-in, off by default)
+
+To find and fix bugs after release, the extension can send **anonymous error reports**. This
+is **off by default** and **nothing is sent unless you agree**:
+
+- Errors are first kept **only on your device**. After a few have accumulated, the extension
+  asks once, in the page, whether you want to help by sending them. You can also turn reporting
+  on or off any time from the **Settings** page ("Send anonymous error reports").
+- If — and only if — you agree, reports are sent to **Google Analytics** (Measurement Protocol).
+  Each report is a **signature**, not your activity: the error type, a **redacted** error message
+  (API keys, emails, phone numbers and similar are masked), the page's **domain only**
+  (e.g. `example.com` — never the full URL or path), which provider you use, and the extension
+  and browser versions. A random, anonymous id ties one session's reports together; it is **not**
+  linked to your identity.
+- We **never** send the page's content, the full URL, the text you selected, the definitions you
+  receive, or your API key.
+
 ## What we do NOT do
 
-- We operate **no server** and **no backend**. Your data never reaches us.
-- We do **no analytics**, **no tracking**, and run **no ads**.
+- We operate **no server** and **no backend** of our own. Your lookups never reach us.
+- We do **not** track your browsing, run **no ads**, and collect **no usage analytics** — the
+  only thing ever sent (and only after you consent) is the anonymous error reports described
+  above.
 - We do **not sell or share** your data with anyone.
 
 ## Third parties
@@ -31,6 +50,7 @@ to that provider's privacy policy:
 
 - Google Gemini API: https://ai.google.dev/gemini-api/terms
 - OpenAI API: https://openai.com/policies/privacy-policy
+- Anonymous error reports (only if you opt in) go to Google Analytics: https://policies.google.com/privacy
 
 ## Contact
 
