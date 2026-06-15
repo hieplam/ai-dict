@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.5.0](https://github.com/hieplam/ai-dict/compare/v1.4.0...v1.5.0) (2026-06-15)
+
+
+### Features
+
+* Chrome Web Store publishing — brand icon + automated release pipeline ([f53de20](https://github.com/hieplam/ai-dict/commit/f53de209d6302307b5439aa968019b00cc3bb010))
+* **prompt:** default template injects {word}+{context}; add English target language ([#56](https://github.com/hieplam/ai-dict/issues/56)) ([4ebaaf3](https://github.com/hieplam/ai-dict/commit/4ebaaf3ebdc75b6a42c2c9a78894e48d850c13f4))
+* **prompt:** split Card format from system envelope; wire {title} with PII redaction ([#63](https://github.com/hieplam/ai-dict/issues/63)) ([5680203](https://github.com/hieplam/ai-dict/commit/568020332bafe9ce7c3cebf79686758a72a3c650))
+
 ## [1.4.0](https://github.com/hieplam/ai-dict/compare/v1.3.0...v1.4.0) (2026-06-11)
 
 
