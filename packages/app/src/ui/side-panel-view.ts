@@ -1,6 +1,6 @@
 import type { HistoryEntry } from '../domain/types';
 import { adoptStyles } from './styles/adopt';
-import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG } from './styles/tokens';
+import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG, ICON_SHIELD, ICON_TRASH } from './styles/tokens';
 import { renderCardState, ICON_SETTINGS, type CardState } from './lookup-card';
 
 /**
@@ -12,11 +12,8 @@ import { renderCardState, ICON_SETTINGS, type CardState } from './lookup-card';
  */
 export type PanelFocusState = CardState | { kind: 'empty' };
 
-const ICON_TRASH =
-  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2.5 4.2h11M6.3 4.2V3a1 1 0 0 1 1-1h1.4a1 1 0 0 1 1 1v1.2M3.9 4.2l.6 8.9a1.2 1.2 0 0 0 1.2 1.1h4.6a1.2 1.2 0 0 0 1.2-1.1l.6-8.9M6.6 7v4.4M9.4 7v4.4"/></svg>';
-
-const ICON_SHIELD =
-  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8l5 2v3.4c0 3-2.1 5.2-5 6.2-2.9-1-5-3.2-5-6.2V3.8l5-2z"/></svg>';
+// ICON_SHIELD / ICON_TRASH are the canonical §5.10 set imported from tokens.ts (centralized so
+// the glyphs can never drift); ICON_SETTINGS is re-exported through lookup-card.
 
 // The panel IS the Paperlight surface (full-height, edge-to-edge, docked), so unlike the floating
 // lookup-card it carries NO border-radius and NO drop shadow and NO close button — re-framing a

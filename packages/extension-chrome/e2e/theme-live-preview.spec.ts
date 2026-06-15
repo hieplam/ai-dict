@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { E2E_HEADLESS } from '../playwright.config';
 
-// Issue #51 evidence: changing the Theme select must re-theme the settings page IMMEDIATELY
+// Issue #51 evidence: pressing a Theme segment must re-theme the settings page IMMEDIATELY
 // (live preview), not only after Save. We record a video of the whole flow and capture
 // before/after stills. This spec runs its own video-recording context (the shared fixture
 // records no video) but loads the extension exactly like fixtures.ts.
@@ -33,7 +33,7 @@ const test = base.extend<{ context: BrowserContext; extensionId: string }>({
   },
 });
 
-test('theme select re-themes the settings page live, before Save', async ({
+test('theme segment re-themes the settings page live, before Save', async ({
   context,
   extensionId,
 }) => {
@@ -45,28 +45,32 @@ test('theme select re-themes the settings page live, before Save', async ({
   const form = page.locator('settings-form');
   await form.waitFor();
 
-  // The neutral options form expresses its theme through the native color-scheme (§5.8),
-  // so the live preview is observed there rather than on an --ad-* surface token.
+  // The fully-themed options form (§5.8) re-themes its --ad-* surface AND its native color-scheme
+  // live; observe both so the preview is provably the whole Paperlight palette, not just chrome.
   const scheme = () =>
     form.evaluate((el) => getComputedStyle(el).getPropertyValue('color-scheme').trim());
+  const surface = () =>
+    form.evaluate((el) => getComputedStyle(el).getPropertyValue('--ad-surface').trim());
 
-  // BEFORE: sepia default → light native scheme.
+  // BEFORE: sepia default → light native scheme + warm-paper surface.
   await expect(form).toHaveAttribute('data-ad-theme', 'sepia');
   expect(await scheme()).toContain('light');
+  expect(await surface()).toContain('0.962'); // sepia warm paper
   await page.waitForTimeout(700);
   await page.screenshot({ path: path.join(out, 'before-sepia.png') });
 
-  // Change the Theme select to Dark — and DO NOT click Save.
-  await form.locator('#theme').selectOption('dark');
+  // Press the Dark segment — and DO NOT click Save.
+  await form.locator('#theme button[data-pref="dark"]').click();
   await page.waitForTimeout(700);
 
   // AFTER: the page is already dark, with NO Save click. This is the bug fix.
   await expect(form).toHaveAttribute('data-ad-theme', 'dark');
   expect(await scheme()).toContain('dark'); // dark color-scheme applied live
+  expect(await surface()).toContain('0.255'); // dark charcoal surface applied live
   await page.screenshot({ path: path.join(out, 'after-dark-no-save.png') });
 
   // System tracks live too.
-  await form.locator('#theme').selectOption('system');
+  await form.locator('#theme button[data-pref="system"]').click();
   await expect(form).toHaveAttribute('data-ad-theme', 'system');
   await page.waitForTimeout(500);
 

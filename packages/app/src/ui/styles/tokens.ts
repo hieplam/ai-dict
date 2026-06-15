@@ -170,3 +170,34 @@ export const BRAND_MARK_SVG =
   '<circle cx="6.5" cy="6.5" r="2.4" fill="var(--ad-warm)"/>' +
   '<rect x="3" y="14.5" width="18" height="3.2" rx="1.6" fill="var(--ad-accent)"/>' +
   '</svg>';
+
+// ── Canonical UI icon set (IMPLEMENTATION_GUIDE §5.10) ─────────────────────────
+// PINNED here as the single source so the set can never drift again — §5.10 blames prior
+// ad-hoc-glyph substitution on "the set wasn't pinned". All are CSP-safe inline SVG,
+// stroke="currentColor" (inherits the token colour of their context — --ad-ink-faint at rest,
+// --ad-ink on hover), geometric, 1.7–1.9 stroke, rounded caps/joins, aria-hidden (the button or
+// row carries the real label). Size is set by the consuming CSS, not baked in: 15px in card/panel
+// action buttons, 13px for the footer shield, 14px for close & trash.
+
+// Settings (sliders). The two knobs are filled with var(--ad-surface) so they read as sitting
+// ON the track — they inherit the surface and stay correct in every theme.
+export const ICON_SETTINGS =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">' +
+  '<line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15.5" x2="20" y2="15.5"/>' +
+  '<circle cx="14.5" cy="9" r="2.4" fill="var(--ad-surface)"/>' +
+  '<circle cx="9.5" cy="15.5" r="2.4" fill="var(--ad-surface)"/></svg>';
+
+// Close (×) — card bar close button.
+export const ICON_CLOSE =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" aria-hidden="true">' +
+  '<line x1="6.5" y1="6.5" x2="17.5" y2="17.5"/><line x1="17.5" y1="6.5" x2="6.5" y2="17.5"/></svg>';
+
+// Shield (privacy) — footer "Stays on your device".
+export const ICON_SHIELD =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M12 3.2l6.5 2.4v4.7c0 3.9-2.7 7.1-6.5 8-3.8-.9-6.5-4.1-6.5-8V5.6L12 3.2z"/></svg>';
+
+// Trash (delete) — side-panel Recent rows.
+export const ICON_TRASH =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M4.5 7h15M9 7V4.8h6V7M7 7l.9 12.2h8.2L17 7"/></svg>';
