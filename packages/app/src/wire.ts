@@ -63,6 +63,13 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
   // chrome.runtime.openOptionsPage itself) when the reader taps "Open Settings" on the
   // no-key card; the service worker performs the actual open. Payload-free.
   z.object({ type: z.literal('open-options') }),
+  // Error-reporting control messages. errlog.status queries the current consent/queue state;
+  // errlog.set-consent records the user's choice (granted/declined/disabled).
+  z.object({ type: z.literal('errlog.status') }),
+  z.object({
+    type: z.literal('errlog.set-consent'),
+    state: z.enum(['granted', 'declined', 'disabled']),
+  }),
 ]);
 
 const MessageTypeEnum = z.enum([
@@ -75,6 +82,8 @@ const MessageTypeEnum = z.enum([
   'cache.clear',
   'connection.test',
   'open-options',
+  'errlog.status',
+  'errlog.set-consent',
 ]);
 
 export const WireReplySchema = z.union([
@@ -92,6 +101,13 @@ export const WireReplySchema = z.union([
     nextCursor: z.string().optional(),
   }),
   z.object({ ok: z.literal(true), type: z.literal('ack') }),
+  z.object({
+    ok: z.literal(true),
+    type: z.literal('errlog'),
+    consent: z.enum(['unset', 'granted', 'disabled']),
+    pending: z.boolean(),
+    count: z.number(),
+  }),
   z.object({
     ok: z.literal(false),
     type: MessageTypeEnum,

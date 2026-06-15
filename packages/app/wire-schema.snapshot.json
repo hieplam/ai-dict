@@ -169,6 +169,41 @@
           "type"
         ],
         "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "errlog.status"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "errlog.set-consent"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "granted",
+              "declined",
+              "disabled"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "state"
+        ],
+        "additionalProperties": false
       }
     ]
   },
@@ -386,6 +421,41 @@
         "properties": {
           "ok": {
             "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
+            "const": "errlog"
+          },
+          "consent": {
+            "type": "string",
+            "enum": [
+              "unset",
+              "granted",
+              "disabled"
+            ]
+          },
+          "pending": {
+            "type": "boolean"
+          },
+          "count": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "consent",
+          "pending",
+          "count"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
             "const": false
           },
           "type": {
@@ -399,7 +469,9 @@
               "history.delete",
               "cache.clear",
               "connection.test",
-              "open-options"
+              "open-options",
+              "errlog.status",
+              "errlog.set-consent"
             ]
           },
           "error": {
