@@ -39,7 +39,7 @@ export class ErrorReporter {
     const raw = await this.deps.kv.getItem(K_BUFFER);
     if (!raw) return [];
     try {
-      const v = JSON.parse(raw);
+      const v: unknown = JSON.parse(raw);
       return Array.isArray(v) ? (v as ErrorRecord[]) : [];
     } catch {
       return [];

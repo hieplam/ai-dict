@@ -27,11 +27,16 @@ describe('buildGa4Request', () => {
     expect(req.method).toBe('POST');
   });
 
+  type Ga4Body = {
+    client_id: string;
+    events: { name: string; params: Record<string, string | number> }[];
+  };
+
   it('emits one extension_error event per record with the signature params', () => {
-    const body = JSON.parse(req.body);
+    const body = JSON.parse(req.body) as Ga4Body;
     expect(body.client_id).toBe('cid-1');
     expect(body.events).toHaveLength(1);
-    const e = body.events[0];
+    const e = body.events[0]!;
     expect(e.name).toBe('extension_error');
     expect(e.params).toMatchObject({
       code: 'RATE_LIMIT',
@@ -45,7 +50,7 @@ describe('buildGa4Request', () => {
   });
 
   it('truncates msg param to GA4 100-char limit', () => {
-    const body = JSON.parse(req.body);
-    expect(body.events[0].params.msg.length).toBeLessThanOrEqual(100);
+    const body = JSON.parse(req.body) as Ga4Body;
+    expect(String(body.events[0]!.params.msg).length).toBeLessThanOrEqual(100);
   });
 });

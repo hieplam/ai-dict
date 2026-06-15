@@ -2,20 +2,17 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { ErrorReporter } from '../../src/app/error-reporter';
 import type { Storage, TelemetrySink } from '../../src/ports';
 import type { ErrorRecord } from '../../src/domain/error-report';
-
-function memStore(): Storage {
-  const m = new Map<string, string>();
-  return {
-    getItem: async (k) => m.get(k) ?? null,
-    setItem: async (k, v) => void m.set(k, v),
-    removeItem: async (k) => void m.delete(k),
-    keys: async (p) => [...m.keys()].filter((k) => !p || k.startsWith(p)),
-  };
-}
+import { fakeStorage } from '../fakes';
 
 function fakeSink(): TelemetrySink & { sent: ErrorRecord[][] } {
   const sent: ErrorRecord[][] = [];
-  return { sent, send: async (recs) => void sent.push(recs) };
+  return {
+    sent,
+    send: (recs) => {
+      sent.push(recs);
+      return Promise.resolve();
+    },
+  };
 }
 
 const meta = { extVersion: '1.5.0', browserVersion: 'Chrome/124', provider: 'gemini' as const };
@@ -28,10 +25,10 @@ const lookupErr = {
 describe('ErrorReporter.capture', () => {
   let kv: Storage, sink: ReturnType<typeof fakeSink>, now: number, reporter: ErrorReporter;
   beforeEach(() => {
-    kv = memStore();
+    kv = fakeStorage();
     sink = fakeSink();
     now = 0;
-    reporter = new ErrorReporter({ kv, sink, now: () => now++, meta: async () => meta });
+    reporter = new ErrorReporter({ kv, sink, now: () => now++, meta: () => Promise.resolve(meta) });
   });
 
   it('buffers silently below the first threshold (3) and never sends', async () => {

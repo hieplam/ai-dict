@@ -467,7 +467,7 @@ describe('<settings-form> provider selection', () => {
 });
 
 describe('<settings-form> error-reporting toggle', () => {
-  it('reflects errorReporting consent and emits error-reporting-change on toggle', async () => {
+  it('reflects errorReporting consent and emits error-reporting-change on toggle', () => {
     const form = document.createElement('settings-form') as SettingsForm;
     document.body.append(form);
     // give it a minimal value so it renders

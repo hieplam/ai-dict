@@ -62,7 +62,7 @@ runLookupWorkflow({
 async function maybeShowConsent(): Promise<void> {
   let status: { consent: string; pending: boolean; count: number } | undefined;
   try {
-    const reply = (await chrome.runtime.sendMessage({ type: 'errlog.status' })) as WireReply;
+    const reply: WireReply = await chrome.runtime.sendMessage({ type: 'errlog.status' });
     if (reply?.ok && reply.type === 'errlog') status = reply;
   } catch {
     return; // SW asleep / no reply — skip silently
