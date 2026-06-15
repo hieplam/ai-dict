@@ -379,3 +379,35 @@ describe('buildRouter', () => {
     expect(reply).toMatchObject({ ok: true, type: 'history' });
   });
 });
+
+describe('errlog routing', () => {
+  it('errlog.status returns the reporter status', async () => {
+    const errlog = {
+      status: vi.fn().mockResolvedValue({ consent: 'unset', pending: true, count: 3 }),
+      setConsent: vi.fn().mockResolvedValue(undefined),
+    };
+    const router = buildRouter({ ...deps(), errlog });
+    const reply = await router({ type: 'errlog.status' });
+    expect(reply).toEqual({ ok: true, type: 'errlog', consent: 'unset', pending: true, count: 3 });
+  });
+
+  it('errlog.set-consent delegates and acks', async () => {
+    const errlog = { status: vi.fn(), setConsent: vi.fn().mockResolvedValue(undefined) };
+    const router = buildRouter({ ...deps(), errlog });
+    const reply = await router({ type: 'errlog.set-consent', state: 'granted' });
+    expect(errlog.setConsent).toHaveBeenCalledWith('granted');
+    expect(reply).toEqual({ ok: true, type: 'ack' });
+  });
+
+  it('errlog.status with no errlog dep returns a disabled status', async () => {
+    const router = buildRouter(deps()); // no errlog
+    const reply = await router({ type: 'errlog.status' });
+    expect(reply).toEqual({
+      ok: true,
+      type: 'errlog',
+      consent: 'disabled',
+      pending: false,
+      count: 0,
+    });
+  });
+});
