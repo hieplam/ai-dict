@@ -87,9 +87,9 @@ export default tseslint.config(
   // so type-aware linting cannot resolve them — same treatment as JS configs.
   { files: ['scripts/**/*.ts'], extends: [tseslint.configs.disableTypeChecked] },
   // Node-runtime scripts: declare Node globals so process/console/URL etc. are defined.
-  // Scoped to scripts/ and esbuild configs — does NOT affect browser/extension source.
+  // Scoped to scripts/ (root + package) and esbuild configs — does NOT affect browser/extension source.
   {
-    files: ['scripts/**/*.mjs', '**/esbuild.config.mjs'],
+    files: ['scripts/**/*.mjs', 'packages/*/scripts/**/*.mjs', '**/esbuild.config.mjs'],
     languageOptions: {
       globals: {
         process: 'readonly',

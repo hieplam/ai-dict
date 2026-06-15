@@ -28,8 +28,10 @@ Run on the tagged commit (`vX.Y.Z` on `main`) before publishing.
 - [ ] GitHub Release created with both assets + notes.
 - [ ] Store-listing screenshots + copy current.
 
-## Store submission (manual at MVP)
+## Store submission
 
-- [ ] Chrome Web Store: drag-drop `dist-chrome.zip`.
+- [ ] Chrome Web Store: **automated** — `release-please.yml` uploads + publishes the new version
+      once the four `CWS_*` secrets are set (one-time setup: `docs/runbooks/chrome-web-store.md`).
+      Confirm the "Publish to Chrome Web Store" job step succeeded for the release tag.
 - [ ] App Store Connect: upload signed `.ipa` via Transporter; enters App Review.
 - [ ] Close the auto-opened "Upload to stores" issue when done.

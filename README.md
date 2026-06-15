@@ -82,6 +82,9 @@ lookups go straight from your browser to the provider you chose and nowhere else
 > Chrome-like browsers such as Edge or Brave). **Safari and iPhone/iPad are not
 > supported yet** — a Safari version is planned, so please check back later.
 
+> **One-click install via the Chrome Web Store is on the way.** Until the listing is approved,
+> use the manual steps below. (Maintainers: publish steps are in `docs/runbooks/chrome-web-store.md`.)
+
 Installing takes about **three minutes** and three steps: **download** the
 extension, **add it to Chrome**, and **paste in a free key from Google**.
 There's no account to create and nothing to pay for.
