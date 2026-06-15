@@ -203,7 +203,10 @@ test('context demo: same word "bank", two sentences, two correct senses', async 
   // loading state on screen.
   await context.route('https://generativelanguage.googleapis.com/**', async (route) => {
     const body = route.request().postData() ?? '';
-    const isRiver = /river|grassy|water/i.test(body);
+    // Route on words unique to the river SENTENCE — not "water", which also appears in
+    // the page title ("A Day by the Water") now wired into the prompt and would then
+    // match the money request too.
+    const isRiver = /river|grassy/i.test(body);
     await new Promise((r) => setTimeout(r, 1_100));
     await route.fulfill({
       status: 200,
