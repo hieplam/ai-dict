@@ -1,0 +1,97 @@
+# Harness profile for ai-dict — audited interview decisions (machine-readable).
+# Written by Ymir; do not hand-tune lightly. The playbook (.ymir/harness-playbook.md)
+# is the LLM-facing half that consumes these keys to (re)generate the harness.
+# Mode: codify what already exists (the wiki concern is the one net-new addition).
+
+meta:
+  project: ai-dict
+  generated_by: ymir
+  generated_at: 2026-06-17
+  spec_version: 1
+
+project:
+  language: typescript
+  runtime: bun # .bun-version 1.3.14; all scripts run via `bun run`
+  layer: frontend # MV3 browser extension (Chrome + Safari shells) + portable @ai-dict/app core; no backend
+  host: github # private repo → GitHub Actions
+
+concerns:
+  rules:
+    status: captured
+    source: [c3-rules, c3-refs, CLAUDE.md] # codify existing enforced rules + conventions
+    obey:
+      - lean-hexagonal-one-way-deps # one portable core + thin shells; talk only via ports.ts (ref-core-dependency-rule, ref-dependency-injection)
+      - domain-purity # packages/app/src/domain imports nothing outward (rule-domain-purity, §8.3)
+      - typed-errors # errors are typed values, not thrown strings (rule-typed-errors)
+      - wire-protocol-validation # validate sw<->content messages against the wire schema (ref-wire-protocol-validation)
+      - sanitize-model-output # sanitize LLM output before the DOM (rule-sanitize-model-output, S4)
+      - gate-runtime-messages # gate/validate runtime messages, never trust raw (rule-gate-runtime-messages, S3)
+      - api-key-isolation # keys only in background/sw, never content scripts (rule-api-key-isolation, S1)
+      - shadow-dom-web-components # UI as web components in shadow DOM (ref-web-components-shadow-dom)
+      - worktree-first-development # start all work in a git worktree (CLAUDE.md)
+      - playwright-harness-for-browser-work # browser tests/screenshots via the project e2e harness (CLAUDE.md)
+      - same-origin-github-evidence-urls # PR evidence uses same-origin github.com/.../raw/... URLs (CLAUDE.md)
+    avoid:
+      - api-keys-in-content-scripts # violates rule-api-key-isolation (S1)
+      - unsanitized-model-output-to-dom # violates rule-sanitize-model-output (S4)
+      - ungated-runtime-messages # violates rule-gate-runtime-messages (S3)
+      - cross-shell-imports # chrome shell <-> safari shell (eslint zone)
+      - domain-importing-adapters-or-shells # core importing the edge (eslint zone + check-dep-direction.mjs)
+      - raw-githubusercontent-for-private-evidence # 404s on this private repo
+      - hand-editing-c3-model # .c3/ is CLI-only
+      - driving-installed-google-chrome-for-extension-tests # Chrome 136+ ignores --load-extension
+
+  lint:
+    status: captured
+    tool: eslint # flat config eslint.config.mjs (js.recommended + typescript-eslint)
+    strict: true # typescript-eslint recommendedTypeChecked (type-aware)
+    config: eslint.config.mjs
+    gates:
+      - scripts/check-dep-direction.mjs # hard allowlist dep-direction gate (before builds + front of `bun run lint`)
+      - import-x/no-restricted-paths # IDE-time boundary zones (same intent as the gate)
+    formatter: prettier # separate; eslint-config-prettier disables conflicts; format:check is its own gate
+    style:
+      indent: space
+      indent_width: 2
+      quotes: single
+      semi: true
+      print_width: 100
+      trailing_comma: all
+
+  ci:
+    status: captured
+    provider: github-actions
+    workflow: .github/workflows/ci.yml
+    runs: # mirrors today's pipeline so regeneration reproduces it
+      - lint # eslint + check-dep-direction.mjs
+      - typecheck # bun run typecheck (per-package tsc)
+      - format:check # prettier --check
+      - test-unit # vitest: @ai-dict/app domain units
+      - test-component # vitest: happy-dom + axe-core component tests
+      - test-contract # vitest: wire-schema contract tests (§8.9, D1)
+      - build-chrome # @ai-dict/extension-chrome dist
+      - build-safari # @ai-dict/extension-safari dist (web-ext)
+      - e2e-chrome # Playwright + bundled Chromium with unpacked extension
+      - coverage-gate # per-package vitest thresholds (§8.2)
+      - sonarcloud # static analysis + coverage upload, quality gate
+      - gitleaks # secret scan (§8.6)
+      - knip # dead exports / unused deps (§8.6)
+      - dep-audit # bun audit --audit-level=high
+
+  wiki:
+    status: captured
+    enabled: true
+    collection: ai-dict-wiki # qmd embedding collection (convention <project>-wiki)
+    note: net-new; coexists with C3 (.c3/ stays the architecture model)
+
+  claude_md:
+    status: captured
+    mode: reconcile-and-extend # a rich CLAUDE.md already exists — extend, don't overwrite
+    steer:
+      - point-to-rules # link docs/rules.md + C3 rules/refs
+      - point-to-wiki # link wiki/SCHEMA.md; note hand-edits are hook-blocked
+      - point-to-c3 # consult .c3/ before changes; CLI-only
+      - lint-before-commit # run lint + format:check + typecheck before committing
+      - playwright-browser-testing # use the e2e harness for any browser work
+      - private-repo-evidence-urls # same-origin github.com/.../raw/... URLs
+      - worktree-first # start work in .claude/worktrees
