@@ -1,0 +1,108 @@
+# Ymir harness profile — audited decisions for ai-dict.
+# Machine-readable half of the spec; the LLM-facing half is harness-playbook.md.
+# `ymir init` audited an EXISTING, mature harness here — every concern below was
+# captured from artifacts already in the repo, not decided from scratch.
+meta:
+  project: ai-dict
+  generated_by: ymir
+  generated_at: 2026-06-17
+  spec_version: 1
+
+project:
+  language: typescript
+  runtime: bun # bun workspaces monorepo (packages/*); .bun-version pins the toolchain
+  layer: frontend # browser-extension client: MV3 service worker + content scripts + UI web components; no backend server (calls Gemini/OpenAI as a client)
+  host: github # private repo hieplam/ai-dict
+
+concerns:
+  # --- 1. rules — conventions to obey / patterns to avoid -------------------
+  # Source of truth is C3: .c3/rules/ (enforced rules) + .c3/refs/ (the "why").
+  rules:
+    status: captured
+    obey:
+      - lean-dependency-rule # one-way deps; dependency-free packages/app/src/domain/; cross-package talk only via packages/app/src/ports.ts (ref-core-dependency-rule)
+      - domain-purity # packages/app/src/domain/ stays free of I/O & platform APIs (rule-domain-purity, §8.3)
+      - dependency-injection-at-composition-roots # sw.ts / content.ts inject platform adapters into the core (ref-dependency-injection)
+      - wire-protocol-validation # validate the SW<->content wire protocol (ref-wire-protocol-validation)
+      - gate-runtime-messages # validate all inbound chrome.runtime messages before acting (rule-gate-runtime-messages, S3)
+      - api-key-isolation # API keys never leak to content/page context (rule-api-key-isolation, S1)
+      - sanitize-model-output # sanitize LLM output before DOM insertion (rule-sanitize-model-output, S4)
+      - typed-errors # use typed error values, not stringly-typed throws (rule-typed-errors)
+      - web-components-shadow-dom # UI is shadow-DOM web components (ref-web-components-shadow-dom)
+      - kv-storage-prefixes # honor chrome.storage key prefixes (ref-kv-storage-prefixes)
+      - consult-c3-before-changes # run `c3 lookup <file>` before editing; query .c3/ for architecture
+      - worktree-first # start even trivial work in a git worktree under .claude/worktrees
+      - evidence-in-prs # before/after screenshot for trivial changes, video for flows/behavior
+      - private-repo-evidence-urls # embed evidence via same-origin github.com/.../raw/... URLs only
+      - playwright-e2e-for-browser # use the project Playwright harness for any real-browser work/screenshots
+    avoid:
+      - editing-c3-by-hand # .c3/ is CLI-only; never hand-edit the model
+      - cross-layer-deps # no dependency that violates the one-way lean dependency rule
+      - io-in-domain # no I/O or platform APIs inside the pure domain
+      - unvalidated-runtime-messages # never act on an inbound message without gating it
+      - unsanitized-model-output # never inject raw model output into the DOM
+      - raw-githubusercontent-urls-in-evidence # different origin -> 404 on this private repo
+      - driving-installed-google-chrome # Chrome 136+ ignores --load-extension/--remote-debugging-port; use bundled Chromium
+
+  # --- 2. lint — linter tool, strictness, style ----------------------------
+  lint:
+    status: captured
+    tool: eslint
+    config: eslint.config.mjs # flat config at repo root
+    strict: true # CI lint job is a blocking gate
+    command: bun run lint # = `bun scripts/check-dep-direction.mjs && eslint .`
+    formatter: prettier # enforced via `bun run format:check` (pre-commit hook + CI format-check job)
+    extra:
+      - dep-direction-check # scripts/check-dep-direction.mjs enforces the lean dependency rule
+      - knip # bunx knip — dead exports / unused deps gate
+
+  # --- 3. CI lint — CI provider + what it runs ------------------------------
+  ci:
+    status: captured
+    provider: github-actions
+    workflow: .github/workflows/ci.yml
+    triggers: [push(master), pull_request, nightly-cron] # nightly makes dep-audit + gitleaks blocking
+    runs:
+      - typecheck # bun run typecheck
+      - lint # bun run lint (dep-direction + eslint)
+      - format-check # prettier --check .
+      - test-unit # @ai-dict/app unit tests
+      - test-component # happy-dom + axe-core component tests
+      - test-contract # wire-schema contract tests
+      - build-chrome
+      - build-safari
+      - e2e-chrome # Playwright + unpacked extension under xvfb
+      - coverage-gate # per-package vitest thresholds
+      - sonarcloud # static analysis + coverage upload, quality-gate.wait
+      - secret-scan # gitleaks
+      - knip # dead exports / unused deps
+      - dep-audit # bun audit (informational on PR, blocking nightly)
+    other_workflows: [release-please.yml, release.yml, sonar-backlog-to-issues.yml]
+
+  # --- 4. wiki / context ----------------------------------------------------
+  # No separate Ymir wiki: the project already has a queryable context system.
+  wiki:
+    status: captured
+    enabled: false # do NOT scaffold a wiki/ tree
+    context_system: c3
+    note: >-
+      .c3/ is the project's context/knowledge system — a queryable C3 architecture
+      model (components c3-1 app / c3-2 extension-chrome / c3-3 extension-safari,
+      refs, enforced rules, code-map.yaml, c3.db) plus a rich root CLAUDE.md.
+      Query it via the c3 CLI (`c3 lookup`, `c3 list`, `c3 graph`, `c3 check`) or
+      read the .c3/ model directly; never hand-edit .c3/.
+
+  # --- 5. CLAUDE.md / AGENT.md — steering file ------------------------------
+  # Keep & capture the existing hand-maintained CLAUDE.md; never overwrite it.
+  claude_md:
+    status: captured
+    target: CLAUDE.md # exists at repo root; keep
+    overwrite: false
+    steer:
+      - point-to-c3 # consult .c3/ (via /c3 or the c3 CLI) before architecture changes
+      - point-to-rules # obey .c3/rules/ (api-key-isolation, domain-purity, gate-runtime-messages, sanitize-model-output, typed-errors)
+      - worktree-first # start work in a git worktree under .claude/worktrees
+      - lint-before-commit # pre-commit runs format:check; CI runs lint + format-check
+      - playwright-e2e-for-browser # browser testing & screenshots go through the Playwright harness
+      - private-repo-evidence-urls # PR/issue evidence uses same-origin github.com/.../raw/... URLs
+      - evidence-in-prs # attach before/after evidence on every PR
