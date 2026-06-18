@@ -245,7 +245,13 @@ built so your key (and your reading) stay yours:
   it's kept in your browser's local storage (`chrome.storage.local`) **on this
   device only** — never in the cloud. Remove it any time by clearing the field
   and clicking **Save settings**.
-- **No tracking.** No analytics, no telemetry — nothing phones home.
+- **No tracking, no usage analytics.** Nothing about your browsing or lookups
+  ever phones home. The _one_ exception is **opt-in, off-by-default** anonymous
+  **error reports** — if you agree to a prompt (or flip the Settings toggle), the
+  extension sends Google Analytics a bug signature (error type, a redacted
+  message, the page's domain only, extension/browser version) to help fix
+  crashes. No page content, no full URLs, no selected text, no API key — and you
+  can turn it off any time. See [PRIVACY.md](PRIVACY.md).
 
 **Two ways to provide the key — pick whichever you trust more:**
 

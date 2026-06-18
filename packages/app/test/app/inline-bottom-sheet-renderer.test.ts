@@ -123,4 +123,15 @@ describe('InlineBottomSheetRenderer', () => {
     card(h).dispatchEvent(new CustomEvent('close', { bubbles: true }));
     expect(h.querySelector('bottom-sheet')).toBeNull();
   });
+
+  it('appendToCard appends a node into the open card and returns true; false when no card', () => {
+    const r = new InlineBottomSheetRenderer(document.body);
+    const extra = document.createElement('div');
+    extra.textContent = 'footer';
+    expect(r.appendToCard(extra)).toBe(false); // no card yet
+    r.renderError(error);
+    expect(r.appendToCard(extra)).toBe(true);
+    // the appended node is now a child of the card element
+    expect(document.body.querySelector('lookup-card')!.contains(extra)).toBe(true);
+  });
 });

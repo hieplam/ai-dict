@@ -56,6 +56,14 @@ jobs:
 
       - name: Build Chrome extension
         if: ${{ steps.release.outputs.release_created }}
+        # GA4 telemetry creds are baked into the SW bundle at build time (sw.ts only — never
+        # content scripts). Empty when the secrets are unset → the error-reporting sink no-ops,
+        # so this is safe before GA4 is configured. Unlike GEMINI_API_KEY (the user's key, guarded
+        # empty above), the GA4 api_secret is OUR write-only Measurement Protocol credential and is
+        # meant to ship in the release build.
+        env:
+          GA4_MEASUREMENT_ID: ${{ secrets.GA4_MEASUREMENT_ID }}
+          GA4_API_SECRET: ${{ secrets.GA4_API_SECRET }}
         run: bun run --filter @ai-dict/extension-chrome build
 
       - name: Zip unpacked dist -> dist-chrome.zip

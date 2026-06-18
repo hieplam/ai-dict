@@ -70,6 +70,17 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.setState({ kind: 'error', error: e });
   }
 
+  /**
+   * Append an extra light-DOM node (e.g. the error-reporting consent footer) into the
+   * currently-shown card. Returns false if no card is open. Uses append (shared-DOM)
+   * so it crosses the MV3 MAIN/isolated-world boundary like the card's other content.
+   */
+  appendToCard(node: Node): boolean {
+    if (!this.card) return false;
+    this.card.append(node);
+    return true;
+  }
+
   close(): void {
     this.sheet?.remove();
     this.sheet = null;

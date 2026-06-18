@@ -91,7 +91,8 @@ button[data-act="settings"] .lbl{line-height:1}
 @keyframes spin{to{transform:rotate(360deg)}}
 ::slotted(.loadrow){display:flex;align-items:center;gap:9px;margin:4px 0 9px;color:var(--ad-ink-soft);font-size:14px}
 ::slotted(.loadrow)::before{content:"";display:block;width:15px;height:15px;flex:none;border:2px solid var(--ad-line);border-top-color:var(--ad-accent);border-radius:50%;animation:spin .77s linear infinite}
-@media (prefers-reduced-motion:reduce){::slotted(.loadrow)::before{animation:none}}`;
+@media (prefers-reduced-motion:reduce){::slotted(.loadrow)::before{animation:none}}
+::slotted(.errlog-consent){margin:10px 16px 0;padding-top:10px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}`;
 
 // Inject @keyframes spin into the document once so Firefox/Safari (which follow CSS
 // Scoping Level 1 strictly) can resolve the animation on the light-DOM .spinner node.

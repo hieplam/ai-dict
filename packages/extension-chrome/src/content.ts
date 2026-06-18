@@ -3,7 +3,9 @@ import {
   InlineBottomSheetRenderer,
   DomSelectionSource,
   MessageRelayLookupClient,
+  buildConsentFooter,
   type SettingsStore,
+  type WireReply,
 } from '@ai-dict/app';
 // Custom elements are defined by content-elements.ts (world:MAIN) — see manifest.json.
 // Do NOT re-import them here; the page's registry is shared between worlds via the DOM.
@@ -46,6 +48,7 @@ runLookupWorkflow({
     renderError(e) {
       inline.renderError(e);
       mirror.renderError(e);
+      void maybeShowConsent();
     },
     close() {
       inline.close();
@@ -55,6 +58,26 @@ runLookupWorkflow({
   client: new MessageRelayLookupClient(chrome.runtime),
   settings: themedSettings,
 });
+
+async function maybeShowConsent(): Promise<void> {
+  let status: { consent: string; pending: boolean; count: number } | undefined;
+  try {
+    const reply: WireReply = await chrome.runtime.sendMessage({ type: 'errlog.status' });
+    if (reply?.ok && reply.type === 'errlog') status = reply;
+  } catch {
+    return; // SW asleep / no reply — skip silently
+  }
+  if (!status || !status.pending || status.consent !== 'unset') return;
+
+  const footer = buildConsentFooter({
+    count: status.count,
+    onChoice: (choice) => {
+      void chrome.runtime.sendMessage({ type: 'errlog.set-consent', state: choice });
+      footer.remove();
+    },
+  });
+  inline.appendToCard(footer);
+}
 
 // The card's Settings actions (header gear, no-key/invalid-key "Open Settings" CTA) dispatch a
 // composed `open-settings` event that bubbles out of the bottom sheet to the document. A content

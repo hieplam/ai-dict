@@ -44,6 +44,19 @@ export interface RouterDeps {
   // itself (chrome.runtime.openOptionsPage) is platform code that has no place in the pure
   // router. Optional: a shell that never sends 'open-options' need not provide it.
   openOptions?: () => void | Promise<void>;
+  /**
+   * Error-reporting service. Optional: a shell that does not report errors
+   * (e.g. Safari, for now) simply omits it; the errlog.* messages then ack
+   * with a disabled status. Injected by the composition root.
+   */
+  errlog?: {
+    status: () => Promise<{
+      consent: 'unset' | 'granted' | 'disabled';
+      pending: boolean;
+      count: number;
+    }>;
+    setConsent: (state: 'granted' | 'declined' | 'disabled') => Promise<void>;
+  };
 }
 
 function toLookupError(err: unknown): LookupError {
@@ -185,6 +198,17 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
         return handleConnectionTest();
       case 'open-options':
         await deps.openOptions?.();
+        return { ok: true, type: 'ack' };
+      case 'errlog.status': {
+        const s = (await deps.errlog?.status()) ?? {
+          consent: 'disabled' as const,
+          pending: false,
+          count: 0,
+        };
+        return { ok: true, type: 'errlog', consent: s.consent, pending: s.pending, count: s.count };
+      }
+      case 'errlog.set-consent':
+        await deps.errlog?.setConsent(msg.state);
         return { ok: true, type: 'ack' };
     }
   };

@@ -82,6 +82,25 @@ function mountSettings(initial: Settings, status?: string): void {
   app.replaceChildren(form);
   (form as unknown as { value: SettingsFormValue }).value = toFormValue(initial);
   wireSettings(form);
+  // Error-reporting consent lives in errlog KV (separate from settings). Reflect + control it here.
+  void send({ type: 'errlog.status' }).then((r) => {
+    if (r.ok && r.type === 'errlog') form.errorReporting = r.consent === 'granted';
+  });
+  form.addEventListener('error-reporting-change', (e) => {
+    const { enabled } = (e as CustomEvent<{ enabled: boolean }>).detail;
+    void send({ type: 'errlog.set-consent', state: enabled ? 'granted' : 'disabled' }).then(
+      (r) =>
+        form.setStatus(
+          r.ok
+            ? enabled
+              ? 'Error reporting enabled'
+              : 'Error reporting disabled'
+            : 'Could not update error reporting',
+          r.ok ? 'ok' : 'error',
+        ),
+      () => form.setStatus('Could not update error reporting', 'error'),
+    );
+  });
   if (status) form.setStatus(status);
 }
 

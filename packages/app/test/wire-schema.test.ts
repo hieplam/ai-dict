@@ -170,3 +170,19 @@ describe('wire-schema', () => {
     );
   });
 });
+
+describe('errlog wire messages', () => {
+  it('accepts errlog.status and errlog.set-consent', () => {
+    expect(WireMessageSchema.safeParse({ type: 'errlog.status' }).success).toBe(true);
+    expect(
+      WireMessageSchema.safeParse({ type: 'errlog.set-consent', state: 'granted' }).success,
+    ).toBe(true);
+    expect(WireMessageSchema.safeParse({ type: 'errlog.set-consent', state: 'nope' }).success).toBe(
+      false,
+    );
+  });
+  it('accepts the errlog status reply', () => {
+    const reply = { ok: true, type: 'errlog', consent: 'unset', pending: true, count: 3 };
+    expect(WireReplySchema.safeParse(reply).success).toBe(true);
+  });
+});

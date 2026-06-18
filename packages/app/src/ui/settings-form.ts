@@ -144,6 +144,7 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
       <h2 class="sec-h" id="sec-priv">Privacy &amp; data</h2>
       <label class="check"><input type="checkbox" id="cache" /> Cache lookups</label>
       <label class="check"><input type="checkbox" id="history" /> Save history</label>
+      <label class="check"><input type="checkbox" id="error-reporting" /> Send anonymous error reports</label>
       <div class="inline-actions">
         <button type="button" id="clear-cache">Clear cache</button>
         <button type="button" id="clear-history">Clear history</button>
@@ -167,6 +168,7 @@ export class SettingsForm extends HTMLElement {
   // still echo the stored key back on save so toggling this state never
   // silently wipes what the user had entered.
   private _keyFromEnv = false;
+  private _errorReporting = false;
   private _provider: Provider = 'gemini';
   // One stash per provider; the visible #key field shows only the selected
   // provider's key and is committed back into the stash before any switch/save.
@@ -223,6 +225,15 @@ export class SettingsForm extends HTMLElement {
     this.relay('#clear-cache', 'clear-cache');
     this.relay('#clear-history', 'clear-history');
     this.relay('#export', 'export-history');
+    this.q<HTMLInputElement>('#error-reporting').addEventListener('change', () => {
+      this.dispatchEvent(
+        new CustomEvent<{ enabled: boolean }>('error-reporting-change', {
+          detail: { enabled: this.q<HTMLInputElement>('#error-reporting').checked },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    });
     this.q<HTMLButtonElement>('#reset-tpl').addEventListener('click', () =>
       this.restoreDefaultTemplate(),
     );
@@ -233,6 +244,7 @@ export class SettingsForm extends HTMLElement {
     }
     // Enforce the lock last so it wins over any value just hydrated above.
     this.syncKeyField();
+    this.q<HTMLInputElement>('#error-reporting').checked = this._errorReporting;
   }
 
   /** Lock the Gemini key field because the build supplies GEMINI_API_KEY itself. */
@@ -242,6 +254,19 @@ export class SettingsForm extends HTMLElement {
   }
   get keyFromEnv(): boolean {
     return this._keyFromEnv;
+  }
+
+  /**
+   * Current error-reporting consent (granted = checked). Wired to the errlog
+   * consent store via the composition root, NOT the settings save flow — so it
+   * is deliberately absent from SettingsFormValue/collect().
+   */
+  set errorReporting(on: boolean) {
+    this._errorReporting = on;
+    if (this.shadowRoot) this.q<HTMLInputElement>('#error-reporting').checked = on;
+  }
+  get errorReporting(): boolean {
+    return this._errorReporting;
   }
 
   /** The env lock applies to the Gemini key only — OpenAI keys always come from the user. */

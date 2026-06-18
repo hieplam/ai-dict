@@ -30,3 +30,14 @@ export const PII_BLACKLIST: PiiRule[] = [
 export function redactPII(text: string): string {
   return PII_BLACKLIST.reduce((s, rule) => s.replace(rule.pattern, '[redact]'), text);
 }
+
+/**
+ * Mask provider API-key shaped tokens (Google `AIza…`, OpenAI `sk-…`) with
+ * `[redacted]`. Domain-pure; shared by error mapping and error reporting so a
+ * key that leaks into an error message never crosses the device boundary.
+ */
+export function scrubSecrets(text: string): string {
+  return text
+    .replace(/AIza[0-9A-Za-z_-]+/g, '[redacted]')
+    .replace(/sk-[0-9A-Za-z_-]{8,}/g, '[redacted]');
+}

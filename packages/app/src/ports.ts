@@ -6,6 +6,7 @@ import type {
   LookupError,
   PublicSettings,
 } from './domain/types';
+import type { ErrorRecord } from './domain/error-report';
 
 export interface SelectionSource {
   onSelection(cb: (e: SelectionEvent) => void): () => void;
@@ -42,4 +43,13 @@ export interface Storage {
   setItem(key: string, value: string): Promise<void>;
   removeItem(key: string): Promise<void>;
   keys(prefix?: string): Promise<string[]>;
+}
+
+/**
+ * Outbound sink for anonymous error records. Implemented by a platform adapter
+ * (GA4 over fetch in the Chrome shell). The core never imports fetch — the sink
+ * is injected at the composition root (ref-dependency-injection).
+ */
+export interface TelemetrySink {
+  send(records: ErrorRecord[]): Promise<void>;
 }
