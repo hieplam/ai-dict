@@ -51,6 +51,15 @@ export interface LookupError {
   message: string;
   retryable: boolean;
   retryAfterSec?: number;
+  /**
+   * Diagnostic-only fields carrying the provider's own failure signature, so opt-in
+   * telemetry can distinguish e.g. a 503 UNAVAILABLE (overloaded) from a 500 INTERNAL.
+   * Never shown in the UI (the card uses `message`). `vendorMessage` is secret-scrubbed
+   * and length-capped at the mapper before it ever crosses the wire (rule-api-key-isolation).
+   */
+  httpStatus?: number;
+  vendorStatus?: string;
+  vendorMessage?: string;
 }
 
 export interface HistoryEntry {

@@ -72,6 +72,10 @@ function toLookupError(err: unknown): LookupError {
     message: e.message,
     retryable: e.retryable,
     ...(e.retryAfterSec !== undefined ? { retryAfterSec: e.retryAfterSec } : {}),
+    // Carry the vendor failure signature across the wire so the SW can feed it to telemetry.
+    ...(e.httpStatus !== undefined ? { httpStatus: e.httpStatus } : {}),
+    ...(e.vendorStatus !== undefined ? { vendorStatus: e.vendorStatus } : {}),
+    ...(e.vendorMessage !== undefined ? { vendorMessage: e.vendorMessage } : {}),
   };
 }
 

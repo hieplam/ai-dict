@@ -27,6 +27,10 @@ function toEvent(rec: ErrorRecord) {
   if (rec.domain) params.domain = rec.domain;
   if (rec.retryable !== undefined) params.retryable = rec.retryable ? 1 : 0;
   if (rec.retryAfterSec !== undefined) params.retry_after_sec = rec.retryAfterSec;
+  // Provider failure signature, so GA4 can split e.g. 503 UNAVAILABLE from 500 INTERNAL.
+  if (rec.httpStatus !== undefined) params.http_status = rec.httpStatus;
+  if (rec.vendorStatus) params.vendor_status = rec.vendorStatus.slice(0, GA4_PARAM_MAX);
+  if (rec.vendorMessage) params.vendor_msg = rec.vendorMessage.slice(0, GA4_PARAM_MAX);
   return { name: 'extension_error', params };
 }
 

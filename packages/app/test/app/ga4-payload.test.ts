@@ -54,3 +54,42 @@ describe('buildGa4Request', () => {
     expect(String(body.events[0]!.params.msg).length).toBeLessThanOrEqual(100);
   });
 });
+
+describe('buildGa4Request — vendor diagnostic params (adr-20260618)', () => {
+  type Ga4Body = {
+    client_id: string;
+    events: { name: string; params: Record<string, string | number> }[];
+  };
+  const vrec: ErrorRecord = {
+    ...rec,
+    code: 'NETWORK',
+    httpStatus: 503,
+    vendorStatus: 'UNAVAILABLE',
+    vendorMessage: 'The model is overloaded. Please try again later.',
+  };
+
+  it('emits http_status, vendor_status and vendor_msg params', () => {
+    const req = buildGa4Request([vrec], { clientId: 'c', measurementId: 'G', apiSecret: 's' });
+    const body = JSON.parse(req.body) as Ga4Body;
+    expect(body.events[0]!.params).toMatchObject({
+      http_status: 503,
+      vendor_status: 'UNAVAILABLE',
+      vendor_msg: 'The model is overloaded. Please try again later.',
+    });
+  });
+
+  it('omits the vendor params when the record lacks them', () => {
+    const req = buildGa4Request([rec], { clientId: 'c', measurementId: 'G', apiSecret: 's' });
+    const params = (JSON.parse(req.body) as Ga4Body).events[0]!.params;
+    expect('http_status' in params).toBe(false);
+    expect('vendor_status' in params).toBe(false);
+    expect('vendor_msg' in params).toBe(false);
+  });
+
+  it('truncates vendor_msg to the GA4 100-char limit', () => {
+    const long: ErrorRecord = { ...vrec, vendorMessage: 'y'.repeat(300) };
+    const req = buildGa4Request([long], { clientId: 'c', measurementId: 'G', apiSecret: 's' });
+    const params = (JSON.parse(req.body) as Ga4Body).events[0]!.params;
+    expect(String(params.vendor_msg).length).toBeLessThanOrEqual(100);
+  });
+});

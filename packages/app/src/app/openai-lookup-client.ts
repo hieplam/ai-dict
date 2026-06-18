@@ -23,6 +23,9 @@ export interface OpenAIDeps {
 interface OpenAIOkBody {
   choices?: { message?: { content?: string } }[];
 }
+interface OpenAIErrBody {
+  error?: { message?: string; code?: string; type?: string };
+}
 
 // Throw an Error instance (satisfies `@typescript-eslint/only-throw-error`) that also
 // carries the LookupError fields, so core's `isLookupError` recognizes it downstream.
@@ -73,10 +76,11 @@ export class OpenAILookupClient implements LookupClient {
 
       if (!res.ok) {
         // Drain the body so a raced abort during the read surfaces here, mirroring the
-        // Gemini client; OpenAI carries no extra status vocabulary we map, so the JSON
-        // content itself is unused and the HTTP status alone drives the mapping.
+        // Gemini client. OpenAI carries no status vocabulary we map (HTTP status alone drives
+        // the mapping), but its `error.message` is the diagnostic signal for telemetry.
+        let vendorMessage: string | undefined;
         try {
-          await res.json();
+          vendorMessage = ((await res.json()) as OpenAIErrBody).error?.message;
         } catch {
           /* non-JSON body: map by status alone */
         }
@@ -88,8 +92,10 @@ export class OpenAILookupClient implements LookupClient {
           status: number;
           provider: 'openai';
           retryAfterSec?: number;
+          vendorMessage?: string;
         } = { kind: 'http', status: res.status, provider: 'openai' };
         if (!Number.isNaN(retryAfterSec)) httpInput.retryAfterSec = retryAfterSec;
+        if (vendorMessage !== undefined) httpInput.vendorMessage = vendorMessage;
         rejectWith(mapError(httpInput));
       }
 

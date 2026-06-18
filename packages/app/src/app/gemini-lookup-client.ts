@@ -35,7 +35,7 @@ interface GeminiOkBody {
   candidates?: { content?: { parts?: { text?: string }[] } }[];
 }
 interface GeminiErrBody {
-  error?: { status?: string };
+  error?: { status?: string; code?: number; message?: string };
 }
 
 // Throw an Error instance (satisfies `@typescript-eslint/only-throw-error`) that also
@@ -86,8 +86,11 @@ export class GeminiLookupClient implements LookupClient {
 
       if (!res.ok) {
         let geminiStatus: string | undefined;
+        let vendorMessage: string | undefined;
         try {
-          geminiStatus = ((await res.json()) as GeminiErrBody).error?.status;
+          const err = ((await res.json()) as GeminiErrBody).error;
+          geminiStatus = err?.status;
+          vendorMessage = err?.message;
         } catch {
           /* non-JSON body: map by status alone */
         }
@@ -99,9 +102,11 @@ export class GeminiLookupClient implements LookupClient {
           status: number;
           geminiStatus?: string;
           retryAfterSec?: number;
+          vendorMessage?: string;
         } = { kind: 'http', status: res.status };
         if (geminiStatus !== undefined) httpInput.geminiStatus = geminiStatus;
         if (!Number.isNaN(retryAfterSec)) httpInput.retryAfterSec = retryAfterSec;
+        if (vendorMessage !== undefined) httpInput.vendorMessage = vendorMessage;
         rejectWith(mapError(httpInput));
       }
 

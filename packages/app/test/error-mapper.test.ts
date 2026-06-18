@@ -195,3 +195,53 @@ describe('mapError — fixture-driven (validates fixture content matches mapper 
     expect(text).toContain('javascript:');
   });
 });
+
+describe('mapError — vendor diagnostic fields (adr-20260618)', () => {
+  it('HTTP 5xx attaches httpStatus + vendorStatus + vendorMessage', () => {
+    const e = mapError({
+      kind: 'http',
+      status: 503,
+      geminiStatus: 'UNAVAILABLE',
+      vendorMessage: 'The model is overloaded. Please try again later.',
+    });
+    expect(e).toMatchObject({
+      code: 'NETWORK',
+      httpStatus: 503,
+      vendorStatus: 'UNAVAILABLE',
+      vendorMessage: 'The model is overloaded. Please try again later.',
+    });
+  });
+
+  it('attaches httpStatus to every http-mapped error (e.g. 401 INVALID_KEY)', () => {
+    expect(mapError({ kind: 'http', status: 401 }).httpStatus).toBe(401);
+  });
+
+  it('scrubs key-like tokens from vendorMessage', () => {
+    const e = mapError({
+      kind: 'http',
+      status: 500,
+      vendorMessage: 'boom AIzaSy' + 'x'.repeat(20),
+    });
+    expect(e.vendorMessage).not.toContain('AIzaSy');
+    expect(e.vendorMessage).toContain('[redacted]');
+  });
+
+  it('caps vendorMessage length at 200 chars', () => {
+    const e = mapError({ kind: 'http', status: 500, vendorMessage: 'x'.repeat(400) });
+    expect((e.vendorMessage ?? '').length).toBeLessThanOrEqual(200);
+  });
+
+  it('omits vendorStatus/vendorMessage when not supplied, but http still carries httpStatus', () => {
+    const e = mapError({ kind: 'http', status: 500 });
+    expect(e.httpStatus).toBe(500);
+    expect('vendorStatus' in e).toBe(false);
+    expect('vendorMessage' in e).toBe(false);
+  });
+
+  it('non-http errors carry no vendor diagnostic fields', () => {
+    const e = mapError({ kind: 'offline' });
+    expect('httpStatus' in e).toBe(false);
+    expect('vendorStatus' in e).toBe(false);
+    expect('vendorMessage' in e).toBe(false);
+  });
+});
