@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.6.0](https://github.com/hieplam/ai-dict/compare/v1.5.0...v1.6.0) (2026-06-18)
+
+
+### Features
+
+* consent-gated, opt-in error reporting → GA4 ([#69](https://github.com/hieplam/ai-dict/issues/69)) ([0bf310f](https://github.com/hieplam/ai-dict/commit/0bf310f9e9b9330e1800533a6b4b0d3997bf6d43))
+* **ui:** Paperlight design system — retire festive look, add theme architecture ([#64](https://github.com/hieplam/ai-dict/issues/64)) ([d613fb4](https://github.com/hieplam/ai-dict/commit/d613fb499a1f1268e2d8c372982b8003f8d05dfe))
+
+
+### Bug Fixes
+
+* **ui:** align Paperlight with hand-off — themed Settings, canonical icons, 22px card gutter ([#67](https://github.com/hieplam/ai-dict/issues/67)) ([09c3a68](https://github.com/hieplam/ai-dict/commit/09c3a6890f6cc02155ece74b89b16a09a0916482))
+
 ## [1.5.0](https://github.com/hieplam/ai-dict/compare/v1.4.0...v1.5.0) (2026-06-15)
 
 
