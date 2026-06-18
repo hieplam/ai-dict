@@ -1,6 +1,17 @@
 import type { LookupError } from '../index';
 import { adoptStyles } from './styles/adopt';
-import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG } from './styles/tokens';
+import {
+  BASE_VARS,
+  THEME_CSS,
+  BRAND_MARK_SVG,
+  ICON_CLOSE,
+  ICON_SHIELD,
+  ICON_SETTINGS,
+} from './styles/tokens';
+
+// Re-exported so existing consumers (side-panel-view) and the c3-117 public surface keep
+// importing ICON_SETTINGS from here; the canonical glyph now lives in tokens.ts (§5.10).
+export { ICON_SETTINGS };
 
 /**
  * A branded string type that marks HTML which has already passed the
@@ -19,15 +30,9 @@ export type CardState =
   | { kind: 'result'; safeHtml: SafeHtml; word: string; target: string }
   | { kind: 'error'; error: LookupError };
 
-// Decorative shadow-DOM icons. Stroked with currentColor so they inherit the token
-// colour of their button; aria-hidden because each control carries its own aria-label.
-const ICON_CLOSE =
-  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M4 4L12 12M12 4L4 12"/></svg>';
-const ICON_SHIELD =
-  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8l5 2v3.4c0 3-2.1 5.2-5 6.2-2.9-1-5-3.2-5-6.2V3.8l5-2z"/></svg>';
-// "Tune" sliders — the header's always-available path to the options page.
-export const ICON_SETTINGS =
-  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><path d="M2.5 5H4.2M7.8 5H13.5M2.5 11H8.2M11.8 11H13.5"/><circle cx="6" cy="5" r="1.8"/><circle cx="10" cy="11" r="1.8"/></svg>';
+// Icons (ICON_CLOSE, ICON_SHIELD, ICON_SETTINGS) are the canonical §5.10 set, imported from
+// tokens.ts above. Stroked with currentColor so they inherit the token colour of their button;
+// aria-hidden because each control carries its own aria-label.
 
 // Content lives in the card's LIGHT DOM, projected through a <slot>, so the shadow rules
 // target slotted nodes via ::slotted(). `color`/`font` are inherited and cross the slot
@@ -51,7 +56,10 @@ ${THEME_CSS}
 /* The 3px spruce→clay accent strip replaces the old festive rainbow ribbon: one quiet sweep,
    clipped by the card's 18px radius. Decorative — aria-hidden on the element. */
 .accent{height:3px;background:linear-gradient(90deg,var(--ad-accent),var(--ad-warm) 92%)}
-.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:11px 12px 2px 16px}
+/* One consistent 22px horizontal gutter on bar, body region and footer (§5.11) so the brand
+   mark, headword, body text and footer line all share the same left edge and an equal right
+   margin — mirrors the reference .ad-card__bar/.ad-body-region/.ad-footer padding. */
+.bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 22px 6px}
 .brand{display:inline-flex;align-items:center;gap:7px;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-bold);letter-spacing:var(--adp-tracking-label);color:var(--ad-accent-ink)}
 .mark{width:21px;height:21px;flex:none}
 .actions{display:inline-flex;align-items:center;gap:4px}
@@ -60,15 +68,15 @@ button[data-act]:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
 button[data-act]:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 button[data-act] svg{pointer-events:none;flex:none}
 /* Close stays a bare icon — its X is universally understood and keeps the right-most spot. */
-button[data-act="close"] svg{width:15px;height:15px}
+button[data-act="close"] svg{width:14px;height:14px}
 /* Settings is the labeled .text variant: gear + the word "Settings", widened, hover-fill like
    the other icon buttons. The visible word removes the icon ambiguity with Close. */
 button[data-act="settings"]{display:inline-flex;align-items:center;gap:5px;width:auto;padding:0 11px 0 9px;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);letter-spacing:.01em}
-button[data-act="settings"] svg{width:14px;height:14px}
+button[data-act="settings"] svg{width:15px;height:15px}
 button[data-act="settings"] .lbl{line-height:1}
 @media (prefers-reduced-motion:reduce){button[data-act]{transition:none}}
-.region{padding:2px 16px 2px}
-.footer{display:flex;align-items:center;gap:6px;margin:8px 16px 0;padding:10px 0 13px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
+.region{padding:2px 22px 2px}
+.footer{display:flex;align-items:center;gap:6px;margin:8px 22px 0;padding:10px 0 13px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 .footer svg{width:13px;height:13px;flex:none}
 /* The signature headword: one serif (Georgia), with a 44×3px spruce→clay underline swatch —
    reads like a dictionary entry's rule. Georgia is the ONLY serif on the surface. */

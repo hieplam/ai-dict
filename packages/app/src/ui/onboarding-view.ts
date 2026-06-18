@@ -1,5 +1,5 @@
 import { adoptStyles } from './styles/adopt';
-import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG } from './styles/tokens';
+import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG, ICON_SHIELD } from './styles/tokens';
 
 // Where a reader creates a free Gemini key. Surfaced as the first onboarding step so a
 // first-time user is never left wondering where the key comes from.
@@ -11,16 +11,15 @@ export interface OnboardingValue {
   targetLang: string;
 }
 
-const ICON_SHIELD =
-  '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 1.8l5 2v3.4c0 3-2.1 5.2-5 6.2-2.9-1-5-3.2-5-6.2V3.8l5-2z"/></svg>';
+// ICON_SHIELD is the canonical §5.10 footer glyph from tokens.ts.
 // Small "opens in a new tab" arrow, paired with the Google AI Studio link.
 const ICON_EXTERNAL =
   '<svg class="ext" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6.5 3H3.5A1.5 1.5 0 0 0 2 4.5v8A1.5 1.5 0 0 0 3.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-3"/><path d="M9.5 2.5H13.5V6.5"/><path d="M13.5 2.5 7.5 8.5"/></svg>';
 
-// The first-run screen the options page shows until a key exists. It is the same cozy surface
-// as the rest of the in-page UI (ribbon, holly, candlelit glow, warm tokens) and is fully
-// responsive: one centred column that reflows from a wide tab down to a narrow window, the key
-// row wrapping rather than overflowing. The single blocking step is the API key — language has
+// The first-run screen the options page shows until a key exists. It is the same Paperlight
+// surface as the rest of the UI (3px spruce→clay accent strip, warm glow, --ad-* tokens) and is
+// fully responsive: one centred column that reflows from a wide tab down to a narrow window, the
+// key row wrapping rather than overflowing. The single blocking step is the API key — language has
 // a sensible default — so the checklist shows what is already done (language) and what is still
 // missing (the key), and the progress count moves the moment a key is pasted.
 const CSS = `:host{${BASE_VARS};display:block;min-height:100vh;box-sizing:border-box;font:var(--adp-text-body)/var(--adp-leading-body) var(--adp-font-sans);color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);color-scheme:light}

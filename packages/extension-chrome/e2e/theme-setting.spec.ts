@@ -3,12 +3,12 @@ import { seedSettings, gotoFixture, selectWord, openTrigger } from './helpers';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-// Theme setting end-to-end (Paperlight): the options page exposes Appearance → Theme (Sepia
-// default), the saved value is stamped as a `data-ad-theme` attribute on every surface, and
-// `system` is the only mode that follows the OS. The options form is deliberately neutral
-// browser-chrome (§5.8), so its theme is observed via the computed `color-scheme` (Sepia &
-// High Contrast are light; Dark is dark) rather than an --ad-* surface token. The in-page
-// bubble/card DO carry the Paperlight palette, so those assert --ad-surface directly.
+// Theme setting end-to-end (Paperlight): the options page exposes Appearance → Theme via a
+// segmented control (Sepia default), the saved value is stamped as a `data-ad-theme` attribute on
+// every surface, and `system` is the only mode that follows the OS. The options form is FULLY
+// THEMED (§5.8) — it wears the --ad-* palette and re-themes with the picker — so its theme can be
+// observed both via the computed `color-scheme` (Sepia & High Contrast are light; Dark is dark)
+// and via the --ad-surface token. The in-page bubble/card carry the same palette.
 // Doubles as PR evidence capture (screenshots land in e2e-evidence/theme/).
 const out = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../e2e-evidence/theme');
 const shot = (name: string) => path.join(out, `${name}.png`);
@@ -29,27 +29,31 @@ test('options page defaults to SEPIA even on a dark OS, and saving Dark flips it
   const form = page.locator('settings-form');
   await form.waitFor();
 
-  // Sepia default: stamped attribute + a LIGHT native color-scheme, despite the dark OS.
+  // Sepia default: stamped attribute + the sepia segment pressed + a LIGHT native color-scheme,
+  // despite the dark OS.
   await expect(form).toHaveAttribute('data-ad-theme', 'sepia');
-  await expect(form.locator('#theme')).toHaveValue('sepia');
+  await expect(form.locator('#theme button[data-pref="sepia"]')).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
   expect(await colorScheme(form)).toContain('light');
   await page.screenshot({ path: shot('settings-sepia-default-on-dark-os') });
 
   // Choose Dark + Save → the page re-stamps itself immediately.
-  await form.locator('#theme').selectOption('dark');
+  await form.locator('#theme button[data-pref="dark"]').click();
   await form.locator('#save').click();
   await expect(form).toHaveAttribute('data-ad-theme', 'dark');
   expect(await colorScheme(form)).toContain('dark');
   await page.screenshot({ path: shot('settings-dark-after-save') });
 
   // High Contrast is a light scheme too.
-  await form.locator('#theme').selectOption('contrast');
+  await form.locator('#theme button[data-pref="contrast"]').click();
   await form.locator('#save').click();
   await expect(form).toHaveAttribute('data-ad-theme', 'contrast');
   expect(await colorScheme(form)).toContain('light');
 
   // System follows the (emulated) dark OS…
-  await form.locator('#theme').selectOption('system');
+  await form.locator('#theme button[data-pref="system"]').click();
   await form.locator('#save').click();
   await expect(form).toHaveAttribute('data-ad-theme', 'system');
   expect(await colorScheme(form)).toContain('dark');

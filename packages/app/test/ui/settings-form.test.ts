@@ -468,8 +468,7 @@ describe('<settings-form> provider selection', () => {
 
 describe('<settings-form> error-reporting toggle', () => {
   it('reflects errorReporting consent and emits error-reporting-change on toggle', () => {
-    const form = document.createElement('settings-form') as SettingsForm;
-    document.body.append(form);
+    const form = mountForm();
     // give it a minimal value so it renders
     form.value = {
       provider: 'gemini',
@@ -495,16 +494,43 @@ describe('<settings-form> error-reporting toggle', () => {
   });
 });
 
-describe('<settings-form> neutral browser-chrome', () => {
-  it('renders the neutral brand, mark, and device footer (no festive ribbon)', () => {
+describe('<settings-form> fully themed (§5.8)', () => {
+  it('renders the brand, mark, and device footer (no festive ribbon)', () => {
     const el = mountForm();
     const r = el.shadowRoot!;
-    // §5.8: the options form is deliberately native — no Paperlight accent strip.
+    // §5.8 retires the festive ribbon; the Settings mock has no accent strip either.
     expect(r.querySelector('.ribbon')).toBeNull();
     expect(r.querySelector('.accent')).toBeNull();
     expect(r.querySelector('.brand')!.textContent).toContain('AI Dictionary');
     expect(r.querySelector('.mark')).not.toBeNull();
     expect(r.querySelector('footer')!.textContent).toContain('Stays on your device');
+  });
+
+  it('wears the --ad-* palette and leaves no native CSS system-color chrome (§5.8 bug guard)', () => {
+    const el = mountForm();
+    const css = [...el.shadowRoot!.adoptedStyleSheets[0]!.cssRules]
+      .map((r) => r.cssText)
+      .join('\n');
+    // The page must read the Paperlight semantic tokens…
+    expect(css).toContain('--ad-surface');
+    expect(css).toContain('--ad-accent');
+    // …and never fall back to browser-default system colors (§5.8: "if any control still shows
+    // browser-default chrome, it is a bug").
+    for (const sysColor of [
+      'Canvas',
+      'CanvasText',
+      'ButtonFace',
+      'ButtonText',
+      'ButtonBorder',
+      'Field',
+      'GrayText',
+      'LinkText',
+      'AccentColor',
+    ]) {
+      expect(css, `must not use the native system color ${sysColor}`).not.toMatch(
+        new RegExp(`[:\\s,(]${sysColor}\\b`),
+      );
+    }
   });
 
   it('groups controls into Connection, Translation, Appearance, and Privacy & data sections', () => {
@@ -542,19 +568,21 @@ describe('<settings-form> neutral browser-chrome', () => {
     expect(el.shadowRoot!.adoptedStyleSheets.length).toBe(1);
   });
 
-  it('defaults the theme select to sepia and offers dark + contrast + system', () => {
+  it('renders a segmented Theme control defaulting to sepia, offering dark + contrast + system', () => {
     const el = mountForm();
-    const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#theme')!;
-    expect(select.value).toBe('sepia');
-    expect([...select.options].map((o) => o.value)).toEqual([
+    // §5.8 / reference Settings mock: the Theme control is a segmented group of aria-pressed
+    // buttons, not a native <select>.
+    const seg = el.shadowRoot!.querySelector<HTMLElement>('#theme')!;
+    expect(seg.getAttribute('role')).toBe('group');
+    const buttons = [...seg.querySelectorAll<HTMLButtonElement>('button[data-pref]')];
+    expect(buttons.map((b) => b.dataset.pref)).toEqual(['sepia', 'dark', 'contrast', 'system']);
+    // Default = sepia pressed, the rest unpressed.
+    expect(buttons.find((b) => b.getAttribute('aria-pressed') === 'true')!.dataset.pref).toBe(
       'sepia',
-      'dark',
-      'contrast',
-      'system',
-    ]);
+    );
   });
 
-  it('round-trips the theme through value and the save event', () => {
+  it('round-trips the theme through value (pressed segment) and the save event', () => {
     const el = mountForm();
     el.value = {
       provider: 'gemini',
@@ -566,7 +594,10 @@ describe('<settings-form> neutral browser-chrome', () => {
       saveHistory: true,
       theme: 'dark',
     };
-    expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#theme')!.value).toBe('dark');
+    const pressed = el.shadowRoot!.querySelector<HTMLButtonElement>(
+      '#theme button[aria-pressed="true"]',
+    )!;
+    expect(pressed.dataset.pref).toBe('dark');
     let captured: SettingsFormValue | undefined;
     el.addEventListener('save', (e) => {
       captured = (e as CustomEvent<SettingsFormValue>).detail;
@@ -586,15 +617,16 @@ describe('<settings-form> neutral browser-chrome', () => {
     expect(notice.textContent).toBe(ENV_KEY_NOTICE);
   });
 
-  it('applies the picked theme to the host immediately on change — live preview, before Save (issue #51)', () => {
-    // The host CSS keys off :host([data-ad-theme="…"]), so stamping the host attribute the
-    // instant the select changes gives a live preview. Persistence still happens only on Save.
+  it('applies the picked theme to the host immediately on press — live preview, before Save (issue #51)', () => {
+    // The host CSS folds in THEME_CSS keyed off :host([data-ad-theme="…"]), so stamping the host
+    // attribute the instant a segment is pressed re-themes the whole page. Persistence on Save.
     const el = mountForm();
-    const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#theme')!;
+    const seg = el.shadowRoot!.querySelector<HTMLElement>('#theme')!;
     for (const value of ['dark', 'system', 'contrast', 'sepia'] as const) {
-      select.value = value;
-      select.dispatchEvent(new Event('change', { bubbles: true }));
+      const btn = seg.querySelector<HTMLButtonElement>(`button[data-pref="${value}"]`)!;
+      btn.click();
       expect(el.getAttribute('data-ad-theme')).toBe(value);
+      expect(btn.getAttribute('aria-pressed')).toBe('true');
     }
   });
 });
