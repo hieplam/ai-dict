@@ -2,6 +2,7 @@
 
 - Always add evidence Before/After when open PR, screenshot for trivial change, video record for flow, behavior changes
 - Always start work even trivial work with git worktree. Default worktree path is `.claude/worktrees`.
+- Run `bun run lint` and `bun run format:check` before committing — the `.githooks/pre-commit` hook and CI also gate this.
 
 **This repo is PRIVATE.** When embedding image/video evidence in a PR or issue, the asset URL MUST be a **same-origin `github.com` URL** so the authorized viewer's session cookies authenticate the request:
 
