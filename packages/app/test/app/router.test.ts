@@ -378,6 +378,36 @@ describe('buildRouter', () => {
     const reply = await route({ type: 'history.list', limit: 1 });
     expect(reply).toMatchObject({ ok: true, type: 'history' });
   });
+
+  it('error reply preserves vendor diagnostic fields through the flatten (adr-20260618)', async () => {
+    // The SW captures telemetry from the flattened reply.error; httpStatus/vendorStatus/
+    // vendorMessage must survive toLookupError() and JSON serialization, or GA4 never sees them.
+    const d = deps({
+      client: {
+        lookup: makeLookupMock(() =>
+          Promise.reject(
+            Object.assign(new Error('Gemini server error. Retry.'), {
+              code: 'NETWORK',
+              message: 'Gemini server error. Retry.',
+              retryable: true,
+              httpStatus: 503,
+              vendorStatus: 'UNAVAILABLE',
+              vendorMessage: 'The model is overloaded.',
+            }),
+          ),
+        ),
+      },
+    });
+    const reply = await buildRouter(d)(lookupMsg('v'));
+    const wire = JSON.parse(JSON.stringify(reply)) as {
+      error: { httpStatus?: number; vendorStatus?: string; vendorMessage?: string };
+    };
+    expect(wire.error).toMatchObject({
+      httpStatus: 503,
+      vendorStatus: 'UNAVAILABLE',
+      vendorMessage: 'The model is overloaded.',
+    });
+  });
 });
 
 describe('errlog routing', () => {

@@ -318,4 +318,23 @@ describe('GeminiLookupClient', () => {
     expect(isLookupError(err)).toBe(true);
     expect((err as { code: string }).code).toBe('NETWORK');
   });
+
+  it('5xx error body → thrown LookupError carries httpStatus + vendorStatus + vendorMessage (adr-20260618)', async () => {
+    const fetchImpl: FetchLike = () =>
+      Promise.resolve(
+        res({
+          ok: false,
+          status: 503,
+          body: {
+            error: { code: 503, status: 'UNAVAILABLE', message: 'The model is overloaded.' },
+          },
+        }),
+      );
+    const err = await client(fetchImpl)
+      .lookup(req)
+      .catch((e: unknown) => e);
+    expect(isLookupError(err)).toBe(true);
+    expect(err).toMatchObject({ code: 'NETWORK', httpStatus: 503, vendorStatus: 'UNAVAILABLE' });
+    expect((err as { vendorMessage?: string }).vendorMessage).toContain('overloaded');
+  });
 });

@@ -6,6 +6,10 @@ const LookupErrorSchema = z.strictObject({
   message: z.string().max(200),
   retryable: z.boolean(),
   retryAfterSec: z.number().optional(),
+  // Diagnostic-only provider failure signature for opt-in telemetry; never rendered in the UI.
+  httpStatus: z.number().optional(),
+  vendorStatus: z.string().max(150).optional(),
+  vendorMessage: z.string().max(200).optional(),
 });
 
 const LookupRequestSchema = z.strictObject({

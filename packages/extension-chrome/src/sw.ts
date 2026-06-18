@@ -99,7 +99,8 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       if (reply !== SUPPRESS) sendResponse(reply);
       if (reply !== SUPPRESS && reply.ok === false) {
         const url = decision.msg.type === 'lookup' ? decision.msg.req.url : undefined;
-        const { code, message, retryable, retryAfterSec } = reply.error;
+        const { code, message, retryable, retryAfterSec, httpStatus, vendorStatus, vendorMessage } =
+          reply.error;
         void reporter.capture({
           source:
             reply.type === 'lookup' || reply.type === 'connection.test' ? reply.type : 'thrown',
@@ -108,6 +109,9 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
             message,
             ...(retryable !== undefined ? { retryable } : {}),
             ...(retryAfterSec !== undefined ? { retryAfterSec } : {}),
+            ...(httpStatus !== undefined ? { httpStatus } : {}),
+            ...(vendorStatus !== undefined ? { vendorStatus } : {}),
+            ...(vendorMessage !== undefined ? { vendorMessage } : {}),
           },
           ...(url !== undefined ? { url } : {}),
         });

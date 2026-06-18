@@ -185,4 +185,30 @@ describe('errlog wire messages', () => {
     const reply = { ok: true, type: 'errlog', consent: 'unset', pending: true, count: 3 };
     expect(WireReplySchema.safeParse(reply).success).toBe(true);
   });
+
+  it('accepts a lookup error reply with vendor diagnostic fields (adr-20260618)', () => {
+    const reply = {
+      ok: false,
+      type: 'lookup',
+      requestId: 'r',
+      error: {
+        code: 'NETWORK',
+        message: 'Gemini server error. Retry.',
+        retryable: true,
+        httpStatus: 503,
+        vendorStatus: 'UNAVAILABLE',
+        vendorMessage: 'The model is overloaded.',
+      },
+    };
+    expect(WireReplySchema.safeParse(reply).success).toBe(true);
+  });
+
+  it('rejects an unknown field inside the error object (strictObject)', () => {
+    const reply = {
+      ok: false,
+      type: 'lookup',
+      error: { code: 'NETWORK', message: 'x', retryable: true, bogus: 1 },
+    };
+    expect(WireReplySchema.safeParse(reply).success).toBe(false);
+  });
 });

@@ -497,6 +497,17 @@
               },
               "retryAfterSec": {
                 "type": "number"
+              },
+              "httpStatus": {
+                "type": "number"
+              },
+              "vendorStatus": {
+                "type": "string",
+                "maxLength": 150
+              },
+              "vendorMessage": {
+                "type": "string",
+                "maxLength": 200
               }
             },
             "required": [

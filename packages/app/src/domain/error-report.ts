@@ -17,11 +17,23 @@ export interface ErrorRecord {
   domain?: string;
   extVersion: string;
   browserVersion: string;
+  /** Provider failure signature (e.g. 503 / 'UNAVAILABLE' / scrubbed vendor message). */
+  httpStatus?: number;
+  vendorStatus?: string;
+  vendorMessage?: string;
 }
 
 export interface CaptureInput {
   source: ErrorRecord['source'];
-  error: { code: string; message: string; retryable?: boolean; retryAfterSec?: number };
+  error: {
+    code: string;
+    message: string;
+    retryable?: boolean;
+    retryAfterSec?: number;
+    httpStatus?: number;
+    vendorStatus?: string;
+    vendorMessage?: string;
+  };
   url?: string;
 }
 
@@ -56,6 +68,12 @@ export function toErrorRecord(input: CaptureInput, meta: CaptureMeta): ErrorReco
   if (meta.provider) rec.provider = meta.provider;
   if (input.error.retryable !== undefined) rec.retryable = input.error.retryable;
   if (input.error.retryAfterSec !== undefined) rec.retryAfterSec = input.error.retryAfterSec;
+  if (input.error.httpStatus !== undefined) rec.httpStatus = input.error.httpStatus;
+  if (input.error.vendorStatus) rec.vendorStatus = input.error.vendorStatus.slice(0, MESSAGE_MAX);
+  // Re-scrub the vendor message at the record boundary (defence in depth: it was already
+  // secret-scrubbed at the mapper; here we also redact PII and re-cap, like `message`).
+  if (input.error.vendorMessage)
+    rec.vendorMessage = scrubSecrets(redactPII(input.error.vendorMessage)).slice(0, MESSAGE_MAX);
   const domain = hostnameOf(input.url);
   if (domain) rec.domain = domain;
   return rec;

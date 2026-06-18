@@ -68,6 +68,39 @@ describe('toErrorRecord', () => {
   });
 });
 
+describe('toErrorRecord — vendor diagnostic fields (adr-20260618)', () => {
+  it('carries httpStatus + vendorStatus and redacts/caps vendorMessage', () => {
+    const r = toErrorRecord(
+      {
+        source: 'lookup',
+        error: {
+          code: 'NETWORK',
+          message: 'Gemini server error. Retry.',
+          retryable: true,
+          httpStatus: 503,
+          vendorStatus: 'UNAVAILABLE',
+          vendorMessage: 'overloaded, contact a@b.com',
+        },
+      },
+      meta,
+    );
+    expect(r.httpStatus).toBe(503);
+    expect(r.vendorStatus).toBe('UNAVAILABLE');
+    expect(r.vendorMessage).not.toContain('a@b.com');
+    expect(r.vendorMessage).toContain('[redact]');
+  });
+
+  it('omits the vendor fields entirely when absent', () => {
+    const r = toErrorRecord(
+      { source: 'lookup', error: { code: 'PARSE', message: 'x', retryable: false } },
+      meta,
+    );
+    expect('httpStatus' in r).toBe(false);
+    expect('vendorStatus' in r).toBe(false);
+    expect('vendorMessage' in r).toBe(false);
+  });
+});
+
 describe('appendCapped', () => {
   it('appends and keeps only the last ERROR_BUFFER_CAP, dropping oldest', () => {
     let buf: ErrorRecord[] = [];
