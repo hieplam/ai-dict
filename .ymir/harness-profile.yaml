@@ -1,0 +1,176 @@
+# Ymir harness profile — audited decisions for ai-dict (fresh v2 init).
+# Machine-readable half of the spec; the LLM-facing half is harness-playbook.md.
+# Every concern below was captured from a MATURE harness already in the repo
+# (ESLint flat config, a ~15-job CI, C3 as the context system), not decided cold.
+meta:
+  project: ai-dict
+  generated_by: ymir
+  generated_at: 2026-06-18
+  spec_version: 2
+
+project:
+  language: typescript
+  runtime: bun # bun workspaces monorepo (packages/*); .bun-version pins the toolchain
+  layer: frontend # browser-extension client (MV3 SW + content scripts + UI web components); no backend server — calls Gemini/OpenAI as a client
+  host: github # private repo hieplam/ai-dict
+
+concerns:
+  # --- 1. rules — native path-scoped .claude/rules/*.md ----------------------
+  # Decision: thin pointers to C3 (the source of truth) + one always-on workflow rule.
+  rules:
+    status: captured
+    files:
+      - name: domain-purity
+        paths: ['packages/app/src/domain/**/*.ts']
+        obey:
+          - 'import only from ./ (domain) and ../ports'
+          - 'to reach outward, add a port to ports.ts and inject an adapter'
+        avoid:
+          - 'chrome.*, fetch, or DOM access inside domain/'
+          - 'importing ui/, app/, wire.ts, or any npm library into domain/'
+        ref: '.c3/rules/rule-domain-purity.md (+ ref-core-dependency-rule); mechanically gated by scripts/check-dep-direction.mjs and eslint import-x/no-restricted-paths'
+      - name: api-key-isolation
+        paths:
+          - 'packages/app/src/wire.ts'
+          - 'packages/app/src/ports.ts'
+          - 'packages/extension-chrome/src/**/*.ts'
+          - 'packages/extension-safari/src/**/*.ts'
+        obey:
+          - 'the Gemini API key lives only in the service worker + options page'
+          - 'SettingsStore.get() returns PublicSettings (no apiKey); z.strictObject strips it on the wire'
+        avoid:
+          - 'putting apiKey on any chrome.runtime wire message'
+          - 'letting a content script read chrome.storage.local settings directly'
+        ref: '.c3/rules/rule-api-key-isolation.md — security invariant S1 (deviation needs an ADR)'
+      - name: gate-runtime-messages
+        paths:
+          - 'packages/extension-chrome/src/sw.ts'
+          - 'packages/extension-safari/src/sw.ts'
+        obey:
+          - 'every chrome.runtime.onMessage handler gates on classifyInbound(msg, sender.id, runtimeId)'
+          - 'act only on an accept decision; keep the channel open for async sendResponse'
+        avoid:
+          - 'routing a message before classifyInbound validates it'
+          - 'trusting msg.type without a schema parse; declaring externally_connectable'
+        ref: '.c3/rules/rule-gate-runtime-messages.md — security invariant S3'
+      - name: sanitize-model-output
+        paths:
+          - 'packages/app/src/ui/**/*.ts'
+          - 'packages/app/src/app/markdown-sanitize.ts'
+        obey:
+          - 'model output reaches the DOM only as SafeHtml from sanitizeMarkdown()'
+          - 'produce SafeHtml only via sanitizeMarkdown (the single trust boundary)'
+        avoid:
+          - 'assigning model text to innerHTML'
+          - 'casting any other string to SafeHtml; calling marked.parse without DOMPurify'
+        ref: '.c3/rules/rule-sanitize-model-output.md — security invariant S4'
+      - name: typed-errors
+        paths:
+          - 'packages/app/src/app/**/*.ts'
+          - 'packages/app/src/domain/error-mapper.ts' # producer in the pure domain (mapError)
+          - 'packages/extension-chrome/src/sw.ts'
+          - 'packages/extension-safari/src/sw.ts'
+        obey:
+          - 'throw only Error instances — attach LookupError via Object.assign(new Error(msg), lookupError)'
+          - 'flatten LookupError to a plain enumerable object before replying over the wire'
+        avoid:
+          - 'throwing plain objects (violates @typescript-eslint/only-throw-error)'
+          - 'sending a raw Error over the wire (message is non-enumerable → dropped by JSON)'
+        ref: '.c3/rules/rule-typed-errors.md (lint-enforced via only-throw-error)'
+      - name: workflow-conventions
+        # always-on (no paths): an imperative checklist that complements the narrative CLAUDE.md
+        obey:
+          - 'start even trivial work in a git worktree under .claude/worktrees'
+          - 'attach before/after evidence to every PR (screenshot for trivial, video for flows/behavior)'
+          - 'embed private-repo evidence via same-origin github.com/<owner>/<repo>/raw/... URLs'
+          - 'do real-browser work and screenshots through the project Playwright e2e harness'
+          - 'consult C3 (/c3 or read .c3/) before architecture changes'
+        avoid:
+          - 'raw.githubusercontent.com evidence URLs (different origin → 404 on this private repo)'
+          - 'driving installed Google Chrome for extension work (Chrome 136+ ignores --load-extension)'
+          - 'hand-editing .c3/ (it is CLI-only)'
+    why: >-
+      the security/architecture invariants and workflow conventions exist in C3 and
+      CLAUDE.md prose but never auto-load PATH-SCOPED; thin .claude/rules/*.md make each one
+      surface the moment Claude opens a governed file, with C3 kept as the source of truth.
+    findings: >-
+      present-weak — 5 enforced rules + 5 refs under .c3/, a rich CLAUDE.md, and ESLint
+      import-x zones + scripts/check-dep-direction.mjs; but NO native .claude/rules/*.md, and
+      the c3 CLI is not on PATH, so nothing surfaces a rule when a matching file is opened.
+    alternatives_considered:
+      [full-duplication-from-c3, workflow-conventions-only, skip-rely-on-c3-and-CLAUDE.md]
+
+  # --- 2. lint — linter tool, strictness, style -----------------------------
+  lint:
+    status: captured
+    tool: eslint
+    config: eslint.config.mjs # flat config at repo root
+    strict: true # type-checked tseslint (recommendedTypeChecked); CI lint job is a blocking gate
+    command: bun run lint # = `bun scripts/check-dep-direction.mjs && eslint .`
+    style: { quotes: single, semicolons: true, trailing_comma: all, print_width: 100 } # .prettierrc.json
+    formatter: prettier # enforced via `bun run format:check` (.githooks/pre-commit + CI format-check)
+    extra:
+      - dep-direction-gate # scripts/check-dep-direction.mjs — hard allowlist for the lean dependency rule (runs first in `lint` and before every build)
+      - import-x-no-restricted-paths # eslint zones mirroring the dependency rule for IDE feedback
+      - knip # bunx knip — dead exports / unused deps gate
+    why: 'a present-strong stack already catches real bugs (type-checked rules) and enforces the architecture (dep-direction gate + import zones); capture it verbatim, change nothing'
+    findings: 'present-strong — ESLint 10 flat config (js.recommended + tseslint recommendedTypeChecked + import-x zones + eslint-config-prettier), check-dep-direction.mjs gate, knip, Prettier, .githooks/pre-commit'
+    alternatives_considered: [biome-single-tool]
+  # --- 3. CI lint — CI provider + what it runs ------------------------------
+  ci:
+    status: captured
+    provider: github-actions
+    workflow: .github/workflows/ci.yml
+    triggers: [push(master), pull_request, nightly-cron] # cron '0 3 * * *' makes dep-audit + gitleaks blocking
+    runs:
+      - typecheck
+      - lint # dep-direction gate + eslint
+      - format-check # prettier --check
+      - test-unit # @ai-dict/app
+      - test-component # happy-dom + axe-core
+      - test-contract # wire-schema contract tests
+      - build-chrome
+      - build-safari
+      - e2e-chrome # xvfb + Playwright, unpacked extension
+      - coverage-gate # per-package vitest thresholds
+      - sonarcloud # quality-gate.wait (skips without SONAR_TOKEN)
+      - secret-scan # gitleaks
+      - knip # dead exports / unused deps
+      - dep-audit # bun audit (informational PR, blocking nightly)
+    other_workflows: [release-please.yml, release.yml, sonar-backlog-to-issues.yml]
+    why: 'block PRs that fail typecheck/lint/format/tests/builds/coverage/security before merge; nightly hardens dep-audit + secret-scan into blocking gates'
+    findings: 'present-strong — one ~15-job ci.yml on push(master)/PR/nightly, plus release-please/release/sonar-backlog workflows'
+    alternatives_considered: []
+  # --- 4. wiki / context ----------------------------------------------------
+  wiki:
+    status: captured
+    enabled: false # do NOT scaffold a wiki/ tree
+    context_system: c3
+    why: 'the project already has a queryable context system (C3) + a rich CLAUDE.md; a second qmd wiki would overlap and add maintenance'
+    findings: 'missing (qmd wiki) by design — .c3/ provides the queryable model (components, refs, ADRs, code-map); no wiki/ tree present'
+    note: >-
+      .c3/ is the project's context system — a queryable C3 architecture model
+      (c3-1 app / c3-2 extension-chrome / c3-3 extension-safari, refs, enforced rules,
+      ADRs, code-map.yaml) plus the root CLAUDE.md. Query via the /c3 skill or read .c3/;
+      never hand-edit .c3/.
+    alternatives_considered: [qmd-wiki-alongside-c3]
+  # --- 5. CLAUDE.md / AGENT.md — steering file ------------------------------
+  claude_md:
+    status: captured
+    target: CLAUDE.md # exists at repo root; hand-maintained
+    overwrite: false # never overwrite — merge additively only
+    steer:
+      - point-to-c3 # consult C3 (/c3 or read .c3/) before architecture changes
+      - worktree-first # start work in a git worktree under .claude/worktrees
+      - lint-before-commit # run `bun run lint` + `bun run format:check` before committing (pre-commit hook + CI also gate)
+      - playwright-e2e-for-browser # browser testing & screenshots go through the Playwright harness
+      - private-repo-evidence-urls # PR/issue evidence uses same-origin github.com/.../raw/... URLs
+      - evidence-in-prs # attach before/after evidence on every PR
+    no_steer:
+      - point-to-rules # OMITTED on purpose — .claude/rules/ auto-loads; a pointer would be redundant (v2 guidance)
+    apply_action: >-
+      merge — keep the hand-maintained CLAUDE.md verbatim and add only one explicit
+      'run lint + format:check before commit' line if absent.
+    why: 'the existing CLAUDE.md already steers C3/worktree/Playwright/evidence well; make the lint gate explicit too without touching the rest, and rely on auto-loading .claude/rules/ instead of a point-to-rules steer'
+    findings: 'present-strong — rich hand-maintained CLAUDE.md (conventions, private-repo evidence URLs, Playwright harness, C3 pointer); lacks only an explicit lint-before-commit line'
+    alternatives_considered: [steers-exactly-as-is, overwrite-from-template]
