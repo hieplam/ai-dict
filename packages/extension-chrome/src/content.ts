@@ -12,8 +12,9 @@ import {
 import { ChromeFloatingTrigger } from './adapters/chrome-floating-trigger';
 import { MessageRelaySettingsStore } from './adapters/message-relay-settings-store';
 import { ChromeSidePanelMirror } from './adapters/chrome-side-panel-mirror';
+import type { SidePanelFocus, OpenSidePanelMessage } from './side-panel-messages';
 
-const inline = new InlineBottomSheetRenderer(document.body);
+const inline = new InlineBottomSheetRenderer(document.body, undefined, { sidePanel: true });
 const mirror = new ChromeSidePanelMirror(chrome.runtime);
 const trigger = new ChromeFloatingTrigger();
 
@@ -33,24 +34,30 @@ const themedSettings: SettingsStore = {
 };
 void themedSettings.get().catch(() => undefined); // seed before the first lookup; light until known
 
+let lastFocus: SidePanelFocus | undefined;
+
 runLookupWorkflow({
   selection: new DomSelectionSource(document),
   trigger,
   renderer: {
     renderLoading(word) {
+      lastFocus = word === undefined ? { state: 'loading' } : { state: 'loading', word };
       inline.renderLoading(word);
       mirror.renderLoading(word);
     },
     renderResult(r) {
+      lastFocus = { state: 'result', payload: r };
       inline.renderResult(r);
       mirror.renderResult(r);
     },
     renderError(e) {
+      lastFocus = { state: 'error', payload: e };
       inline.renderError(e);
       mirror.renderError(e);
       void maybeShowConsent();
     },
     close() {
+      lastFocus = undefined;
       inline.close();
       mirror.close();
     },
@@ -85,4 +92,18 @@ async function maybeShowConsent(): Promise<void> {
 // chrome.runtime.openOptionsPage).
 document.addEventListener('open-settings', () => {
   void chrome.runtime.sendMessage({ type: 'open-options' });
+});
+
+// The card's "Open in side panel" action (Chrome only) bubbles a composed `open-side-panel`
+// event out of the bottom sheet. A content script can't call chrome.sidePanel.open(), so we
+// relay it (synchronously, preserving the user gesture) to the service worker, then dismiss the
+// in-page sheet so the lookup "moves" to the docked panel — but keep the mirror so the panel
+// keeps showing it (do NOT call the renderer's close()).
+document.addEventListener('open-side-panel', () => {
+  const message: OpenSidePanelMessage =
+    lastFocus !== undefined
+      ? { type: 'open-side-panel', focus: lastFocus }
+      : { type: 'open-side-panel' };
+  void chrome.runtime.sendMessage(message).catch(() => undefined);
+  inline.close();
 });
