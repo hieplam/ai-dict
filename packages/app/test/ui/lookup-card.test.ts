@@ -16,6 +16,13 @@ function mountCard(): LookupCard {
   return el;
 }
 
+function mountCardWithSidePanel(): LookupCard {
+  const el = document.createElement('lookup-card') as LookupCard;
+  el.setAttribute('side-panel', '');
+  document.body.append(el);
+  return el;
+}
+
 /** Locate the visible loading caption (`.loadrow`) among the loading nodes. The spinner is
  * the caption's ::before pseudo-element (defined in CSS), not a DOM node. */
 function loadingCaption(state: { kind: 'loading'; word?: string } = { kind: 'loading' }): {
@@ -300,6 +307,43 @@ describe('<lookup-card>', () => {
       kind: 'error',
       error: { code: 'NO_KEY', message: 'Add your Gemini API key in Settings.', retryable: false },
     };
+    expect(await axeViolations(el)).toEqual([]);
+  });
+
+  it('omits the side-panel action by default (no side-panel attribute)', () => {
+    const el = mountCard();
+    expect(el.shadowRoot!.querySelector('[data-act="side-panel"]')).toBeNull();
+    const acts = [...el.shadowRoot!.querySelectorAll<HTMLButtonElement>('button[data-act]')];
+    expect(acts.map((b) => b.dataset['act'])).toEqual(['settings', 'close']);
+  });
+
+  it('with the side-panel attribute, renders the action FIRST (before Settings and Close)', () => {
+    const el = mountCardWithSidePanel();
+    const acts = [...el.shadowRoot!.querySelectorAll<HTMLButtonElement>('button[data-act]')];
+    expect(acts.map((b) => b.dataset['act'])).toEqual(['side-panel', 'settings', 'close']);
+    const btn = acts[0]!;
+    expect(btn.getAttribute('aria-label')).toBe('Open in side panel');
+    expect(btn.getAttribute('title')).toBe('Open in side panel');
+  });
+
+  it('the side-panel action emits a composed, bubbling "open-side-panel" event', () => {
+    const el = mountCardWithSidePanel();
+    let evt: CustomEvent | null = null;
+    const handler = (e: Event): void => {
+      evt = e as CustomEvent;
+    };
+    document.body.addEventListener('open-side-panel', handler);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('[data-act="side-panel"]')!.click();
+    document.body.removeEventListener('open-side-panel', handler);
+    expect(evt).not.toBeNull();
+    // Frozen cross-bundle contract: the Chrome shell listens for exactly this name.
+    expect(evt!.type).toBe('open-side-panel');
+    expect(evt!.composed).toBe(true);
+  });
+
+  it('has no axe violations with the side-panel action present (result state)', async () => {
+    const el = mountCardWithSidePanel();
+    el.state = { kind: 'result', word: 'sky', target: 'vi', safeHtml: safe('<p>the sky</p>') };
     expect(await axeViolations(el)).toEqual([]);
   });
 });

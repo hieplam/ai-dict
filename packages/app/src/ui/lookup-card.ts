@@ -7,6 +7,7 @@ import {
   ICON_CLOSE,
   ICON_SHIELD,
   ICON_SETTINGS,
+  ICON_SIDE_PANEL,
 } from './styles/tokens';
 
 // Re-exported so existing consumers (side-panel-view) and the c3-117 public surface keep
@@ -69,6 +70,7 @@ button[data-act]:focus-visible{outline:2px solid var(--ad-accent);outline-offset
 button[data-act] svg{pointer-events:none;flex:none}
 /* Close stays a bare icon — its X is universally understood and keeps the right-most spot. */
 button[data-act="close"] svg{width:14px;height:14px}
+button[data-act="side-panel"] svg{width:15px;height:15px}
 /* Settings is the labeled .text variant: gear + the word "Settings", widened, hover-fill like
    the other icon buttons. The visible word removes the icon ambiguity with Close. */
 button[data-act="settings"]{display:inline-flex;align-items:center;gap:5px;width:auto;padding:0 11px 0 9px;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);letter-spacing:.01em}
@@ -210,6 +212,9 @@ export class LookupCard extends HTMLElement {
     brand.innerHTML = `${BRAND_MARK_SVG}<span>AI Dictionary</span>`;
     const actions = document.createElement('span');
     actions.className = 'actions';
+    if (this.hasAttribute('side-panel')) {
+      actions.append(this.actionButton('side-panel', 'Open in side panel', ICON_SIDE_PANEL));
+    }
     actions.append(
       this.actionButton('settings', 'Settings', ICON_SETTINGS),
       this.actionButton('close', 'Close', ICON_CLOSE),
@@ -238,11 +243,18 @@ export class LookupCard extends HTMLElement {
     if (this.childNodes.length === 0) this.renderState();
   }
 
-  private actionButton(act: 'settings' | 'close', label: string, icon: string): HTMLButtonElement {
+  private actionButton(
+    act: 'settings' | 'close' | 'side-panel',
+    label: string,
+    icon: string,
+  ): HTMLButtonElement {
     const b = document.createElement('button');
     b.type = 'button';
     b.dataset['act'] = act;
     b.setAttribute('aria-label', label);
+    // A native tooltip on the icon-only side-panel control (Settings carries a visible word; the
+    // bare panel/close glyphs benefit from a hover title — and the handoff specifies title here).
+    if (act === 'side-panel') b.title = label;
     b.innerHTML = icon; // decorative aria-hidden SVG; accessible name comes from aria-label
     // Settings carries a visible "Settings" word so it reads as a control, not a twin of the
     // bare X. aria-label still wins as the accessible name, so this never double-announces.
@@ -252,9 +264,10 @@ export class LookupCard extends HTMLElement {
       lbl.textContent = label;
       b.append(lbl);
     }
-    // The settings action reuses the `open-settings` event name the shells already route to
-    // the options page (content script → service worker; side panel directly) — see settingsCta.
-    const event = act === 'settings' ? 'open-settings' : act;
+    // Each action maps to the composed event name the shell already routes:
+    //  settings → open-settings (options page); close → close; side-panel → open-side-panel.
+    const event =
+      act === 'settings' ? 'open-settings' : act === 'side-panel' ? 'open-side-panel' : 'close';
     b.addEventListener('click', () =>
       this.dispatchEvent(new CustomEvent(event, { bubbles: true, composed: true })),
     );
