@@ -2,7 +2,17 @@
 
 **Date:** 2026-06-18
 **Status:** Approved (design); pending spec review
-**Source handoff:** `design-system/side-panel-button/` (README + living style-guide HTML)
+**Source handoff:** `design-system/side-panel-button/` — `README.md` (the button
+spec), `AI Dictionary Design System.html` (living style guide), and
+`IMPLEMENTATION_GUIDE.md` (the authentic, current Paperlight spec).
+
+> **Preserve the authentic prompt.** `IMPLEMENTATION_GUIDE.md` is saved verbatim
+> (kept out of Prettier via `.prettierignore`). Its **§9 "Prompt for Claude
+> Code"** was authored by Claude Design with full project context — treat it as
+> authoritative and **do not edit, paraphrase, or drop it** during
+> implementation. This bundle's guide is newer than the stale
+> `design-hand-off/IMPLEMENTATION_GUIDE.md` (it adds the fully-themed Settings
+> §5.8, the canonical icon set §5.10, and card gutters §5.11).
 
 ## Summary
 
@@ -201,16 +211,16 @@ payload: <current lookup result | undefined> })` — sent inside the gesture
 
 ## Files touched
 
-| File                                                   | Change                                                           |
-| ------------------------------------------------------ | ---------------------------------------------------------------- |
-| `packages/app/src/ui/styles/tokens.ts`                 | add `ICON_SIDE_PANEL`                                            |
-| `packages/app/src/ui/lookup-card.ts`                   | gated side-panel action button + `open-side-panel` event         |
-| `packages/app/src/app/inline-bottom-sheet-renderer.ts` | `{ sidePanel }` flag → stamp `side-panel` attr                   |
-| `packages/extension-chrome/src/content.ts`             | enable flag; relay `open-side-panel`; dismiss sheet              |
-| `packages/extension-chrome/src/sw.ts`                  | intercept `open-side-panel`; `sidePanel.open`; cache + broadcast |
-| `packages/extension-chrome/src/side-panel.ts`          | boot-time `get-focus` to render the current lookup               |
-| `design-system/side-panel-button/`                     | saved handoff reference (HTML + README)                          |
-| tests                                                  | unit specs + new e2e spec as above                               |
+| File                                                   | Change                                                                                |
+| ------------------------------------------------------ | ------------------------------------------------------------------------------------- |
+| `packages/app/src/ui/styles/tokens.ts`                 | add `ICON_SIDE_PANEL`                                                                 |
+| `packages/app/src/ui/lookup-card.ts`                   | gated side-panel action button + `open-side-panel` event                              |
+| `packages/app/src/app/inline-bottom-sheet-renderer.ts` | `{ sidePanel }` flag → stamp `side-panel` attr                                        |
+| `packages/extension-chrome/src/content.ts`             | enable flag; relay `open-side-panel`; dismiss sheet                                   |
+| `packages/extension-chrome/src/sw.ts`                  | intercept `open-side-panel`; `sidePanel.open`; cache + broadcast                      |
+| `packages/extension-chrome/src/side-panel.ts`          | boot-time `get-focus` to render the current lookup                                    |
+| `design-system/side-panel-button/`                     | saved handoff reference (HTML + README + IMPLEMENTATION_GUIDE w/ authentic §9 prompt) |
+| tests                                                  | unit specs + new e2e spec as above                                                    |
 
 ## Architecture notes (C3)
 
