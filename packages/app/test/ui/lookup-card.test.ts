@@ -339,6 +339,7 @@ describe('<lookup-card>', () => {
     // Frozen cross-bundle contract: the Chrome shell listens for exactly this name.
     expect(evt!.type).toBe('open-side-panel');
     expect(evt!.composed).toBe(true);
+    expect(evt!.bubbles).toBe(true);
   });
 
   it('has no axe violations with the side-panel action present (result state)', async () => {
