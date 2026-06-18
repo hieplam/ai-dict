@@ -172,7 +172,13 @@ jobs:
           key: bun-${{ runner.os }}-${{ hashFiles('bun.lock') }}
           restore-keys: bun-${{ runner.os }}-
       - run: bun install --frozen-lockfile
+        # Dummy GA4 creds so the telemetry sink is enabled in the e2e build. The
+        # error-reporting spec routes/intercepts the GA4 endpoint, so the values only
+        # need to be non-empty for the sink to fire and the flush assertion to be real.
       - run: bun run --filter @ai-dict/extension-chrome build
+        env:
+          GA4_MEASUREMENT_ID: G-E2ETEST
+          GA4_API_SECRET: e2e-secret
       - run: cd packages/extension-chrome && bunx playwright install --with-deps chromium
       - run: cd packages/extension-chrome && xvfb-run -a bunx playwright test
       - if: failure()
