@@ -15,7 +15,8 @@ export type ErrorInput =
       /** Raw provider error.message; scrubbed + capped here before it can leave the device. */
       vendorMessage?: string;
     }
-  | { kind: 'thrown'; error: unknown };
+  | { kind: 'thrown'; error: unknown }
+  | { kind: 'cooldown' };
 
 // User-facing vendor wording per provider; absent provider keeps the original
 // Gemini wording, so pre-provider call sites and messages are unchanged.
@@ -95,5 +96,14 @@ export function mapError(input: ErrorInput): LookupError {
       const msg = input.error instanceof Error ? input.error.message : String(input.error);
       return { code: 'UNKNOWN', message: sanitize(`Lookup failed: ${msg}`), retryable: false };
     }
+    case 'cooldown':
+      // Local client-side pacing (not a provider failure): Define was clicked again within
+      // the cooldown window. Reuses RATE_LIMIT so no new code ripples through card/telemetry;
+      // wording is distinct from the provider 429 ('Hit Gemini rate limit.').
+      return {
+        code: 'RATE_LIMIT',
+        message: 'Slow down — wait a moment before the next lookup.',
+        retryable: true,
+      };
   }
 }

@@ -4,6 +4,13 @@ import { resolve } from 'node:path';
 import { mapError } from '../src/domain/error-mapper';
 
 describe('mapError (spec §6.9)', () => {
+  it('cooldown -> RATE_LIMIT, retryable, with local pacing wording (not the provider 429 text)', () => {
+    const e = mapError({ kind: 'cooldown' });
+    expect(e).toMatchObject({ code: 'RATE_LIMIT', retryable: true });
+    expect(e.message).toBe('Slow down — wait a moment before the next lookup.');
+    expect(e.message).not.toBe('Hit Gemini rate limit.');
+  });
+
   it('no-key → NO_KEY, not retryable', () => {
     expect(mapError({ kind: 'no-key' })).toMatchObject({ code: 'NO_KEY', retryable: false });
   });
