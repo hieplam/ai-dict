@@ -201,3 +201,9 @@ export const ICON_SHIELD =
 export const ICON_TRASH =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M4.5 7h15M9 7V4.8h6V7M7 7l.9 12.2h8.2L17 7"/></svg>';
+
+// Side panel (open in side panel) — card bar, Chrome only. A rounded rectangle (the browser
+// viewport) with a vertical divider offset RIGHT, denoting a panel docked on the right edge.
+export const ICON_SIDE_PANEL =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><line x1="14" y1="5" x2="14" y2="19"/></svg>';

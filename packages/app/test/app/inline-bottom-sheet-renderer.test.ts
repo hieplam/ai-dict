@@ -124,6 +124,18 @@ describe('InlineBottomSheetRenderer', () => {
     expect(h.querySelector('bottom-sheet')).toBeNull();
   });
 
+  it('does NOT stamp the side-panel attribute by default', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderLoading();
+    expect(card(h).hasAttribute('side-panel')).toBe(false);
+  });
+
+  it('stamps the side-panel attribute on the card when constructed with { sidePanel: true }', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h, undefined, { sidePanel: true }).renderLoading();
+    expect(card(h).hasAttribute('side-panel')).toBe(true);
+  });
+
   it('appendToCard appends a node into the open card and returns true; false when no card', () => {
     const r = new InlineBottomSheetRenderer(document.body);
     const extra = document.createElement('div');

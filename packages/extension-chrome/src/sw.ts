@@ -14,8 +14,21 @@ import {
 import { ChromeKvStore } from './adapters/chrome-kv-store';
 import { ChromeStorageStore } from './adapters/chrome-storage-store';
 import { Ga4TelemetrySink } from './adapters/ga4-telemetry-sink';
+import {
+  isOpenSidePanel,
+  isGetSidePanelFocus,
+  type SidePanelFocus,
+  type SidePanelFocusReply,
+} from './side-panel-messages';
 
 const DEFAULT_TARGET = 'vi';
+
+// The most recent lookup promoted to the side panel, kept so a freshly-opened panel can recover
+// it on boot (its onMessage listener may not be registered when we broadcast, and history is
+// empty when saveHistory is off). Not window-scoped — mirrors the existing broadcast model,
+// which already fans out to every open side panel.
+let lastSidePanelFocus: SidePanelFocus | null = null;
+
 async function readFullSettings(): Promise<Settings> {
   const { settings } = (await chrome.storage.local.get('settings')) as { settings?: Settings };
   return (
@@ -88,6 +101,34 @@ const router = buildRouter({
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
+  // Chrome-only side-panel control messages. They are NOT part of the pure wire protocol
+  // (classifyInbound would reject them): open-side-panel needs `sender` (windowId) and the
+  // relayed user gesture, so chrome.sidePanel.open() stays here in the shell, not the core.
+  if (isOpenSidePanel(msg) || isGetSidePanelFocus(msg)) {
+    if (sender.id !== chrome.runtime.id) return false; // S3 sender gate
+    if (isGetSidePanelFocus(msg)) {
+      const reply: SidePanelFocusReply = { focus: lastSidePanelFocus };
+      sendResponse(reply);
+      return true;
+    }
+    // open-side-panel: cache first (cheap sync work), then open the panel SYNCHRONOUSLY so the
+    // user-gesture token survives, then mirror the lookup to any already-open panel.
+    lastSidePanelFocus = msg.focus ?? null;
+    const windowId = sender.tab?.windowId;
+    if (windowId !== undefined) {
+      // Best-effort: open() rejects if there is no gesture or no registered panel; we ignore it
+      // (the in-page sheet has already dismissed) — the manual/HEADED check verifies real opening.
+      void Promise.resolve(chrome.sidePanel?.open?.({ windowId })).catch(() => undefined);
+    }
+    if (msg.focus) {
+      void Promise.resolve(chrome.runtime.sendMessage({ to: 'side-panel', ...msg.focus })).catch(
+        () => undefined,
+      );
+    }
+    sendResponse({ ok: true });
+    return true;
+  }
+
   const decision = classifyInbound(msg, sender.id, chrome.runtime.id);
   if (decision.action === 'ignore') return false;
   if (decision.action === 'reject') {

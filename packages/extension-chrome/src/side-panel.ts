@@ -9,6 +9,11 @@ import {
   type HistoryEntry,
   type WireReply,
 } from '@ai-dict/app';
+import type {
+  GetSidePanelFocusMessage,
+  SidePanelFocusReply,
+  SidePanelFocus,
+} from './side-panel-messages';
 registerSidePanel();
 
 // The side panel is a persistent, docked surface — it fills the panel viewport edge-to-edge.
@@ -127,8 +132,35 @@ chrome.runtime.onMessage.addListener(
   },
 );
 
+// On boot, recover the lookup the panel may have missed: when the reader clicks "Open in side
+// panel", the SW caches that lookup, but a freshly-opened panel might not have its onMessage
+// listener registered when the SW broadcasts it (a race), and Recent is empty when saveHistory
+// is off. So we pull the cached focus directly. A subsequent live mirror message overrides it.
+function applyFocus(focus: SidePanelFocus): void {
+  if (focus.state === 'loading') {
+    view.focusState =
+      focus.word !== undefined ? { kind: 'loading', word: focus.word } : { kind: 'loading' };
+  } else if (focus.state === 'result' && isLookupResult(focus.payload)) {
+    view.focusState = resultToFocus(focus.payload);
+  } else if (focus.state === 'error') {
+    // LookupError is display-only text (no HTML); unlike the result branch it needs no isLookupResult guard (S4).
+    view.focusState = { kind: 'error', error: focus.payload };
+  }
+}
+
+async function recoverFocus(): Promise<void> {
+  try {
+    const message: GetSidePanelFocusMessage = { type: 'side-panel.get-focus' };
+    const raw: unknown = await chrome.runtime.sendMessage(message);
+    const reply = raw as SidePanelFocusReply | undefined;
+    if (reply && reply.focus) applyFocus(reply.focus);
+  } catch {
+    // Best-effort; the empty teaching state / no-key invite remains a fine fallback.
+  }
+}
+
 // On open, populate Recent from stored history. The focus region stays on its teaching empty
 // state until the first lookup mirrors in or a recent row is clicked — unless no key is set,
 // in which case initFromSettings swaps it for the setup invite (and stamps the theme).
 void refreshRecent();
-void initFromSettings();
+void initFromSettings().then(() => recoverFocus());

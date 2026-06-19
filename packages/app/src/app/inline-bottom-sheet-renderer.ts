@@ -10,6 +10,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   constructor(
     private readonly host: HTMLElement,
     private readonly sanitize: (md: string) => SafeHtml = sanitizeMarkdown,
+    private readonly opts: { sidePanel?: boolean } = {},
   ) {}
 
   /**
@@ -32,6 +33,10 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     const sheet = document.createElement('bottom-sheet');
     const card = document.createElement('lookup-card') as LookupCard;
     card.setAttribute('data-ad-theme', this._theme);
+    // Chrome opts in to the "Open in side panel" affordance; the shared card reads this attribute
+    // in connectedCallback (shared DOM, so it crosses the MV3 world boundary and is set before the
+    // element upgrades — same mechanism as data-ad-theme above). Safari leaves it off.
+    if (this.opts.sidePanel) card.setAttribute('side-panel', '');
     sheet.setAttribute('data-ad-theme', this._theme);
     sheet.append(card);
     sheet.addEventListener('dismiss', () => this.close());
