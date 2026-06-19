@@ -25,6 +25,20 @@ This is the **project-scoped exception to the global "prefer agent-browser for b
 
 **Guardrail: never drive your installed Google Chrome** — Chrome 136+ silently ignores `--remote-debugging-port` (default profile) and `--load-extension`. The Playwright-managed Chromium (a bundled/standalone build, not Google Chrome) honors both, which is exactly why the harness uses it.
 
+# Frontend design system — "Paperlight" (source of truth)
+
+The **single source of truth for the frontend design system is the [`design-system/`](design-system/) folder.** Start at [`design-system/README.md`](design-system/README.md) — it is the folder map. Layout:
+
+- `design-system/DESIGN.md` — the **visual design system**: token architecture, Sepia/Dark/High-Contrast color tables, typography, motion, every surface. Start here.
+- `design-system/PRODUCT.md` — the **strategic/brand** doc: users, purpose, brand personality, principles, accessibility.
+- `design-system/IMPLEMENTATION_GUIDE.md` — the build-ready **"Paperlight"** engineering spec (verbatim hand-off; Prettier-ignored).
+- `design-system/AI Dictionary Design System.html` — the **living visual reference**; flip the Sepia/Dark/Contrast toggle to see every surface re-theme.
+- `design-system/tokens.css` — the **portable token export** mirroring the shipped code.
+
+**Shipped implementation:** `packages/app/src/ui/styles/tokens.ts` — primitives (`--adp-*`), per-theme semantic blocks (`--ad-*`), and the canonical inline-SVG icon set. **When the docs and the code disagree, the guide + `tokens.ts` win** (fix the doc). In C3 the UI surface is `c3-117 ui-components` governed by `ref-web-components-shadow-dom`.
+
+**Non-negotiable token law:** components read **only** `--ad-*` / `--adp-*` tokens — never hard-code a hex/oklch value, never name a theme, never branch on `prefers-color-scheme` per component (theme switching is centralized via the `data-ad-theme` attribute). No pure `#fff`/`#000`. The earlier **"Candlelit Margin" cozy-Christmas** identity (holly, pine/cranberry, honey-amber glow, festive ribbon) is **retired** — do not reintroduce it into the default themes.
+
 # Architecture (C3)
 
 This repo is documented with **C3** in `.c3/` (a queryable architecture model). Consult it before changing code; `.c3/` is CLI-only — never edit it by hand.

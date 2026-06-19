@@ -392,7 +392,7 @@ It's a **bun workspace monorepo** — one portable core plus a thin Chrome shell
 | `packages/extension-chrome` | The Chrome MV3 shell (service worker, content scripts, options, side panel).                      |
 
 The architecture is documented with **C3** in `.c3/` (a queryable model) — see
-[`DESIGN.md`](DESIGN.md) for the engineering design. A Safari/iOS shell is a work
+[`DESIGN.md`](design-system/DESIGN.md) for the engineering design. A Safari/iOS shell is a work
 in progress and is **not yet supported**.
 
 ### Known tradeoffs
@@ -409,6 +409,6 @@ in progress and is **not yet supported**.
 
 ## More
 
-- Product overview: [`PRODUCT.md`](PRODUCT.md)
-- Engineering design: [`DESIGN.md`](DESIGN.md)
+- Product overview: [`PRODUCT.md`](design-system/PRODUCT.md)
+- Engineering design: [`DESIGN.md`](design-system/DESIGN.md)
 - Release steps: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)

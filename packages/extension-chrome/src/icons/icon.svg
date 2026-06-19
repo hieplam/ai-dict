@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
   <!-- Paperlight brand icon: the headword RULE (spruce) + a diacritic ACCENT DOT (clay), on a
-       warm paper-tone tile. Mirrors the in-UI mark (design-hand-off §5.9), scaled to 128. -->
+       warm paper-tone tile. Mirrors the in-UI mark (design-system/IMPLEMENTATION_GUIDE.md §5.9), scaled to 128. -->
   <rect width="128" height="128" rx="28" fill="#f4efe3"/>
   <rect x="1" y="1" width="126" height="126" rx="27" fill="none" stroke="#d8d0bd" stroke-width="2"/>
   <circle cx="35" cy="35" r="13" fill="#a9774f"/>
