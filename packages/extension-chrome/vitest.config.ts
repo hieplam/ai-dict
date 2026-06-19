@@ -10,7 +10,9 @@ export default defineConfig({
       // lcov for SonarQube Cloud; text keeps the CI log summary. projectRoot
       // makes SF: paths repo-relative so Sonar can map them from the repo root.
       reporter: ['text', ['lcov', { projectRoot: '../..' }]],
-      include: ['src/adapters/**', 'src/router.ts', 'src/inbound.ts'],
+      // side-panel-messages.ts is a pure, fully unit-tested module (not a composition root),
+      // so it is measured like the adapters/router/inbound logic.
+      include: ['src/adapters/**', 'src/router.ts', 'src/inbound.ts', 'src/side-panel-messages.ts'],
       exclude: [
         'src/content.ts',
         'src/options.ts',
