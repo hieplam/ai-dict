@@ -53,6 +53,12 @@ async function doErrorLookup(
   context: BrowserContext,
   expectedBufferLength: number,
 ): Promise<void> {
+  // The per-tab lookup cooldown (workflow.ts COOLDOWN_MS = 2s) blocks a second Define fired
+  // within the window — it would render the local "Slow down" notice instead of reaching Gemini,
+  // so the errlog buffer would never advance. This flow fires several error-lookups back-to-back,
+  // so wait out the cooldown before each one to guarantee a genuine fresh fire that hits the
+  // (faked) Gemini. (Harmless on the first call, where there is no prior fire to be throttled by.)
+  await page.waitForTimeout(2_100);
   await selectWord(page, 't', 'bank');
   await openTrigger(page);
   await expect(page.locator('bottom-sheet lookup-card')).toContainText('Gemini server error', {
