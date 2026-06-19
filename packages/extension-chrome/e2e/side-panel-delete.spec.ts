@@ -78,7 +78,10 @@ test('deleting one Recent row leaves other cached words untouched', async ({
   await seedSettings(page);
   await doLookup(page);
 
-  // Second lookup of a different word from the same fixture sentence.
+  // Second lookup of a different word on the SAME page. doLookup's first lookup fired moments
+  // ago, so wait out the per-tab cooldown (workflow.ts COOLDOWN_MS = 2s); without this the 2nd
+  // Define is blocked with the local "Slow down" notice instead of querying Gemini.
+  await page.waitForTimeout(2_100);
   await selectWord(page, 't', 'river');
   await openTrigger(page);
   await expect(page.locator('bottom-sheet lookup-card')).toContainText('financial institution', {
