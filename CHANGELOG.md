@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.7.0](https://github.com/hieplam/ai-dict/compare/v1.6.0...v1.7.0) (2026-06-19)
+
+
+### Features
+
+* **lookup:** 2s per-tab cooldown to stop rapid Define-spam 429s ([#77](https://github.com/hieplam/ai-dict/issues/77)) ([ff153d7](https://github.com/hieplam/ai-dict/commit/ff153d7b15022ce3c022aec0045d8647726f022a))
+* open the side panel from the lookup card (Chrome) ([#76](https://github.com/hieplam/ai-dict/issues/76)) ([11896a9](https://github.com/hieplam/ai-dict/commit/11896a9c7ee5fa87f6b882481b8a8fa9b0230fc7))
+* **telemetry:** carry provider HTTP status + vendor status/message into GA4 ([#72](https://github.com/hieplam/ai-dict/issues/72)) ([c0f1978](https://github.com/hieplam/ai-dict/commit/c0f1978c4061a53adb6c2b725184a6ef79aaaa83))
+
 ## [1.6.0](https://github.com/hieplam/ai-dict/compare/v1.5.0...v1.6.0) (2026-06-18)
 
 
