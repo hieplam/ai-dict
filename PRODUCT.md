@@ -41,13 +41,17 @@ they trust that nothing is being harvested; and they pay only for their own API 
 
 Three words: **distinct, trustworthy, focused.**
 
-AI Dictionary should carry an identity of its own — a signature color and mark that make its card
-unmistakably _AI Dictionary's_ the moment it appears over any website — yet it earns that
-distinctiveness through craft and restraint, never through noise. The voice is plain, confident,
-and quietly reassuring: it explains a word the way a sharp bilingual tutor would, then gets out of
-the way. Privacy is part of the personality, not the fine print — the product should _feel_ local,
-self-owned, and honest. The emotion to design for is the relief of understanding without friction,
-and the calm of a tool that respects you.
+AI Dictionary should carry an identity of its own — a single quiet signature color and a geometric
+"defined-word" mark that make its card unmistakably _AI Dictionary's_ the moment it appears over any
+website — yet it earns that distinctiveness through craft and restraint, never through noise. The
+identity is **"Paperlight"**: a calm sheet of paper-light in the margin of the reader's page, tuned for
+tired eyes on long reads (comfortable, not maximal, contrast; no pure white or black; one low-chroma
+accent that signals rather than glares). It is deliberately _not_ seasonal or decorative — the earlier
+cozy-Christmas treatment has been retired. The voice is plain, confident, and quietly reassuring: it
+explains a word the way a sharp bilingual tutor would, then gets out of the way. Privacy is part of the
+personality, not the fine print — the product should _feel_ local, self-owned, and honest. The emotion to
+design for is the relief of understanding without friction, and the calm of a tool that respects your
+eyes and your attention.
 
 ## Anti-references
 
@@ -82,11 +86,15 @@ and the calm of a tool that respects you.
 ## Accessibility & Inclusion
 
 WCAG 2.1 AA is the committed bar (≥4.5:1 for text, ≥3:1 for UI), already encoded in the engineering
-design spec. The lookup card uses semantic headings and `aria-live="polite"` for loading→result
-transitions; the bottom sheet is a focus-trapped `role="dialog"` with ESC-to-close and focus
-restoration; the trigger is keyboard-activatable with a visible focus ring; the settings form uses
-real labels and `aria-describedby`. Motion respects `prefers-reduced-motion` (the bottom-sheet slide
-degrades to no transition).
+design spec — though the brand aims for _comfortable, not maximal_ contrast (body text ~8–11:1), never
+the harsh 21:1 of pure black on pure white. Three themes ship and are user-selectable in Settings:
+**Sepia** (default), **Dark** (warm, low-glare), and **High Contrast** (a dedicated accessibility theme
+that clears AAA on body text), plus a **Match system** option. The theme is the reader's explicit choice,
+persisted on-device, not silently driven by the host page. The lookup card uses semantic headings and
+`aria-live="polite"` for loading→result transitions; the bottom sheet is a focus-trapped `role="dialog"`
+with ESC-to-close and focus restoration; the trigger is keyboard-activatable with a visible focus ring;
+the settings form uses real labels and `aria-describedby`. Motion respects `prefers-reduced-motion` (the
+bottom-sheet slide degrades to no transition, and theme swaps apply instantly).
 
 Two needs are specific to this product. First, because the UI is injected over arbitrary host pages,
 contrast and legibility must hold regardless of the page behind it — the card is fully opaque and

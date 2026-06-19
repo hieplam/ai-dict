@@ -1,35 +1,47 @@
 ---
 name: AI Dictionary
-description: A bright, warm bilingual lookup card — winter-morning light in the margin of whatever you're reading.
+description: Paperlight — a calm sheet of paper-light in the margin of whatever you're reading, tuned for tired eyes on long reads. One quiet signature color, three swappable themes.
 colors:
-  candlelit-cream: 'oklch(0.992 0.005 95)'
-  cream-soft: 'oklch(0.968 0.012 90)'
-  ink: 'oklch(0.33 0.02 60)'
-  ink-soft: 'oklch(0.48 0.018 65)'
-  honey-amber: 'oklch(0.64 0.14 70)'
-  mulled-cranberry: 'oklch(0.54 0.165 26)'
-  pine: 'oklch(0.48 0.09 154)'
-  line: 'oklch(0.93 0.008 90)'
-  error: 'oklch(0.5 0.17 25)'
+  surface: 'oklch(0.962 0.016 80)'
+  surface-raised: 'oklch(0.935 0.020 78)'
+  surface-sunken: 'oklch(0.978 0.011 82)'
+  ink: 'oklch(0.345 0.022 60)'
+  ink-soft: 'oklch(0.500 0.020 62)'
+  ink-faint: 'oklch(0.610 0.018 65)'
+  line: 'oklch(0.895 0.012 78)'
+  line-strong: 'oklch(0.855 0.014 76)'
+  accent: 'oklch(0.500 0.068 168)'
+  accent-ink: 'oklch(0.430 0.072 168)'
+  accent-soft: 'oklch(0.925 0.030 168)'
+  on-accent: 'oklch(0.985 0.008 80)'
+  warm: 'oklch(0.560 0.090 48)'
+  warm-ink: 'oklch(0.500 0.092 46)'
+  error: 'oklch(0.520 0.160 28)'
 typography:
   headword:
-    fontFamily: 'Georgia, "Times New Roman", serif'
+    fontFamily: 'Georgia, "Iowan Old Style", "Times New Roman", serif'
     fontSize: '1.7rem'
     fontWeight: 400
     lineHeight: 1.15
     letterSpacing: '-0.01em'
+  sub-headword:
+    fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif'
+    fontSize: '17px'
+    fontWeight: 700
+    lineHeight: 1.3
+    letterSpacing: 'normal'
   body:
     fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: '15px'
     fontWeight: 400
-    lineHeight: 1.6
+    lineHeight: 1.62
     letterSpacing: 'normal'
   brand-label:
     fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: '12px'
     fontWeight: 700
     lineHeight: 1.6
-    letterSpacing: '0.01em'
+    letterSpacing: '0.02em'
   trigger-label:
     fontFamily: 'system-ui, -apple-system, "Segoe UI", sans-serif'
     fontSize: '13px'
@@ -42,229 +54,485 @@ typography:
     fontWeight: 400
     lineHeight: 1.6
     letterSpacing: 'normal'
+  ipa:
+    fontFamily: 'ui-monospace, "SF Mono", "Cascadia Code", Menlo, monospace'
+    fontSize: '13px'
+    fontWeight: 400
+    lineHeight: 1.4
+    letterSpacing: 'normal'
 rounded:
-  control: '8px'
-  card: '16px'
+  control: '9px'
+  card: '18px'
   pill: '999px'
 spacing:
-  xs: '2px'
-  sm: '8px'
-  md: '12px'
-  lg: '16px'
+  space-2: '2px'
+  space-4: '4px'
+  space-6: '6px'
+  space-8: '8px'
+  space-12: '12px'
+  space-16: '16px'
+  space-20: '20px'
+  space-24: '24px'
+  space-32: '32px'
+sizing:
+  card-width: '420px'
+  panel-width: '360px'
+  action-size: '30px'
+  tap-min: '44px'
+motion:
+  ease: 'cubic-bezier(0.22, 1, 0.36, 1)'
+  dur-fast: '140ms'
+  dur-base: '240ms'
+  dur-slow: '320ms'
+  dur-theme: '360ms'
 components:
   trigger-pill:
-    backgroundColor: '{colors.candlelit-cream}'
+    backgroundColor: '{colors.surface}'
     textColor: '{colors.ink}'
+    border: '1px solid {colors.line-strong}'
     rounded: '{rounded.pill}'
-    padding: '7px 12px 7px 9px'
+    padding: '7px 13px 7px 10px'
     typography: '{typography.trigger-label}'
   trigger-pill-hover:
-    backgroundColor: '{colors.cream-soft}'
+    backgroundColor: '{colors.surface-raised}'
     textColor: '{colors.ink}'
   lookup-card:
-    backgroundColor: '{colors.candlelit-cream}'
+    backgroundColor: '{colors.surface}'
     textColor: '{colors.ink}'
     rounded: '{rounded.card}'
-    width: '420px'
+    width: '{sizing.card-width}'
+    gutter: '22px'
+  card-accent-strip:
+    height: '3px'
+    background: 'linear-gradient(90deg, {colors.accent}, {colors.warm} 92%)'
+  card-brand:
+    textColor: '{colors.accent-ink}'
+    typography: '{typography.brand-label}'
   card-headword:
     textColor: '{colors.ink}'
     typography: '{typography.headword}'
-  card-brand:
-    textColor: '{colors.pine}'
-    typography: '{typography.brand-label}'
+    underline: '44px x 3px linear-gradient(90deg, {colors.accent}, {colors.warm})'
   card-action:
     backgroundColor: 'transparent'
-    textColor: '{colors.ink-soft}'
+    textColor: '{colors.ink-faint}'
     rounded: '{rounded.control}'
-    size: '28px'
+    size: '{sizing.action-size}'
   card-action-hover:
-    backgroundColor: '{colors.cream-soft}'
+    backgroundColor: '{colors.surface-raised}'
     textColor: '{colors.ink}'
   card-footer:
-    textColor: '{colors.ink-soft}'
+    textColor: '{colors.ink-faint}'
     typography: '{typography.footer-label}'
+  side-panel:
+    backgroundColor: '{colors.surface}'
+    width: '{sizing.panel-width}'
+    gutter: '18px'
+    framing: 'none (no radius, no shadow, no close button)'
+  primary-button:
+    backgroundColor: '{colors.accent}'
+    textColor: '{colors.on-accent}'
+    rounded: '{rounded.control}'
+  focus-ring:
+    outline: '2px solid {colors.accent}'
+    offset: '2px'
 ---
 
 # Design System: AI Dictionary
 
+> **Source of truth:** `design-system/side-panel-button/IMPLEMENTATION_GUIDE.md` (the "Paperlight"
+> build-ready spec) and `design-system/side-panel-button/AI Dictionary Design System.html` (the living
+> visual reference). The shipped implementation lives in `packages/app/src/ui/styles/tokens.ts`
+> (primitives, per-theme semantic blocks, and the canonical icon set). This document mirrors them; when
+> they disagree, the guide and `tokens.ts` win.
+
 ## 1. Overview
 
-**Creative North Star: "The Candlelit Margin"**
+**Creative North Star: "Paperlight"**
 
-AI Dictionary is a warm pool of light cast in the margin of whatever you happen to be reading. A reader hits an unfamiliar English word mid-sentence; one selection brings up a small, self-owned card that explains the word in this sentence, in their language, then gets out of the way. The whole system is built to feel like a candle set down beside the page: honey-amber glow at the top of the surface, a serif headword that reads like a printed dictionary entry, and just enough festive trim (a holly mark, a thin ribbon) to make the card unmistakably _ours_ the instant it appears over any website.
+AI Dictionary is a calm sheet of paper-light cast in the margin of whatever you happen to be reading. A
+reader hits an unfamiliar English word mid-sentence; one selection brings up a small, self-owned card
+that explains the word **in this sentence, in the reader's language**, then gets out of the way.
 
-The card overlays arbitrary, unpredictable pages, so it is built as a fully opaque, fully self-contained shadow-DOM surface that carries its own tokens and never leans on the host background. Every color is OKLCH and tuned for WCAG AA against its own surface, verified in-browser, because legibility has to hold whether the page behind it is a white news site or a black code editor. The warmth is the felt emotion the product designs for: the relief of understanding without friction, the calm of a tool that respects you. The cozy-Christmas identity is the carrier of that warmth, not a costume on top of it.
+The whole system is tuned for one thing: **tired eyes on long reads.** That single goal drives every
+value. No pure white and no pure black anywhere; every neutral is warm-shifted. Body text targets a
+**comfortable ~8–11:1**, never the harsh 21:1 of black-on-white. Color is quiet — one low-chroma
+spruce-teal signature that _signals_ (focus, brand, links, spinner) and never glares or fills a surface.
 
-This system explicitly rejects the experiences that make looking a word up feel like work: the ad-cluttered dictionary site with its pop-overs and "related searches"; the heavy SaaS dashboard with persistent chrome and card grids; the data-harvesting AI app that feels like it phones home; and the playful AI gimmick that substitutes mascots, emoji, and "✨AI✨" sparkle-glow for actual personality. Distinct through craft, never through noise. The festive language is restrained on purpose: it lives at the trim of the card, not all over it.
+The card overlays arbitrary, unpredictable pages, so it is built as a fully opaque, fully self-contained
+shadow-DOM surface that carries its own tokens and never leans on the host background. Every color is
+OKLCH and tuned for WCAG AA against its _own_ surface, verified in-browser, because legibility has to
+hold whether the page behind it is a white news site or a black code editor.
+
+> **This retires the previous "Candlelit Margin" cozy-Christmas identity** — the holly mark, the
+> pine/cranberry festive trim, the honey-amber glow, the rainbow ribbon. The festive look may return
+> later as an _optional_ theme, but it is no longer the brand.
+
+This system explicitly rejects the experiences that make looking a word up feel like work: the
+ad-cluttered dictionary site with its pop-overs and "related searches"; the heavy SaaS dashboard with
+persistent chrome and card grids; the data-harvesting AI app that feels like it phones home; and the
+playful AI gimmick that substitutes mascots, emoji, and "✨AI✨" sparkle-glow for actual personality.
+Distinct through craft, never through noise.
 
 **Key Characteristics:**
 
-- **In-page, not in-app.** The cozy identity belongs to the reading surfaces: the lookup card that floats over the host page and the docked side panel that mirrors it. The settings/options form — a configuration surface, not a reading one — stays deliberately neutral.
-- **Candlelit warmth, lifted to morning.** A honey-amber radial glow still tops the card surface, but the palette is lifted toward clean winter-morning light: a cooler near-white surface (less amber tint) across warm-to-clean OKLCH hues (≈26–95°), with festive accents at pine green and cranberry red. Brighter room, same cozy warmth.
-- **Opaque and self-contained.** Own shadow root, own tokens, full opacity. The card never borrows the page's background or fights its content.
-- **Bilingual clarity first.** The English headword and its translation are each unmistakable and scannable; meaning is never carried by color alone.
-- **Adapts to the page.** Light and dark token sets switch on `prefers-color-scheme`, so the card matches the host page's mood.
-- **Privacy you can feel.** A shield-marked "Stays on your device" line is part of the card itself, not buried fine print.
+- **Eye-comfort first.** No pure white, no pure black; comfortable not maximal contrast; quiet color.
+  The aesthetic is designed for long, fatigue-free reading.
+- **Theme-able to the core.** Components read _only_ semantic `--ad-*` tokens (plus raw `--adp-*`
+  primitives). Three themes ship — **Sepia** (default, reading-warm), **Dark** (warm low-glare night),
+  **High Contrast** (accessibility) — plus a **system** option. Adding a theme is one token block; no
+  component changes.
+- **Theme is a choice, not the page's.** The theme is picked in Settings and persisted per device; it
+  is no longer auto-driven by the host page's `prefers-color-scheme` (except via the explicit "system"
+  option).
+- **Opaque and self-contained.** Own shadow root, own tokens, full opacity. The card never borrows the
+  page's background or fights its content.
+- **Bilingual clarity first.** The English headword and its translation are each unmistakable and
+  scannable; meaning is never carried by color alone.
+- **Privacy you can feel.** A shield-marked "Stays on your device" line is part of the surface itself,
+  not buried fine print.
 
-## 2. Colors
+## 2. Theme architecture
 
-A bright, warm reading surface — winter-morning light rather than 8pm candlelight: honey-amber is the signature, with pine green and mulled-wine cranberry as the small festive accents. The light surface is a cooler near-white with the amber tint pulled back, hairlines are lighter, and the top wash is brighter (but whiter); the dark set is lifted a step to match. Every value is OKLCH, tuned for WCAG AA against its own surface (verified in-browser; the lightest amber that still clears the ≥3:1 focus ring sets the amber value). Each token carries a light value (below) and a paired dark value applied inside `@media (prefers-color-scheme: dark)`.
+Three token layers, and one law that makes re-theming free.
 
-### Primary
+```
+PRIMITIVES   --adp-*   raw, theme-agnostic: type scale, spacing, radii, motion. NEVER themed.
+SEMANTIC     --ad-*    meaning-based: surface, ink, accent, line, shadow… Re-bound per theme.
+                       Components read ONLY these.
+THEMES                 [data-ad-theme="sepia"]    (default, reading-warm)
+                       [data-ad-theme="dark"]     (warm low-glare night)
+                       [data-ad-theme="contrast"] (accessibility, high-contrast)
+```
 
-- **Honey-Amber** (`oklch(0.64 0.14 70)`; dark `oklch(0.84 0.13 75)`): The signature. It is the candle. Used for the warm radial glow at the top of the card, the focus-ring outline on every control, the spinner's leading arc, and the warm midpoint of the festive ribbon. It is the color the card is remembered by.
+**The law.** A component (`.ad-card`, `.ad-trigger`, …) may reference `--ad-*` and `--adp-*` tokens and
+nothing else. It must never name a theme, never hard-code a hex/oklch value, and never branch on
+`prefers-color-scheme`. Re-theming then touches zero component code. Adding a theme = appending one
+`[data-ad-theme="…"]` block of semantic tokens and one entry in the Settings picker.
 
-### Secondary
+**Switching & persistence.** Theme is set in Settings (§5 Settings form) under `chrome.storage.local`
+key `ad:theme` with values `sepia | dark | contrast | system`. The mechanism is a single attribute:
+`data-ad-theme` on the theme root — the **shadow-root host** (`:host`) for the over-page card and side
+panel, or `document.documentElement` for the options page. `system` follows the OS via `matchMedia` and
+live-updates. A `ad:theme-changed` broadcast re-themes any open card/panel live, cross-fading over
+`--adp-dur-theme` (360ms), and honoring `prefers-reduced-motion`.
 
-- **Pine Green** (`oklch(0.48 0.09 154)`; dark `oklch(0.7 0.09 154)`): The festive evergreen. Carries the brand label ("AI Dictionary"), the holly leaves, the left end of the ribbon, and the left half of the headword underline. A calm, low-chroma green that reads as botanical, not neon.
-- **Mulled-Wine Cranberry** (`oklch(0.54 0.165 26)`; dark `oklch(0.69 0.155 28)`): The berry accent. The holly berries, the right end of the ribbon, and the right half of the headword underline. Warm red, deliberately muted toward wine rather than candy.
+**Shadow-DOM isolation.** The over-page card and trigger inject `:host { all: initial }` (custom
+properties survive it) plus `z-index: 2147483647` so no page ancestor can occlude them. The token blocks
+are scoped to **both** `:root` (options page) and `:host` (shadow roots) so the custom properties survive
+`all: initial`.
 
-### Neutral
+## 3. Colors
 
-- **Candlelit Cream** (`oklch(0.992 0.005 95)`; dark `oklch(0.285 0.02 55)`): The card surface itself. A clean, barely-warm near-white in light mode, a lifted warm brown-charcoal in dark. Fully opaque; this is what isolates the card from the host page.
-- **Cream Soft** (`oklch(0.968 0.012 90)`; dark `oklch(0.33 0.024 52)`): The one-step-warmer hover fill for icon buttons and the trigger pill.
-- **Ink** (`oklch(0.33 0.02 60)`; dark `oklch(0.94 0.014 85)`): Primary text. The headword, body copy, and active control labels. Carries the ≥4.5:1 body contrast against cream (≈12:1 in both modes).
-- **Ink Soft** (`oklch(0.48 0.018 65)`; dark `oklch(0.77 0.02 75)`): Secondary text. Icon-button rest color and the footer line.
-- **Line** (`oklch(0.93 0.008 90)`; dark `oklch(0.39 0.022 55)`): Hairline borders and dividers (footer rule, trigger-pill border, spinner track).
+All values are **OKLCH**, tuned for WCAG AA against the surface's _own_ background, verified in-browser
+per theme. Sepia is the default and the canonical set; Dark and High Contrast re-bind the same semantic
+names.
 
-### Tertiary
+### 3.1 Sepia (default, reading-warm)
 
-- **Error** (`oklch(0.5 0.17 25)`; dark `oklch(0.72 0.15 25)`): Failure messaging only. A cousin of cranberry pushed to higher chroma so an error never reads as decorative festive red.
+| Token            | Value                                                                                 | Role                                                          |
+| ---------------- | ------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| `surface`        | `oklch(0.962 0.016 80)`                                                               | Warm paper. Card / panel background.                          |
+| `surface-raised` | `oklch(0.935 0.020 78)`                                                               | Hover fill, chips.                                            |
+| `surface-sunken` | `oklch(0.978 0.011 82)`                                                               | Input wells, recent-row hover.                                |
+| `ink`            | `oklch(0.345 0.022 60)`                                                               | Body & headword. ~9.5:1 — clear, not harsh.                   |
+| `ink-soft`       | `oklch(0.500 0.020 62)`                                                               | Secondary text. ~5:1.                                         |
+| `ink-faint`      | `oklch(0.610 0.018 65)`                                                               | Captions, rest-state icons. ~3.3:1 (UI).                      |
+| `line`           | `oklch(0.895 0.012 78)`                                                               | Hairline dividers.                                            |
+| `line-strong`    | `oklch(0.855 0.014 76)`                                                               | Input / trigger borders.                                      |
+| `accent`         | `oklch(0.500 0.068 168)`                                                              | **Signature spruce-teal.** Focus ring, spinner, brand, links. |
+| `accent-ink`     | `oklch(0.430 0.072 168)`                                                              | Accent used as _text_ on paper. ~5.5:1.                       |
+| `accent-soft`    | `oklch(0.925 0.030 168)`                                                              | Accent tint: focus halo, selection, info note.                |
+| `on-accent`      | `oklch(0.985 0.008 80)`                                                               | Text/icon on an accent fill (primary button).                 |
+| `warm`           | `oklch(0.560 0.090 48)`                                                               | Clay. Trim only (underline 2nd half, accent-strip end).       |
+| `warm-ink`       | `oklch(0.500 0.092 46)`                                                               | Clay as text, if ever needed.                                 |
+| `error`          | `oklch(0.520 0.160 28)`                                                               | Failure only. The one high-chroma value.                      |
+| `glow`           | `radial-gradient(120% 72% at 50% -12%, oklch(0.91 0.038 78 / 0.36), transparent 70%)` | Faint warm wash at the surface's top edge.                    |
+| `scrim`          | `oklch(0.28 0.020 60 / 0.42)`                                                         | Warm dim behind the bottom sheet.                             |
+| `selection`      | `oklch(0.80 0.06 168 / 0.45)`                                                         | Text selection inside the card.                               |
 
-### Named Rules
+### 3.2 Dark (warm low-glare night)
 
-**The Trim Rule.** The festive accents (pine, cranberry) live only at the _trim_ of the card: the 4px ribbon, the holly mark, the brand label, the headword underline. They never fill a surface or tint body text. Strip the trim away and the card is still a calm, legible reading surface. That restraint is what keeps "Christmas" from tipping into gimmick.
+Warm charcoal, **never** blue-black; off-white ink, **never** `#fff`. Same semantic names, re-bound.
 
-**The Candle Rule.** Honey-amber is the only color that _glows_. It is the radial wash at the top of the card and the focus ring; it is never used for plain text or borders. Its job is light, not labeling.
+| Token            | Value                                                                                 | Role                                |
+| ---------------- | ------------------------------------------------------------------------------------- | ----------------------------------- |
+| `surface`        | `oklch(0.255 0.013 70)`                                                               | Warm charcoal.                      |
+| `surface-raised` | `oklch(0.305 0.015 68)`                                                               | Hover fill.                         |
+| `surface-sunken` | `oklch(0.225 0.012 70)`                                                               | Wells.                              |
+| `ink`            | `oklch(0.905 0.014 84)`                                                               | Warm off-white. ~11:1.              |
+| `ink-soft`       | `oklch(0.740 0.016 80)`                                                               | Secondary. ~5.5:1.                  |
+| `ink-faint`      | `oklch(0.605 0.016 76)`                                                               | Captions/icons. ~3.2:1 (UI).        |
+| `line`           | `oklch(0.360 0.016 68)`                                                               | Hairlines.                          |
+| `line-strong`    | `oklch(0.420 0.018 66)`                                                               | Input borders.                      |
+| `accent`         | `oklch(0.785 0.070 168)`                                                              | Lifted spruce, AA on charcoal.      |
+| `accent-ink`     | `oklch(0.810 0.072 168)`                                                              | Accent text.                        |
+| `accent-soft`    | `oklch(0.385 0.040 168)`                                                              | Tint / halo.                        |
+| `on-accent`      | `oklch(0.220 0.015 70)`                                                               | Dark ink on the lifted accent fill. |
+| `warm`           | `oklch(0.760 0.085 50)`                                                               | Clay, lifted.                       |
+| `error`          | `oklch(0.720 0.140 28)`                                                               | Failure only.                       |
+| `glow`           | `radial-gradient(120% 72% at 50% -12%, oklch(0.50 0.050 72 / 0.30), transparent 70%)` | Glow pulled almost to nothing.      |
+| `scrim`          | `oklch(0.10 0.010 60 / 0.58)`                                                         | —                                   |
+| `selection`      | `oklch(0.55 0.06 168 / 0.50)`                                                         | —                                   |
 
-**The No-Color-Only Rule.** The English term and its translation must be distinguishable without color (order, label, and weight carry the distinction). Primary users read in a second language; color is decoration, never the signal.
+### 3.3 High Contrast (accessibility)
 
-## 3. Typography
+The proof that "add a theme = one block." Stronger contrast, crisp defining edges (a 1px shadow ring
+stands in for the soft shadow), and **no decorative glow**.
 
-**Display Font:** Georgia (with `"Times New Roman", serif`)
-**Body Font:** system-ui (with `-apple-system, "Segoe UI", sans-serif`)
+| Token            | Value                                                                               | Role                                |
+| ---------------- | ----------------------------------------------------------------------------------- | ----------------------------------- |
+| `surface`        | `oklch(0.985 0.006 85)`                                                             | Near-white, faintly warm.           |
+| `surface-raised` | `oklch(0.930 0.010 82)`                                                             | Hover fill.                         |
+| `surface-sunken` | `oklch(0.970 0.008 85)`                                                             | Wells.                              |
+| `ink`            | `oklch(0.200 0.015 60)`                                                             | ~16:1 — maximum legibility.         |
+| `ink-soft`       | `oklch(0.340 0.018 62)`                                                             | ~9:1.                               |
+| `ink-faint`      | `oklch(0.430 0.018 64)`                                                             | ~6:1 — "faint" stays strong.        |
+| `line`           | `oklch(0.720 0.012 78)`                                                             | Visible, not hairline.              |
+| `line-strong`    | `oklch(0.560 0.014 76)`                                                             | —                                   |
+| `accent`         | `oklch(0.400 0.100 168)`                                                            | Deeper spruce, AAA on white.        |
+| `accent-ink`     | `oklch(0.360 0.100 168)`                                                            | —                                   |
+| `accent-soft`    | `oklch(0.900 0.040 168)`                                                            | —                                   |
+| `on-accent`      | `oklch(0.990 0.005 85)`                                                             | —                                   |
+| `warm`           | `oklch(0.450 0.120 45)`                                                             | —                                   |
+| `error`          | `oklch(0.450 0.180 28)`                                                             | —                                   |
+| `glow`           | `linear-gradient(transparent, transparent)`                                         | No decorative glow.                 |
+| `shadow-card`    | `0 0 0 1px oklch(0.560 0.014 76 / 0.9), 0 6px 18px -8px oklch(0.30 0.02 60 / 0.22)` | 1px ring = crisp edge + light lift. |
 
-**Character:** A printed-dictionary serif for the headword sets the one moment of editorial authority, then the native system sans carries everything else with zero load cost and perfect host-page familiarity. The contrast is on a real axis (serif headword vs. sans everything-else), so the two never compete. No third family, no display face for labels.
+### Named color rules
 
-### Hierarchy
+- **Quiet-Accent Rule.** The spruce signature is the only color used for _meaning_ — focus ring,
+  spinner, brand label, links. It never fills a surface or tints body text.
+- **No-Color-Only Rule.** The English term vs. its translation is distinguished by order, label, and
+  weight, never by hue. Primary users read in a second language; color is decoration, never the signal.
+- **Comfort-Contrast Rule.** Body text aims for ~8–11:1, not maximal. Verify in-browser, per theme,
+  against the card's _own_ surface.
+- **Warm-Shadow Rule.** Shadows are tinted warm (45–60° hue), never neutral gray.
 
-- **Headword** (Georgia serif, `1.7rem`, line-height `1.15`, letter-spacing `-0.01em`): The looked-up word. The single serif element in the system, rendered as an inline-block with a short pine→cranberry gradient underline swatch (44px × 3px) sitting under its left edge. Reads like the head of a dictionary entry.
-- **Brand label** (system-ui, `700`, `12px`, letter-spacing `0.01em`, pine): "AI Dictionary" in the card bar, paired with the holly mark.
-- **Body** (system-ui, `15px`, line-height `1.6`, ink): The definition content (IPA, part of speech, learner definition, translation, example) projected into the card. The card caps at 420px wide, keeping prose comfortably under the 65–75ch line-length ceiling.
-- **Trigger label** (system-ui, `600`, `13px`, line-height `1`, ink): The word "Define" inside the floating trigger pill.
-- **Footer label** (system-ui, `11px`, ink-soft): The "Stays on your device" privacy line beside the shield.
+## 4. Typography
 
-### Named Rules
+**Display Font:** Georgia (`"Iowan Old Style", "Times New Roman", serif`)
+**Body Font:** system-ui (`-apple-system, "Segoe UI", Roboto, sans-serif`)
+**Mono Font:** ui-monospace (`"SF Mono", "Cascadia Code", Menlo, monospace`) — IPA only.
 
-**The One Serif Rule.** Georgia appears exactly once per card: the headword. Everything else is the system sans. A serif in a button or label would break the editorial-vs-utility contrast that makes the headword feel authoritative.
+| Role                        | Family          | Size     | Weight | Line / tracking          |
+| --------------------------- | --------------- | -------- | ------ | ------------------------ |
+| Headword                    | serif (Georgia) | `1.7rem` | 400    | `1.15` / `-0.01em`       |
+| Sub-headword / panel header | sans            | `17px`   | 700    | `1.3`                    |
+| Body (definition)           | sans            | `15px`   | 400    | `1.62`                   |
+| Brand label                 | sans            | `12px`   | 700    | `0.02em`, `accent-ink`   |
+| Trigger label / recent rows | sans            | `13px`   | 600    | —                        |
+| Footer / caption            | sans            | `11px`   | 400    | `ink-soft` / `ink-faint` |
+| IPA                         | mono            | `13px`   | 400    | —                        |
 
-**The Native Sans Rule.** The body face is always the host system's UI font (`system-ui` stack), never a webfont. It costs nothing to load, never blocks the lookup, and makes the card feel like it belongs on the reader's own machine.
+### Named rules
 
-## 4. Elevation
+- **One Serif Rule.** Georgia appears exactly once per surface: the headword. A serif anywhere else
+  breaks the editorial-vs-utility contrast.
+- **Native Sans Rule.** Body is always the host `system-ui` stack, never a webfont — zero load cost,
+  never blocks the lookup, feels native to the reader's machine.
+- **Generous leading.** Body line-height is `1.62` for long-read comfort.
+- The card caps at `420px` wide, keeping prose comfortably under the 65–75ch line-length ceiling.
 
-The card is a single lifted surface floating above an arbitrary page; depth is conveyed by one warm, layered drop shadow plus the candlelit glow, not by stacked cards. There is exactly one visible surface at a time: when the card is presented inside the bottom sheet, the sheet panel is transparent and the card alone carries the bg, radius, and shadow, so the card is never framed in a second card. Surfaces are flat internally; the only "elevation" is the whole card lifting off the page.
+## 5. Space, shape, elevation & motion
 
-### Shadow Vocabulary
+**Spacing** — 4px base: `2 · 4 · 6 · 8 · 12 · 16 · 20 · 24 · 32` (`--adp-space-*`).
 
-- **Card lift (light)** (`box-shadow: 0 1px 1px oklch(0.45 0.05 60 / 0.05), 0 12px 26px -10px oklch(0.5 0.05 60 / 0.18), 0 28px 56px -24px oklch(0.5 0.05 55 / 0.22)`): The lookup card's resting shadow. Three warm-tinted layers (the shadow is keyed to warm hues, not neutral gray), lightened for the brighter surface so the card still lifts off the host page without reading heavy.
-- **Card lift (dark)** (`box-shadow: 0 1px 1px oklch(0 0 0 / 0.3), 0 16px 32px -10px oklch(0 0 0 / 0.52), 0 40px 70px -28px oklch(0 0 0 / 0.58)`): Deeper, near-black layers so the card still separates from a dark host page.
-- **Trigger lift** (`box-shadow: 0 2px 5px oklch(0.4 0.05 50 / 0.16), 0 10px 22px -10px oklch(0.4 0.06 45 / 0.4)`): The floating pill's two-layer warm shadow, lighter than the card.
-- **Glow** (`radial-gradient(125% 80% at 50% -14%, oklch(0.85 0.12 78 / 0.72), transparent 72%)`; dark uses `oklch(0.72 0.14 72 / 0.46)`): Not a shadow but the candlelight: a honey-amber radial wash layered behind the card surface at its top edge.
-- **Scrim** (`oklch(0.18 0.02 50 / 0.46)`): The warm dim behind the bottom sheet on mobile. A warm-tinted dark, never neutral black.
+**Radii** — `control 9px` · `card 18px` · `pill 999px` (`--adp-radius-*`).
 
-### Named Rules
+**Sizing** — card width `420px`; side panel `360px`; icon action `30px`; min touch target `44px`.
 
-**The One Surface Rule.** Only one cozy surface is ever visible. The card owns the bg/radius/shadow; any container around it (the bottom sheet) is transparent. Never nest the card inside a second visible card.
+**Card gutter** — one consistent **22px** horizontal gutter on the bar, body region, and footer so the
+brand mark, headword, body text, and footer line all share the same left edge. (Side panel: `18px`,
+applied the same way across header, body, footer.)
 
-**The Warm Shadow Rule.** Shadows are tinted toward warm hue (45–52°), never neutral gray. A gray shadow under a candlelit card reads cold and breaks the warmth.
+### Elevation
 
-## 5. Components
+- **One Surface Rule.** Exactly one surface is ever visible. The card owns background/radius/shadow;
+  the bottom-sheet container is transparent; the side panel paints the surface itself and carries **no**
+  card framing (no radius, no shadow, no close button). Never nest the card inside a second visible card.
+- `shadow-card` — three warm-tinted layers (light) / near-black layers (dark).
+- `shadow-trigger` — two lighter warm layers.
+- `glow` — a faint warm radial wash behind the surface top edge: `background: var(--ad-glow), var(--ad-surface)`.
 
-### Floating Trigger (the "Define" pill)
+### Motion — one easing, four durations
 
-- **Character:** A small, confident pill that appears next to the reader's selection. The shortest possible affordance from "I don't know this word" to "now I do."
-- **Shape:** Full pill (`border-radius: 999px`).
-- **Style:** Cream surface, `1px solid` line border, holly mark + "Define" label (system-ui 600/13px, ink), asymmetric padding `7px 12px 7px 9px` (tighter on the holly side). Carries the two-layer trigger-lift shadow.
-- **Hover:** Background shifts to cream-soft.
-- **Focus:** `2px solid honey-amber` outline, `2px` offset.
-- **Loading:** On click the label is removed and replaced by a 13px amber-arc spinner; the button is `disabled` (no `aria-busy` — AT removes disabled buttons from the tree). The accessible name stays stable via `aria-label="Look up selected text"`.
-- **Isolation:** The host uses `all: initial` to fend off arbitrary page CSS (custom properties survive it) and `z-index: 2147483647` so no positioned page ancestor can occlude it.
+| Token       | Value                            | Use                                 |
+| ----------- | -------------------------------- | ----------------------------------- |
+| `ease`      | `cubic-bezier(0.22, 1, 0.36, 1)` | Default ease-out, no bounce.        |
+| `dur-fast`  | `140ms`                          | Hover, focus, button press.         |
+| `dur-base`  | `240ms`                          | Card content fade-in.               |
+| `dur-slow`  | `320ms`                          | Card enter, bottom-sheet slide-up.  |
+| `dur-theme` | `360ms`                          | Surface cross-fade on theme change. |
 
-### Lookup Card
+- **Card enter:** `opacity 0→1`, `translateY(10px)→0`, `scale(.98)→1` over `dur-slow`.
+- **Spinner:** a 15px arc — `border: 2px solid var(--ad-line)` with `border-top-color: var(--ad-accent)`,
+  rotating `0.77s linear infinite`. The only spinning element.
+- **Bottom sheet:** slide-up via `transform: translateY(100%)→0` on `dur-slow`.
+- **Reduced motion:** under `prefers-reduced-motion: reduce`, drop all transitions/animations (sheet
+  appears with no slide; theme swaps instantly).
 
-- **Character:** The candlelit margin itself. The product's whole identity in one 420px-wide surface.
-- **Corner Style:** `16px` radius. Festive trim is clipped by `overflow: hidden`.
-- **Background:** Candlelit-cream with the honey-amber glow layered on top (`background: var(--ad-glow), var(--ad-surface)`).
-- **Shadow:** The three-layer warm card-lift (see Elevation).
-- **Ribbon:** A `4px` top strip, `linear-gradient(90deg, pine, amber 52%, cranberry)`. The single most festive element; decorative, clipped by the rounded corners.
-- **Bar:** Brand cluster (holly mark + "AI Dictionary" in pine 700/12px) on the left, a `28px` close button on the right.
-- **Content region:** A `<section aria-live="polite">` projecting light-DOM content through a `<slot>`, so loading→result transitions announce once.
-- **Footer:** A hairline-topped row with a shield icon and "Stays on your device" (ink-soft, 11px) — privacy made visible.
-- **States:** _Loading_ (the reader's selected word shown immediately as the serif headword, with a visible "Looking up the meaning…" caption led by a small amber spinner — the spinner is the caption's `::before`, so the card reads as populated and on-brand the instant Define is clicked, never as an empty box); _Result_ (serif headword + sanitized definition body); _Error_ ("Lookup failed" headword + cranberry-leaning error text).
+## 6. Components & surfaces
 
-### Icon Buttons (card actions)
+### 6.1 Floating trigger — the "Define" pill
 
-- **Shape:** `28px` square, `8px` radius, `display: grid; place-items: center`.
-- **Rest:** Transparent background, ink-soft icon (15px, stroked with `currentColor`).
-- **Hover:** Cream-soft background, ink icon.
-- **Focus:** `2px solid honey-amber` outline, `2px` offset.
+Full pill: `background: surface`; `1px solid line-strong`; `shadow-trigger`; padding `7px 13px 7px 10px`
+(tighter on the mark side). Brand mark (18px) + "Define" (`13px/600`, `ink`). Hover: `surface-raised`,
+lift `translateY(-1px)`. Focus: `2px solid accent`, offset `2px`. Loading: replace the label with the
+15px spruce-arc spinner, set `disabled`, keep a stable `aria-label="Look up selected text"` (no
+`aria-busy` on a disabled button). Isolation: `all: initial` + `z-index: 2147483647` on the host.
 
-### Bottom Sheet (mobile presentation)
+### 6.2 Lookup card — shell
 
-- **Character:** A transparent, centering container that slides the card up from the bottom on small screens. It carries no surface of its own.
-- **Scrim:** Warm dim (`oklch(0.18 0.02 50 / 0.46)`), dismiss-on-click.
-- **Panel:** `max-height: 88vh`, scrollable, respects `env(safe-area-inset-bottom)`.
-- **Motion:** Slide-up via `transform` on `transition: 0.28s cubic-bezier(0.22, 1, 0.36, 1)` (ease-out, no bounce).
-- **Accessibility:** `role="dialog"`, `aria-modal="true"`, focus-trapped, ESC-to-close, focus restoration on close. `[reduced]` attribute (set from `prefers-reduced-motion`) drops the transition entirely.
+Top → bottom:
 
-### Side Panel (persistent docked surface)
+1. **`.ad-card__accent`** — a `3px` top strip, `linear-gradient(90deg, var(--ad-accent), var(--ad-warm) 92%)`.
+   A single quiet spruce→clay sweep (replacing the retired festive rainbow ribbon), clipped by the `18px`
+   radius. Decorative; `aria-hidden`.
+2. **`.ad-card__bar`** — brand cluster (mark 21px + "AI Dictionary" in `accent-ink` `12px/700`) on the
+   left; the action cluster on the right.
+3. **`.ad-body-region`** — a `<section aria-live="polite">` so loading→result announces once.
+4. **`.ad-footer`** — hairline-topped row, shield glyph + "Stays on your device" (`ink-faint`, `11px`).
 
-- **Character:** The candlelit margin made persistent. When the reader opens the panel from the toolbar, it docks full-height beside the page and keeps a running record of their reading. Unlike the floating card it is _the_ surface, not a surface floating over one.
-- **The One Surface Rule, applied:** the panel paints the cozy surface itself — candlelit-cream with the honey-amber glow at the top edge — and carries **no** card framing: no `border-radius`, no drop shadow, no Close button. Re-framing a docked panel as a floating card would double the surface. Depth comes from the host browser chrome.
-- **Structure (top → bottom):** the festive `4px` ribbon; a brand header (holly + "AI Dictionary" in pine); a scrolling body holding the **focus region** then the **Recent** list; a hairline-topped privacy footer ("Stays on your device"). Header and footer are flush; only the body scrolls.
-- **Focus region** (`<section aria-live="polite">`): the current lookup, in the card's own three states (loading headword + spinner caption, serif headword + sanitized body, error). It opens on a fourth, panel-only **empty state** — a centered holly mark with "Select a word on any page" and a one-line instruction — so a freshly opened panel teaches the interface instead of showing a wordless spinner.
-- **Recent list:** the reader's history (`history.list` over the wire), newest-first, each row a full-width button (`word` + a muted one-line context snippet). Clicking re-shows that lookup in the focus region. The whole section is hidden when history is empty — never an empty "Recent" header. Per the One Serif Rule the rows are the system sans; Georgia stays reserved for the focus headword.
-- **Markdown safety:** stored and mirrored markdown is re-sanitized at the render boundary (S4); the panel never trusts history as pre-sanitized.
-- **Accessibility:** the focus region announces loading→result once via `aria-live="polite"`; recent rows carry an explicit "Show definition of {word}" label; honey-amber focus rings on every control; verified against the panel's own surface in light and dark.
+Surface: `background: var(--ad-glow), var(--ad-surface)`; `shadow-card`; `overflow: hidden`; `width: 420px`.
 
-### Holly Mark (signature)
+### 6.3 Card action cluster — order & the side-panel button
 
-- **Character:** The brand mark. A clean, geometric holly sprig: two pine ellipse-leaves angled apart, one upright, with a three-berry cranberry cluster below. CSP-safe SVG with presentation-attribute fills bound to `--ad-pine` and `--ad-cranberry`.
-- **Sizes:** `18px` in the trigger, `21px` in the card brand cluster.
-- **Always `aria-hidden`:** Decorative. Every place it appears carries its own accessible label.
+The right cluster reads left→right by escalation:
 
-### Headword Underline (signature)
+```
+[⇥ Open in side panel]  [⚙ Settings]  [✕ Close]
+```
 
-- A short gradient swatch (`linear-gradient(90deg, pine, cranberry)`, `44px × 3px`, left-aligned, no-repeat) sitting under the serif headword. A festive flourish that reads as a dictionary entry's rule, not decoration.
+- **Open in side panel** is the **first** item — an _icon-only_ `.ad-action` (matching Close) carrying
+  `aria-label`/`title="Open in side panel"`. Its glyph is a rounded rectangle (the browser viewport)
+  with a vertical divider offset right (panel docked on the right edge): 24×24 viewBox, `fill="none"`,
+  `stroke="currentColor"`, stroke-width `1.8`, rendered 15px in the 30px hit target. Clicking promotes
+  the current lookup into the persistent side panel (`chrome.sidePanel.open({ tabId })`, called
+  synchronously from the user gesture) and dismisses the floating card. It appears on **all desktop card
+  states** (setup, loading, result, error) and is **omitted from the mobile bottom sheet** (no side panel
+  there).
+- **Settings** — text+icon button (sliders glyph) opening the options page.
+- **Close** — icon-only `×`, kept at the far edge.
 
-### Settings Form (deliberately outside the cozy system)
+### 6.4 Lookup card — four states
 
-The extension options form is plain neutral browser chrome (`#202124` on `#f1f3f4` controls), not the `--ad-*` palette. This is intentional, not drift: the cozy-Christmas identity belongs to the in-page card that floats over the reader's page. The settings form lives on a browser-owned surface where the right move is restraint and native familiarity, not festive trim. Keep it neutral.
+- **Setup-invite:** centered mark + "Set up AI Dictionary" (`17px/700`) + one-line explainer + a primary
+  **Open Settings** button.
+- **Loading:** the selected word shown immediately as the serif headword, then a caption row
+  `[spinner] Looking up the meaning…` (`ink-soft`, `13px`). Never an empty box.
+- **Result:** serif headword + underline swatch; meta line `IPA · part-of-speech` (`ink-faint`, IPA in
+  mono); then rows — **English** — definition, **Tiếng Việt** — translation (label bold in `ink`, body in
+  `ink`); then an _Example:_ line in `ink-soft`.
+- **Error:** headword "Lookup failed" + message in `error` + a ghost **Retry** button.
 
-## 6. Do's and Don'ts
+### 6.5 Headword + underline (signature)
 
-### Do:
+`.ad-headword` — Georgia `1.7rem`, inline-block, with a `::after` underline swatch `44px × 3px`,
+`linear-gradient(90deg, var(--ad-accent), var(--ad-warm))`, left-aligned. Reads like a dictionary entry's
+rule.
 
-- **Do** keep the festive accents (pine, cranberry) at the _trim_ only — ribbon, holly, brand label, headword underline. Strip the trim and the card must still be a calm, legible reading surface.
-- **Do** use honey-amber as the one glowing color: the radial card glow, the focus ring, the spinner arc. Nothing else glows.
-- **Do** render every color in OKLCH and verify ≥4.5:1 body / ≥3:1 UI contrast in-browser, against the card's _own_ surface, in both light and dark.
-- **Do** keep the card fully opaque and self-contained (own shadow root, own tokens). It must read identically over a white news site and a black editor.
-- **Do** isolate any over-page host with `all: initial` plus the cozy `--ad-*` tokens (custom properties survive `all`) and lift it with `z-index: 2147483647`.
-- **Do** keep exactly one visible cozy surface: the card carries bg/radius/shadow; the bottom sheet stays transparent.
-- **Do** keep the headword the only serif and the body the native `system-ui` sans.
-- **Do** distinguish the two languages by order, label, and weight — never by color alone.
-- **Do** tint shadows and the scrim toward warm hue (45–52°), never neutral gray.
+### 6.6 Icon buttons (`.ad-action`)
 
-### Don't:
+`30px` square, `9px` radius, `display: grid; place-items: center`. Rest: transparent + `ink-faint`.
+Hover: `surface-raised` + `ink`, `140ms` ease. Focus-visible: `2px solid accent`, offset `2px`. A `.text`
+variant widens for "Settings". Never hard-code a color — the icon stroke is `currentColor`.
 
-- **Don't** let the design feel like an **ad-cluttered dictionary site** — no pop-overs, no "related searches," no SEO sludge. Escaping that is the entire reason this exists.
-- **Don't** grow it into a **heavy SaaS dashboard** — no persistent sidebars, no card grids everywhere, no settings sprawl. This is a focused overlay, not an app shell.
-- **Don't** make it **feel like it phones home** — no telemetry chrome, no account walls, no "engagement" surfaces. It must look as private as it is.
-- **Don't** reach for **playful AI gimmicks** — no mascots, no emoji-soaked copy, no gradient-glow "✨AI✨" novelty, no sparkles standing in for personality. Distinct, not cute.
-- **Don't** fill a surface or tint body text with pine or cranberry. They are trim, not paint.
-- **Don't** nest the card inside a second visible card or frame.
-- **Don't** introduce a third font family or use the serif anywhere but the headword.
-- **Don't** use a webfont for body — the native system sans is the rule.
-- **Don't** apply the cozy `--ad-*` palette to the settings/options form; browser-chrome surfaces stay deliberately neutral.
-- **Don't** use a hand-drawn / `feTurbulence` "sketchy" holly — the mark is clean geometric SVG with token-bound fills, on purpose.
-- **Don't** use neutral-gray shadows under the warm card; they read cold and break the candlelight.
+### 6.7 Bottom sheet (mobile)
+
+Transparent centering container (no surface of its own). `scrim` backdrop, dismiss-on-click. Panel
+`max-height: 88vh`, scrollable, respects `env(safe-area-inset-bottom)`. Slide-up via `transform` on
+`dur-slow`. `role="dialog"`, `aria-modal="true"`, focus-trapped, ESC-to-close, focus restoration. A
+`[reduced]` attribute drops the transition. **No side-panel button** here.
+
+### 6.8 Side panel (persistent docked)
+
+- Paints the surface itself: `background: var(--ad-glow), var(--ad-surface)`, **no** radius / shadow /
+  close button. `360px` wide, full height; only the body scrolls.
+- Structure: `.ad-panel__accent` (3px strip) → header (mark + brand + Settings icon) → scrolling body =
+  **focus region** then **Recent** → hairline footer.
+- **Focus region** (`aria-live="polite"`): the current lookup in the card's states, plus a panel-only
+  **empty state** — centered mark, "Select a word on any page", one-line instruction.
+- **Recent list:** newest-first; each row a full-width button (`word` + muted one-line context); hover
+  reveals a delete affordance (trash glyph). Clicking re-shows that lookup. Hide the whole section
+  (header included) when history is empty. Rows are sans (serif stays reserved for the focus headword).
+- Re-sanitize stored markdown at the render boundary (S4); never trust history as pre-sanitized.
+
+### 6.9 Settings / options form — FULLY THEMED
+
+> ⚠️ **This supersedes any earlier "keep it native / neutral" guidance.** The options page wears the
+> **full `--ad-*` palette** and re-themes with the picker, exactly like the card and side panel. There is
+> **no native-chrome surface left** — no white `#fff` cards, no `#202124` text, no system-blue buttons,
+> no blue checkboxes or focus rings. Any browser-default chrome that still shows is a bug.
+
+A calm, restful single column (max-width ~600px, centered), never a dashboard. Each section is an
+`.opt-card`. Sections, in order: **Header** (brand + serif "Settings" title) · **Connection** (provider
+select, Gemini key field with locked-from-env state, accent-soft info note, Test connection) ·
+**Translation** (target language, card-format textarea in a `surface-sunken` mono well, Restore default)
+· **Appearance** (Theme control: `Sepia · Dark · High Contrast · Match system`, a segmented control whose
+pressed segment is `accent` fill / `on-accent` text, wired to `setTheme`) · **Privacy & data** (Cache /
+Save-history checkboxes with `accent-color: var(--ad-accent)`, Clear cache, Clear history, Export history
+link) · **Save bar** (primary **Save settings** + a "Settings saved" toast in the accent-soft + 3px
+accent left-border treatment).
+
+Verify the form re-themes correctly in **all three** themes against its own surface (≥4.5:1 text,
+≥3:1 UI).
+
+### 6.10 Brand mark (signature)
+
+The holly is retired (intrinsically festive). The mark is built from the system's own vocabulary — the
+**headword rule + a diacritic accent dot** — so it reads as "a defined word" in any theme, the dot a
+quiet nod to the diacritics of the reader's language. CSP-safe SVG, fills bound to tokens
+(`--ad-warm` dot + `--ad-accent` rule), always `aria-hidden`; 18px in the trigger, 21px in the card
+brand. Keep it geometric — no hand-drawn / `feTurbulence` textures.
+
+### 6.11 Canonical UI icon set (do not substitute)
+
+> ⚠️ **Use exactly these icons.** Earlier builds substituted ad-hoc glyphs because the set wasn't pinned.
+
+All are **CSP-safe inline SVG, `stroke="currentColor"`** (inheriting `ink-faint` at rest, `ink` on
+hover), geometric, `1.7–1.9` stroke, rounded caps/joins, `aria-hidden` (the button/row carries the real
+label). Sizes: **15px** in card/panel action buttons, **14px** for close & trash, **13px** for the footer
+shield.
+
+| Icon                                  | Where                                         |
+| ------------------------------------- | --------------------------------------------- |
+| **Settings** (sliders)                | card bar "Settings" button; side-panel header |
+| **Close** (×)                         | card bar close button                         |
+| **Side panel** (rect + right divider) | card bar "Open in side panel" button          |
+| **Shield** (privacy)                  | footer "Stays on your device"                 |
+| **Trash** (delete)                    | side-panel Recent rows                        |
+
+The settings sliders icon fills its two knobs with `var(--ad-surface)` so they read as sitting _on_ the
+track and stay correct in every theme.
+
+## 7. Do & Don't
+
+**Do**
+
+- Keep one quiet spruce accent for _meaning_; warm-shift every neutral; aim for comfortable (not maximal)
+  contrast (~8–11:1 body).
+- Render every color in OKLCH and verify ≥4.5:1 body / ≥3:1 UI in **all three** themes, against the
+  card's own surface.
+- Keep the card fully opaque and self-contained (own shadow root, own tokens, `z-index: 2147483647`,
+  `all: initial`).
+- Read **only** `--ad-*` / `--adp-*` tokens in components; add a token rather than hard-coding a value.
+- Keep exactly one visible surface (the One Surface Rule): card owns bg/radius/shadow; bottom sheet is
+  transparent; side panel has no card framing.
+- Keep the headword the only serif and the body the native `system-ui` sans.
+- Distinguish the two languages by order, label, and weight — never by color alone.
+- Tint shadows warm (45–60°); degrade motion under `prefers-reduced-motion`.
+
+**Don't**
+
+- Reintroduce seasonal/festive trim (holly, pine/cranberry, rainbow ribbon, honey-amber glow) into the
+  default themes.
+- Use pure `#fff` or `#000` anywhere.
+- Push the accent to high chroma or let it glow aggressively; fill a surface or tint body text with it.
+- Nest the card inside a second visible card/frame.
+- Hard-code a hex/oklch value in a component, name a theme in a component, or branch on
+  `prefers-color-scheme` per-component (theme switching is centralized).
+- Substitute a different settings/close/shield/trash/side-panel glyph for the canonical set.
+- Apply native browser chrome to the settings form — it is fully themed now.
+- Sprawl Settings into a dashboard — keep it a calm, restful single-column form even when themed.
+- Use a webfont for body, a third font family, or the serif anywhere but the headword.
+- Use neutral-gray shadows; they read cold against the warm surface.
