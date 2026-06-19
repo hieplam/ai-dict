@@ -81,6 +81,47 @@ export default tseslint.config(
       ],
     },
   },
+  // S1 (rule-api-key-isolation): only the service worker + options page may touch
+  // *.storage.local — it holds the Gemini apiKey. Every other extension-source file is
+  // content-side and must relay through settings.get -> PublicSettings. Fail-safe scope:
+  // ban across all extension src, exempt only the four trusted entries (+ tests).
+  {
+    files: ['packages/extension-chrome/src/**/*.ts', 'packages/extension-safari/src/**/*.ts'],
+    ignores: [
+      'packages/extension-chrome/src/sw.ts',
+      'packages/extension-chrome/src/options.ts',
+      'packages/extension-safari/src/sw.ts',
+      'packages/extension-safari/src/options.ts',
+      '**/*.test.ts',
+    ],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "MemberExpression[object.property.name='storage'][property.name='local']",
+          message:
+            'S1: only the service worker and options page may read *.storage.local (it holds the Gemini apiKey). Content-side code must relay through settings.get -> PublicSettings (rule-api-key-isolation).',
+        },
+      ],
+    },
+  },
+  // S4 (rule-sanitize-model-output): SafeHtml may be produced ONLY by sanitizeMarkdown()
+  // (the single DOMPurify trust boundary). Forbid casting any string to SafeHtml elsewhere.
+  // Tests live under packages/app/test/**, so this src-only scope leaves them untouched.
+  {
+    files: ['packages/app/src/**/*.ts'],
+    ignores: ['packages/app/src/app/markdown-sanitize.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        {
+          selector: "TSAsExpression > TSTypeReference > Identifier[name='SafeHtml']",
+          message:
+            'S4: SafeHtml may be produced only by sanitizeMarkdown(); do not cast to SafeHtml here (rule-sanitize-model-output).',
+        },
+      ],
+    },
+  },
   // JS config files (eslint.config.mjs etc.) have no type info — turn off type-checked rules
   { files: ['**/*.{js,mjs,cjs}'], extends: [tseslint.configs.disableTypeChecked] },
   // scripts/ TS files (tooling tests/configs) sit outside every tsconfig project,
