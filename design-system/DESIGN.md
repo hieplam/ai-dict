@@ -139,11 +139,13 @@ components:
 
 # Design System: AI Dictionary
 
-> **Source of truth:** `design-system/side-panel-button/IMPLEMENTATION_GUIDE.md` (the "Paperlight"
-> build-ready spec) and `design-system/side-panel-button/AI Dictionary Design System.html` (the living
-> visual reference). The shipped implementation lives in `packages/app/src/ui/styles/tokens.ts`
-> (primitives, per-theme semantic blocks, and the canonical icon set). This document mirrors them; when
-> they disagree, the guide and `tokens.ts` win.
+> **Source of truth:** this file lives in `design-system/` — the single source of truth for the
+> frontend design system (see `design-system/README.md` for the folder map). The build-ready spec is
+> `design-system/IMPLEMENTATION_GUIDE.md` ("Paperlight"); the living visual reference is
+> `design-system/AI Dictionary Design System.html`; the portable token export is
+> `design-system/tokens.css`. The shipped implementation lives in
+> `packages/app/src/ui/styles/tokens.ts` (primitives, per-theme semantic blocks, canonical icon set).
+> This document mirrors them; when they disagree, the guide and `tokens.ts` win.
 
 ## 1. Overview
 

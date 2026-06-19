@@ -1,6 +1,6 @@
 // "Paperlight" design tokens for the in-page UI components.
 //
-// THREE LAYERS (see design-hand-off/IMPLEMENTATION_GUIDE.md §1):
+// THREE LAYERS (see design-system/IMPLEMENTATION_GUIDE.md §1):
 //   1. PRIMITIVES  (--adp-*)  raw, theme-agnostic: type scale, spacing, radii, motion,
 //                             z-index. NEVER themed.
 //   2. SEMANTIC    (--ad-*)   meaning-based: surface, ink, accent, line, shadow…

@@ -8,9 +8,12 @@ CHANGELOG.md
 
 .c3/
 
-# External design hand-off (authored by Claude Design); keep its formatting verbatim.
-design-hand-off/
-design-system/
+# External design hand-off files (authored by Claude Design); keep their formatting verbatim.
+# Only the verbatim hand-off artifacts are ignored — DESIGN.md / PRODUCT.md / README.md in
+# design-system/ are maintained docs and ARE formatted.
+design-system/IMPLEMENTATION_GUIDE.md
+design-system/AI Dictionary Design System.html
+design-system/tokens.css
 
 # Persisted Claude Code Workflow scripts; keep their generated formatting verbatim.
 .claude/workflows/
