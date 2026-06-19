@@ -11,7 +11,7 @@ paths:
 Security invariant **S1** — the Gemini API key stays in trusted contexts only.
 Canonical rule: `.c3/rules/rule-api-key-isolation.md` (a deviation needs an ADR).
 
-## NEVER
+## NEVER, NON NEGOTIABLE
 
 - Put `apiKey` on any `chrome.runtime` wire message.
 - Let a content script read `chrome.storage.local` settings directly.
