@@ -19,10 +19,11 @@ test.describe('open in side panel', () => {
     });
 
     // 1. The in-page card shows the side-panel button.
-    await expect(page.locator('lookup-card button[data-act="side-panel"]')).toBeVisible();
+    const sidePanelBtn = page.locator('lookup-card button[data-act="side-panel"]');
+    await expect(sidePanelBtn).toBeVisible();
 
     // 2. Click the side-panel button.
-    await page.locator('lookup-card button[data-act="side-panel"]').click();
+    await sidePanelBtn.click();
 
     // 3. The in-page sheet is dismissed (the lookup "moved" to the dock).
     await expect(page.locator('bottom-sheet')).toHaveCount(0);
@@ -34,6 +35,6 @@ test.describe('open in side panel', () => {
     await expect(panel.locator('side-panel-view')).toContainText('financial institution', {
       timeout: 5_000,
     });
-    await expect(panel.locator('side-panel-view')).toContainText('river bank');
+    await expect(panel.locator('side-panel-view')).toContainText('river bank', { timeout: 5_000 });
   });
 });

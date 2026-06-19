@@ -28,6 +28,7 @@ const DEFAULT_TARGET = 'vi';
 // empty when saveHistory is off). Not window-scoped — mirrors the existing broadcast model,
 // which already fans out to every open side panel.
 let lastSidePanelFocus: SidePanelFocus | null = null;
+
 async function readFullSettings(): Promise<Settings> {
   const { settings } = (await chrome.storage.local.get('settings')) as { settings?: Settings };
   return (
