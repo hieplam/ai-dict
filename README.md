@@ -7,6 +7,7 @@
 </p>
 
 <p align="center">
+  <a href="https://chromewebstore.google.com/detail/ai-dictionary/ipnmjhndmlkbhnifhmbknjjomdocgkeg"><img alt="Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-Add%20to%20Chrome-2f6f4e?logo=googlechrome&logoColor=white"></a>
   <img alt="Version" src="https://img.shields.io/badge/version-1.2.0-2f6f4e">
   <img alt="Browser" src="https://img.shields.io/badge/Chrome-MV3-2f6f4e">
   <img alt="Powered by Gemini" src="https://img.shields.io/badge/powered%20by-Google%20Gemini-2f6f4e">
@@ -59,18 +60,25 @@ There are two ways to install — pick one, then
 One click, **automatic updates**, and no developer mode. This is the install for
 day-to-day users.
 
-> **Coming soon.** The Chrome Web Store listing is being set up — once it's live,
-> the **Add to Chrome** button will appear here. Until then, use **Option B**
-> below. _(Maintainers: the publish steps are in
-> `docs/runbooks/chrome-web-store.md`.)_
+<p align="center">
+  <a href="https://chromewebstore.google.com/detail/ai-dictionary/ipnmjhndmlkbhnifhmbknjjomdocgkeg">
+    <img alt="Add to Chrome — Chrome Web Store" src="https://img.shields.io/badge/Add%20to%20Chrome-Chrome%20Web%20Store-2f6f4e?logo=googlechrome&logoColor=white&style=for-the-badge">
+  </a>
+</p>
+
+Open the
+**[AI Dictionary listing on the Chrome Web Store](https://chromewebstore.google.com/detail/ai-dictionary/ipnmjhndmlkbhnifhmbknjjomdocgkeg)**,
+click **Add to Chrome**, then
+[add your free Google key](#add-your-free-google-key). Chrome keeps it updated
+for you from here on.
 
 ### Option B — Load a build yourself (developers / early access)
 
-The built extension is attached to every
+Most people want **Option A** above. This path is for developers and early
+access: the built extension is attached to every
 [GitHub Release](https://github.com/hieplam/ai-dict/releases/latest) as
-**`dist-chrome.zip`** — a developer artifact you can sideload before (or instead
-of) the Web Store listing. It's the same build the store gets; it just doesn't
-auto-update.
+**`dist-chrome.zip`**, the same build the store gets — you just sideload it
+yourself, and it doesn't auto-update.
 
 **[⬇️ Download AI Dictionary (dist-chrome.zip)](https://github.com/hieplam/ai-dict/releases/latest/download/dist-chrome.zip)**
 
@@ -309,7 +317,10 @@ has a generous free tier.
 <details>
 <summary><strong>How do I update?</strong></summary>
 
-Download the newest
+If you installed from the **Chrome Web Store** (Option A), you don't — Chrome
+updates it automatically.
+
+If you sideloaded a build (Option B), download the newest
 [dist-chrome.zip](https://github.com/hieplam/ai-dict/releases/latest/download/dist-chrome.zip)
 and unzip it into the same folder as before (or re-run the one-command
 installer), then click **Reload** on the extension's card in
