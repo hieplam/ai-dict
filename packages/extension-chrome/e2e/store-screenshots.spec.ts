@@ -24,8 +24,9 @@ const RICH = JSON.stringify({
       content: {
         parts: [
           {
+            // No leading "## word" heading — the card already renders the headword.
             text:
-              '## serendipity\n/ˌsɛr.ənˈdɪp.ɪ.ti/ · noun\n\n' +
+              '/ˌsɛr.ənˈdɪp.ɪ.ti/ · noun\n\n' +
               '**English** — the occurrence of events by chance in a happy or beneficial way.\n\n' +
               '**Tiếng Việt** — sự tình cờ may mắn.\n\n' +
               '*Example:* "A fortunate stroke of serendipity brought them together." — ' +
@@ -64,7 +65,16 @@ test.describe('store screenshots (1280×800)', () => {
     const page = await context.newPage();
     await page.setViewportSize(SIZE);
     await page.goto(`chrome-extension://${extensionId}/options.html`);
-    await seedSettings(page, { hasKey: true, apiKey: 'AIza-demo', provider: 'gemini' });
+    await seedSettings(page, {
+      hasKey: true,
+      apiKey: 'AIza-demo',
+      provider: 'gemini',
+      // The shipped default Card format, so the Translation section shows the
+      // real out-of-the-box value instead of the test stub.
+      outputFormat:
+        '1. **Eng -> Eng** — a full, complete explanation of the meaning (do not summarize long senses).\n' +
+        '2. **Eng -> {target_lang}** — translate the full meaning into the selected language.',
+    });
     await page.reload();
     await page.waitForTimeout(300);
     await page.screenshot({ path: `${OUT}/02-options.png` });
@@ -81,12 +91,23 @@ test.describe('store screenshots (1280×800)', () => {
     await seed.goto('http://article.test/');
     await selectWord(seed, 't', 'serendipity');
     await openTrigger(seed);
+    await expect(seed.locator('bottom-sheet lookup-card')).toContainText('serendipity', {
+      timeout: 10_000,
+    });
     await seed.waitForTimeout(800); // let the lookup persist to history
+    // Send the lookup to the side panel (primes the SW focus cache) so the panel
+    // screenshot shows the definition, not the empty state.
+    await seed.locator('lookup-card button[data-act="side-panel"]').click();
+    await seed.waitForTimeout(400);
 
     const panel = await context.newPage();
     await panel.setViewportSize(SIZE);
     await panel.goto(`chrome-extension://${extensionId}/side-panel.html`);
     await panel.locator('side-panel-view').waitFor({ state: 'attached', timeout: 5_000 });
+    // Wait for the recovered definition body (not the loading spinner) to render.
+    await expect(panel.locator('side-panel-view')).toContainText('sự tình cờ may mắn', {
+      timeout: 10_000,
+    });
     await panel.waitForTimeout(400);
     await panel.screenshot({ path: `${OUT}/03-side-panel.png` });
   });

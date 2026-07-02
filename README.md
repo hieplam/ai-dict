@@ -8,7 +8,7 @@
 
 <p align="center">
   <a href="https://chromewebstore.google.com/detail/ai-dictionary/ipnmjhndmlkbhnifhmbknjjomdocgkeg"><img alt="Chrome Web Store" src="https://img.shields.io/badge/Chrome%20Web%20Store-Add%20to%20Chrome-2f6f4e?logo=googlechrome&logoColor=white"></a>
-  <img alt="Version" src="https://img.shields.io/badge/version-1.2.0-2f6f4e">
+  <img alt="Version" src="https://img.shields.io/badge/version-1.7.0-2f6f4e">
   <img alt="Browser" src="https://img.shields.io/badge/Chrome-MV3-2f6f4e">
   <img alt="Powered by Gemini" src="https://img.shields.io/badge/powered%20by-Google%20Gemini-2f6f4e">
   <img alt="Safari" src="https://img.shields.io/badge/Safari-not%20yet%20supported-9b9b9b">
@@ -36,12 +36,12 @@ one thing a word-only dictionary can't do, and it's why AI Dictionary fits how
 you actually read.
 
 <p align="center">
-  <a href="docs/demos/context-bank/context-bank-demo.mp4">
-    <img src="docs/demos/context-bank/context-bank-demo.gif" alt="The same word 'bank' selected in two different sentences — 'the grassy bank of the river' returns the riverside meaning, while 'the bank approved my loan' returns the money-business meaning — each translated to Vietnamese" width="760">
+  <a href="docs/media/demos/context-bank/context-bank-demo.mp4">
+    <img src="docs/media/demos/context-bank/context-bank-demo.gif" alt="The same word 'bank' selected in two different sentences — 'the grassy bank of the river' returns the riverside meaning, while 'the bank approved my loan' returns the money-business meaning — each translated to Vietnamese" width="760">
   </a>
 </p>
 
-<p align="center"><em>The same word in two sentences → two correct meanings, each chosen from its context. (<a href="docs/demos/context-bank/context-bank-demo.mp4">watch the video</a>)</em></p>
+<p align="center"><em>The same word in two sentences → two correct meanings, each chosen from its context. (<a href="docs/media/demos/context-bank/context-bank-demo.mp4">watch the video</a>)</em></p>
 
 ---
 
@@ -119,10 +119,10 @@ personal code from Google that lets it ask Google's AI for definitions. It's
 [Getting a Gemini API key](#getting-a-gemini-api-key) just below.
 
 Open the extension's **settings** page (it opens by itself the first time),
-paste your key, and click **Save**.
+paste your key, and click **Save & activate**.
 
 <p align="center">
-  <img src="docs/screenshots/options-api-key.png" alt="The AI Dictionary settings page with a field for the Gemini API key, target language, and prompt template" width="540">
+  <img src="docs/media/screenshots/onboarding.png" alt="The first-run welcome screen: pick your reading language, paste your free Gemini API key (with a link to get one), and click Save &amp; activate" width="640">
 </p>
 
 > [!IMPORTANT]
@@ -139,11 +139,19 @@ That's it — you're ready to read.
 
 ## How to use
 
+<p align="center">
+  <a href="docs/media/demos/define-flow/define-flow-demo.mp4">
+    <img src="docs/media/demos/define-flow/define-flow-demo.gif" alt="Selecting the word serendipity in an article, clicking the floating Define button, and reading the definition card that appears on the page" width="760">
+  </a>
+</p>
+
+<p align="center"><em>Select → Define → read, without leaving the page. (<a href="docs/media/demos/define-flow/define-flow-demo.mp4">watch the video</a>)</em></p>
+
 **1. Select a word or phrase** on any page while you read. A small **Define**
 button pops up next to your selection.
 
 <p align="center">
-  <img src="docs/screenshots/select-define.png" alt="Selecting the word serendipity in an article, with a Define button appearing beside it" width="680">
+  <img src="docs/media/screenshots/select-define.png" alt="Selecting the word serendipity in an article, with a Define button appearing beside it" width="680">
 </p>
 
 **2. Click _Define_.** The definition appears right on the page — pronunciation,
@@ -151,29 +159,55 @@ part of speech, an English explanation, a translation in your language, and an
 example.
 
 <p align="center">
-  <img src="docs/screenshots/lookup-result.png" alt="The definition card for serendipity, showing IPA, part of speech, English and Vietnamese meanings, and an example" width="680">
+  <img src="docs/media/screenshots/lookup-result.png" alt="The definition card for serendipity, showing IPA, part of speech, English and Vietnamese meanings, and an example" width="680">
 </p>
 
 **3. Keep reading.** Press <kbd>Esc</kbd> or click away to dismiss the card.
-Prefer a sidebar? Click the toolbar icon to open the **side panel**, which keeps
-the current definition and your recent lookups beside the page.
+Prefer a sidebar? Click the **side-panel button** in the card's header (or the
+toolbar icon) to move the lookup into Chrome's **side panel**, which keeps the
+current definition and your recent lookups beside the page — click any entry
+under **Recent** to bring it back, or delete it with its trash button.
 
-You can change the **target language**, tweak the **prompt template**, and toggle
-**caching** and **history** any time from the extension's settings page.
+<p align="center">
+  <a href="docs/media/demos/side-panel/side-panel-demo.mp4">
+    <img src="docs/media/screenshots/side-panel.png" alt="The side panel showing the focused definition of serendipity above the Recent list with earlier lookups and their delete buttons" width="380">
+  </a>
+</p>
+
+<p align="center"><em>The side panel: the current lookup on top, your history below. (<a href="docs/media/demos/side-panel/side-panel-demo.mp4">watch the video</a>)</em></p>
+
+You can change the **target language**, tweak the **Card format**, switch the
+**theme**, and toggle **caching** and **history** any time from the extension's
+settings page.
+
+### Three reading themes
+
+The whole UI — card, side panel, and settings — ships in three looks, tuned for
+long reads: **Sepia** (warm paper, the default), **Dark** (low-glare night), and
+**High Contrast** (maximum legibility), plus **Match system**. Change it under
+**Settings → Appearance** and the page re-themes as you click
+(<a href="docs/media/demos/themes/themes-demo.mp4">see it live</a>).
+
+<p align="center">
+  <img src="docs/media/screenshots/card-sepia.png" alt="The definition card in the warm Sepia theme" width="32%">
+  <img src="docs/media/screenshots/card-dark.png" alt="The definition card in the low-glare Dark theme" width="32%">
+  <img src="docs/media/screenshots/card-contrast.png" alt="The definition card in the High Contrast theme" width="32%">
+</p>
 
 ---
 
-## Customize the prompt template
+## Customize the card format
 
-Every definition is produced by sending Google's Gemini a short set of
-instructions — _the **prompt**_. AI Dictionary ships with a sensible default,
-but the **whole prompt is yours to rewrite**, so you can shape what every lookup
-returns: add etymology, drop the IPA, ask for three example sentences, answer in
-a different style, whatever suits how you read.
+Every definition is produced by sending your AI provider a short set of
+instructions — _the **prompt**_. The scaffolding is fixed (your selected word,
+its sentence, the page title, and the safety constraints are always sent), and
+the part that decides **what the answer card contains** — the **Card format** —
+is yours to rewrite: add IPA and examples, drop sections, ask for etymology,
+answer in a different style, whatever suits how you read.
 
 **Where:** open the extension's **settings** page → **Translation** section →
-**Prompt template**. Edit the text, click **Save settings**, and your next lookup
-uses it. Changed your mind? **Restore default** puts the shipped prompt back.
+**Card format**. Edit the text, click **Save settings**, and your next lookup
+uses it. Changed your mind? **Restore default** puts the shipped format back.
 
 ### Fill-in placeholders
 
@@ -190,21 +224,20 @@ that isn't on this list is left untouched, so stray braces won't break anything:
 | `{url}`         | The address of the page you're reading.                     |
 | `{title}`       | The title of that page.                                     |
 
-### The default prompt
+### What actually gets sent
 
-This is what ships out of the box — copy it as a starting point for your own:
+Your Card format slots into a fixed envelope that always carries the word, the
+sentence around it, and the safety constraints — that's what makes every answer
+fit _this_ sentence, no matter how you customize the card:
 
 ```text
 You are a bilingual dictionary for {target_lang} learners of English.
 Word/phrase: "{word}"
 Sentence context: "{context}"
+Page title: "{title}"
 
-Output Markdown with sections in this exact order:
-1. **IPA**
-2. **Part of Speech (POS)**
-3. **Eng -> Eng** (learner-style definition in simple English)
-4. **Eng -> {target_lang}** (translation)
-5. **Example** (one short sentence in English + its {target_lang} translation)
+Output Markdown with these sections, in this exact order:
+{output_format}
 
 Constraints:
 - Disambiguate the sense based on the sentence context.
@@ -213,11 +246,30 @@ Constraints:
 - Keep the response under 200 words.
 ```
 
+The shipped default Card format (the `{output_format}` slot above) keeps the
+card focused on meaning and translation:
+
+```text
+1. **Eng -> Eng** — a full, complete explanation of the meaning (do not summarize long senses).
+2. **Eng -> {target_lang}** — translate the full meaning into the selected language.
+```
+
+Prefer the richer five-section card shown in the demos above? Paste this as
+your Card format:
+
+```text
+1. **IPA**
+2. **Part of Speech (POS)**
+3. **Eng -> Eng** (learner-style definition in simple English)
+4. **Eng -> {target_lang}** (translation)
+5. **Example** (one short sentence in English + its {target_lang} translation)
+```
+
 > [!TIP]
-> Keep `{word}` and `{context}` in your prompt — they're what makes the answer
-> fit _this_ sentence instead of a generic dictionary entry. The result is shown
-> as Markdown, so asking for **bold** headings and short lists reads best on the
-> card.
+> Your selected word and its sentence are always sent automatically — you don't
+> need to repeat `{word}` or `{context}` inside the Card format. The result is
+> shown as Markdown, so asking for **bold** section labels and short lists reads
+> best on the card.
 
 ---
 
@@ -420,6 +472,7 @@ in progress and is **not yet supported**.
 
 ## More
 
+- Landing page: [hieplam.github.io/ai-dict](https://hieplam.github.io/ai-dict/)
 - Product overview: [`PRODUCT.md`](design-system/PRODUCT.md)
 - Engineering design: [`DESIGN.md`](design-system/DESIGN.md)
 - Release steps: [`RELEASE_CHECKLIST.md`](RELEASE_CHECKLIST.md)

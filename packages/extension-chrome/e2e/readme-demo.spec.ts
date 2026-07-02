@@ -74,7 +74,7 @@ const ARTICLE_HTML = `<!doctype html>
 </body></html>`;
 
 // Mocked Gemini markdown — mirrors the shipped default prompt's 5-section format and
-// matches docs/screenshots/lookup-result.png exactly.
+// matches docs/media/screenshots/lookup-result.png exactly.
 const SERENDIPITY_MD = [
   '1. **IPA** /ˌserənˈdɪpəti/',
   '2. **Part of Speech (POS)** Noun',

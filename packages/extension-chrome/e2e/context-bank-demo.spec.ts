@@ -24,7 +24,7 @@ import { E2E_HEADLESS } from '../playwright.config';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(here, '../dist');
-const videoDir = path.resolve(here, '../../../.demo-out/context-bank');
+const videoDir = path.resolve(here, '../../../.kanna/demos/context-bank');
 
 const VIEWPORT = { width: 1200, height: 720 };
 
