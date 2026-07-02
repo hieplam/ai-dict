@@ -10,6 +10,10 @@ Select any word and get its meaning — in context, on the page — using your o
 
 **Privacy policy URL:** https://github.com/hieplam/ai-dict/blob/master/PRIVACY.md
 
+**Homepage / official URL:** https://hieplam.github.io/ai-dict/
+
+**Support URL:** https://github.com/hieplam/ai-dict/issues
+
 ## Detailed description
 
 You're reading an article and hit a word you only half-know. AI Dictionary lets you select it
@@ -54,6 +58,22 @@ provider API key.
 
 ## Assets
 
-- Store icon (128×128): `packages/extension-chrome/src/icons/icon-128.png`
-- Screenshots (1280×800): `docs/store/chrome/screenshots/*.png`
-- Small promo tile (440×280): `docs/store/chrome/promo-440x280.png`
+All assets are current — Paperlight UI, recaptured for v1.7.1. See
+`docs/runbooks/chrome-web-store.md` for the step-by-step Dashboard upload.
+
+- **Store icon** (128×128): `packages/extension-chrome/src/icons/icon-128.png`
+- **Screenshots** (1280×800) — upload in this order (the carousel reads left-to-right):
+  1. `screenshots/01-result-card.png` — the meaning, in context, right on the page
+  2. `screenshots/02-select-define.png` — select any word, then Define
+  3. `screenshots/03-side-panel.png` — side panel keeps your lookup history
+  4. `screenshots/04-options.png` — Settings: bring your own Gemini / OpenAI key
+  5. `screenshots/05-onboarding.png` — one-minute setup, key stays on device
+- **Small promo tile** (440×280): `docs/store/chrome/promo-440x280.png`
+- **Promotional video** (YouTube): upload `docs/store/chrome/promo-video.mp4`
+  (1920×1080, ~48 s, silent) to YouTube, then paste the watch URL into the
+  listing's **Video** field. Suggested custom thumbnail:
+  `docs/store/chrome/promo-thumbnail.png` (1280×720).
+  - Suggested title: **AI Dictionary — reads the sentence, not just the word**
+  - Suggested description: _Select any word on any page and get the one meaning
+    that fits the sentence, translated into your language. Runs on your own free
+    Gemini (or OpenAI) key — no account, no server, no tracking._
