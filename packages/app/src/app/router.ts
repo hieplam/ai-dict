@@ -96,7 +96,9 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       const { cacheEnabled, saveHistory } = await deps.readToggles();
       const keyReq = { word: req.word, context: req.context, target: req.target };
 
-      if (cacheEnabled) {
+      // A manual provider pick (req.provider set) must reach the picked provider: the cache key
+      // ignores provider, so a hit would echo back the previous provider's answer. Skip the read.
+      if (cacheEnabled && req.provider === undefined) {
         const hit = await cacheGet({ storage: deps.kv }, keyReq);
         if (hit)
           return { ok: true, type: 'lookup', result: { ...hit, fromCache: true }, requestId };

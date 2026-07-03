@@ -36,6 +36,14 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
     expect('apiKey' in pub).toBe(false);
   });
 
+  it('envGeminiKey ctor flag makes Gemini configured even with no stored key', async () => {
+    // A build baked in GEMINI_API_KEY → Gemini works with nothing entered, so hasKey is true
+    // and configuredProviders lists gemini regardless of the empty stored apiKey.
+    const pub = await new ChromeStorageStore(fakeArea({ apiKey: '' }), true).get();
+    expect(pub.hasKey).toBe(true);
+    expect(pub.configuredProviders).toEqual(['gemini']);
+  });
+
   it('get() coerces a legacy stored "light" theme to the Paperlight "sepia" default', async () => {
     const area = fakeArea({
       targetLang: 'vi',

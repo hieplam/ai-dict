@@ -29,6 +29,14 @@
               },
               "outputFormat": {
                 "type": "string"
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "gemini",
+                  "openai",
+                  "anthropic"
+                ]
               }
             },
             "required": [

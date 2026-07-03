@@ -12,6 +12,8 @@ const LookupErrorSchema = z.strictObject({
   vendorMessage: z.string().max(200).optional(),
 });
 
+const ProviderEnum = z.enum(['gemini', 'openai', 'anthropic']);
+
 const LookupRequestSchema = z.strictObject({
   word: z.string(),
   context: z.string(),
@@ -19,9 +21,9 @@ const LookupRequestSchema = z.strictObject({
   title: z.string(),
   target: z.string(),
   outputFormat: z.string(),
+  // One-shot manual provider override from the card picker; absent on normal lookups.
+  provider: ProviderEnum.optional(),
 });
-
-const ProviderEnum = z.enum(['gemini', 'openai', 'anthropic']);
 
 const LookupResultSchema = z.strictObject({
   markdown: z.string(),

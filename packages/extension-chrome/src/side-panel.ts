@@ -43,7 +43,16 @@ function isLookupResult(v: unknown): v is LookupResult {
 // A stored/looked-up result becomes the focus. Markdown is (re-)sanitized here at the render
 // boundary — never trust stored markdown as safe (S4).
 function resultToFocus(r: LookupResult): PanelFocusState {
-  return { kind: 'result', safeHtml: sanitizeMarkdown(r.markdown), word: r.word, target: r.target };
+  // Show the provider badge + fallback note in the panel too, but no one-shot picker here
+  // (the panel is a persistent surface, not the transient in-page card) — omit `providers`.
+  return {
+    kind: 'result',
+    safeHtml: sanitizeMarkdown(r.markdown),
+    word: r.word,
+    target: r.target,
+    ...(r.provider !== undefined ? { provider: r.provider } : {}),
+    ...(r.fallbackFrom !== undefined ? { fallbackFrom: r.fallbackFrom } : {}),
+  };
 }
 
 async function refreshRecent(): Promise<void> {

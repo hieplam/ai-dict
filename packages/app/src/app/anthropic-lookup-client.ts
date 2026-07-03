@@ -88,8 +88,11 @@ export class AnthropicLookupClient implements LookupClient {
 
       if (!res.ok) {
         let vendorMessage: string | undefined;
+        let vendorStatus: string | undefined;
         try {
-          vendorMessage = ((await res.json()) as AnthropicErrBody).error?.message;
+          const errBody = (await res.json()) as AnthropicErrBody;
+          vendorMessage = errBody.error?.message;
+          vendorStatus = errBody.error?.type;
         } catch {
           /* non-JSON body: map by status alone */
         }
@@ -100,9 +103,11 @@ export class AnthropicLookupClient implements LookupClient {
           status: number;
           provider: 'anthropic';
           retryAfterSec?: number;
+          vendorStatus?: string;
           vendorMessage?: string;
         } = { kind: 'http', status: res.status, provider: 'anthropic' };
         if (!Number.isNaN(retryAfterSec)) httpInput.retryAfterSec = retryAfterSec;
+        if (vendorStatus !== undefined) httpInput.vendorStatus = vendorStatus;
         if (vendorMessage !== undefined) httpInput.vendorMessage = vendorMessage;
         rejectWith(mapError(httpInput));
       }

@@ -150,14 +150,23 @@ describe('AnthropicLookupClient', () => {
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'INVALID_KEY' });
   });
 
-  it('HTTP 429 → RATE_LIMIT with retryAfterSec from header', async () => {
+  it('HTTP 429 → RATE_LIMIT with retryAfterSec + vendorStatus/vendorMessage from body', async () => {
     const c = client(() =>
-      Promise.resolve(res({ ok: false, status: 429, retryAfter: '30', body: {} })),
+      Promise.resolve(
+        res({
+          ok: false,
+          status: 429,
+          retryAfter: '7',
+          body: { type: 'error', error: { type: 'rate_limit_error', message: 'slow down' } },
+        }),
+      ),
     );
     await expect(c.lookup(req)).rejects.toMatchObject({
       code: 'RATE_LIMIT',
       retryable: true,
-      retryAfterSec: 30,
+      retryAfterSec: 7,
+      vendorStatus: 'rate_limit_error',
+      vendorMessage: 'slow down',
     });
   });
 

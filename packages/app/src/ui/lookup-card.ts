@@ -35,8 +35,21 @@ export type CardState =
       target: string;
       provider?: Provider;
       fallbackFrom?: Provider;
+      /** Providers the reader may switch to; when ≥2, the card shows a one-shot picker. */
+      providers?: Provider[];
     }
   | { kind: 'error'; error: LookupError };
+
+/** Display names for each provider — the ONLY user-facing provider wording on the card. */
+export const PROVIDER_LABELS: Record<Provider, string> = {
+  gemini: 'Gemini',
+  openai: 'ChatGPT',
+  anthropic: 'Claude',
+};
+
+function providerLabel(p: Provider): string {
+  return PROVIDER_LABELS[p] ?? p;
+}
 
 // Icons (ICON_CLOSE, ICON_SHIELD, ICON_SETTINGS) are the canonical §5.10 set, imported from
 // tokens.ts above. Stroked with currentColor so they inherit the token colour of their button;
@@ -102,16 +115,38 @@ button[data-act="settings"] .lbl{line-height:1}
 ::slotted(.loadrow)::before{content:"";display:block;width:15px;height:15px;flex:none;border:2px solid var(--ad-line);border-top-color:var(--ad-accent);border-radius:50%;animation:spin .77s linear infinite}
 @media (prefers-reduced-motion:reduce){::slotted(.loadrow)::before{animation:none}}
 ::slotted(.errlog-consent){margin:10px 16px 0;padding-top:10px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
-::slotted(.fallback-note){margin:8px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint);font-style:italic}`;
+/* The result metadata row (provider badge + fallback note + one-shot picker). Only the row is a
+   direct slotted child, so ::slotted sets its layout + the color/font its children inherit; the
+   children's own box decorations live in CARD_DOC_CSS (::slotted cannot reach a slotted node's
+   descendants). */
+::slotted(.meta-row){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}`;
 
-// Inject @keyframes spin into the document once so Firefox/Safari (which follow CSS
-// Scoping Level 1 strictly) can resolve the animation on the light-DOM .spinner node.
-let _docKeyframesInjected = false;
-function ensureDocKeyframes(): void {
-  if (_docKeyframesInjected) return;
-  _docKeyframesInjected = true;
+// Descendants of the slotted .meta-row cannot be reached by ::slotted() (it only matches the
+// top-level assigned node), so their box decorations are injected ONCE into the document, scoped
+// under `lookup-card` so nothing leaks. The --ad-*/--adp-* tokens are declared on the card :host
+// and inherit into its light-DOM children, so these page-level rules resolve the themed values.
+const CARD_DOC_CSS = `@keyframes spin{to{transform:rotate(360deg)}}
+lookup-card .prov-badge{border:1px solid var(--ad-line);border-radius:var(--adp-radius-control);padding:1px 8px;color:var(--ad-ink-soft)}
+lookup-card .fallback-note{font-style:italic;color:var(--ad-ink-faint)}
+lookup-card .prov-switch{margin-left:auto;border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:2px 10px;font:inherit;font-size:var(--adp-text-2xs);cursor:pointer}
+lookup-card .prov-switch:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
+lookup-card .prov-switch:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .prov-menu{display:flex;flex-wrap:wrap;gap:5px;width:100%;margin-top:2px}
+lookup-card .prov-menu[hidden]{display:none}
+lookup-card .prov-menu [role=option]{border:1px solid var(--ad-line);background:var(--ad-surface);color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:2px 10px;font:inherit;font-size:var(--adp-text-2xs);cursor:pointer}
+lookup-card .prov-menu [role=option]:hover:not([disabled]){background:var(--ad-surface-raised);color:var(--ad-ink)}
+lookup-card .prov-menu [role=option]:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .prov-menu [role=option][disabled]{opacity:.55;cursor:default}`;
+
+// Inject the document-scoped card styles once: the @keyframes spin (so Firefox/Safari, which
+// follow CSS Scoping Level 1 strictly, can resolve the animation on the light-DOM spinner) and
+// the .meta-row descendant decorations that ::slotted() cannot reach.
+let _docStylesInjected = false;
+function ensureCardDocStyles(): void {
+  if (_docStylesInjected) return;
+  _docStylesInjected = true;
   const style = document.createElement('style');
-  style.textContent = '@keyframes spin{to{transform:rotate(360deg)}}';
+  style.textContent = CARD_DOC_CSS;
   document.head.append(style);
 }
 
@@ -202,22 +237,92 @@ export function renderCardState(state: CardState): Node[] {
   const body = document.createElement('div');
   body.innerHTML = state.safeHtml; // trusted: sanitized upstream by adapters-shared (S4)
   const nodes: Node[] = [h, body];
-  if (state.fallbackFrom) {
-    const PROVIDER_NAMES: Record<Provider, string> = {
-      gemini: 'Gemini',
-      openai: 'ChatGPT',
-      anthropic: 'Claude',
-    };
-    const failed = PROVIDER_NAMES[state.fallbackFrom] ?? state.fallbackFrom;
-    const answerer = state.provider
-      ? (PROVIDER_NAMES[state.provider] ?? state.provider)
-      : 'a fallback provider';
-    const note = document.createElement('p');
-    note.className = 'fallback-note';
-    note.textContent = `${failed} was unavailable — answered by ${answerer}.`;
-    nodes.push(note);
-  }
+  const meta = renderMetaRow(state);
+  if (meta) nodes.push(meta);
   return nodes;
+}
+
+/**
+ * The metadata row shown beneath a result: a provider badge naming the answering
+ * provider, an optional fallback note when a non-primary answered, and a one-shot
+ * provider picker when ≥2 providers are configured. Returns null when no provider
+ * is known (e.g. entries cached before this feature) — nothing to show.
+ *
+ * Descendants of this row are styled by the document-scoped rules in
+ * `CARD_DOC_CSS` (::slotted cannot reach a slotted node's own descendants).
+ */
+function renderMetaRow(state: {
+  provider?: Provider;
+  fallbackFrom?: Provider;
+  providers?: Provider[];
+}): HTMLElement | null {
+  if (!state.provider) return null;
+  const row = document.createElement('div');
+  row.className = 'meta-row';
+
+  const badge = document.createElement('span');
+  badge.className = 'prov-badge';
+  badge.textContent = providerLabel(state.provider);
+  row.append(badge);
+
+  if (state.fallbackFrom) {
+    const note = document.createElement('span');
+    note.className = 'fallback-note';
+    note.textContent = `${providerLabel(state.fallbackFrom)} unavailable — answered by ${providerLabel(state.provider)}`;
+    row.append(note);
+  }
+
+  if (state.providers && state.providers.length >= 2) {
+    const current = state.provider;
+    const switchBtn = document.createElement('button');
+    switchBtn.type = 'button';
+    switchBtn.className = 'prov-switch';
+    switchBtn.setAttribute('aria-haspopup', 'listbox');
+    switchBtn.setAttribute('aria-expanded', 'false');
+    switchBtn.textContent = 'Switch';
+
+    const menu = document.createElement('span');
+    menu.className = 'prov-menu';
+    menu.setAttribute('role', 'listbox');
+    menu.hidden = true;
+
+    for (const p of state.providers) {
+      const opt = document.createElement('button');
+      opt.type = 'button';
+      opt.setAttribute('role', 'option');
+      opt.dataset['provider'] = p;
+      opt.textContent = providerLabel(p);
+      const isCurrent = p === current;
+      opt.setAttribute('aria-selected', String(isCurrent));
+      if (isCurrent) {
+        opt.disabled = true;
+      } else {
+        opt.addEventListener('click', () => {
+          menu.hidden = true;
+          switchBtn.setAttribute('aria-expanded', 'false');
+          // Ask the shell to re-run this lookup once against the picked provider.
+          opt.dispatchEvent(
+            new CustomEvent('switch-provider', {
+              detail: { provider: p },
+              bubbles: true,
+              composed: true,
+            }),
+          );
+        });
+      }
+      menu.append(opt);
+    }
+
+    switchBtn.addEventListener('click', () => {
+      const willOpen = menu.hidden;
+      menu.hidden = !willOpen;
+      switchBtn.setAttribute('aria-expanded', String(willOpen));
+    });
+
+    row.append(switchBtn, menu);
+  }
+
+  return row;
 }
 
 export class LookupCard extends HTMLElement {
@@ -225,7 +330,7 @@ export class LookupCard extends HTMLElement {
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
-    ensureDocKeyframes(); // inject document @keyframes for light-DOM spinner (Firefox/Safari)
+    ensureCardDocStyles(); // inject document @keyframes + meta-row rules for light-DOM content
     const root = this.attachShadow({ mode: 'open' });
     adoptStyles(root, CSS);
 

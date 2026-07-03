@@ -24,16 +24,20 @@ const okResult: LookupResult = {
   fromCache: false,
   fetchedAt: 1,
 };
-const pub = (hasKey: boolean) => ({
-  targetLang: 'vi',
-  outputFormat: 'tpl',
-  hasKey,
-  theme: 'sepia' as const,
-  configuredProviders: (hasKey ? ['gemini'] : []) as Provider[],
-});
+const pub = (hasKey: boolean, configuredProviders?: Provider[]) => {
+  const fallback: Provider[] = hasKey ? ['gemini'] : [];
+  return {
+    targetLang: 'vi',
+    outputFormat: 'tpl',
+    hasKey,
+    theme: 'sepia' as const,
+    configuredProviders: configuredProviders ?? fallback,
+  };
+};
 
 function harness(opts: {
   hasKey?: boolean;
+  configuredProviders?: Provider[];
   impl?: FakeLookupClient['lookup'];
   now?: () => number;
 }) {
@@ -41,7 +45,7 @@ function harness(opts: {
   const trigger = new FakeTriggerUI();
   const renderer = new FakeResultRenderer();
   const client = new FakeLookupClient(opts.impl ?? (() => Promise.resolve(okResult)));
-  const settings = new FakeSettingsStore(pub(opts.hasKey ?? true));
+  const settings = new FakeSettingsStore(pub(opts.hasKey ?? true, opts.configuredProviders));
   const teardown = runLookupWorkflow({
     selection,
     trigger,
@@ -79,6 +83,52 @@ describe('runLookupWorkflow', () => {
     await vi.waitFor(() => expect(h.renderer.lastError?.code).toBe('NO_KEY'));
     expect(h.renderer.calls).not.toContain('loading');
     expect(h.client.lastReq).toBeNull();
+  });
+
+  it('gates on configuredProviders, not hasKey: fires when a non-default provider is configured', async () => {
+    // hasKey is false (the SELECTED provider has no key) but another provider is configured.
+    const h = harness({ hasKey: false, configuredProviders: ['openai'] });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(h.client.lastReq).not.toBeNull();
+  });
+
+  it('passes picker context (providers + onSwitchProvider) when ≥2 providers configured', async () => {
+    const h = harness({ configuredProviders: ['gemini', 'openai'] });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(h.renderer.lastCtx?.providers).toEqual(['gemini', 'openai']);
+    expect(typeof h.renderer.lastCtx?.onSwitchProvider).toBe('function');
+  });
+
+  it('omits picker context when only one provider is configured', async () => {
+    const h = harness({ configuredProviders: ['gemini'] });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(h.renderer.lastCtx).toBeUndefined();
+  });
+
+  it('onSwitchProvider re-runs the SAME selection with req.provider override, bypassing cooldown', async () => {
+    let t = 5000;
+    const h = harness({ configuredProviders: ['gemini', 'openai'], now: () => t });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    const switchTo = h.renderer.lastCtx!.onSwitchProvider!;
+    // Still inside the cooldown window — a manual switch must NOT be blocked.
+    t = 5001;
+    switchTo('openai');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+    expect(h.client.lastReq).toMatchObject({
+      word: 'bank',
+      context: 'river bank',
+      provider: 'openai',
+    });
+    // Never blocked → no cooldown RATE_LIMIT error.
+    expect(h.renderer.lastError).toBeNull();
   });
 
   it('maps a rejected lookup (LookupError-shaped) to renderError', async () => {

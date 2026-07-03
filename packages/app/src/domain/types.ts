@@ -20,6 +20,13 @@ export interface LookupRequest {
   title: string;
   target: string;
   outputFormat: string;
+  /**
+   * One-shot provider override from the card's manual picker. When set, the pool
+   * tries this provider first (bypassing the stored default) and the router skips
+   * the cache read so the picked provider actually answers. Declared
+   * `Provider | undefined` for Zod/EOP alignment with the optional wire field.
+   */
+  provider?: Provider | undefined;
 }
 
 export interface LookupResult {

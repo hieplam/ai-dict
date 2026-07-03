@@ -67,6 +67,38 @@ describe('createProviderPool', () => {
     expect(out.fallbackFrom).toBe('gemini');
   });
 
+  it('req.provider override wins over getProvider and runs first (one-shot)', async () => {
+    const gemini = stubOk('gemini-model');
+    const anthropic = stubOk('anthropic-model');
+    const p = pool({
+      primary: 'gemini',
+      configured: ['gemini', 'anthropic'],
+      gemini,
+      anthropic,
+    });
+    const out = await p.lookup({ ...req, provider: 'anthropic' });
+    expect(out.model).toBe('anthropic-model');
+    // The picked provider answered directly — no fallback annotation.
+    expect(out.fallbackFrom).toBeUndefined();
+    // getProvider's 'gemini' was overridden — the Gemini client was never called.
+    expect(gemini.lookup).not.toHaveBeenCalled();
+  });
+
+  it('req.provider override that fails still falls through to next configured provider', async () => {
+    const anthropic = stubFail(primaryErr);
+    const gemini = stubOk('gemini-model');
+    const p = pool({
+      primary: 'gemini',
+      configured: ['gemini', 'anthropic'],
+      gemini,
+      anthropic,
+    });
+    const out = await p.lookup({ ...req, provider: 'anthropic' });
+    // Picked anthropic failed → fell back to gemini; fallbackFrom names the picked primary.
+    expect(out.model).toBe('gemini-model');
+    expect(out.fallbackFrom).toBe('anthropic');
+  });
+
   it('skips unconfigured providers (not in configuredProviders)', async () => {
     const openaiSpy = stubOk('openai-model');
     const p = pool({

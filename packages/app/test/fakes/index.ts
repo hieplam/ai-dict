@@ -2,6 +2,7 @@ import type {
   SelectionSource,
   TriggerUI,
   ResultRenderer,
+  ResultRenderContext,
   LookupClient,
   SettingsStore,
   Storage,
@@ -43,15 +44,17 @@ export class FakeTriggerUI implements TriggerUI {
 export class FakeResultRenderer implements ResultRenderer {
   calls: string[] = [];
   lastResult: LookupResult | null = null;
+  lastCtx: ResultRenderContext | undefined;
   lastError: LookupError | null = null;
   loadingWord: string | undefined;
   renderLoading(word?: string) {
     this.calls.push('loading');
     this.loadingWord = word;
   }
-  renderResult(r: LookupResult) {
+  renderResult(r: LookupResult, ctx?: ResultRenderContext) {
     this.calls.push('result');
     this.lastResult = r;
+    this.lastCtx = ctx;
   }
   renderError(e: LookupError) {
     this.calls.push('error');

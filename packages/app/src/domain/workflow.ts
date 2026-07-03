@@ -2,10 +2,11 @@ import type {
   SelectionSource,
   TriggerUI,
   ResultRenderer,
+  ResultRenderContext,
   LookupClient,
   SettingsStore,
 } from '../ports';
-import type { SelectionEvent, LookupRequest, LookupError } from './types';
+import type { SelectionEvent, LookupRequest, LookupError, Provider } from './types';
 import { isLookupError } from './types';
 import { mapError } from './error-mapper';
 
@@ -41,7 +42,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
   let lastFireAt = -Infinity;
   const now = deps.now ?? (() => Date.now());
 
-  async function runLookup(e: SelectionEvent): Promise<void> {
+  async function runLookup(e: SelectionEvent, providerOverride?: Provider): Promise<void> {
     inFlight?.abort();
     const controller = new AbortController();
     inFlight = controller;
@@ -65,9 +66,24 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
       target: settings.targetLang,
       outputFormat: settings.outputFormat,
     };
+    // A manual pick re-runs THIS selection once against the chosen provider (one-shot).
+    if (providerOverride) req.provider = providerOverride;
     try {
       const result = await deps.client.lookup(req, { signal: controller.signal });
-      if (!controller.signal.aborted) deps.renderer.renderResult(result);
+      // Offer the one-shot picker only when there's more than one provider to choose from.
+      const ctx: ResultRenderContext | undefined =
+        settings.configuredProviders.length >= 2
+          ? {
+              providers: settings.configuredProviders,
+              onSwitchProvider: (p) => {
+                // Deliberate switch bypasses the Define-spam cooldown — it's not spam.
+                void runLookup(e, p).catch((err) =>
+                  deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
+                );
+              },
+            }
+          : undefined;
+      if (!controller.signal.aborted) deps.renderer.renderResult(result, ctx);
     } catch (err) {
       if (!controller.signal.aborted) deps.renderer.renderError(toLookupError(err));
     } finally {

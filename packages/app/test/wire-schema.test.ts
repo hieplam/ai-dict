@@ -176,6 +176,44 @@ describe('wire-schema', () => {
     expect(result.success).toBe(false);
   });
 
+  it('lookup req accepts an optional provider override and rejects unknown providers', () => {
+    const base = { word: 'w', context: 'c', url: '', title: '', target: 'vi', outputFormat: 'f' };
+    const ok = WireMessageSchema.safeParse({
+      type: 'lookup',
+      requestId: '1',
+      req: { ...base, provider: 'anthropic' },
+    });
+    expect(ok.success).toBe(true);
+    const bad = WireMessageSchema.safeParse({
+      type: 'lookup',
+      requestId: '1',
+      req: { ...base, provider: 'skynet' },
+    });
+    expect(bad.success).toBe(false);
+  });
+
+  it('lookup result carries optional provider + fallbackFrom; old results still parse', () => {
+    const result = {
+      markdown: 'm',
+      word: 'w',
+      target: 'vi',
+      model: 'x',
+      fromCache: false,
+      fetchedAt: 1,
+    };
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'lookup', requestId: '1', result }).success,
+    ).toBe(true);
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'lookup',
+        requestId: '1',
+        result: { ...result, provider: 'anthropic', fallbackFrom: 'gemini' },
+      }).success,
+    ).toBe(true);
+  });
+
   it('JSON-schema snapshot is stable (spec §8.5)', async () => {
     await expect(JSON.stringify(wireJsonSchema(), null, 2)).toMatchFileSnapshot(
       '../wire-schema.snapshot.json',

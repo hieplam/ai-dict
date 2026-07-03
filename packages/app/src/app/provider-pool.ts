@@ -2,9 +2,13 @@ import type { LookupClient, LookupRequest, LookupResult, Provider } from '../ind
 import { isLookupError } from '../index';
 
 // Canonical provider order for the fallback tail: when a provider fails, the pool
-// tries remaining configured providers in this order. The primary (user-selected)
-// provider is always tried first regardless of where it falls here.
+// tries remaining configured providers in this order. The primary (user-selected
+// or one-shot picked) provider is always tried first regardless of where it falls here.
 const PROVIDER_ORDER: readonly Provider[] = ['gemini', 'openai', 'anthropic'];
+
+function isKnownProvider(v: unknown): v is Provider {
+  return typeof v === 'string' && (PROVIDER_ORDER as readonly string[]).includes(v);
+}
 
 export interface ProviderPoolDeps {
   /** One concrete client per provider, built once by the composition root. */
@@ -33,10 +37,11 @@ export interface ProviderPoolDeps {
 export function createProviderPool(deps: ProviderPoolDeps): LookupClient {
   return {
     async lookup(req: LookupRequest, opts?: { signal?: AbortSignal }): Promise<LookupResult> {
-      const [primary, configured] = await Promise.all([
-        deps.getProvider(),
-        deps.getConfiguredProviders(),
-      ]);
+      // A one-shot manual pick from the card (req.provider) overrides the stored default
+      // for THIS call only — it becomes the primary and runs first, even if keyless (its
+      // NO_KEY error then falls through to the next configured provider: any-failure semantics).
+      const primary = isKnownProvider(req.provider) ? req.provider : await deps.getProvider();
+      const configured = await deps.getConfiguredProviders();
 
       // Build the ordered candidate list: primary first, then remaining configured
       // providers in PROVIDER_ORDER, excluding the primary to avoid duplication.

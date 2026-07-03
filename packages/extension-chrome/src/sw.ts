@@ -1,7 +1,7 @@
 import {
   mapError,
   DEFAULT_OUTPUT_FORMAT,
-  type Provider,
+  configuredProvidersFor,
   type Settings,
   GeminiLookupClient,
   OpenAILookupClient,
@@ -95,16 +95,10 @@ const router = buildRouter({
     },
     // Settings stored before the provider field existed have no `provider` → Gemini.
     getProvider: async () => (await readFullSettings()).provider ?? 'gemini',
-    getConfiguredProviders: async () => {
-      const s = await readFullSettings();
-      const configured: Provider[] = [];
-      if (s.apiKey || ENV_API_KEY) configured.push('gemini');
-      if (s.openaiApiKey) configured.push('openai');
-      if (s.anthropicApiKey) configured.push('anthropic');
-      return configured;
-    },
+    getConfiguredProviders: async () =>
+      configuredProvidersFor(await readFullSettings(), { envGeminiKey: Boolean(ENV_API_KEY) }),
   }),
-  settings: new ChromeStorageStore(chrome.storage.local),
+  settings: new ChromeStorageStore(chrome.storage.local, Boolean(ENV_API_KEY)),
   kv: new ChromeKvStore(chrome.storage.local),
   readToggles: async () => {
     const s = await readFullSettings();

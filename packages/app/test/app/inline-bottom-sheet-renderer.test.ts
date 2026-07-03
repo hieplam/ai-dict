@@ -136,6 +136,40 @@ describe('InlineBottomSheetRenderer', () => {
     expect(card(h).hasAttribute('side-panel')).toBe(true);
   });
 
+  it('renderResult forwards provider + ctx.providers → badge and picker appear in light DOM', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(
+      { ...result, provider: 'anthropic', fallbackFrom: 'gemini' },
+      { providers: ['gemini', 'anthropic'], onSwitchProvider: () => {} },
+    );
+    const c = card(h);
+    expect(c.querySelector('.prov-badge')!.textContent).toBe('Claude');
+    expect(c.querySelector('.fallback-note')!.textContent).toBe(
+      'Gemini unavailable — answered by Claude',
+    );
+    expect(c.querySelector('.prov-switch')).not.toBeNull();
+  });
+
+  it('clicking a picker option invokes ctx.onSwitchProvider with the chosen provider', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    const picks: string[] = [];
+    r.renderResult(
+      { ...result, provider: 'gemini' },
+      { providers: ['gemini', 'openai'], onSwitchProvider: (p) => picks.push(p) },
+    );
+    const c = card(h);
+    c.querySelector<HTMLButtonElement>('.prov-menu [data-provider="openai"]')!.click();
+    expect(picks).toEqual(['openai']);
+  });
+
+  it('a result with no provider metadata renders no meta-row (back-compat)', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderResult(result);
+    expect(card(h).querySelector('.meta-row')).toBeNull();
+  });
+
   it('appendToCard appends a node into the open card and returns true; false when no card', () => {
     const r = new InlineBottomSheetRenderer(document.body);
     const extra = document.createElement('div');

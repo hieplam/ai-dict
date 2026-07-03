@@ -348,3 +348,119 @@ describe('<lookup-card>', () => {
     expect(await axeViolations(el)).toEqual([]);
   });
 });
+
+describe('<lookup-card> provider metadata row (badge, fallback note, picker)', () => {
+  it('result with a provider renders a .meta-row with the provider badge label', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      provider: 'anthropic',
+    };
+    const row = el.querySelector('.meta-row');
+    expect(row).not.toBeNull();
+    expect(el.querySelector('.prov-badge')!.textContent).toBe('Claude');
+  });
+
+  it('result WITHOUT a provider renders no .meta-row (e.g. entries cached before this feature)', () => {
+    const nodes = renderCardState({
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+    });
+    const hasMeta = nodes.some((n) => n instanceof HTMLElement && n.classList.contains('meta-row'));
+    expect(hasMeta).toBe(false);
+  });
+
+  it('fallbackFrom renders a .fallback-note naming the failed and answering providers', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      provider: 'anthropic',
+      fallbackFrom: 'gemini',
+    };
+    expect(el.querySelector('.fallback-note')!.textContent).toBe(
+      'Gemini unavailable — answered by Claude',
+    );
+  });
+
+  it('≥2 providers renders a .prov-switch; picking an option fires composed switch-provider', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      provider: 'gemini',
+      providers: ['gemini', 'openai', 'anthropic'],
+    };
+    const sw = el.querySelector<HTMLButtonElement>('.prov-switch');
+    expect(sw).not.toBeNull();
+    // The current provider's option is selected + disabled; others are actionable.
+    const current = el.querySelector<HTMLButtonElement>('.prov-menu [data-provider="gemini"]')!;
+    expect(current.getAttribute('aria-selected')).toBe('true');
+    expect(current.disabled).toBe(true);
+
+    let evt: CustomEvent<{ provider: string }> | null = null;
+    const handler = (e: Event): void => {
+      evt = e as CustomEvent<{ provider: string }>;
+    };
+    document.body.addEventListener('switch-provider', handler);
+    el.querySelector<HTMLButtonElement>('.prov-menu [data-provider="openai"]')!.click();
+    document.body.removeEventListener('switch-provider', handler);
+    expect(evt).not.toBeNull();
+    expect(evt!.composed).toBe(true);
+    expect(evt!.detail.provider).toBe('openai');
+  });
+
+  it('a single configured provider renders no .prov-switch (nothing to switch to)', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      provider: 'gemini',
+      providers: ['gemini'],
+    };
+    expect(el.querySelector('.prov-switch')).toBeNull();
+  });
+
+  it('the Switch button toggles the listbox open/closed via aria-expanded', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      provider: 'gemini',
+      providers: ['gemini', 'openai'],
+    };
+    const sw = el.querySelector<HTMLButtonElement>('.prov-switch')!;
+    const menu = el.querySelector<HTMLElement>('.prov-menu')!;
+    expect(menu.hidden).toBe(true);
+    expect(sw.getAttribute('aria-expanded')).toBe('false');
+    sw.click();
+    expect(menu.hidden).toBe(false);
+    expect(sw.getAttribute('aria-expanded')).toBe('true');
+  });
+
+  it('has no axe violations with the provider picker present (result state)', async () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'sky',
+      target: 'vi',
+      safeHtml: safe('<p>the sky</p>'),
+      provider: 'gemini',
+      providers: ['gemini', 'openai'],
+    };
+    expect(await axeViolations(el)).toEqual([]);
+  });
+});

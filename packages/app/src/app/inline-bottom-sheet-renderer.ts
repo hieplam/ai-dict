@@ -1,4 +1,11 @@
-import type { ResultRenderer, LookupResult, LookupError, Theme } from '../index';
+import type {
+  ResultRenderer,
+  ResultRenderContext,
+  LookupResult,
+  LookupError,
+  Provider,
+  Theme,
+} from '../index';
 import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '../ui/index';
 import { sanitizeMarkdown } from './markdown-sanitize';
 
@@ -6,6 +13,9 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   private sheet: HTMLElement | null = null;
   private card: LookupCard | null = null;
   private _theme: Theme = 'sepia';
+  // Set on every renderResult from the render context; the card's one `switch-provider`
+  // listener (attached in ensureCard) reads whatever the latest result installed.
+  private onSwitch: ((p: Provider) => void) | undefined;
 
   constructor(
     private readonly host: HTMLElement,
@@ -41,6 +51,11 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     sheet.append(card);
     sheet.addEventListener('dismiss', () => this.close());
     card.addEventListener('close', () => this.close());
+    // One-shot provider picker: the card fires `switch-provider` when the reader picks a
+    // provider; delegate to the handler the workflow installed via the render context.
+    card.addEventListener('switch-provider', (e) =>
+      this.onSwitch?.((e as CustomEvent<{ provider: Provider }>).detail.provider),
+    );
     this.host.append(sheet); // connection upgrades both elements + builds their shadow roots
     this.sheet = sheet;
     this.card = card;
@@ -60,9 +75,10 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.setState(word === undefined ? { kind: 'loading' } : { kind: 'loading', word });
   }
 
-  renderResult(r: LookupResult): void {
+  renderResult(r: LookupResult, ctx?: ResultRenderContext): void {
     // `sanitize` already returns `SafeHtml` (the trust boundary lives in sanitizeMarkdown, S4).
     // No cast needed here — the DI param type `(md: string) => SafeHtml` guarantees it.
+    this.onSwitch = ctx?.onSwitchProvider;
     this.setState({
       kind: 'result',
       safeHtml: this.sanitize(r.markdown),
@@ -70,6 +86,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
       target: r.target,
       ...(r.provider !== undefined ? { provider: r.provider } : {}),
       ...(r.fallbackFrom !== undefined ? { fallbackFrom: r.fallbackFrom } : {}),
+      ...(ctx?.providers !== undefined ? { providers: ctx.providers } : {}),
     });
   }
 

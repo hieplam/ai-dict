@@ -10,6 +10,8 @@ export type ErrorInput =
       kind: 'http';
       status: number;
       geminiStatus?: string;
+      /** Provider-native error type (e.g. Anthropic's 'rate_limit_error'); flows into diag as vendorStatus. */
+      vendorStatus?: string;
       retryAfterSec?: number;
       provider?: Provider;
       /** Raw provider error.message; scrubbed + capped here before it can leave the device. */
@@ -52,14 +54,17 @@ export function mapError(input: ErrorInput): LookupError {
       return { code: 'PARSE', message: `${product} returned unexpected output.`, retryable: false };
     }
     case 'http': {
-      const { status, geminiStatus, retryAfterSec, vendorMessage } = input;
+      const { status, geminiStatus, vendorStatus, retryAfterSec, vendorMessage } = input;
       const { product, vendor } = NAMES[input.provider ?? 'gemini'];
       // The vendor's own failure signature, attached to EVERY http-mapped error for telemetry.
       // httpStatus/vendorStatus are safe provider enums/numbers; vendorMessage is free text so it
       // is secret-scrubbed + capped HERE, before the LookupError can cross the wire (S1).
+      // A native vendorStatus (e.g. Anthropic 'rate_limit_error') takes precedence over the
+      // Gemini-style geminiStatus so each provider reports its own signature.
+      const status_ = vendorStatus ?? geminiStatus;
       const diag: Pick<LookupError, 'httpStatus' | 'vendorStatus' | 'vendorMessage'> = {
         httpStatus: status,
-        ...(geminiStatus !== undefined ? { vendorStatus: geminiStatus } : {}),
+        ...(status_ !== undefined ? { vendorStatus: status_ } : {}),
         ...(vendorMessage ? { vendorMessage: sanitize(vendorMessage) } : {}),
       };
       const base = ((): LookupError => {
