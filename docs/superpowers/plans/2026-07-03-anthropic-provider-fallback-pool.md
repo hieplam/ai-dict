@@ -35,10 +35,12 @@
 ### Task 1: Domain types — Provider union, keys, result metadata, configuredProviders
 
 **Files:**
+
 - Modify: `packages/app/src/domain/types.ts`
 - Test: `packages/app/test/types.test.ts`
 
 **Interfaces produced (later tasks rely on these exact names):**
+
 - `type Provider = 'gemini' | 'openai' | 'anthropic'`
 - `const PROVIDERS: readonly Provider[]` (canonical order `['gemini','openai','anthropic']`)
 - `Settings.anthropicApiKey: string`
@@ -95,7 +97,7 @@ export function hasKeyFor(s: {
 }
 ```
 
-  - New pure helper (used by both storage-store adapters):
+- New pure helper (used by both storage-store adapters):
 
 ```ts
 /** Providers with a usable key, canonical order. envGeminiKey: a build-time
@@ -119,6 +121,7 @@ export function configuredProvidersFor(
 ### Task 2: Wire schemas — provider fields + configuredProviders
 
 **Files:**
+
 - Modify: `packages/app/src/wire.ts`
 - Test: `packages/app/test/wire-schema.test.ts`
 
@@ -143,21 +146,37 @@ it('lookup req accepts an optional provider override and rejects unknown provide
   expect(bad.success).toBe(false);
 });
 it('lookup result carries optional provider + fallbackFrom; old results still parse', () => {
-  const result = { markdown: 'm', word: 'w', target: 'vi', model: 'x', fromCache: false, fetchedAt: 1 };
+  const result = {
+    markdown: 'm',
+    word: 'w',
+    target: 'vi',
+    model: 'x',
+    fromCache: false,
+    fetchedAt: 1,
+  };
   expect(
     WireReplySchema.safeParse({ ok: true, type: 'lookup', requestId: '1', result }).success,
   ).toBe(true);
   expect(
     WireReplySchema.safeParse({
-      ok: true, type: 'lookup', requestId: '1',
+      ok: true,
+      type: 'lookup',
+      requestId: '1',
       result: { ...result, provider: 'anthropic', fallbackFrom: 'gemini' },
     }).success,
   ).toBe(true);
 });
 it('settings reply includes configuredProviders', () => {
   const r = WireReplySchema.safeParse({
-    ok: true, type: 'settings',
-    settings: { targetLang: 'vi', outputFormat: 'f', hasKey: true, theme: 'sepia', configuredProviders: ['gemini'] },
+    ok: true,
+    type: 'settings',
+    settings: {
+      targetLang: 'vi',
+      outputFormat: 'f',
+      hasKey: true,
+      theme: 'sepia',
+      configuredProviders: ['gemini'],
+    },
   });
   expect(r.success).toBe(true);
 });
@@ -190,6 +209,7 @@ it('names Claude/Anthropic for anthropic-tagged errors', () => {
 ### Task 4: AnthropicLookupClient
 
 **Files:**
+
 - Create: `packages/app/src/app/anthropic-lookup-client.ts`
 - Modify: `packages/app/src/index.ts` (export it — mirror how `OpenAILookupClient` is exported)
 - Test: `packages/app/test/app/anthropic-lookup-client.test.ts`
@@ -215,10 +235,10 @@ interface AnthropicErrBody {
 }
 ```
 
-  - fetch call: `headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': ANTHROPIC_VERSION, 'anthropic-dangerous-direct-browser-access': 'true' }`, body `JSON.stringify({ model, max_tokens: MAX_TOKENS, messages: [{ role: 'user', content: prompt }] })`.
-  - !res.ok branch: parse `AnthropicErrBody`; pass `vendorMessage: body.error?.message` AND `vendorStatus: body.error?.type` into the http `ErrorInput`. NOTE: `ErrorInput.http` today has `geminiStatus` for vendorStatus — do NOT reuse `geminiStatus`; instead add an optional `vendorStatus?: string` member to the http variant in `error-mapper.ts` that flows into `diag` exactly like `geminiStatus` does (one-line addition: `...(input.vendorStatus !== undefined ? { vendorStatus: input.vendorStatus } : {})` merged with the existing geminiStatus spread; add a mapper unit test for it).
-  - success parse: `const text = parsed.content?.find((b) => b?.type === 'text')?.text;` then the same non-empty-string guard; return `{ markdown: text, word: req.word, target: req.target, model, provider: 'anthropic', fromCache: false, fetchedAt: Date.now() }`.
-  - all `mapError` provider tags: `'anthropic'`.
+- fetch call: `headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': ANTHROPIC_VERSION, 'anthropic-dangerous-direct-browser-access': 'true' }`, body `JSON.stringify({ model, max_tokens: MAX_TOKENS, messages: [{ role: 'user', content: prompt }] })`.
+- !res.ok branch: parse `AnthropicErrBody`; pass `vendorMessage: body.error?.message` AND `vendorStatus: body.error?.type` into the http `ErrorInput`. NOTE: `ErrorInput.http` today has `geminiStatus` for vendorStatus — do NOT reuse `geminiStatus`; instead add an optional `vendorStatus?: string` member to the http variant in `error-mapper.ts` that flows into `diag` exactly like `geminiStatus` does (one-line addition: `...(input.vendorStatus !== undefined ? { vendorStatus: input.vendorStatus } : {})` merged with the existing geminiStatus spread; add a mapper unit test for it).
+- success parse: `const text = parsed.content?.find((b) => b?.type === 'text')?.text;` then the same non-empty-string guard; return `{ markdown: text, word: req.word, target: req.target, model, provider: 'anthropic', fromCache: false, fetchedAt: Date.now() }`.
+- all `mapError` provider tags: `'anthropic'`.
 - [ ] **Step 4:** Anthropic suite PASS; run full `bun run test packages/app/test/app` and mapper tests.
 - [ ] **Step 5: Commit** `git commit -am "feat(app): AnthropicLookupClient (claude-haiku-4-5, messages API)"`
 
@@ -234,6 +254,7 @@ interface AnthropicErrBody {
 **Files:** Modify `packages/app/src/app/lookup-client-selector.ts`; Test `packages/app/test/app/lookup-client-selector.test.ts`
 
 **Interfaces produced:** `LookupClientSelectorDeps` gains `getConfiguredProviders: () => Provider[] | Promise<Provider[]>`. Behavior contract (consumed by both sw.ts files):
+
 1. `requested = req.provider` if it is a key of `clients` AND (configured OR equal to `getProvider()` result); otherwise `await getProvider()`. Simplest correct rule: honor `req.provider` when it's a known provider, else use `getProvider()`.
 2. Candidates: `[requested, ...PROVIDERS.filter(p => p !== requested && configured.includes(p))]` — requested runs even if keyless (its NO_KEY error then falls through to the next candidate: pure any-failure semantics).
 3. Per candidate try/catch: caller-cancel (`opts?.signal?.aborted` and error is NOT `isLookupError`) → rethrow raw. Device offline (`navigator.onLine === false`) → rethrow (all providers share the network). Otherwise remember the FIRST error and continue.
@@ -251,11 +272,18 @@ function failingClient(code = 'NETWORK'): LookupClient & { lookup: ReturnType<ty
 }
 ```
 
-  Tests: (1) *falls back to next configured provider on any failure and annotates fallbackFrom* — gemini failing, openai stub, anthropic stub; getProvider 'gemini'; configured `['gemini','openai','anthropic']` → result model `gpt-4o-mini`, `fallbackFrom: 'gemini'`, gemini called once, anthropic never. (2) *skips unconfigured providers* — configured `['gemini','anthropic']`, gemini fails → anthropic answers. (3) *throws the FIRST (requested) error when all fail*. (4) *req.provider override wins over getProvider and is one-shot input* — getProvider 'gemini', `selector.lookup({ ...req, provider: 'anthropic' })` → anthropic called first. (5) *caller-cancel rethrows raw without trying next* — client rejects `new DOMException('x','AbortError')` with an aborted signal → selector rejects with that same error, second client never called. (6) *no fallbackFrom when requested provider succeeds*. (7) *offline stops the chain*: `vi.stubGlobal('navigator', { onLine: false })` (mirror the client suites' stub/unstub pattern), gemini fails → rejects with gemini's error, openai never called.
+Tests: (1) _falls back to next configured provider on any failure and annotates fallbackFrom_ — gemini failing, openai stub, anthropic stub; getProvider 'gemini'; configured `['gemini','openai','anthropic']` → result model `gpt-4o-mini`, `fallbackFrom: 'gemini'`, gemini called once, anthropic never. (2) _skips unconfigured providers_ — configured `['gemini','anthropic']`, gemini fails → anthropic answers. (3) _throws the FIRST (requested) error when all fail_. (4) _req.provider override wins over getProvider and is one-shot input_ — getProvider 'gemini', `selector.lookup({ ...req, provider: 'anthropic' })` → anthropic called first. (5) _caller-cancel rethrows raw without trying next_ — client rejects `new DOMException('x','AbortError')` with an aborted signal → selector rejects with that same error, second client never called. (6) _no fallbackFrom when requested provider succeeds_. (7) _offline stops the chain_: `vi.stubGlobal('navigator', { onLine: false })` (mirror the client suites' stub/unstub pattern), gemini fails → rejects with gemini's error, openai never called.
+
 - [ ] **Step 2:** FAIL (deps type + behavior). **Step 3: Implement** (complete replacement of the selector body):
 
 ```ts
-import { PROVIDERS, type LookupClient, type LookupRequest, type LookupResult, type Provider } from '../index';
+import {
+  PROVIDERS,
+  type LookupClient,
+  type LookupRequest,
+  type LookupResult,
+  type Provider,
+} from '../index';
 
 export interface LookupClientSelectorDeps {
   clients: Record<Provider, LookupClient>;
@@ -300,14 +328,15 @@ function isLookupErrorShape(e: unknown): boolean {
 }
 ```
 
-  Update the two pre-existing tests to pass `getConfiguredProviders: () => ['gemini','openai']`. Keep the doc comment on the factory: rewrite it to describe the pool (per-call resolution unchanged; any-failure fall-through; offline/cancel stop; first error surfaces).
+Update the two pre-existing tests to pass `getConfiguredProviders: () => ['gemini','openai']`. Keep the doc comment on the factory: rewrite it to describe the pool (per-call resolution unchanged; any-failure fall-through; offline/cancel stop; first error surfaces).
+
 - [ ] **Step 4:** Suite PASS. **Step 5: Commit** `git commit -am "feat(app): lookup selector becomes any-failure fallback pool"`
 
 ### Task 7: Router — cache bypass on override, strip fallbackFrom on persist
 
 **Files:** Modify `packages/app/src/app/router.ts`; Test `packages/app/test/app/router.test.ts`
 
-- [ ] **Step 1: Failing tests** (follow the existing router suite's fake client/kv pattern): (1) *manual provider override skips the cache read* — seed cache so a normal lookup hits, then send `req` with `provider: 'openai'` → client called, reply `fromCache` false. (2) *fallbackFrom never persists* — client resolves `{ ..., provider: 'openai', fallbackFrom: 'gemini' }` with cache+history on → reply carries `fallbackFrom`, but the cachePut'd value and the history entry's `result` do NOT have a `fallbackFrom` key (assert `'fallbackFrom' in stored === false`), while `provider: 'openai'` IS persisted.
+- [ ] **Step 1: Failing tests** (follow the existing router suite's fake client/kv pattern): (1) _manual provider override skips the cache read_ — seed cache so a normal lookup hits, then send `req` with `provider: 'openai'` → client called, reply `fromCache` false. (2) _fallbackFrom never persists_ — client resolves `{ ..., provider: 'openai', fallbackFrom: 'gemini' }` with cache+history on → reply carries `fallbackFrom`, but the cachePut'd value and the history entry's `result` do NOT have a `fallbackFrom` key (assert `'fallbackFrom' in stored === false`), while `provider: 'openai'` IS persisted.
 - [ ] **Step 2:** FAIL. **Step 3: Implement** in `handleLookup`:
   - Cache read gate: `if (cacheEnabled && req.provider === undefined) { …cacheGet… }` (comment: a manual pick must reach the picked provider — the cache key ignores provider, so a hit would echo the old answer back).
   - After `deps.client.lookup(...)`: `const { fallbackFrom: _transient, ...persistable } = result;` use `persistable` for `cachePut` and for the `HistoryEntry.result`; keep replying with the full `result`.
@@ -316,6 +345,7 @@ function isLookupErrorShape(e: unknown): boolean {
 ### Task 8: Storage stores + SW wiring + manifests (both shells)
 
 **Files:**
+
 - Modify: `packages/extension-chrome/src/adapters/chrome-storage-store.ts`, `packages/extension-safari/src/adapters/safari-storage-store.ts` (mirror), `packages/extension-chrome/src/sw.ts`, `packages/extension-safari/src/sw.ts`, `packages/extension-chrome/src/manifest.json`, `packages/extension-safari/src/manifest.json`
 - Test: `packages/extension-chrome/src/adapters/*.test.ts` if a store test exists (check `ls packages/extension-chrome/src/adapters`); otherwise adapter behavior is covered by the e2e task.
 
@@ -329,14 +359,15 @@ anthropic: new AnthropicLookupClient({
 }),
 ```
 
-  Selector deps gain:
+Selector deps gain:
 
 ```ts
 getConfiguredProviders: async () =>
   configuredProvidersFor(await readFullSettings(), { envGeminiKey: Boolean(ENV_API_KEY) }),
 ```
 
-  Settings store construction: `new ChromeStorageStore(chrome.storage.local, Boolean(ENV_API_KEY))`.
+Settings store construction: `new ChromeStorageStore(chrome.storage.local, Boolean(ENV_API_KEY))`.
+
 - [ ] **Step 3: Safari sw.ts.** Same clients-record + `getConfiguredProviders: async () => configuredProvidersFor(await readFullSettings())` (no env), defaults object gains the two new fields.
 - [ ] **Step 4: Manifests.** In BOTH `manifest.json` files add `"https://api.anthropic.com/*"` to `host_permissions` (alongside the existing Gemini/OpenAI hosts — confirm the key name in each file and match its style).
 - [ ] **Step 5:** `bun run typecheck` now passes workspace-wide (Tasks 1–8 close the loop). `bun run build:chrome` and `bun run build:safari` succeed.
@@ -345,6 +376,7 @@ getConfiguredProviders: async () =>
 ### Task 9: Settings form + options pages carry the Claude key
 
 **Files:**
+
 - Modify: `packages/app/src/ui/settings-form.ts`, `packages/extension-chrome/src/options.ts`, `packages/extension-safari/src/options.ts`
 - Test: `packages/app/test/ui/settings-form.test.ts` (check `ls packages/app/test/ui` for the exact file; extend it in its own style)
 
@@ -366,10 +398,12 @@ getConfiguredProviders: async () =>
 ### Task 10: Workflow — configured-providers gate + one-shot picker re-lookup
 
 **Files:**
+
 - Modify: `packages/app/src/domain/workflow.ts`, `packages/app/src/ports.ts`
 - Test: `packages/app/test/workflow.test.ts`
 
 **Interfaces produced (Task 11 consumes):**
+
 - `ports.ts`: `ResultRenderer.renderResult(r: LookupResult, ctx?: ResultRenderContext): void` and
 
 ```ts
@@ -381,14 +415,14 @@ export interface ResultRenderContext {
 }
 ```
 
-  (import `Provider` into `ports.ts` from `./domain/types`).
+(import `Provider` into `ports.ts` from `./domain/types`).
 
 - [ ] **Step 1: Failing tests** (extend `workflow.test.ts` using its existing fake deps):
-  1. *gates on configuredProviders, not hasKey*: settings `{ hasKey: false, configuredProviders: ['openai'] }` → lookup FIRES (no NO_KEY error).
-  2. *renders no-key when nothing configured*: `{ hasKey: false, configuredProviders: [] }` → `renderError` with `code NO_KEY`, client never called.
-  3. *passes picker context on success*: settings with `configuredProviders: ['gemini','openai']` → `renderResult` called with a 2nd arg whose `providers` equals that list and whose `onSwitchProvider` is a function.
-  4. *switch re-runs same selection with provider override*: capture `ctx.onSwitchProvider` from the first render, call it with `'openai'` → client called again with `req.provider === 'openai'` and same word/context; `renderLoading` shown again; cooldown does NOT block it.
-  5. *no picker context with a single configured provider*: `configuredProviders: ['gemini']` → 2nd arg omitted or `providers` undefined.
+  1. _gates on configuredProviders, not hasKey_: settings `{ hasKey: false, configuredProviders: ['openai'] }` → lookup FIRES (no NO_KEY error).
+  2. _renders no-key when nothing configured_: `{ hasKey: false, configuredProviders: [] }` → `renderError` with `code NO_KEY`, client never called.
+  3. _passes picker context on success_: settings with `configuredProviders: ['gemini','openai']` → `renderResult` called with a 2nd arg whose `providers` equals that list and whose `onSwitchProvider` is a function.
+  4. _switch re-runs same selection with provider override_: capture `ctx.onSwitchProvider` from the first render, call it with `'openai'` → client called again with `req.provider === 'openai'` and same word/context; `renderLoading` shown again; cooldown does NOT block it.
+  5. _no picker context with a single configured provider_: `configuredProviders: ['gemini']` → 2nd arg omitted or `providers` undefined.
 - [ ] **Step 2:** FAIL. **Step 3: Implement** in `workflow.ts`:
   - Update `PublicSettings` consumers: gate becomes `if (settings.configuredProviders.length === 0) { renderError(no-key); return; }` (replaces the `!settings.hasKey` check; `hasKey` remains for the settings UI).
   - `runLookup(e: SelectionEvent, providerOverride?: Provider)`: build `req` as today, then `if (providerOverride) req.provider = providerOverride;` (with `LookupRequest.provider?` from Task 2).
@@ -409,16 +443,18 @@ const ctx: ResultRenderContext | undefined =
 if (!controller.signal.aborted) deps.renderer.renderResult(result, ctx);
 ```
 
-  - The picker path calls `runLookup` directly (bypasses the trigger-click cooldown gate by design — a deliberate switch is not Define-spam; note this in a one-line comment).
+- The picker path calls `runLookup` directly (bypasses the trigger-click cooldown gate by design — a deliberate switch is not Define-spam; note this in a one-line comment).
 - [ ] **Step 4:** Workflow suite PASS (update any existing tests constructing `PublicSettings` to include `configuredProviders`). **Step 5: Commit** `git commit -am "feat(domain): workflow gates on configured providers and offers one-shot provider switch"`
 
 ### Task 11: Card UI — badge, fallback note, picker menu
 
 **Files:**
+
 - Modify: `packages/app/src/ui/lookup-card.ts`, `packages/app/src/app/inline-bottom-sheet-renderer.ts`, `packages/extension-chrome/src/side-panel.ts` (badge only), `packages/app/src/ui/side-panel-view.ts` (only if it forwards CardState types)
 - Test: `packages/app/test/app/inline-bottom-sheet-renderer.test.ts` + the ui suite for `renderCardState`
 
 **Design (locked):**
+
 - `CardState` result variant gains `provider?: Provider; fallbackFrom?: Provider; providers?: Provider[];`.
 - New UI constant `export const PROVIDER_LABELS: Record<Provider, string> = { gemini: 'Gemini', openai: 'ChatGPT', anthropic: 'Claude' };` in `lookup-card.ts`.
 - `renderCardState` appends, after the body div, a light-DOM `<div class="meta-row">` containing:
@@ -435,6 +471,7 @@ if (!controller.signal.aborted) deps.renderer.renderResult(result, ctx);
 ### Task 12: e2e — mockAnthropic + badge/fallback/picker specs + seedSettings
 
 **Files:**
+
 - Modify: `packages/extension-chrome/e2e/helpers.ts`
 - Create: `packages/extension-chrome/e2e/provider-fallback.spec.ts`
 - Reference: `packages/extension-chrome/e2e/provider-selection.spec.ts` (existing patterns for provider e2e), `lookup.spec.ts`
@@ -449,14 +486,17 @@ export const ANTHROPIC_OK_BODY = JSON.stringify({
 export async function mockAnthropic(
   context: BrowserContext,
   opts: MockGeminiOpts = {},
-): Promise<{ count: number }> { /* copy mockOpenAI body, swap GLOB + OK body */ }
+): Promise<{ count: number }> {
+  /* copy mockOpenAI body, swap GLOB + OK body */
+}
 ```
 
-  `SettingsOverrides` gains `anthropicApiKey?: string` and widens `provider` to `'gemini' | 'openai' | 'anthropic'`; `seedSettings` defaults add `anthropicApiKey: ''`.
+`SettingsOverrides` gains `anthropicApiKey?: string` and widens `provider` to `'gemini' | 'openai' | 'anthropic'`; `seedSettings` defaults add `anthropicApiKey: ''`.
+
 - [ ] **Step 2: Spec `provider-fallback.spec.ts`** (use the fixtures/`test` export from `./fixtures` like the other specs):
-  1. *badge shows answering provider*: seed `{ provider: 'gemini' }`, `mockGemini`, run the canonical lookup (`gotoFixture`, `selectWord`, `openTrigger`), expect card light DOM to contain badge text `Gemini`.
-  2. *any-failure fallback with note*: seed `{ provider: 'gemini', anthropicApiKey: 'sk-ant-e2e' }`, `mockGemini(context, { status: 500 })`, `mockAnthropic(context)` → card renders the Claude body, badge `Claude`, note contains `Gemini unavailable`; gemini mock count === 1, anthropic count === 1.
-  3. *one-shot picker*: seed `{ provider: 'gemini', openaiApiKey: 'sk-e2e' }`, mock both OK, lookup → badge `Gemini`; click `.prov-switch`, click the `ChatGPT` option → card re-renders with badge `ChatGPT` and openai count === 1; select the word again and lookup → badge `Gemini` again (default restored; cache note: the picker lookup overwrote the cache entry with OpenAI's answer — cover this by asserting the SECOND default lookup serves `fromCache` content with badge `ChatGPT`? NO — keep it deterministic: seed `cacheEnabled: false` for this test).
+  1. _badge shows answering provider_: seed `{ provider: 'gemini' }`, `mockGemini`, run the canonical lookup (`gotoFixture`, `selectWord`, `openTrigger`), expect card light DOM to contain badge text `Gemini`.
+  2. _any-failure fallback with note_: seed `{ provider: 'gemini', anthropicApiKey: 'sk-ant-e2e' }`, `mockGemini(context, { status: 500 })`, `mockAnthropic(context)` → card renders the Claude body, badge `Claude`, note contains `Gemini unavailable`; gemini mock count === 1, anthropic count === 1.
+  3. _one-shot picker_: seed `{ provider: 'gemini', openaiApiKey: 'sk-e2e' }`, mock both OK, lookup → badge `Gemini`; click `.prov-switch`, click the `ChatGPT` option → card re-renders with badge `ChatGPT` and openai count === 1; select the word again and lookup → badge `Gemini` again (default restored; cache note: the picker lookup overwrote the cache entry with OpenAI's answer — cover this by asserting the SECOND default lookup serves `fromCache` content with badge `ChatGPT`? NO — keep it deterministic: seed `cacheEnabled: false` for this test).
 - [ ] **Step 3:** `bun run build:chrome && bun run e2e:chrome` → all specs green (including the pre-existing suite: `provider-selection.spec.ts` exercises the selector deps — update its seeds if `configuredProviders`-related changes surface).
 - [ ] **Step 4: Commit** `git commit -am "test(e2e): anthropic mock, fallback + picker flows"`
 
