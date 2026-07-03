@@ -2,6 +2,20 @@
 <html lang="en" data-ad-theme="sepia">
   <head>
     <meta charset="utf-8" />
+    <script>
+      // Resolve language before first paint: ?lang= wins (saved), else saved choice, else en.
+      (function () {
+        var p = new URLSearchParams(location.search).get('lang');
+        var l = p === 'vi' || p === 'en' ? p : null;
+        try {
+          if (l) localStorage.setItem('ad_lang', l);
+          else l = localStorage.getItem('ad_lang');
+        } catch (e) {
+          /* storage blocked: default en */
+        }
+        document.documentElement.lang = l === 'vi' ? 'vi' : 'en';
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AI Dictionary: look up any word right where you’re reading</title>
     <meta
@@ -318,6 +332,34 @@
           color var(--adp-dur-fast) var(--adp-ease);
       }
       .seg button[aria-pressed='true'] {
+        background: var(--ad-accent);
+        color: var(--ad-on-accent);
+      }
+
+      /* Language switch -------------------------------------------------- */
+      .lang-switch {
+        display: inline-flex;
+        border: 1px solid var(--ad-line-strong);
+        border-radius: var(--adp-radius-control);
+        background: var(--ad-surface-sunken);
+        padding: 2px;
+        gap: 2px;
+        flex: none;
+      }
+      .lang-switch button {
+        appearance: none;
+        border: 0;
+        background: transparent;
+        color: var(--ad-ink-soft);
+        font: 600 var(--adp-text-xs) / 1 var(--adp-font-sans);
+        padding: 7px 11px;
+        border-radius: calc(var(--adp-radius-control) - 3px);
+        cursor: pointer;
+        transition:
+          background-color var(--adp-dur-fast) var(--adp-ease),
+          color var(--adp-dur-fast) var(--adp-ease);
+      }
+      .lang-switch button[aria-pressed='true'] {
         background: var(--ad-accent);
         color: var(--ad-on-accent);
       }
@@ -903,7 +945,7 @@
     </style>
   </head>
   <body>
-    <a class="skip" href="#main">Skip to content</a>
+    <a class="skip" href="#main" data-i18n="a11y-skip">Skip to content</a>
 
     <div class="shell">
       <header class="site">
@@ -915,13 +957,17 @@
           AI Dictionary
         </a>
         <nav class="site" aria-label="Sections">
-          <a href="#why">Why</a>
-          <a href="#compare">Compare</a>
-          <a href="#guide">Guide</a>
-          <a href="#start">Get started</a>
-          <a href="#faq">FAQ</a>
+          <a href="#why" data-i18n="nav-why">Why</a>
+          <a href="#compare" data-i18n="nav-compare">Compare</a>
+          <a href="#guide" data-i18n="nav-guide">Guide</a>
+          <a href="#start" data-i18n="nav-start">Get started</a>
+          <a href="#faq" data-i18n="nav-faq">FAQ</a>
           <a href="https://github.com/hieplam/ai-dict">GitHub</a>
         </nav>
+        <div class="lang-switch" role="group" aria-label="Language / Ngôn ngữ">
+          <button type="button" data-lang="en" aria-pressed="true">EN</button>
+          <button type="button" data-lang="vi" aria-pressed="false">VI</button>
+        </div>
         <div
           class="seg"
           role="group"
@@ -937,9 +983,11 @@
         <!-- ============================ HERO ============================ -->
         <div class="hero" id="top">
           <div>
-            <p class="eyebrow">Free Chrome extension · your own key · no account</p>
-            <h1>Look up any word right where you&rsquo;re reading.</h1>
-            <p class="lede">
+            <p class="eyebrow" data-i18n="hero-eyebrow">
+              Free Chrome extension · your own key · no account
+            </p>
+            <h1 data-i18n="hero-title">Look up any word right where you&rsquo;re reading.</h1>
+            <p class="lede" data-i18n="hero-lede">
               Select a word on any page and AI Dictionary reads the sentence around it, picks the
               one meaning that fits, and hands it to you in your language. You never leave the
               paragraph.
@@ -948,10 +996,11 @@
               <a
                 class="btn btn-primary"
                 href="https://chromewebstore.google.com/detail/ai-dictionary/ipnmjhndmlkbhnifhmbknjjomdocgkeg"
+                data-i18n="hero-cta-primary"
               >
                 Add to Chrome, it’s free
               </a>
-              <a class="btn btn-quiet" href="#why">See it think</a>
+              <a class="btn btn-quiet" href="#why" data-i18n="hero-cta-secondary">See it think</a>
             </div>
             <p class="privacy-line">
               <svg width="13" height="15" viewBox="0 0 13 15" fill="none" aria-hidden="true">
@@ -962,7 +1011,9 @@
                   stroke-linejoin="round"
                 />
               </svg>
-              No server. No account. Your key and your history stay in your browser.
+              <span data-i18n="hero-privacy-line"
+                >No server. No account. Your key and your history stay in your browser.</span
+              >
             </p>
           </div>
 
@@ -971,6 +1022,7 @@
           <div
             class="tableau"
             aria-label="Demo: the word bank selected in a sentence, with the AI Dictionary definition card showing the riverside sense"
+            data-i18n-attrs="aria-label:hero-tableau-aria"
           >
             <div class="sheet">
               <p class="kicker">Memoir</p>
@@ -1038,11 +1090,13 @@
 
         <!-- ============================ WHY ============================ -->
         <section id="why" class="reveal">
-          <p class="eyebrow">The one thing word-only dictionaries can’t do</p>
-          <h2 class="prose">
+          <p class="eyebrow" data-i18n="why-eyebrow">
+            The one thing word-only dictionaries can’t do
+          </p>
+          <h2 class="prose" data-i18n="why-h2">
             Ordinary dictionaries look up the word.<br />This one reads the sentence.
           </h2>
-          <p class="lede prose" style="margin-top: 18px">
+          <p class="lede prose" style="margin-top: 18px" data-i18n="why-lede">
             Classic dictionary extensions, including Google’s, throw away everything around your
             selection and hand back every meaning the word has ever had. You scroll and guess. AI
             Dictionary sends the word <strong>with its sentence</strong>, so you get the one sense
@@ -1078,11 +1132,12 @@
               preload="metadata"
               poster="media/screenshots/select-define.png"
               aria-label="Screen recording: the word bank looked up in two different sentences, returning the riverside sense in one and the financial sense in the other"
+              data-i18n-attrs="aria-label:why-video-aria"
             >
               <source src="media/demos/context-bank/context-bank-demo.mp4" type="video/mp4" />
             </video>
           </figure>
-          <p class="caption">
+          <p class="caption" data-i18n="why-caption">
             Same word, opposite meanings, both correct: picked from context, not guessed.
           </p>
         </section>
@@ -1091,54 +1146,70 @@
 
         <!-- ============================ COMPARE ============================ -->
         <section id="compare" class="reveal">
-          <p class="eyebrow">An honest comparison</p>
-          <h2>Where it sits among the usual suspects</h2>
+          <p class="eyebrow" data-i18n="compare-eyebrow">An honest comparison</p>
+          <h2 data-i18n="compare-h2">Where it sits among the usual suspects</h2>
           <div class="compare-wrap">
             <table class="compare">
               <thead>
                 <tr>
-                  <th scope="col">While you read…</th>
+                  <th scope="col" data-i18n="compare-th-feature">While you read…</th>
                   <th scope="col">AI Dictionary</th>
-                  <th scope="col">Word-only dictionary extensions</th>
-                  <th scope="col">Chat AI in another tab</th>
+                  <th scope="col" data-i18n="compare-th-word-only">
+                    Word-only dictionary extensions
+                  </th>
+                  <th scope="col" data-i18n="compare-th-chat-ai">Chat AI in another tab</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>Understands the sentence around the word</td>
-                  <td><span class="yes">Yes,</span> sent with every lookup</td>
-                  <td><span class="no">No,</span> the word alone</td>
-                  <td>Only if you paste the paragraph yourself</td>
+                  <td data-i18n="compare-r1-feature">Understands the sentence around the word</td>
+                  <td data-i18n="compare-r1-ai-dict">
+                    <span class="yes">Yes,</span> sent with every lookup
+                  </td>
+                  <td data-i18n="compare-r1-word-only">
+                    <span class="no">No,</span> the word alone
+                  </td>
+                  <td data-i18n="compare-r1-chat-ai">Only if you paste the paragraph yourself</td>
                 </tr>
                 <tr>
-                  <td>What you get back</td>
-                  <td>The one sense in play, in two languages</td>
-                  <td>Every sense the word has ever had</td>
-                  <td>A good answer, eventually, somewhere else</td>
+                  <td data-i18n="compare-r2-feature">What you get back</td>
+                  <td data-i18n="compare-r2-ai-dict">The one sense in play, in two languages</td>
+                  <td data-i18n="compare-r2-word-only">Every sense the word has ever had</td>
+                  <td data-i18n="compare-r2-chat-ai">A good answer, eventually, somewhere else</td>
                 </tr>
                 <tr>
-                  <td>Keeps you on the page</td>
-                  <td><span class="yes">Yes,</span> card on the page or side panel</td>
-                  <td>Mostly</td>
-                  <td><span class="no">No,</span> tab switch every time</td>
+                  <td data-i18n="compare-r3-feature">Keeps you on the page</td>
+                  <td data-i18n="compare-r3-ai-dict">
+                    <span class="yes">Yes,</span> card on the page or side panel
+                  </td>
+                  <td data-i18n="compare-r3-word-only">Mostly</td>
+                  <td data-i18n="compare-r3-chat-ai">
+                    <span class="no">No,</span> tab switch every time
+                  </td>
                 </tr>
                 <tr>
-                  <td>Account required</td>
-                  <td><span class="yes">None.</span> Your own free API key</td>
-                  <td>None</td>
-                  <td>Usually</td>
+                  <td data-i18n="compare-r4-feature">Account required</td>
+                  <td data-i18n="compare-r4-ai-dict">
+                    <span class="yes">None.</span> Your own free API key
+                  </td>
+                  <td data-i18n="compare-r4-word-only">None</td>
+                  <td data-i18n="compare-r4-chat-ai">Usually</td>
                 </tr>
                 <tr>
-                  <td>Tracking</td>
-                  <td><span class="yes">None.</span> Opt-in crash reports only, off by default</td>
-                  <td>Varies by vendor</td>
-                  <td>Provider-dependent</td>
+                  <td data-i18n="compare-r5-feature">Tracking</td>
+                  <td data-i18n="compare-r5-ai-dict">
+                    <span class="yes">None.</span> Opt-in crash reports only, off by default
+                  </td>
+                  <td data-i18n="compare-r5-word-only">Varies by vendor</td>
+                  <td data-i18n="compare-r5-chat-ai">Provider-dependent</td>
                 </tr>
                 <tr>
-                  <td>Cost</td>
-                  <td>Free; you pay only your own API usage (free tier is plenty)</td>
-                  <td>Free</td>
-                  <td>Often a subscription</td>
+                  <td data-i18n="compare-r6-feature">Cost</td>
+                  <td data-i18n="compare-r6-ai-dict">
+                    Free; you pay only your own API usage (free tier is plenty)
+                  </td>
+                  <td data-i18n="compare-r6-word-only">Free</td>
+                  <td data-i18n="compare-r6-chat-ai">Often a subscription</td>
                 </tr>
               </tbody>
             </table>
@@ -1149,12 +1220,12 @@
 
         <!-- ============================ GUIDE ============================ -->
         <section id="guide">
-          <p class="eyebrow">The full tour</p>
-          <h2>Everything it does, and how to drive it</h2>
+          <p class="eyebrow" data-i18n="guide-eyebrow">The full tour</p>
+          <h2 data-i18n="guide-h2">Everything it does, and how to drive it</h2>
 
           <div class="guide-item reveal">
             <div>
-              <h3>Define, without leaving</h3>
+              <h3 data-i18n="guide-define-h3">Define, without leaving</h3>
               <p>
                 <strong>Select a word or phrase.</strong> A small Define button appears beside it.
                 Click it and the card opens right there: pronunciation, part of speech, a plain
@@ -1176,6 +1247,7 @@
                 preload="none"
                 poster="media/screenshots/select-define.png"
                 aria-label="Screen recording: selecting the word serendipity, clicking Define, and reading the definition card"
+                data-i18n-attrs="aria-label:guide-define-video-aria"
               >
                 <source src="media/demos/define-flow/define-flow-demo.mp4" type="video/mp4" />
               </video>
@@ -1184,7 +1256,7 @@
 
           <div class="guide-item flip reveal">
             <div>
-              <h3>The side panel: your reading desk</h3>
+              <h3 data-i18n="guide-sidepanel-h3">The side panel: your reading desk</h3>
               <p>
                 Click the <strong>side-panel button</strong> in the card’s header (or the toolbar
                 icon) and the lookup moves into Chrome’s side panel, beside the page instead of on
@@ -1209,6 +1281,7 @@
                 preload="none"
                 poster="media/screenshots/side-panel.png"
                 aria-label="Screen recording of the side panel: a focused definition, recalling an earlier word from Recent, then deleting it from history"
+                data-i18n-attrs="aria-label:guide-sidepanel-video-aria"
               >
                 <source src="media/demos/side-panel/side-panel-demo.mp4" type="video/mp4" />
               </video>
@@ -1217,8 +1290,8 @@
 
           <div class="guide-item reveal">
             <div>
-              <h3>Settings, section by section</h3>
-              <p>Four quiet sections, nothing buried:</p>
+              <h3 data-i18n="guide-settings-h3">Settings, section by section</h3>
+              <p data-i18n="guide-settings-intro">Four quiet sections, nothing buried:</p>
               <ul>
                 <li>
                   <strong>Connection.</strong> Pick your AI provider, Gemini (default, model
@@ -1243,6 +1316,7 @@
               <img
                 src="media/screenshots/settings.png"
                 alt="The settings page: Connection section with AI provider and Gemini API key, and the Translation section with target language and Card format"
+                data-i18n-attrs="alt:guide-settings-img-alt"
                 loading="lazy"
                 width="1280"
                 height="800"
@@ -1252,7 +1326,7 @@
 
           <div class="guide-item flip reveal">
             <div>
-              <h3>Make the card answer your way</h3>
+              <h3 data-i18n="guide-cardformat-h3">Make the card answer your way</h3>
               <p>
                 The card’s layout is a short text recipe you can edit. The default keeps it to
                 meaning and translation; the demos on this page use a richer five-section recipe
@@ -1269,6 +1343,7 @@
               <img
                 src="media/screenshots/settings-translation.png"
                 alt="The Translation section: target language dropdown and the editable Card format with its Restore default button"
+                data-i18n-attrs="alt:guide-cardformat-img-alt"
                 loading="lazy"
               />
             </figure>
@@ -1276,7 +1351,7 @@
 
           <div class="guide-item reveal">
             <div>
-              <h3>Where your data lives: on your device</h3>
+              <h3 data-i18n="guide-privacy-h">Where your data lives: on your device</h3>
               <p>
                 There is no backend. Everything the extension knows sits in your browser’s local
                 extension storage (<code>chrome.storage.local</code>), and Settings gives you a
@@ -1285,31 +1360,35 @@
               <table class="ledger">
                 <thead>
                   <tr>
-                    <th scope="col">Stored</th>
-                    <th scope="col">Where</th>
-                    <th scope="col">Your controls</th>
+                    <th scope="col" data-i18n="guide-privacy-th-stored">Stored</th>
+                    <th scope="col" data-i18n="guide-privacy-th-where">Where</th>
+                    <th scope="col" data-i18n="guide-privacy-th-controls">Your controls</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
-                    <td>API key</td>
-                    <td>This device only</td>
-                    <td>Replace or clear it in Settings</td>
+                    <td data-i18n="guide-privacy-r1-item">API key</td>
+                    <td data-i18n="guide-privacy-r1-where">This device only</td>
+                    <td data-i18n="guide-privacy-r1-controls">Replace or clear it in Settings</td>
                   </tr>
                   <tr>
-                    <td>Settings</td>
-                    <td>This device only</td>
-                    <td>Edit any time; changes apply after saving</td>
+                    <td data-i18n="guide-privacy-r2-item">Settings</td>
+                    <td data-i18n="guide-privacy-r2-where">This device only</td>
+                    <td data-i18n="guide-privacy-r2-controls">
+                      Edit any time; changes apply after saving
+                    </td>
                   </tr>
                   <tr>
-                    <td>Answer cache</td>
-                    <td>This device only</td>
-                    <td>Toggle off, or Clear cache</td>
+                    <td data-i18n="guide-privacy-r3-item">Answer cache</td>
+                    <td data-i18n="guide-privacy-r3-where">This device only</td>
+                    <td data-i18n="guide-privacy-r3-controls">Toggle off, or Clear cache</td>
                   </tr>
                   <tr>
-                    <td>Lookup history</td>
-                    <td>This device only</td>
-                    <td>Toggle off, delete rows, Clear history, or Export</td>
+                    <td data-i18n="guide-privacy-r4-item">Lookup history</td>
+                    <td data-i18n="guide-privacy-r4-where">This device only</td>
+                    <td data-i18n="guide-privacy-r4-controls">
+                      Toggle off, delete rows, Clear history, or Export
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -1323,6 +1402,7 @@
               <img
                 src="media/screenshots/settings-privacy.png"
                 alt="The Privacy and data section: cache and history toggles, the off-by-default error report toggle, and Clear cache, Clear history, Export history buttons"
+                data-i18n-attrs="alt:guide-privacy-img-alt"
                 loading="lazy"
               />
             </figure>
@@ -1330,7 +1410,7 @@
 
           <div class="guide-item flip reveal">
             <div>
-              <h3>Three reading lights</h3>
+              <h3 data-i18n="guide-themes-h3">Three reading lights</h3>
               <p>
                 Sepia is warm paper for daytime reads. Dark is a low-glare night surface, never
                 blue-black. High Contrast clears AAA for maximum legibility. Every surface re-themes
@@ -1349,6 +1429,7 @@
                 preload="none"
                 poster="media/screenshots/settings-appearance.png"
                 aria-label="Screen recording: clicking through Sepia, Dark, and High Contrast in Settings, the page re-theming instantly with each click"
+                data-i18n-attrs="aria-label:guide-themes-video-aria"
               >
                 <source src="media/demos/themes/themes-demo.mp4" type="video/mp4" />
               </video>
@@ -1361,24 +1442,31 @@
                 src="media/screenshots/card-sepia.png"
                 alt="The definition card in Sepia"
                 loading="lazy"
+                data-i18n-attrs="alt:guide-themes-img-sepia-alt"
               />
-              <figcaption>Sepia, the default</figcaption>
+              <figcaption data-i18n="guide-themes-caption-sepia">Sepia, the default</figcaption>
             </figure>
             <figure>
               <img
                 src="media/screenshots/card-dark.png"
                 alt="The definition card in Dark"
                 loading="lazy"
+                data-i18n-attrs="alt:guide-themes-img-dark-alt"
               />
-              <figcaption>Dark, warm and low-glare</figcaption>
+              <figcaption data-i18n="guide-themes-caption-dark">
+                Dark, warm and low-glare
+              </figcaption>
             </figure>
             <figure>
               <img
                 src="media/screenshots/card-contrast.png"
                 alt="The definition card in High Contrast"
                 loading="lazy"
+                data-i18n-attrs="alt:guide-themes-img-contrast-alt"
               />
-              <figcaption>High Contrast, AAA legibility</figcaption>
+              <figcaption data-i18n="guide-themes-caption-contrast">
+                High Contrast, AAA legibility
+              </figcaption>
             </figure>
           </div>
         </section>
@@ -1387,12 +1475,12 @@
 
         <!-- ============================ GET STARTED ============================ -->
         <section id="start" class="reveal">
-          <p class="eyebrow">Two minutes, once</p>
-          <h2>Get started</h2>
+          <p class="eyebrow" data-i18n="start-eyebrow">Two minutes, once</p>
+          <h2 data-i18n="start-h2">Get started</h2>
           <ol class="steps">
             <li>
               <div>
-                <h3>Add it to Chrome</h3>
+                <h3 data-i18n="start-step1-h">Add it to Chrome</h3>
                 <p>
                   Install from the
                   <a
@@ -1407,7 +1495,7 @@
             </li>
             <li>
               <div>
-                <h3>Get your free Gemini key</h3>
+                <h3 data-i18n="start-step2-h">Get your free Gemini key</h3>
                 <p>
                   Create one in
                   <a href="https://aistudio.google.com/app/apikey">Google AI Studio</a>: sign in,
@@ -1419,8 +1507,8 @@
             </li>
             <li>
               <div>
-                <h3>Paste, save, read</h3>
-                <p>
+                <h3 data-i18n="start-step3-h">Paste, save, read</h3>
+                <p data-i18n="start-step3-p">
                   The welcome screen opens by itself: pick your reading language, paste the key,
                   <strong>Save &amp; activate</strong>. The key is stored only in your browser and
                   used only to call your chosen provider.
@@ -1432,6 +1520,7 @@
             <img
               src="media/screenshots/onboarding.png"
               alt="The first-run welcome screen: reading language picker, Gemini API key field with a Get a free API key link, and the Save and activate button"
+              data-i18n-attrs="alt:start-onboarding-img-alt"
               loading="lazy"
               width="1280"
               height="800"
@@ -1443,19 +1532,19 @@
 
         <!-- ============================ FAQ ============================ -->
         <section id="faq" class="reveal">
-          <p class="eyebrow">Straight answers</p>
-          <h2>Questions people actually ask</h2>
+          <p class="eyebrow" data-i18n="faq-eyebrow">Straight answers</p>
+          <h2 data-i18n="faq-h2">Questions people actually ask</h2>
           <div class="faq">
             <details>
-              <summary>Is it really free?</summary>
-              <p>
+              <summary data-i18n="faq-q1">Is it really free?</summary>
+              <p data-i18n="faq-a1">
                 The extension is free. Lookups run on your own API key, so you pay your provider
                 only for what you use; Gemini’s free tier is more than enough for everyday reading.
               </p>
             </details>
             <details>
-              <summary>Is my reading private?</summary>
-              <p>
+              <summary data-i18n="faq-q2">Is my reading private?</summary>
+              <p data-i18n="faq-a2">
                 There’s no account and no server. Each lookup goes directly from your browser to
                 Google or OpenAI using your key, and the extension’s network access is locked by its
                 Content Security Policy to exactly those two endpoints. History, cache, and key live
@@ -1465,31 +1554,31 @@
               </p>
             </details>
             <details>
-              <summary>Can my API key leak?</summary>
-              <p>
+              <summary data-i18n="faq-q3">Can my API key leak?</summary>
+              <p data-i18n="faq-a3">
                 The key is saved in <code>chrome.storage.local</code> on your device and attached
                 only to requests sent to the provider you picked. It never touches any other server,
                 because there isn’t one. Remove it any time by clearing the field in Settings.
               </p>
             </details>
             <details>
-              <summary>Which languages does it translate into?</summary>
-              <p>
+              <summary data-i18n="faq-q4">Which languages does it translate into?</summary>
+              <p data-i18n="faq-a4">
                 Vietnamese ships as the default target, with English also built in, and the Card
                 format’s <code>{target_lang}</code> placeholder follows whatever you choose. The
                 source language is English for now.
               </p>
             </details>
             <details>
-              <summary>Does it work in Safari or on my phone?</summary>
-              <p>
+              <summary data-i18n="faq-q5">Does it work in Safari or on my phone?</summary>
+              <p data-i18n="faq-a5">
                 Not yet. Today it’s Chrome on a computer, plus Chrome-family browsers like Edge and
                 Brave. A Safari and iOS version is planned; watch the GitHub repository for news.
               </p>
             </details>
             <details>
-              <summary>Why did the Define button not appear?</summary>
-              <p>
+              <summary data-i18n="faq-q6">Why did the Define button not appear?</summary>
+              <p data-i18n="faq-a6">
                 Make sure you selected text on a normal web page. Browser-internal pages like
                 chrome:// and the Web Store are off-limits to all extensions, and freshly installed
                 extensions need a tab reload before they can run there.
@@ -1500,22 +1589,36 @@
       </main>
 
       <footer class="site">
-        <a class="wordmark" href="#top" aria-label="Back to top">
+        <a
+          class="wordmark"
+          href="#top"
+          aria-label="Back to top"
+          data-i18n-attrs="aria-label:footer-wordmark-aria"
+        >
           <svg class="mark" viewBox="0 0 32 32" aria-hidden="true">
             <circle class="dot" cx="11" cy="9" r="4"></circle>
             <rect class="bar" x="4" y="19" width="24" height="6" rx="3"></rect>
           </svg>
           AI Dictionary
         </a>
-        <span>Built for readers in a second language. Your page, your key, your data.</span>
-        <nav aria-label="Footer">
+        <span data-i18n="footer-tagline"
+          >Built for readers in a second language. Your page, your key, your data.</span
+        >
+        <nav aria-label="Footer" data-i18n-attrs="aria-label:footer-nav-aria">
           <a
             href="https://chromewebstore.google.com/detail/ai-dictionary/ipnmjhndmlkbhnifhmbknjjomdocgkeg"
+            data-i18n="footer-nav-store"
             >Chrome Web Store</a
           >
           <a href="https://github.com/hieplam/ai-dict">GitHub</a>
-          <a href="https://github.com/hieplam/ai-dict/blob/master/PRIVACY.md">Privacy</a>
-          <a href="https://github.com/hieplam/ai-dict/releases">Releases</a>
+          <a
+            href="https://github.com/hieplam/ai-dict/blob/master/PRIVACY.md"
+            data-i18n="footer-nav-privacy"
+            >Privacy</a
+          >
+          <a href="https://github.com/hieplam/ai-dict/releases" data-i18n="footer-nav-releases"
+            >Releases</a
+          >
         </nav>
       </footer>
     </div>
@@ -1595,6 +1698,168 @@
           v.setAttribute('controls', '');
         });
       }
+    </script>
+
+    <script>
+      // prettier-ignore
+      var VI = {
+        'doc-title': 'AI Dictionary: tra từ ngay tại nơi bạn đang đọc',
+        'a11y-skip': 'Đến nội dung chính',
+        'nav-why': 'Vì sao',
+        'nav-compare': 'So sánh',
+        'nav-guide': 'Hướng dẫn',
+        'nav-start': 'Bắt đầu',
+        'nav-faq': 'Hỏi đáp',
+        'hero-eyebrow': 'Extension Chrome miễn phí · dùng khoá của riêng bạn · không cần tài khoản',
+        'hero-title': 'Tra bất kỳ từ nào ngay tại nơi bạn đang đọc.',
+        'hero-lede': 'Chọn một từ trên bất kỳ trang nào, AI Dictionary đọc toàn bộ câu xung quanh từ đó, chọn đúng nghĩa đang được dùng, rồi trả kết quả về bằng ngôn ngữ của bạn. Bạn không cần rời khỏi đoạn văn.',
+        'hero-cta-primary': 'Thêm vào Chrome, miễn phí',
+        'hero-cta-secondary': 'Xem nó hoạt động',
+        'hero-privacy-line': 'Không máy chủ. Không tài khoản. Khoá và lịch sử tra cứu của bạn ở lại trình duyệt của bạn.',
+        'hero-tableau-aria': 'Demo: từ "bank" được chọn trong một câu, với thẻ định nghĩa AI Dictionary hiển thị nghĩa "bờ sông"',
+        'why-eyebrow': 'Điều duy nhất từ điển thông thường không thể làm',
+        'why-h2': 'Từ điển thông thường tra từ. Từ điển này đọc cả câu.',
+        'why-lede': 'Các extension từ điển thông thường, kể cả của Google, bỏ đi toàn bộ ngữ cảnh xung quanh từ bạn chọn và trả về mọi nghĩa mà từ đó từng có. Bạn phải lướt và đoán. AI Dictionary gửi từ cùng với câu, nên bạn nhận được đúng nghĩa đang được dùng, đã được dịch sẵn.',
+        'why-video-aria': 'Bản ghi màn hình: từ "bank" được tra trong hai câu khác nhau, trả về nghĩa "bờ sông" ở một câu và nghĩa "ngân hàng" ở câu kia',
+        'why-caption': 'Cùng một từ, hai nghĩa trái ngược, đều đúng: được chọn từ ngữ cảnh, không phải đoán mò.',
+        'compare-eyebrow': 'Một so sánh trung thực',
+        'compare-h2': 'Vị trí của nó trong số các lựa chọn thông dụng',
+        'compare-th-feature': 'Khi bạn đang đọc…',
+        'compare-th-word-only': 'Extension từ điển tra từ đơn',
+        'compare-th-chat-ai': 'Chat AI ở tab khác',
+        'compare-r1-feature': 'Hiểu câu xung quanh từ',
+        'compare-r1-ai-dict': 'Có, gửi kèm mỗi lần tra',
+        'compare-r1-word-only': 'Không, chỉ có từ đơn',
+        'compare-r1-chat-ai': 'Chỉ khi bạn tự dán đoạn văn vào',
+        'compare-r2-feature': 'Kết quả trả về',
+        'compare-r2-ai-dict': 'Đúng một nghĩa đang được dùng, bằng hai ngôn ngữ',
+        'compare-r2-word-only': 'Mọi nghĩa mà từ đó từng có',
+        'compare-r2-chat-ai': 'Một câu trả lời khá, sau một lúc, ở nơi khác',
+        'compare-r3-feature': 'Giữ bạn ở lại trang',
+        'compare-r3-ai-dict': 'Có, thẻ ngay trên trang hoặc bảng bên',
+        'compare-r3-word-only': 'Phần lớn là có',
+        'compare-r3-chat-ai': 'Không, phải chuyển tab mỗi lần',
+        'compare-r4-feature': 'Yêu cầu tài khoản',
+        'compare-r4-ai-dict': 'Không. Dùng khoá API miễn phí của riêng bạn',
+        'compare-r4-word-only': 'Không',
+        'compare-r4-chat-ai': 'Thường là có',
+        'compare-r5-feature': 'Theo dõi',
+        'compare-r5-ai-dict': 'Không. Chỉ báo cáo sự cố ẩn danh (tuỳ chọn, tắt theo mặc định)',
+        'compare-r5-word-only': 'Tuỳ nhà cung cấp',
+        'compare-r5-chat-ai': 'Tuỳ nhà cung cấp',
+        'compare-r6-feature': 'Chi phí',
+        'compare-r6-ai-dict': 'Miễn phí; bạn chỉ trả phí sử dụng API của mình (gói miễn phí là đủ dùng)',
+        'compare-r6-word-only': 'Miễn phí',
+        'compare-r6-chat-ai': 'Thường phải đăng ký trả phí',
+        'guide-eyebrow': 'Tổng quan đầy đủ',
+        'guide-h2': 'Tất cả những gì nó làm, và cách sử dụng',
+        'guide-define-h3': 'Tra từ ngay tại chỗ, không cần rời trang',
+        'guide-define-video-aria': 'Bản ghi màn hình: chọn từ "serendipity", bấm Define, và đọc thẻ định nghĩa',
+        'guide-sidepanel-h3': 'Bảng bên (side panel): bàn đọc sách của bạn',
+        'guide-sidepanel-video-aria': 'Bản ghi màn hình về bảng bên: định nghĩa đang xem, gọi lại từ đã tra trước đó trong Gần đây, rồi xoá khỏi lịch sử',
+        'guide-settings-h3': 'Cài đặt, từng phần một',
+        'guide-settings-intro': 'Bốn phần gọn gàng, không có gì bị ẩn:',
+        'guide-settings-img-alt': 'Trang cài đặt: phần Kết nối với nhà cung cấp AI và khoá API Gemini, và phần Dịch thuật với ngôn ngữ đích và định dạng thẻ',
+        'guide-cardformat-h3': 'Tuỳ chỉnh nội dung thẻ theo ý bạn',
+        'guide-cardformat-img-alt': 'Phần Dịch thuật: trình đơn ngôn ngữ đích và ô chỉnh sửa định dạng thẻ với nút Khôi phục mặc định',
+        'guide-privacy-h': 'Dữ liệu của bạn nằm ở đâu: ngay trên máy bạn',
+        'guide-privacy-th-stored': 'Dữ liệu',
+        'guide-privacy-th-where': 'Lưu ở đâu',
+        'guide-privacy-th-controls': 'Quyền kiểm soát của bạn',
+        'guide-privacy-r1-item': 'Khoá API',
+        'guide-privacy-r1-where': 'Chỉ trên thiết bị này',
+        'guide-privacy-r1-controls': 'Thay thế hoặc xoá trong Cài đặt',
+        'guide-privacy-r2-item': 'Cài đặt',
+        'guide-privacy-r2-where': 'Chỉ trên thiết bị này',
+        'guide-privacy-r2-controls': 'Chỉnh sửa bất cứ lúc nào; thay đổi có hiệu lực sau khi lưu',
+        'guide-privacy-r3-item': 'Bộ nhớ đệm kết quả',
+        'guide-privacy-r3-where': 'Chỉ trên thiết bị này',
+        'guide-privacy-r3-controls': 'Tắt hoặc Xoá bộ nhớ đệm',
+        'guide-privacy-r4-item': 'Lịch sử tra cứu',
+        'guide-privacy-r4-where': 'Chỉ trên thiết bị này',
+        'guide-privacy-r4-controls': 'Tắt, xoá từng dòng, Xoá lịch sử hoặc Xuất dữ liệu',
+        'guide-privacy-img-alt': 'Phần Riêng tư & dữ liệu: nút bật/tắt bộ nhớ đệm và lịch sử, nút báo cáo lỗi (tắt theo mặc định), và các nút Xoá bộ nhớ đệm, Xoá lịch sử, Xuất lịch sử',
+        'guide-themes-h3': 'Ba chế độ ánh sáng',
+        'guide-themes-video-aria': 'Bản ghi màn hình: chuyển qua lại giữa Sepia, Tối và Độ tương phản cao trong Cài đặt, trang đổi giao diện ngay lập tức',
+        'guide-themes-img-sepia-alt': 'Thẻ định nghĩa ở chế độ Sepia',
+        'guide-themes-img-dark-alt': 'Thẻ định nghĩa ở chế độ Tối',
+        'guide-themes-img-contrast-alt': 'Thẻ định nghĩa ở chế độ Độ tương phản cao',
+        'guide-themes-caption-sepia': 'Sepia, mặc định',
+        'guide-themes-caption-dark': 'Tối, ấm và không gây chói',
+        'guide-themes-caption-contrast': 'Độ tương phản cao, dễ đọc tối đa',
+        'start-eyebrow': 'Hai phút, một lần duy nhất',
+        'start-h2': 'Bắt đầu sử dụng',
+        'start-step1-h': 'Thêm vào Chrome',
+        'start-step2-h': 'Lấy khoá Gemini miễn phí',
+        'start-step3-h': 'Dán khoá, lưu lại, đọc tiếp',
+        'start-step3-p': 'Màn hình chào mừng sẽ tự mở ra: chọn ngôn ngữ đích, dán khoá, rồi bấm Lưu & kích hoạt. Khoá chỉ được lưu trong trình duyệt của bạn và chỉ được dùng để kết nối với nhà cung cấp bạn đã chọn.',
+        'start-onboarding-img-alt': 'Màn hình chào mừng lần đầu: trình đơn chọn ngôn ngữ đọc, ô nhập khoá API Gemini có liên kết lấy khoá miễn phí, và nút Lưu & kích hoạt',
+        'faq-eyebrow': 'Câu trả lời thẳng thắn',
+        'faq-h2': 'Những câu hỏi thường gặp',
+        'faq-q1': 'Có thực sự miễn phí không?',
+        'faq-a1': 'Extension hoàn toàn miễn phí. Mỗi lần tra cứu chạy bằng khoá API của riêng bạn, nên bạn chỉ trả phí sử dụng cho nhà cung cấp; gói miễn phí của Gemini là quá đủ cho việc đọc hàng ngày.',
+        'faq-q2': 'Việc đọc của tôi có riêng tư không?',
+        'faq-a2': 'Không có tài khoản, không có máy chủ. Mỗi lần tra cứu đi thẳng từ trình duyệt của bạn đến Google hoặc OpenAI bằng khoá của bạn, và quyền truy cập mạng của extension bị giới hạn chỉ đúng hai điểm cuối đó. Lịch sử, bộ nhớ đệm và khoá đều lưu trong bộ nhớ cục bộ của trình duyệt. Tín hiệu tuỳ chọn duy nhất là báo cáo sự cố ẩn danh, tắt theo mặc định, và nó không bao giờ bao gồm nội dung trang, văn bản đã chọn, URL đầy đủ hay khoá của bạn.',
+        'faq-q3': 'Khoá API của tôi có bị lộ không?',
+        'faq-a3': 'Khoá được lưu trong chrome.storage.local trên thiết bị của bạn và chỉ được gắn vào các yêu cầu gửi đến nhà cung cấp bạn đã chọn. Nó không bao giờ chạm đến bất kỳ máy chủ nào khác, vì không có máy chủ nào cả. Bạn có thể xoá nó bất cứ lúc nào bằng cách xoá trường trong Cài đặt.',
+        'faq-q4': 'Nó dịch sang những ngôn ngữ nào?',
+        'faq-a4': 'Tiếng Việt là ngôn ngữ đích mặc định, tiếng Anh cũng được tích hợp sẵn, và trình giữ chỗ {target_lang} trong định dạng thẻ sẽ theo ngôn ngữ bạn chọn. Ngôn ngữ nguồn hiện tại là tiếng Anh.',
+        'faq-q5': 'Nó có hoạt động trên Safari hoặc điện thoại không?',
+        'faq-a5': 'Chưa có. Hiện tại chỉ hỗ trợ Chrome trên máy tính, cùng các trình duyệt họ Chrome như Edge và Brave. Phiên bản Safari và iOS đang được lên kế hoạch; hãy theo dõi kho lưu trữ GitHub để cập nhật.',
+        'faq-q6': 'Tại sao nút Define không xuất hiện?',
+        'faq-a6': 'Hãy đảm bảo bạn đang chọn văn bản trên một trang web thông thường. Các trang nội bộ của trình duyệt như chrome:// và Web Store không cho phép extension hoạt động, và extension mới cài cần tải lại tab trước khi có thể chạy ở đó.',
+        'footer-wordmark-aria': 'Lên đầu trang',
+        'footer-tagline': 'Được xây dựng cho người đọc ngôn ngữ thứ hai. Trang của bạn, khoá của bạn, dữ liệu của bạn.',
+        'footer-nav-aria': 'Chân trang',
+        'footer-nav-store': 'Chrome Web Store',
+        'footer-nav-privacy': 'Quyền riêng tư',
+        'footer-nav-releases': 'Bản phát hành',
+      };
+
+      (function () {
+        var EN = new Map();
+        var ENA = new Map();
+        function nodes() {
+          return document.querySelectorAll('[data-i18n], [data-i18n-attrs]');
+        }
+        function apply(lang) {
+          document.documentElement.lang = lang;
+          nodes().forEach(function (el) {
+            var key = el.getAttribute('data-i18n');
+            if (key) {
+              if (!EN.has(el)) EN.set(el, el.textContent);
+              var t = lang === 'vi' ? VI[key] : EN.get(el);
+              if (t != null) el.textContent = t;
+            }
+            var attrs = el.getAttribute('data-i18n-attrs');
+            if (attrs) {
+              if (!ENA.has(el)) ENA.set(el, {});
+              attrs.split(',').forEach(function (pair) {
+                var a = pair.split(':')[0],
+                  k = pair.split(':')[1];
+                var store = ENA.get(el);
+                if (!(a in store)) store[a] = el.getAttribute(a);
+                var v = lang === 'vi' ? VI[k] : store[a];
+                if (v != null) el.setAttribute(a, v);
+              });
+            }
+          });
+          document.title = lang === 'vi' && VI['doc-title'] ? VI['doc-title'] : EN_TITLE;
+          document.querySelectorAll('.lang-switch [data-lang]').forEach(function (b) {
+            b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang));
+          });
+          try {
+            localStorage.setItem('ad_lang', lang);
+          } catch (e) {}
+        }
+        var EN_TITLE = document.title;
+        document.querySelectorAll('.lang-switch [data-lang]').forEach(function (b) {
+          b.addEventListener('click', function () {
+            apply(b.getAttribute('data-lang'));
+          });
+        });
+        if (document.documentElement.lang === 'vi') apply('vi');
+      })();
     </script>
   </body>
 </html>
