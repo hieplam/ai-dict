@@ -1,7 +1,7 @@
 import type { LookupClient, LookupRequest, LookupResult, Provider } from '../index';
 import { isLookupError } from '../index';
 
-// Canonical provider order for the fallback tail: when a provider fails, the pool
+// Canonical provider order for the fallback tail: when a provider fails, the selector
 // tries remaining configured providers in this order. The primary (user-selected
 // or one-shot picked) provider is always tried first regardless of where it falls here.
 const PROVIDER_ORDER: readonly Provider[] = ['gemini', 'openai', 'anthropic'];
@@ -10,7 +10,7 @@ function isKnownProvider(v: unknown): v is Provider {
   return typeof v === 'string' && (PROVIDER_ORDER as readonly string[]).includes(v);
 }
 
-export interface ProviderPoolDeps {
+export interface LookupClientSelectorDeps {
   /** One concrete client per provider, built once by the composition root. */
   clients: Record<Provider, LookupClient>;
   /**
@@ -26,15 +26,17 @@ export interface ProviderPoolDeps {
 }
 
 /**
- * A `LookupClient` that tries the primary provider first, then silently falls
- * back to other configured providers if the primary fails for a recoverable
- * reason. Sets `result.fallbackFrom` when a non-primary provider answers.
+ * The lookup-client selector, which doubles as an any-failure fallback pool: it
+ * tries the primary provider first (the stored default, or a one-shot `req.provider`
+ * pick from the card), then silently falls back to the other configured providers if
+ * the primary fails for any recoverable reason. Sets `result.fallbackFrom` when a
+ * non-primary provider answers.
  *
  * Stops trying early when:
  * - The caller's signal is aborted (user cancel).
  * - The device is offline (`navigator.onLine === false`) — no provider can succeed.
  */
-export function createProviderPool(deps: ProviderPoolDeps): LookupClient {
+export function createLookupClientSelector(deps: LookupClientSelectorDeps): LookupClient {
   return {
     async lookup(req: LookupRequest, opts?: { signal?: AbortSignal }): Promise<LookupResult> {
       // A one-shot manual pick from the card (req.provider) overrides the stored default

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { createProviderPool } from '../../src/app/provider-pool';
+import { createLookupClientSelector } from '../../src/app/lookup-client-selector';
 import type { LookupClient, LookupRequest, LookupResult, Provider } from '../../src';
 
 const req: LookupRequest = {
@@ -36,7 +36,7 @@ function pool(opts: {
   openai?: LookupClient;
   anthropic?: LookupClient;
 }) {
-  return createProviderPool({
+  return createLookupClientSelector({
     clients: {
       gemini: opts.gemini ?? stubOk('gemini-model'),
       openai: opts.openai ?? stubOk('openai-model'),
@@ -47,7 +47,7 @@ function pool(opts: {
   });
 }
 
-describe('createProviderPool', () => {
+describe('createLookupClientSelector', () => {
   it('primary succeeds → no fallbackFrom; returns result as-is', async () => {
     const gemini = stubOk('gemini-2.5-flash');
     const p = pool({ gemini });
@@ -186,7 +186,7 @@ describe('createProviderPool', () => {
     let configured: Provider[] = ['gemini'];
     const gemini = stubOk('gemini-model');
     const openai = stubOk('openai-model');
-    const p = createProviderPool({
+    const p = createLookupClientSelector({
       clients: { gemini, openai, anthropic: stubOk('anthropic-model') },
       getProvider: () => primary,
       getConfiguredProviders: () => configured,

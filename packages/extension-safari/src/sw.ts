@@ -6,7 +6,7 @@ import {
   GeminiLookupClient,
   OpenAILookupClient,
   AnthropicLookupClient,
-  createProviderPool,
+  createLookupClientSelector,
   buildRouter,
   WriteQueue,
   SUPPRESS,
@@ -36,7 +36,7 @@ async function readFullSettings(): Promise<Settings> {
 }
 
 const router = buildRouter({
-  client: createProviderPool({
+  client: createLookupClientSelector({
     clients: {
       gemini: new GeminiLookupClient({
         fetch: (u, i) => fetch(u, i),

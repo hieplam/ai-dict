@@ -19,7 +19,7 @@
 - rule-gate-runtime-messages (S3): wire schemas stay `z.strictObject`.
 - UI styling: only `var(--ad-*)`/`var(--adp-*)` tokens; no hex; respect `prefers-reduced-motion`.
 - Commits: conventional messages, NO Co-Authored-By lines. Never `--no-verify`.
-- Model default: `claude-haiku-4-5`. Display names: Gemini, ChatGPT, Claude.
+- Model default: `claude-haiku-4-5-20251001-20251001`. Display names: Gemini, ChatGPT, Claude.
 - Gates before PR: `bun run lint`, `bun run format:check`, `bun run typecheck`, `bun run test`, `bun run build:chrome`, `bun run e2e:chrome`.
 
 ---
@@ -216,13 +216,13 @@ it('names Claude/Anthropic for anthropic-tagged errors', () => {
 
 **Interfaces produced:** `class AnthropicLookupClient implements LookupClient`, `interface AnthropicDeps { fetch: FetchLike; getApiKey: () => string | Promise<string>; timeoutMs?: number; model?: string }`.
 
-- [ ] **Step 1: Write the test file** by copying `packages/app/test/app/openai-lookup-client.test.ts` wholesale and adapting: endpoint `https://api.anthropic.com/v1/messages`; OK body `JSON.stringify({ content: [{ type: 'text', text: '## hi' }] })`; header assertions — captured request headers must contain `x-api-key: <key>` and `anthropic-version: '2023-06-01'` and `anthropic-dangerous-direct-browser-access: 'true'`; URL and body must NOT contain the key; body JSON must be `{ model: 'claude-haiku-4-5', max_tokens: 1024, messages: [{ role: 'user', content: <prompt> }] }`; parse-failure case uses `{ content: [] }`; http-error case body `{ type: 'error', error: { type: 'rate_limit_error', message: 'slow down' } }` with status 429 + `retry-after: '7'` header → expect `code: 'RATE_LIMIT'`, `retryAfterSec: 7`, `vendorMessage: 'slow down'`, `vendorStatus: 'rate_limit_error'`; success result must include `provider: 'anthropic'` and `model: 'claude-haiku-4-5'`. Keep the offline / timeout / caller-cancel / mapped-error-guard cases exactly as in the OpenAI suite.
+- [ ] **Step 1: Write the test file** by copying `packages/app/test/app/openai-lookup-client.test.ts` wholesale and adapting: endpoint `https://api.anthropic.com/v1/messages`; OK body `JSON.stringify({ content: [{ type: 'text', text: '## hi' }] })`; header assertions — captured request headers must contain `x-api-key: <key>` and `anthropic-version: '2023-06-01'` and `anthropic-dangerous-direct-browser-access: 'true'`; URL and body must NOT contain the key; body JSON must be `{ model: 'claude-haiku-4-5-20251001', max_tokens: 1024, messages: [{ role: 'user', content: <prompt> }] }`; parse-failure case uses `{ content: [] }`; http-error case body `{ type: 'error', error: { type: 'rate_limit_error', message: 'slow down' } }` with status 429 + `retry-after: '7'` header → expect `code: 'RATE_LIMIT'`, `retryAfterSec: 7`, `vendorMessage: 'slow down'`, `vendorStatus: 'rate_limit_error'`; success result must include `provider: 'anthropic'` and `model: 'claude-haiku-4-5-20251001'`. Keep the offline / timeout / caller-cancel / mapped-error-guard cases exactly as in the OpenAI suite.
 - [ ] **Step 2:** Run → FAIL (module missing).
 - [ ] **Step 3: Implement** — copy `openai-lookup-client.ts` structure verbatim (AbortController merge, timer, catch-order, `rejectWith`, trailing unreachable return) with these deltas:
 
 ```ts
 const ENDPOINT = 'https://api.anthropic.com/v1/messages';
-const DEFAULT_MODEL = 'claude-haiku-4-5';
+const DEFAULT_MODEL = 'claude-haiku-4-5-20251001';
 const ANTHROPIC_VERSION = '2023-06-01';
 const MAX_TOKENS = 1024; // card is capped at ~200 words; 1024 output tokens is ample
 
@@ -240,7 +240,7 @@ interface AnthropicErrBody {
 - success parse: `const text = parsed.content?.find((b) => b?.type === 'text')?.text;` then the same non-empty-string guard; return `{ markdown: text, word: req.word, target: req.target, model, provider: 'anthropic', fromCache: false, fetchedAt: Date.now() }`.
 - all `mapError` provider tags: `'anthropic'`.
 - [ ] **Step 4:** Anthropic suite PASS; run full `bun run test packages/app/test/app` and mapper tests.
-- [ ] **Step 5: Commit** `git commit -am "feat(app): AnthropicLookupClient (claude-haiku-4-5, messages API)"`
+- [ ] **Step 5: Commit** `git commit -am "feat(app): AnthropicLookupClient (claude-haiku-4-5-20251001, messages API)"`
 
 ### Task 5: Existing clients stamp their provider
 
