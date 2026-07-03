@@ -19,7 +19,7 @@
 - rule-gate-runtime-messages (S3): wire schemas stay `z.strictObject`.
 - UI styling: only `var(--ad-*)`/`var(--adp-*)` tokens; no hex; respect `prefers-reduced-motion`.
 - Commits: conventional messages, NO Co-Authored-By lines. Never `--no-verify`.
-- Model default: `claude-haiku-4-5-20251001-20251001`. Display names: Gemini, ChatGPT, Claude.
+- Model default: `claude-haiku-4-5-20251001`. Display names: Gemini, ChatGPT, Claude.
 - Gates before PR: `bun run lint`, `bun run format:check`, `bun run typecheck`, `bun run test`, `bun run build:chrome`, `bun run e2e:chrome`.
 
 ---
