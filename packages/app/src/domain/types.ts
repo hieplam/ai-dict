@@ -46,6 +46,24 @@ export interface LookupResult {
  */
 export type Provider = 'gemini' | 'openai' | 'anthropic';
 
+/** Canonical display order — used by the pool and settings UI. */
+export const PROVIDERS: readonly Provider[] = ['gemini', 'openai', 'anthropic'];
+
+/**
+ * Derive which providers have an API key configured, in canonical order.
+ * `opts.envGeminiKey` counts as a configured Gemini key (build-time injection).
+ */
+export function configuredProvidersFor(
+  s: { apiKey?: string; openaiApiKey?: string; anthropicApiKey?: string },
+  opts?: { envGeminiKey?: boolean },
+): Provider[] {
+  const out: Provider[] = [];
+  if (opts?.envGeminiKey || s.apiKey) out.push('gemini');
+  if (s.openaiApiKey) out.push('openai');
+  if (s.anthropicApiKey) out.push('anthropic');
+  return out;
+}
+
 export type LookupErrorCode =
   | 'NO_KEY'
   | 'INVALID_KEY'

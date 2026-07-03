@@ -2,7 +2,7 @@ import {
   DEFAULT_OUTPUT_FORMAT,
   hasKeyFor,
   normalizeTheme,
-  type Provider,
+  configuredProvidersFor,
   type SettingsStore,
   type PublicSettings,
   type Settings,
@@ -36,10 +36,6 @@ export class ChromeStorageStore implements SettingsStore {
 
   async get(): Promise<PublicSettings> {
     const s = await this.read();
-    const configured: Provider[] = [];
-    if (s?.apiKey) configured.push('gemini');
-    if (s?.openaiApiKey) configured.push('openai');
-    if (s?.anthropicApiKey) configured.push('anthropic');
     return {
       targetLang: s?.targetLang ?? DEFAULT_TARGET,
       outputFormat: s?.outputFormat ?? DEFAULT_OUTPUT_FORMAT,
@@ -47,7 +43,7 @@ export class ChromeStorageStore implements SettingsStore {
       // Coerce: settings stored before the theme setting existed have no `theme`, and
       // pre-Paperlight settings hold the legacy 'light' value → both normalise to 'sepia'.
       theme: normalizeTheme(s?.theme),
-      configuredProviders: configured,
+      configuredProviders: configuredProvidersFor(s ?? {}),
     };
   }
 
