@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/hieplam/ai-dict/compare/v1.7.0...v1.7.1) (2026-07-03)
+
+
+### Miscellaneous Chores
+
+* release 1.7.1 ([bd44134](https://github.com/hieplam/ai-dict/commit/bd44134f8ba4352837e739eaac7c48b47acb7df4))
+
 ## [1.7.0](https://github.com/hieplam/ai-dict/compare/v1.6.0...v1.7.0) (2026-06-19)
 
 
