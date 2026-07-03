@@ -30,13 +30,21 @@ export interface LookupResult {
   model: string;
   fromCache: boolean;
   fetchedAt: number;
+  /** The provider that produced this result. Stamped by each lookup client. */
+  provider?: Provider | undefined;
+  /**
+   * Set by the fallback pool when a non-primary provider answered.
+   * Stripped before cache/history writes — transient per-request annotation.
+   * Declared `Provider | undefined` (not just `Provider`) for Zod/EOP alignment.
+   */
+  fallbackFrom?: Provider | undefined;
 }
 
 /**
  * AI provider answering lookups. 'gemini' is the default and the behavior
  * before the setting existed; each provider keeps its own API key.
  */
-export type Provider = 'gemini' | 'openai';
+export type Provider = 'gemini' | 'openai' | 'anthropic';
 
 export type LookupErrorCode =
   | 'NO_KEY'
@@ -95,6 +103,8 @@ export interface PublicSettings {
   outputFormat: string;
   hasKey: boolean;
   theme: Theme;
+  /** Provider names that have an API key configured. Keys themselves are never included. */
+  configuredProviders: Provider[];
 }
 
 /**
@@ -106,8 +116,12 @@ export function hasKeyFor(s: {
   provider?: Provider;
   apiKey?: string;
   openaiApiKey?: string;
+  anthropicApiKey?: string;
 }): boolean {
-  return Boolean((s.provider ?? 'gemini') === 'openai' ? s.openaiApiKey : s.apiKey);
+  const p = s.provider ?? 'gemini';
+  if (p === 'openai') return Boolean(s.openaiApiKey);
+  if (p === 'anthropic') return Boolean(s.anthropicApiKey);
+  return Boolean(s.apiKey);
 }
 
 export function isLookupError(e: unknown): e is LookupError {
@@ -131,4 +145,5 @@ export interface Settings extends PublicSettings {
   saveHistory: boolean;
   provider: Provider;
   openaiApiKey: string;
+  anthropicApiKey: string;
 }

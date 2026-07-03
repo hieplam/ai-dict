@@ -21,6 +21,8 @@ const LookupRequestSchema = z.strictObject({
   outputFormat: z.string(),
 });
 
+const ProviderEnum = z.enum(['gemini', 'openai', 'anthropic']);
+
 const LookupResultSchema = z.strictObject({
   markdown: z.string(),
   word: z.string(),
@@ -30,6 +32,8 @@ const LookupResultSchema = z.strictObject({
   model: z.string().min(1),
   fromCache: z.boolean(),
   fetchedAt: z.number(),
+  provider: ProviderEnum.optional(),
+  fallbackFrom: ProviderEnum.optional(),
 });
 
 const PublicSettingsSchema = z.strictObject({
@@ -37,6 +41,7 @@ const PublicSettingsSchema = z.strictObject({
   outputFormat: z.string(),
   hasKey: z.boolean(),
   theme: z.enum(['sepia', 'dark', 'contrast', 'system']),
+  configuredProviders: z.array(ProviderEnum),
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]
 
 const HistoryEntrySchema = z.strictObject({

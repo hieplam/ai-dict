@@ -1,4 +1,4 @@
-import type { LookupError } from '../index';
+import type { LookupError, Provider } from '../index';
 import { adoptStyles } from './styles/adopt';
 import {
   BASE_VARS,
@@ -28,7 +28,14 @@ export type SafeHtml = string & { readonly __brand: 'SafeHtml' };
  */
 export type CardState =
   | { kind: 'loading'; word?: string }
-  | { kind: 'result'; safeHtml: SafeHtml; word: string; target: string }
+  | {
+      kind: 'result';
+      safeHtml: SafeHtml;
+      word: string;
+      target: string;
+      provider?: Provider;
+      fallbackFrom?: Provider;
+    }
   | { kind: 'error'; error: LookupError };
 
 // Icons (ICON_CLOSE, ICON_SHIELD, ICON_SETTINGS) are the canonical §5.10 set, imported from
@@ -94,7 +101,8 @@ button[data-act="settings"] .lbl{line-height:1}
 ::slotted(.loadrow){display:flex;align-items:center;gap:9px;margin:4px 0 9px;color:var(--ad-ink-soft);font-size:14px}
 ::slotted(.loadrow)::before{content:"";display:block;width:15px;height:15px;flex:none;border:2px solid var(--ad-line);border-top-color:var(--ad-accent);border-radius:50%;animation:spin .77s linear infinite}
 @media (prefers-reduced-motion:reduce){::slotted(.loadrow)::before{animation:none}}
-::slotted(.errlog-consent){margin:10px 16px 0;padding-top:10px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}`;
+::slotted(.errlog-consent){margin:10px 16px 0;padding-top:10px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
+::slotted(.fallback-note){margin:8px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint);font-style:italic}`;
 
 // Inject @keyframes spin into the document once so Firefox/Safari (which follow CSS
 // Scoping Level 1 strictly) can resolve the animation on the light-DOM .spinner node.
@@ -193,7 +201,23 @@ export function renderCardState(state: CardState): Node[] {
   h.textContent = state.word;
   const body = document.createElement('div');
   body.innerHTML = state.safeHtml; // trusted: sanitized upstream by adapters-shared (S4)
-  return [h, body];
+  const nodes: Node[] = [h, body];
+  if (state.fallbackFrom) {
+    const PROVIDER_NAMES: Record<Provider, string> = {
+      gemini: 'Gemini',
+      openai: 'ChatGPT',
+      anthropic: 'Claude',
+    };
+    const failed = PROVIDER_NAMES[state.fallbackFrom] ?? state.fallbackFrom;
+    const answerer = state.provider
+      ? (PROVIDER_NAMES[state.provider] ?? state.provider)
+      : 'a fallback provider';
+    const note = document.createElement('p');
+    note.className = 'fallback-note';
+    note.textContent = `${failed} was unavailable — answered by ${answerer}.`;
+    nodes.push(note);
+  }
+  return nodes;
 }
 
 export class LookupCard extends HTMLElement {

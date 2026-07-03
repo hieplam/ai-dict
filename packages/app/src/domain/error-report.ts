@@ -1,4 +1,5 @@
 import { redactPII, scrubSecrets } from './pii';
+import type { Provider } from './types';
 
 /** Max errors held locally before consent; oldest dropped beyond this. */
 export const ERROR_BUFFER_CAP = 100;
@@ -10,7 +11,7 @@ export interface ErrorRecord {
   ts: number;
   source: 'lookup' | 'connection.test' | 'thrown';
   code: string;
-  provider?: 'gemini' | 'openai';
+  provider?: Provider;
   message: string;
   retryable?: boolean;
   retryAfterSec?: number;
@@ -41,7 +42,7 @@ export interface CaptureMeta {
   now: number;
   extVersion: string;
   browserVersion: string;
-  provider: 'gemini' | 'openai' | undefined;
+  provider: Provider | undefined;
 }
 
 /** Hostname only — never path/query (privacy). undefined on empty/invalid. */

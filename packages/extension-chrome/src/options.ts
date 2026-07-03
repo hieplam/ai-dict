@@ -4,6 +4,7 @@ import {
   DEFAULT_OUTPUT_FORMAT,
   buildHistoryExport,
   hasKeyFor,
+  type Provider,
   type Settings,
   type SettingsForm,
   type SettingsFormValue,
@@ -30,12 +31,14 @@ const DEFAULTS: Settings = {
   targetLang: 'vi',
   outputFormat: DEFAULT_OUTPUT_FORMAT,
   hasKey: false,
+  configuredProviders: [],
   apiKey: '',
   cacheEnabled: true,
   saveHistory: true,
   theme: 'sepia',
   provider: 'gemini',
   openaiApiKey: '',
+  anthropicApiKey: '',
 };
 
 async function load(): Promise<Settings> {
@@ -65,6 +68,7 @@ function toFormValue(s: Settings): SettingsFormValue {
     provider: s.provider,
     apiKey: s.apiKey,
     openaiApiKey: s.openaiApiKey,
+    anthropicApiKey: s.anthropicApiKey ?? '',
     targetLang: s.targetLang,
     outputFormat: s.outputFormat,
     cacheEnabled: s.cacheEnabled,
@@ -107,9 +111,15 @@ function mountSettings(initial: Settings, status?: string): void {
 function wireSettings(form: SettingsForm): void {
   form.addEventListener('save', (e) => {
     const next = (e as CustomEvent<SettingsFormValue>).detail;
+    const configured: Provider[] = [];
+    if (next.apiKey) configured.push('gemini');
+    if (next.openaiApiKey) configured.push('openai');
+    if (next.anthropicApiKey) configured.push('anthropic');
     void load()
       .then((cur) =>
-        chrome.storage.local.set({ settings: { ...cur, ...next, hasKey: hasKeyFor(next) } }),
+        chrome.storage.local.set({
+          settings: { ...cur, ...next, hasKey: hasKeyFor(next), configuredProviders: configured },
+        }),
       )
       .then(
         () => {

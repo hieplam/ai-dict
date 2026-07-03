@@ -7,7 +7,7 @@ import {
   FakeLookupClient,
   FakeSettingsStore,
 } from './fakes';
-import type { SelectionEvent, LookupResult } from '../src';
+import type { SelectionEvent, LookupResult, Provider } from '../src';
 
 const sel: SelectionEvent = {
   text: 'bank',
@@ -29,6 +29,7 @@ const pub = (hasKey: boolean) => ({
   outputFormat: 'tpl',
   hasKey,
   theme: 'sepia' as const,
+  configuredProviders: (hasKey ? ['gemini'] : []) as Provider[],
 });
 
 function harness(opts: {

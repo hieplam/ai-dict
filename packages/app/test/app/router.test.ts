@@ -48,6 +48,7 @@ function deps(over: DepsOverrides = {}) {
       outputFormat: 'tpl',
       hasKey: true,
       theme: 'sepia' as const,
+      configuredProviders: [],
     }),
   );
   return {
@@ -208,6 +209,7 @@ describe('buildRouter', () => {
             outputFormat: 'tpl',
             hasKey: true,
             theme: 'sepia' as const,
+            configuredProviders: [],
           }),
         ),
         set: vi.fn(),
@@ -255,7 +257,13 @@ describe('buildRouter', () => {
     expect(reply).toEqual({
       ok: true,
       type: 'settings',
-      settings: { targetLang: 'vi', outputFormat: 'tpl', hasKey: true, theme: 'sepia' as const },
+      settings: {
+        targetLang: 'vi',
+        outputFormat: 'tpl',
+        hasKey: true,
+        theme: 'sepia' as const,
+        configuredProviders: [],
+      },
     });
   });
 

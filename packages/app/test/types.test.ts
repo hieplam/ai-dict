@@ -9,12 +9,14 @@ describe('Settings public shape (FIX 1 — contract lock)', () => {
       targetLang: 'vi',
       outputFormat: '{word}',
       hasKey: true,
+      configuredProviders: ['gemini'],
       apiKey: 'AIzaFake',
       cacheEnabled: true,
       saveHistory: false,
       theme: 'sepia',
       provider: 'gemini',
       openaiApiKey: '',
+      anthropicApiKey: '',
     };
     expect(s.targetLang).toBe('vi');
     expect(s.outputFormat).toBe('{word}');

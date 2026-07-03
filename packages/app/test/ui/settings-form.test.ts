@@ -33,6 +33,7 @@ describe('<settings-form>', () => {
       provider: 'gemini',
       apiKey: '',
       openaiApiKey: '',
+      anthropicApiKey: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -143,6 +144,7 @@ describe('<settings-form>', () => {
       provider: 'gemini',
       apiKey: 'deferred-key',
       openaiApiKey: '',
+      anthropicApiKey: '',
       targetLang: 'en',
       outputFormat: 'P',
       cacheEnabled: false,
@@ -224,6 +226,7 @@ describe('<settings-form> restore default prompt', () => {
       provider: 'gemini',
       apiKey: '',
       openaiApiKey: '',
+      anthropicApiKey: '',
       targetLang: 'vi',
       outputFormat: 'my custom prompt',
       cacheEnabled: true,
@@ -246,6 +249,7 @@ describe('<settings-form> restore default prompt', () => {
       provider: 'gemini',
       apiKey: '',
       openaiApiKey: '',
+      anthropicApiKey: '',
       targetLang: 'vi',
       outputFormat: 'my custom prompt',
       cacheEnabled: true,
@@ -268,6 +272,7 @@ describe('<settings-form> restore default prompt', () => {
       provider: 'gemini',
       apiKey: '',
       openaiApiKey: '',
+      anthropicApiKey: '',
       targetLang: 'vi',
       outputFormat: DEFAULT_OUTPUT_FORMAT,
       cacheEnabled: true,
@@ -314,6 +319,7 @@ describe('<settings-form> env-key lock', () => {
       provider: 'gemini',
       apiKey: 'AIza-stored',
       openaiApiKey: '',
+      anthropicApiKey: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -337,6 +343,7 @@ describe('<settings-form> env-key lock', () => {
       provider: 'gemini',
       apiKey: 'AIza-stored',
       openaiApiKey: '',
+      anthropicApiKey: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -370,6 +377,7 @@ describe('<settings-form> provider selection', () => {
       provider: 'gemini',
       apiKey: '',
       openaiApiKey: '',
+      anthropicApiKey: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -383,7 +391,7 @@ describe('<settings-form> provider selection', () => {
     const el = mountForm();
     const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#provider')!;
     expect(select.value).toBe('gemini');
-    expect([...select.options].map((o) => o.value)).toEqual(['gemini', 'openai']);
+    expect([...select.options].map((o) => o.value)).toEqual(['gemini', 'openai', 'anthropic']);
     expect(el.shadowRoot!.querySelector('#key-label')!.textContent).toBe('Gemini API key');
   });
 
@@ -474,6 +482,7 @@ describe('<settings-form> error-reporting toggle', () => {
       provider: 'gemini',
       apiKey: '',
       openaiApiKey: '',
+      anthropicApiKey: '',
       targetLang: 'vi',
       outputFormat: 'x',
       cacheEnabled: true,
@@ -588,6 +597,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
       provider: 'gemini',
       apiKey: '',
       openaiApiKey: '',
+      anthropicApiKey: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,

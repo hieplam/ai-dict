@@ -23,6 +23,7 @@ export type ErrorInput =
 const NAMES: Record<Provider, { product: string; vendor: string }> = {
   gemini: { product: 'Gemini', vendor: 'Google' },
   openai: { product: 'OpenAI', vendor: 'OpenAI' },
+  anthropic: { product: 'Claude', vendor: 'Anthropic' },
 };
 
 function sanitize(msg: string): string {

@@ -15,7 +15,7 @@ describe('manifest.json (S5 CSP + S8 Safari permissions — exact)', () => {
   });
   it('extension_pages CSP matches §7.3 S5 exactly', () => {
     expect(manifest.content_security_policy.extension_pages).toBe(
-      "default-src 'none'; script-src 'self'; object-src 'none'; connect-src https://generativelanguage.googleapis.com https://api.openai.com; img-src 'self' data:; style-src 'self'; base-uri 'none'; frame-ancestors 'none';",
+      "default-src 'none'; script-src 'self'; object-src 'none'; connect-src https://generativelanguage.googleapis.com https://api.openai.com https://api.anthropic.com; img-src 'self' data:; style-src 'self'; base-uri 'none'; frame-ancestors 'none';",
     );
   });
   it('MV3 + statically registered content scripts (no scripting API)', () => {

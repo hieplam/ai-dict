@@ -26,7 +26,13 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       hasKey: true,
     });
     const pub = await new ChromeStorageStore(area).get();
-    expect(pub).toEqual({ targetLang: 'vi', outputFormat: 'tpl', hasKey: true, theme: 'sepia' });
+    expect(pub).toEqual({
+      targetLang: 'vi',
+      outputFormat: 'tpl',
+      hasKey: true,
+      theme: 'sepia',
+      configuredProviders: ['gemini'],
+    });
     expect('apiKey' in pub).toBe(false);
   });
 
@@ -47,6 +53,7 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       outputFormat: DEFAULT_OUTPUT_FORMAT,
       hasKey: false,
       theme: 'sepia',
+      configuredProviders: [],
     });
     const noKey = await new ChromeStorageStore(
       fakeArea({ targetLang: 'en', outputFormat: 't', apiKey: '' }),

@@ -27,12 +27,14 @@ function stubClient(model: string): LookupClient & { lookup: ReturnType<typeof v
   };
 }
 
+const anthropicStub = stubClient('claude-haiku-4-5');
+
 describe('createLookupClientSelector', () => {
   it('delegates to the client of the selected provider and forwards req + signal', async () => {
     const gemini = stubClient('gemini-2.5-flash');
     const openai = stubClient('gpt-4o-mini');
     const selector = createLookupClientSelector({
-      clients: { gemini, openai },
+      clients: { gemini, openai, anthropic: anthropicStub },
       getProvider: () => 'openai',
     });
     const ac = new AbortController();
@@ -47,7 +49,7 @@ describe('createLookupClientSelector', () => {
     const openai = stubClient('gpt-4o-mini');
     let current: Provider = 'gemini';
     const selector = createLookupClientSelector({
-      clients: { gemini, openai },
+      clients: { gemini, openai, anthropic: anthropicStub },
       // async form exercises the Promise branch of getProvider
       getProvider: () => Promise.resolve(current),
     });
@@ -62,7 +64,7 @@ describe('createLookupClientSelector', () => {
     const boom = Object.assign(new Error('no key'), { code: 'NO_KEY', retryable: false });
     const failing: LookupClient = { lookup: () => Promise.reject(boom) };
     const selector = createLookupClientSelector({
-      clients: { gemini: failing, openai: stubClient('x') },
+      clients: { gemini: failing, openai: stubClient('x'), anthropic: anthropicStub },
       getProvider: () => 'gemini',
     });
     await expect(selector.lookup(req)).rejects.toBe(boom);

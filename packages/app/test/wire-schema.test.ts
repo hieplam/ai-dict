@@ -30,7 +30,13 @@ describe('wire-schema', () => {
     const ok = WireReplySchema.safeParse({
       ok: true,
       type: 'settings',
-      settings: { targetLang: 'vi', outputFormat: 't', hasKey: true, theme: 'sepia' },
+      settings: {
+        targetLang: 'vi',
+        outputFormat: 't',
+        hasKey: true,
+        theme: 'sepia',
+        configuredProviders: [],
+      },
       apiKey: 'leaked',
     });
     expect(ok.success).toBe(true);
@@ -42,7 +48,13 @@ describe('wire-schema', () => {
       const ok = WireReplySchema.safeParse({
         ok: true,
         type: 'settings',
-        settings: { targetLang: 'vi', outputFormat: 't', hasKey: true, theme },
+        settings: {
+          targetLang: 'vi',
+          outputFormat: 't',
+          hasKey: true,
+          theme,
+          configuredProviders: [],
+        },
       });
       expect(ok.success, `theme=${theme} must parse`).toBe(true);
     }

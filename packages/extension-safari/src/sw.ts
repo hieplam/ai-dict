@@ -1,10 +1,12 @@
 import {
   mapError,
   DEFAULT_OUTPUT_FORMAT,
+  type Provider,
   type Settings,
   GeminiLookupClient,
   OpenAILookupClient,
-  createLookupClientSelector,
+  AnthropicLookupClient,
+  createProviderPool,
   buildRouter,
   WriteQueue,
   SUPPRESS,
@@ -21,18 +23,20 @@ async function readFullSettings(): Promise<Settings> {
       targetLang: DEFAULT_TARGET,
       outputFormat: DEFAULT_OUTPUT_FORMAT,
       hasKey: false,
+      configuredProviders: [],
       apiKey: '',
       cacheEnabled: true,
       saveHistory: true,
       theme: 'sepia',
       provider: 'gemini',
       openaiApiKey: '',
+      anthropicApiKey: '',
     }
   );
 }
 
 const router = buildRouter({
-  client: createLookupClientSelector({
+  client: createProviderPool({
     clients: {
       gemini: new GeminiLookupClient({
         fetch: (u, i) => fetch(u, i),
@@ -42,9 +46,22 @@ const router = buildRouter({
         fetch: (u, i) => fetch(u, i),
         getApiKey: async () => (await readFullSettings()).openaiApiKey ?? '',
       }),
+      anthropic: new AnthropicLookupClient({
+        fetch: (u, i) => fetch(u, i),
+        // S1: key read from storage here in SW only; never sent to the wire or content scripts.
+        getApiKey: async () => (await readFullSettings()).anthropicApiKey ?? '',
+      }),
     },
     // Settings stored before the provider field existed have no `provider` → Gemini.
     getProvider: async () => (await readFullSettings()).provider ?? 'gemini',
+    getConfiguredProviders: async () => {
+      const s = await readFullSettings();
+      const configured: Provider[] = [];
+      if (s.apiKey) configured.push('gemini');
+      if (s.openaiApiKey) configured.push('openai');
+      if (s.anthropicApiKey) configured.push('anthropic');
+      return configured;
+    },
   }),
   settings: new SafariStorageStore(browser.storage.local),
   kv: new SafariKvStore(browser.storage.local),

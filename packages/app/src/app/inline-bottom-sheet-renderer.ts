@@ -68,6 +68,8 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
       safeHtml: this.sanitize(r.markdown),
       word: r.word,
       target: r.target,
+      ...(r.provider !== undefined ? { provider: r.provider } : {}),
+      ...(r.fallbackFrom !== undefined ? { fallbackFrom: r.fallbackFrom } : {}),
     });
   }
 

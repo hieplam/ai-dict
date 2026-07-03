@@ -52,7 +52,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
       if (!controller.signal.aborted) deps.trigger.hide();
     });
     // hide bubble once settings are known — keeps spinner visible during the async gap
-    if (!settings.hasKey) {
+    if (settings.configuredProviders.length === 0) {
       deps.renderer.renderError(mapError({ kind: 'no-key' }));
       return;
     }
