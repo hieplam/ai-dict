@@ -42,7 +42,9 @@
     try {
       if (l) localStorage.setItem('ad_lang', l);
       else l = localStorage.getItem('ad_lang');
-    } catch (e) { /* storage blocked: default en */ }
+    } catch (e) {
+      /* storage blocked: default en */
+    }
     document.documentElement.lang = l === 'vi' ? 'vi' : 'en';
   })();
 </script>
@@ -57,7 +59,8 @@
 </div>
 ```
 
-  Style it with the page's existing variables (inspect the nav's current link styling and reuse its colors/radii; active state = filled with the page's accent variable, inactive = quiet). Must remain visible and tappable at 390px width (if the nav collapses on mobile, place the switch so it stays reachable — verify in Task 3).
+Style it with the page's existing variables (inspect the nav's current link styling and reuse its colors/radii; active state = filled with the page's accent variable, inactive = quiet). Must remain visible and tappable at 390px width (if the nav collapses on mobile, place the switch so it stays reachable — verify in Task 3).
+
 - [ ] **Step 3: Engine** — add at the END of `<body>` (synchronous, before the closing tag; AFTER the dictionary of Task 2, which lives in the same script block):
 
 ```html
@@ -65,7 +68,9 @@
   (function () {
     var EN = new Map(); // element -> original English (snapshotted on first swap)
     var ENA = new Map(); // element -> { attr: original } for attribute translations
-    function nodes() { return document.querySelectorAll('[data-i18n], [data-i18n-attrs]'); }
+    function nodes() {
+      return document.querySelectorAll('[data-i18n], [data-i18n-attrs]');
+    }
     function apply(lang) {
       document.documentElement.lang = lang;
       nodes().forEach(function (el) {
@@ -80,7 +85,8 @@
         if (attrs) {
           if (!ENA.has(el)) ENA.set(el, {});
           attrs.split(',').forEach(function (pair) {
-            var a = pair.split(':')[0], k = pair.split(':')[1];
+            var a = pair.split(':')[0],
+              k = pair.split(':')[1];
             var store = ENA.get(el);
             if (!(a in store)) store[a] = el.getAttribute(a);
             var v = lang === 'vi' ? VI[k] : store[a];
@@ -92,11 +98,15 @@
       document.querySelectorAll('.lang-switch [data-lang]').forEach(function (b) {
         b.setAttribute('aria-pressed', String(b.getAttribute('data-lang') === lang));
       });
-      try { localStorage.setItem('ad_lang', lang); } catch (e) {}
+      try {
+        localStorage.setItem('ad_lang', lang);
+      } catch (e) {}
     }
     var EN_TITLE = document.title;
     document.querySelectorAll('.lang-switch [data-lang]').forEach(function (b) {
-      b.addEventListener('click', function () { apply(b.getAttribute('data-lang')); });
+      b.addEventListener('click', function () {
+        apply(b.getAttribute('data-lang'));
+      });
     });
     if (document.documentElement.lang === 'vi') apply('vi');
   })();
@@ -126,7 +136,8 @@
 'guide-privacy-h': 'Dữ liệu của bạn nằm ở đâu: ngay trên máy bạn',
 ```
 
-  Translate the rest to the same standard: idiomatic, warm-professional, second person "bạn"; keep technical nouns (side panel → "bảng bên (side panel)" on first mention, then "bảng bên").
+Translate the rest to the same standard: idiomatic, warm-professional, second person "bạn"; keep technical nouns (side panel → "bảng bên (side panel)" on first mention, then "bảng bên").
+
 - [ ] **Step 3:** Verify no missed strings: in agent-browser with VI active, scan every section for leftover English (except the deliberate keep-list) — fix until clean.
 - [ ] **Step 4: Commit** `git commit -am "feat(landing): full Vietnamese translation dictionary"`
 
