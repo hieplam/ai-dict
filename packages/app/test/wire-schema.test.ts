@@ -176,6 +176,21 @@ describe('wire-schema', () => {
     expect(result.success).toBe(false);
   });
 
+  it('settings reply includes configuredProviders', () => {
+    const r = WireReplySchema.safeParse({
+      ok: true,
+      type: 'settings',
+      settings: {
+        targetLang: 'vi',
+        outputFormat: 'f',
+        hasKey: true,
+        theme: 'sepia',
+        configuredProviders: ['gemini'],
+      },
+    });
+    expect(r.success).toBe(true);
+  });
+
   it('lookup req accepts an optional provider override and rejects unknown providers', () => {
     const base = { word: 'w', context: 'c', url: '', title: '', target: 'vi', outputFormat: 'f' };
     const ok = WireMessageSchema.safeParse({
