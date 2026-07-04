@@ -12,6 +12,8 @@ const LookupErrorSchema = z.strictObject({
   vendorMessage: z.string().max(200).optional(),
 });
 
+const ProviderEnum = z.enum(['gemini', 'openai', 'anthropic']);
+
 const LookupRequestSchema = z.strictObject({
   word: z.string(),
   context: z.string(),
@@ -19,6 +21,8 @@ const LookupRequestSchema = z.strictObject({
   title: z.string(),
   target: z.string(),
   outputFormat: z.string(),
+  // One-shot manual provider override from the card picker; absent on normal lookups.
+  provider: ProviderEnum.optional(),
 });
 
 const LookupResultSchema = z.strictObject({
@@ -30,6 +34,8 @@ const LookupResultSchema = z.strictObject({
   model: z.string().min(1),
   fromCache: z.boolean(),
   fetchedAt: z.number(),
+  provider: ProviderEnum.optional(),
+  fallbackFrom: ProviderEnum.optional(),
 });
 
 const PublicSettingsSchema = z.strictObject({
@@ -37,6 +43,7 @@ const PublicSettingsSchema = z.strictObject({
   outputFormat: z.string(),
   hasKey: z.boolean(),
   theme: z.enum(['sepia', 'dark', 'contrast', 'system']),
+  configuredProviders: z.array(ProviderEnum),
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]
 
 const HistoryEntrySchema = z.strictObject({

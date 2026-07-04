@@ -5,6 +5,7 @@ import type {
   LookupResult,
   LookupError,
   PublicSettings,
+  Provider,
 } from './domain/types';
 import type { ErrorRecord } from './domain/error-report';
 
@@ -17,6 +18,18 @@ export interface TriggerUI {
   hide(): void;
 }
 
+/**
+ * Optional context handed to `renderResult` so the card can offer a one-shot
+ * provider picker. Omitted when fewer than two providers are configured (nothing
+ * to switch to). The picker re-runs the SAME lookup once with the chosen provider.
+ */
+export interface ResultRenderContext {
+  /** Providers the reader may switch to (>=2 entries when present). */
+  providers?: Provider[];
+  /** Re-run the SAME lookup once with this provider; does not persist the choice. */
+  onSwitchProvider?: (p: Provider) => void;
+}
+
 export interface ResultRenderer {
   /**
    * Show the loading state. `word` is the reader's selected text, known the
@@ -24,7 +37,7 @@ export interface ResultRenderer {
    * card never appears empty while waiting for the model's reply.
    */
   renderLoading(word?: string): void;
-  renderResult(r: LookupResult): void;
+  renderResult(r: LookupResult, ctx?: ResultRenderContext): void;
   renderError(e: LookupError): void;
   close(): void;
 }

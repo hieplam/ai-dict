@@ -24,6 +24,7 @@ export * from './ui/index';
 export * from './app/markdown-sanitize';
 export * from './app/gemini-lookup-client';
 export * from './app/openai-lookup-client';
+export * from './app/anthropic-lookup-client';
 export * from './app/lookup-client-selector';
 export * from './app/inline-bottom-sheet-renderer';
 export * from './app/router';

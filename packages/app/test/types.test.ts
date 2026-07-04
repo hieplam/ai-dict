@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { hasKeyFor, normalizeTheme } from '../src';
+import { hasKeyFor, normalizeTheme, PROVIDERS, configuredProvidersFor } from '../src';
 import type { Settings, PublicSettings, Theme } from '../src';
 
 describe('Settings public shape (FIX 1 — contract lock)', () => {
@@ -9,12 +9,14 @@ describe('Settings public shape (FIX 1 — contract lock)', () => {
       targetLang: 'vi',
       outputFormat: '{word}',
       hasKey: true,
+      configuredProviders: ['gemini'],
       apiKey: 'AIzaFake',
       cacheEnabled: true,
       saveHistory: false,
       theme: 'sepia',
       provider: 'gemini',
       openaiApiKey: '',
+      anthropicApiKey: '',
     };
     expect(s.targetLang).toBe('vi');
     expect(s.outputFormat).toBe('{word}');
@@ -56,6 +58,38 @@ describe('hasKeyFor — hasKey derives from the selected provider', () => {
   it('settings stored before the provider field existed read as Gemini', () => {
     expect(hasKeyFor({ apiKey: 'AIza' })).toBe(true);
     expect(hasKeyFor({})).toBe(false);
+  });
+});
+
+describe('PROVIDERS + configuredProvidersFor', () => {
+  it('PROVIDERS canonical order is gemini, openai, anthropic', () => {
+    expect(PROVIDERS).toEqual(['gemini', 'openai', 'anthropic']);
+  });
+
+  it('configuredProvidersFor lists only providers with non-empty keys, canonical order', () => {
+    expect(configuredProvidersFor({ apiKey: 'g', anthropicApiKey: 'a' })).toEqual([
+      'gemini',
+      'anthropic',
+    ]);
+    expect(configuredProvidersFor({ openaiApiKey: 'sk', anthropicApiKey: 'ant' })).toEqual([
+      'openai',
+      'anthropic',
+    ]);
+    expect(configuredProvidersFor({})).toEqual([]);
+  });
+
+  it('configuredProvidersFor counts envGeminiKey as configured Gemini', () => {
+    expect(configuredProvidersFor({}, { envGeminiKey: true })).toEqual(['gemini']);
+    expect(configuredProvidersFor({ anthropicApiKey: 'a' }, { envGeminiKey: true })).toEqual([
+      'gemini',
+      'anthropic',
+    ]);
+  });
+
+  it('hasKeyFor uses anthropicApiKey when anthropic selected', () => {
+    expect(hasKeyFor({ provider: 'anthropic', anthropicApiKey: 'sk-ant-x' })).toBe(true);
+    expect(hasKeyFor({ provider: 'anthropic' })).toBe(false);
+    expect(hasKeyFor({ provider: 'anthropic', anthropicApiKey: '' })).toBe(false);
   });
 });
 

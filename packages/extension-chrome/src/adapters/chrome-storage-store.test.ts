@@ -26,8 +26,22 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       hasKey: true,
     });
     const pub = await new ChromeStorageStore(area).get();
-    expect(pub).toEqual({ targetLang: 'vi', outputFormat: 'tpl', hasKey: true, theme: 'sepia' });
+    expect(pub).toEqual({
+      targetLang: 'vi',
+      outputFormat: 'tpl',
+      hasKey: true,
+      theme: 'sepia',
+      configuredProviders: ['gemini'],
+    });
     expect('apiKey' in pub).toBe(false);
+  });
+
+  it('envGeminiKey ctor flag makes Gemini configured even with no stored key', async () => {
+    // A build baked in GEMINI_API_KEY → Gemini works with nothing entered, so hasKey is true
+    // and configuredProviders lists gemini regardless of the empty stored apiKey.
+    const pub = await new ChromeStorageStore(fakeArea({ apiKey: '' }), true).get();
+    expect(pub.hasKey).toBe(true);
+    expect(pub.configuredProviders).toEqual(['gemini']);
   });
 
   it('get() coerces a legacy stored "light" theme to the Paperlight "sepia" default', async () => {
@@ -47,6 +61,7 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       outputFormat: DEFAULT_OUTPUT_FORMAT,
       hasKey: false,
       theme: 'sepia',
+      configuredProviders: [],
     });
     const noKey = await new ChromeStorageStore(
       fakeArea({ targetLang: 'en', outputFormat: 't', apiKey: '' }),

@@ -22,7 +22,7 @@ export interface ErrorReporterDeps {
   meta: () => Promise<{
     extVersion: string;
     browserVersion: string;
-    provider: 'gemini' | 'openai' | undefined;
+    provider: 'gemini' | 'openai' | 'anthropic' | undefined;
   }>;
 }
 

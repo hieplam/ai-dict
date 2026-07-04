@@ -1,11 +1,11 @@
 ---
 id: c3-114
-c3-seal: 9df7f4d417a418a60934efb0f99a8dd24b6f730a878dbac5ae2da9bfcabdd573
+c3-seal: 659eded368ad34af40ae2eb6db94934640a1bd3bf21ac6cddacb14f30afe6ba4
 title: lookup-clients
 type: component
 category: feature
 parent: c3-1
-goal: Implement the `LookupClient` port once per supported AI provider — Gemini 2.5 Flash (`generateContent` REST) and OpenAI ChatGPT (`chat/completions` REST) — plus the per-call selector that picks the client for the provider stored in settings. Every client enforces a 20-second timeout, short-circuits when offline, and maps every HTTP/parse/offline/timeout failure to a typed `LookupError` that the service-worker router can serialize and forward to the content script.
+goal: Implement the `LookupClient` port once per supported AI provider — Gemini 2.5 Flash (`generateContent` REST), OpenAI ChatGPT (`chat/completions` REST), and Anthropic Claude (`messages` REST) — plus `createProviderPool`, the any-failure fallback pool that tries the selected (or one-shot picked) provider first and silently falls through to the next configured provider. Every client enforces a 20-second timeout, short-circuits when offline, stamps the answering `provider` on the result, and maps every HTTP/parse/offline/timeout failure to a typed `LookupError`.
 uses:
     - ref-core-dependency-rule
     - ref-dependency-injection

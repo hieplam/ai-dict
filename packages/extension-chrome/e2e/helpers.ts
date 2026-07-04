@@ -14,6 +14,13 @@ export const OPENAI_OK_BODY = JSON.stringify({
   choices: [{ message: { content: '## bank\nA financial institution (via OpenAI).' } }],
 });
 
+export const ANTHROPIC_GLOB = 'https://api.anthropic.com/**';
+
+/** Default OK Anthropic messages body for the canonical "bank" fixture. */
+export const ANTHROPIC_OK_BODY = JSON.stringify({
+  content: [{ type: 'text', text: '## bank\nA financial institution (via Claude).' }],
+});
+
 export interface SettingsOverrides {
   targetLang?: string;
   outputFormat?: string;
@@ -22,8 +29,9 @@ export interface SettingsOverrides {
   saveHistory?: boolean;
   hasKey?: boolean;
   theme?: 'sepia' | 'dark' | 'contrast' | 'system';
-  provider?: 'gemini' | 'openai';
+  provider?: 'gemini' | 'openai' | 'anthropic';
   openaiApiKey?: string;
+  anthropicApiKey?: string;
 }
 
 /** Write a full settings object to storage. Overrides merge onto sensible defaults. */
@@ -40,6 +48,8 @@ export async function seedSettings(page: Page, overrides: SettingsOverrides = {}
         theme: 'sepia',
         provider: 'gemini',
         openaiApiKey: '',
+        anthropicApiKey: '',
+        configuredProviders: ['gemini'],
         ...o,
       },
     });
@@ -104,6 +114,31 @@ export async function mockOpenAI(
       contentType: 'application/json',
       headers: opts.headers ?? {},
       body: opts.body ?? OPENAI_OK_BODY,
+    });
+  });
+  return calls;
+}
+
+/**
+ * Fake the Anthropic messages endpoint and count hits. Routes on the CONTEXT for the
+ * same reason as mockGemini: the fetch originates in the extension's service worker.
+ */
+export async function mockAnthropic(
+  context: BrowserContext,
+  opts: MockGeminiOpts = {},
+): Promise<{ count: number }> {
+  const calls = { count: 0 };
+  await context.route(ANTHROPIC_GLOB, async (route) => {
+    calls.count++;
+    if (opts.abort) {
+      await route.abort('failed');
+      return;
+    }
+    await route.fulfill({
+      status: opts.status ?? 200,
+      contentType: 'application/json',
+      headers: opts.headers ?? {},
+      body: opts.body ?? ANTHROPIC_OK_BODY,
     });
   });
   return calls;

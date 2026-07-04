@@ -29,6 +29,14 @@
               },
               "outputFormat": {
                 "type": "string"
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "gemini",
+                  "openai",
+                  "anthropic"
+                ]
               }
             },
             "required": [
@@ -242,6 +250,22 @@
               },
               "fetchedAt": {
                 "type": "number"
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "gemini",
+                  "openai",
+                  "anthropic"
+                ]
+              },
+              "fallbackFrom": {
+                "type": "string",
+                "enum": [
+                  "gemini",
+                  "openai",
+                  "anthropic"
+                ]
               }
             },
             "required": [
@@ -297,13 +321,25 @@
                   "contrast",
                   "system"
                 ]
+              },
+              "configuredProviders": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "gemini",
+                    "openai",
+                    "anthropic"
+                  ]
+                }
               }
             },
             "required": [
               "targetLang",
               "outputFormat",
               "hasKey",
-              "theme"
+              "theme",
+              "configuredProviders"
             ],
             "additionalProperties": false
           }
@@ -361,6 +397,22 @@
                     },
                     "fetchedAt": {
                       "type": "number"
+                    },
+                    "provider": {
+                      "type": "string",
+                      "enum": [
+                        "gemini",
+                        "openai",
+                        "anthropic"
+                      ]
+                    },
+                    "fallbackFrom": {
+                      "type": "string",
+                      "enum": [
+                        "gemini",
+                        "openai",
+                        "anthropic"
+                      ]
                     }
                   },
                   "required": [

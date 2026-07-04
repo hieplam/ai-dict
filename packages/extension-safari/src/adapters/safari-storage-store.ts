@@ -2,6 +2,7 @@ import {
   DEFAULT_OUTPUT_FORMAT,
   hasKeyFor,
   normalizeTheme,
+  configuredProvidersFor,
   type SettingsStore,
   type PublicSettings,
   type Settings,
@@ -14,12 +15,14 @@ function defaults(): Settings {
     targetLang: DEFAULT_TARGET,
     outputFormat: DEFAULT_OUTPUT_FORMAT,
     hasKey: false,
+    configuredProviders: [],
     apiKey: '',
     cacheEnabled: true,
     saveHistory: true,
     theme: 'sepia',
     provider: 'gemini',
     openaiApiKey: '',
+    anthropicApiKey: '',
   };
 }
 
@@ -40,6 +43,7 @@ export class SafariStorageStore implements SettingsStore {
       // Coerce: settings stored before the theme setting existed have no `theme`, and
       // pre-Paperlight settings hold the legacy 'light' value → both normalise to 'sepia'.
       theme: normalizeTheme(s?.theme),
+      configuredProviders: configuredProvidersFor(s ?? {}),
     };
   }
 

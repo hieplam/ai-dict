@@ -15,12 +15,14 @@ const DEFAULTS: Settings = {
   targetLang: 'vi',
   outputFormat: DEFAULT_OUTPUT_FORMAT,
   hasKey: false,
+  configuredProviders: [],
   apiKey: '',
   cacheEnabled: true,
   saveHistory: true,
   theme: 'sepia',
   provider: 'gemini',
   openaiApiKey: '',
+  anthropicApiKey: '',
 };
 
 async function load(): Promise<Settings> {

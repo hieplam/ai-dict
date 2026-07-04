@@ -124,6 +124,7 @@ export class GeminiLookupClient implements LookupClient {
         word: req.word,
         target: req.target,
         model: 'gemini-2.5-flash',
+        provider: 'gemini' as const,
         fromCache: false,
         fetchedAt: Date.now(),
       };

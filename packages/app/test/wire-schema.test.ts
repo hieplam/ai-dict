@@ -30,7 +30,13 @@ describe('wire-schema', () => {
     const ok = WireReplySchema.safeParse({
       ok: true,
       type: 'settings',
-      settings: { targetLang: 'vi', outputFormat: 't', hasKey: true, theme: 'sepia' },
+      settings: {
+        targetLang: 'vi',
+        outputFormat: 't',
+        hasKey: true,
+        theme: 'sepia',
+        configuredProviders: [],
+      },
       apiKey: 'leaked',
     });
     expect(ok.success).toBe(true);
@@ -42,7 +48,13 @@ describe('wire-schema', () => {
       const ok = WireReplySchema.safeParse({
         ok: true,
         type: 'settings',
-        settings: { targetLang: 'vi', outputFormat: 't', hasKey: true, theme },
+        settings: {
+          targetLang: 'vi',
+          outputFormat: 't',
+          hasKey: true,
+          theme,
+          configuredProviders: [],
+        },
       });
       expect(ok.success, `theme=${theme} must parse`).toBe(true);
     }
@@ -162,6 +174,59 @@ describe('wire-schema', () => {
       requestId: 'r1',
     });
     expect(result.success).toBe(false);
+  });
+
+  it('settings reply includes configuredProviders', () => {
+    const r = WireReplySchema.safeParse({
+      ok: true,
+      type: 'settings',
+      settings: {
+        targetLang: 'vi',
+        outputFormat: 'f',
+        hasKey: true,
+        theme: 'sepia',
+        configuredProviders: ['gemini'],
+      },
+    });
+    expect(r.success).toBe(true);
+  });
+
+  it('lookup req accepts an optional provider override and rejects unknown providers', () => {
+    const base = { word: 'w', context: 'c', url: '', title: '', target: 'vi', outputFormat: 'f' };
+    const ok = WireMessageSchema.safeParse({
+      type: 'lookup',
+      requestId: '1',
+      req: { ...base, provider: 'anthropic' },
+    });
+    expect(ok.success).toBe(true);
+    const bad = WireMessageSchema.safeParse({
+      type: 'lookup',
+      requestId: '1',
+      req: { ...base, provider: 'skynet' },
+    });
+    expect(bad.success).toBe(false);
+  });
+
+  it('lookup result carries optional provider + fallbackFrom; old results still parse', () => {
+    const result = {
+      markdown: 'm',
+      word: 'w',
+      target: 'vi',
+      model: 'x',
+      fromCache: false,
+      fetchedAt: 1,
+    };
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'lookup', requestId: '1', result }).success,
+    ).toBe(true);
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'lookup',
+        requestId: '1',
+        result: { ...result, provider: 'anthropic', fallbackFrom: 'gemini' },
+      }).success,
+    ).toBe(true);
   });
 
   it('JSON-schema snapshot is stable (spec §8.5)', async () => {

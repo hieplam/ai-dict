@@ -20,6 +20,13 @@ export interface LookupRequest {
   title: string;
   target: string;
   outputFormat: string;
+  /**
+   * One-shot provider override from the card's manual picker. When set, the pool
+   * tries this provider first (bypassing the stored default) and the router skips
+   * the cache read so the picked provider actually answers. Declared
+   * `Provider | undefined` for Zod/EOP alignment with the optional wire field.
+   */
+  provider?: Provider | undefined;
 }
 
 export interface LookupResult {
@@ -30,13 +37,39 @@ export interface LookupResult {
   model: string;
   fromCache: boolean;
   fetchedAt: number;
+  /** The provider that produced this result. Stamped by each lookup client. */
+  provider?: Provider | undefined;
+  /**
+   * Set by the fallback pool when a non-primary provider answered.
+   * Stripped before cache/history writes — transient per-request annotation.
+   * Declared `Provider | undefined` (not just `Provider`) for Zod/EOP alignment.
+   */
+  fallbackFrom?: Provider | undefined;
 }
 
 /**
  * AI provider answering lookups. 'gemini' is the default and the behavior
  * before the setting existed; each provider keeps its own API key.
  */
-export type Provider = 'gemini' | 'openai';
+export type Provider = 'gemini' | 'openai' | 'anthropic';
+
+/** Canonical display order — used by the pool and settings UI. */
+export const PROVIDERS: readonly Provider[] = ['gemini', 'openai', 'anthropic'];
+
+/**
+ * Derive which providers have an API key configured, in canonical order.
+ * `opts.envGeminiKey` counts as a configured Gemini key (build-time injection).
+ */
+export function configuredProvidersFor(
+  s: { apiKey?: string; openaiApiKey?: string; anthropicApiKey?: string },
+  opts?: { envGeminiKey?: boolean },
+): Provider[] {
+  const out: Provider[] = [];
+  if (opts?.envGeminiKey || s.apiKey) out.push('gemini');
+  if (s.openaiApiKey) out.push('openai');
+  if (s.anthropicApiKey) out.push('anthropic');
+  return out;
+}
 
 export type LookupErrorCode =
   | 'NO_KEY'
@@ -95,6 +128,8 @@ export interface PublicSettings {
   outputFormat: string;
   hasKey: boolean;
   theme: Theme;
+  /** Provider names that have an API key configured. Keys themselves are never included. */
+  configuredProviders: Provider[];
 }
 
 /**
@@ -106,8 +141,12 @@ export function hasKeyFor(s: {
   provider?: Provider;
   apiKey?: string;
   openaiApiKey?: string;
+  anthropicApiKey?: string;
 }): boolean {
-  return Boolean((s.provider ?? 'gemini') === 'openai' ? s.openaiApiKey : s.apiKey);
+  const p = s.provider ?? 'gemini';
+  if (p === 'openai') return Boolean(s.openaiApiKey);
+  if (p === 'anthropic') return Boolean(s.anthropicApiKey);
+  return Boolean(s.apiKey);
 }
 
 export function isLookupError(e: unknown): e is LookupError {
@@ -131,4 +170,5 @@ export interface Settings extends PublicSettings {
   saveHistory: boolean;
   provider: Provider;
   openaiApiKey: string;
+  anthropicApiKey: string;
 }

@@ -7,14 +7,14 @@ export interface SettingsFormValue {
   provider: Provider;
   apiKey: string;
   openaiApiKey: string;
+  anthropicApiKey: string;
   targetLang: string;
   outputFormat: string;
   cacheEnabled: boolean;
   saveHistory: boolean;
   theme: Theme;
-  // NOTE: `hasKey` is intentionally absent — it is a derived field computed
-  // from the selected provider's key (`hasKeyFor`) on save/read and is never
-  // emitted by the form's 'save' event.
+  // NOTE: `hasKey` and `configuredProviders` are intentionally absent — they are
+  // derived fields computed on save/read and never emitted by the form's 'save' event.
 }
 
 // Per-provider copy for the single key row; the row morphs as the select changes
@@ -22,6 +22,7 @@ export interface SettingsFormValue {
 const KEY_LABEL: Record<Provider, string> = {
   gemini: 'Gemini API key',
   openai: 'OpenAI API key',
+  anthropic: 'Anthropic (Claude) API key',
 };
 
 // Single source of truth for the "key comes from the build env" wording, shared
@@ -104,6 +105,7 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
       <select id="provider">
         <option value="gemini">Gemini (Google)</option>
         <option value="openai">ChatGPT (OpenAI)</option>
+        <option value="anthropic">Claude (Anthropic)</option>
       </select>
       <label for="key" id="key-label">Gemini API key</label>
       <div class="keyrow">
@@ -172,7 +174,7 @@ export class SettingsForm extends HTMLElement {
   private _provider: Provider = 'gemini';
   // One stash per provider; the visible #key field shows only the selected
   // provider's key and is committed back into the stash before any switch/save.
-  private _keys: Record<Provider, string> = { gemini: '', openai: '' };
+  private _keys: Record<Provider, string> = { gemini: '', openai: '', anthropic: '' };
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -380,6 +382,7 @@ export class SettingsForm extends HTMLElement {
       provider: this._provider,
       apiKey: this._keys.gemini,
       openaiApiKey: this._keys.openai,
+      anthropicApiKey: this._keys.anthropic,
       targetLang: this.q<HTMLSelectElement>('#target').value,
       outputFormat: this.q<HTMLTextAreaElement>('#tpl').value,
       cacheEnabled: this.q<HTMLInputElement>('#cache').checked,
@@ -396,7 +399,11 @@ export class SettingsForm extends HTMLElement {
     }
     // Settings saved before the provider field existed lack provider/openaiApiKey.
     this._provider = v.provider ?? 'gemini';
-    this._keys = { gemini: v.apiKey, openai: v.openaiApiKey ?? '' };
+    this._keys = {
+      gemini: v.apiKey,
+      openai: v.openaiApiKey ?? '',
+      anthropic: v.anthropicApiKey ?? '',
+    };
     this.q<HTMLSelectElement>('#provider').value = this._provider;
     this.q<HTMLSelectElement>('#target').value = v.targetLang;
     this.q<HTMLTextAreaElement>('#tpl').value = v.outputFormat;

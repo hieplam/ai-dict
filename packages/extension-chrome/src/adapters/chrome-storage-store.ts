@@ -2,6 +2,7 @@ import {
   DEFAULT_OUTPUT_FORMAT,
   hasKeyFor,
   normalizeTheme,
+  configuredProvidersFor,
   type SettingsStore,
   type PublicSettings,
   type Settings,
@@ -14,17 +15,24 @@ function defaults(): Settings {
     targetLang: DEFAULT_TARGET,
     outputFormat: DEFAULT_OUTPUT_FORMAT,
     hasKey: false,
+    configuredProviders: [],
     apiKey: '',
     cacheEnabled: true,
     saveHistory: true,
     theme: 'sepia',
     provider: 'gemini',
     openaiApiKey: '',
+    anthropicApiKey: '',
   };
 }
 
 export class ChromeStorageStore implements SettingsStore {
-  constructor(private readonly area: StorageAreaLike) {}
+  // envGeminiKey: a build-time Gemini key (Chrome env define) makes Gemini configured
+  // even with no stored key — so hasKey and configuredProviders reflect the baked-in key.
+  constructor(
+    private readonly area: StorageAreaLike,
+    private readonly envGeminiKey = false,
+  ) {}
 
   private async read(): Promise<Settings | undefined> {
     const { settings } = (await this.area.get('settings')) as { settings?: Settings };
@@ -36,10 +44,11 @@ export class ChromeStorageStore implements SettingsStore {
     return {
       targetLang: s?.targetLang ?? DEFAULT_TARGET,
       outputFormat: s?.outputFormat ?? DEFAULT_OUTPUT_FORMAT,
-      hasKey: hasKeyFor(s ?? {}),
+      hasKey: hasKeyFor(s ?? {}) || this.envGeminiKey,
       // Coerce: settings stored before the theme setting existed have no `theme`, and
       // pre-Paperlight settings hold the legacy 'light' value → both normalise to 'sepia'.
       theme: normalizeTheme(s?.theme),
+      configuredProviders: configuredProvidersFor(s ?? {}, { envGeminiKey: this.envGeminiKey }),
     };
   }
 

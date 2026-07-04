@@ -96,7 +96,9 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       const { cacheEnabled, saveHistory } = await deps.readToggles();
       const keyReq = { word: req.word, context: req.context, target: req.target };
 
-      if (cacheEnabled) {
+      // A manual provider pick (req.provider set) must reach the picked provider: the cache key
+      // ignores provider, so a hit would echo back the previous provider's answer. Skip the read.
+      if (cacheEnabled && req.provider === undefined) {
         const hit = await cacheGet({ storage: deps.kv }, keyReq);
         if (hit)
           return { ok: true, type: 'lookup', result: { ...hit, fromCache: true }, requestId };
@@ -107,13 +109,18 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       if (cancelled.has(requestId)) return SUPPRESS;
 
       const result = await deps.client.lookup(req, { signal: controller.signal });
-      if (cacheEnabled) await deps.queue.run(() => cachePut({ storage: deps.kv }, keyReq, result));
+      // Strip fallbackFrom before storage writes: it's a per-request runtime annotation
+      // (which provider answered this lookup) and should not persist in cache or history.
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { fallbackFrom: _f, ...storableResult } = result;
+      if (cacheEnabled)
+        await deps.queue.run(() => cachePut({ storage: deps.kv }, keyReq, storableResult));
       if (saveHistory) {
         const entry: HistoryEntry = {
           id: crypto.randomUUID(),
           word: req.word,
           context: req.context,
-          result,
+          result: storableResult,
           createdAt: result.fetchedAt,
         };
         await deps.queue.run(() => historyAppend({ storage: deps.kv }, entry));

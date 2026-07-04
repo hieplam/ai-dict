@@ -48,6 +48,7 @@ function deps(over: DepsOverrides = {}) {
       outputFormat: 'tpl',
       hasKey: true,
       theme: 'sepia' as const,
+      configuredProviders: [],
     }),
   );
   return {
@@ -83,6 +84,42 @@ describe('buildRouter', () => {
     const reply = await route(lookupMsg('b')); // same req → hit
     expect(reply).toMatchObject({ ok: true, type: 'lookup', result: { fromCache: true } });
     expect(d.client.lookup).not.toHaveBeenCalled();
+  });
+
+  it('manual provider override (req.provider) skips the cache read — picked provider answers', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route(lookupMsg('a')); // populate cache with the default answer
+    d.client.lookup.mockClear();
+    // Same selection, but with a one-shot provider pick → must bypass the cache and call the client.
+    const reply = await route({
+      type: 'lookup',
+      req: { ...req, provider: 'openai' },
+      requestId: 'b',
+    });
+    expect(reply).toMatchObject({ ok: true, type: 'lookup', result: { fromCache: false } });
+    expect(d.client.lookup).toHaveBeenCalledTimes(1);
+  });
+
+  it('fallbackFrom is never persisted, but provider IS (cache + history strip transient only)', async () => {
+    const d = deps({
+      client: {
+        lookup: makeLookupMock(() =>
+          Promise.resolve({ ...result, provider: 'openai', fallbackFrom: 'gemini' }),
+        ),
+      },
+    });
+    const route = buildRouter(d);
+    const reply = await route(lookupMsg('a'));
+    // The live reply carries the transient annotation…
+    expect(reply).toMatchObject({
+      ok: true,
+      result: { fallbackFrom: 'gemini', provider: 'openai' },
+    });
+    // …but the persisted history entry keeps provider and drops fallbackFrom.
+    const { entries } = await historyList({ storage: d.kv }, {});
+    expect(entries[0]!.result.provider).toBe('openai');
+    expect('fallbackFrom' in entries[0]!.result).toBe(false);
   });
 
   it('honours toggles: cacheEnabled=false + saveHistory=false skips both stores', async () => {
@@ -208,6 +245,7 @@ describe('buildRouter', () => {
             outputFormat: 'tpl',
             hasKey: true,
             theme: 'sepia' as const,
+            configuredProviders: [],
           }),
         ),
         set: vi.fn(),
@@ -255,7 +293,13 @@ describe('buildRouter', () => {
     expect(reply).toEqual({
       ok: true,
       type: 'settings',
-      settings: { targetLang: 'vi', outputFormat: 'tpl', hasKey: true, theme: 'sepia' as const },
+      settings: {
+        targetLang: 'vi',
+        outputFormat: 'tpl',
+        hasKey: true,
+        theme: 'sepia' as const,
+        configuredProviders: [],
+      },
     });
   });
 

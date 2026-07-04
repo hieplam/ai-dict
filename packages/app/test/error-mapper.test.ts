@@ -223,6 +223,33 @@ describe('mapError — vendor diagnostic fields (adr-20260618)', () => {
     expect(mapError({ kind: 'http', status: 401 }).httpStatus).toBe(401);
   });
 
+  it('native vendorStatus flows into diag (e.g. Anthropic rate_limit_error)', () => {
+    const e = mapError({
+      kind: 'http',
+      status: 429,
+      provider: 'anthropic',
+      vendorStatus: 'rate_limit_error',
+      vendorMessage: 'slow down',
+      retryAfterSec: 7,
+    });
+    expect(e).toMatchObject({
+      code: 'RATE_LIMIT',
+      retryAfterSec: 7,
+      vendorStatus: 'rate_limit_error',
+      vendorMessage: 'slow down',
+    });
+  });
+
+  it('vendorStatus takes precedence over geminiStatus when both supplied', () => {
+    const e = mapError({
+      kind: 'http',
+      status: 503,
+      geminiStatus: 'UNAVAILABLE',
+      vendorStatus: 'overloaded_error',
+    });
+    expect(e.vendorStatus).toBe('overloaded_error');
+  });
+
   it('scrubs key-like tokens from vendorMessage', () => {
     const e = mapError({
       kind: 'http',

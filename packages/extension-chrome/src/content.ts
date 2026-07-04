@@ -45,9 +45,11 @@ runLookupWorkflow({
       inline.renderLoading(word);
       mirror.renderLoading(word);
     },
-    renderResult(r) {
+    renderResult(r, ctx) {
       lastFocus = { state: 'result', payload: r };
-      inline.renderResult(r);
+      // Forward the picker context to the in-page card only; the side-panel mirror shows the
+      // badge/note from `r` but no one-shot picker (it's a persistent surface).
+      inline.renderResult(r, ctx);
       mirror.renderResult(r);
     },
     renderError(e) {
