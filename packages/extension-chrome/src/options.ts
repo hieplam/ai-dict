@@ -30,6 +30,7 @@ const KEY_FROM_ENV = __GEMINI_KEY_FROM_ENV__;
 const DEFAULTS: Settings = {
   targetLang: 'vi',
   outputFormat: DEFAULT_OUTPUT_FORMAT,
+  promptEnvelope: '',
   hasKey: false,
   configuredProviders: [],
   apiKey: '',

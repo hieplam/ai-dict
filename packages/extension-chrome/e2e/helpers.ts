@@ -24,6 +24,7 @@ export const ANTHROPIC_OK_BODY = JSON.stringify({
 export interface SettingsOverrides {
   targetLang?: string;
   outputFormat?: string;
+  promptEnvelope?: string;
   apiKey?: string;
   cacheEnabled?: boolean;
   saveHistory?: boolean;
@@ -41,6 +42,7 @@ export async function seedSettings(page: Page, overrides: SettingsOverrides = {}
       settings: {
         targetLang: 'vi',
         outputFormat: 'Define {word}',
+        promptEnvelope: '',
         apiKey: 'AIza-test',
         cacheEnabled: true,
         saveHistory: true,

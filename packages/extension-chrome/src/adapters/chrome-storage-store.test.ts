@@ -29,6 +29,7 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
     expect(pub).toEqual({
       targetLang: 'vi',
       outputFormat: 'tpl',
+      promptEnvelope: '',
       hasKey: true,
       theme: 'sepia',
       configuredProviders: ['gemini'],
@@ -42,6 +43,11 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
     const pub = await new ChromeStorageStore(fakeArea({ apiKey: '' }), true).get();
     expect(pub.hasKey).toBe(true);
     expect(pub.configuredProviders).toEqual(['gemini']);
+  });
+
+  it('get() resolves a legacy custom promptTemplate into the envelope override (read-time)', async () => {
+    const area = fakeArea({ apiKey: 'AIza', promptTemplate: 'my old {word} prompt' });
+    expect((await new ChromeStorageStore(area).get()).promptEnvelope).toBe('my old {word} prompt');
   });
 
   it('get() coerces a legacy stored "light" theme to the Paperlight "sepia" default', async () => {
@@ -59,6 +65,7 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
     expect(empty).toEqual({
       targetLang: 'vi',
       outputFormat: DEFAULT_OUTPUT_FORMAT,
+      promptEnvelope: '',
       hasKey: false,
       theme: 'sepia',
       configuredProviders: [],

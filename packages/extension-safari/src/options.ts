@@ -14,6 +14,7 @@ const form = document.querySelector('settings-form')! as unknown as SettingsForm
 const DEFAULTS: Settings = {
   targetLang: 'vi',
   outputFormat: DEFAULT_OUTPUT_FORMAT,
+  promptEnvelope: '',
   hasKey: false,
   configuredProviders: [],
   apiKey: '',

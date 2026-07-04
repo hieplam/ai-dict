@@ -10,6 +10,7 @@ const req: LookupRequest = {
   title: 'T',
   target: 'vi',
   outputFormat: 'Define {word} in {target_lang}: {context}',
+  promptEnvelope: '',
 };
 
 function res(
@@ -97,6 +98,20 @@ describe('AnthropicLookupClient', () => {
     const content = parsed.messages[0]?.content ?? '';
     expect(content).toContain('Define bank in vi: river bank');
     expect(content).toContain('You are a bilingual dictionary');
+  });
+
+  it('advanced promptEnvelope override replaces the built-in envelope in the sent prompt', async () => {
+    let captured: { init: Parameters<FetchLike>[1] } | null = null;
+    const c = client((_url, init) => {
+      captured = { init };
+      return Promise.resolve(res({ ok: true, status: 200, body: okBody }));
+    });
+    await c.lookup({ ...req, promptEnvelope: 'CUSTOM {word}' });
+    const parsed = JSON.parse(captured!.init.body) as {
+      messages: { role: string; content: string }[];
+    };
+    expect(parsed.messages[0]?.content).toBe('CUSTOM bank');
+    expect(parsed.messages[0]?.content).not.toContain('You are a bilingual dictionary');
   });
 
   it('configured model overrides the default and is echoed in the result', async () => {

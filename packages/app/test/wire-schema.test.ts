@@ -7,7 +7,15 @@ describe('wire-schema', () => {
       WireMessageSchema.safeParse({
         type: 'lookup',
         requestId: 'r1',
-        req: { word: 'a', context: 'b', url: '', title: '', target: 'vi', outputFormat: 't' },
+        req: {
+          word: 'a',
+          context: 'b',
+          url: '',
+          title: '',
+          target: 'vi',
+          outputFormat: 't',
+          promptEnvelope: '',
+        },
       }).success,
     ).toBe(true);
   });
@@ -33,6 +41,7 @@ describe('wire-schema', () => {
       settings: {
         targetLang: 'vi',
         outputFormat: 't',
+        promptEnvelope: '',
         hasKey: true,
         theme: 'sepia',
         configuredProviders: [],
@@ -51,6 +60,7 @@ describe('wire-schema', () => {
         settings: {
           targetLang: 'vi',
           outputFormat: 't',
+          promptEnvelope: '',
           hasKey: true,
           theme,
           configuredProviders: [],
@@ -81,7 +91,15 @@ describe('wire-schema', () => {
     const ok = WireMessageSchema.safeParse({
       type: 'lookup',
       requestId: 'r1',
-      req: { word: 'a', context: 'b', url: '', title: '', target: 'vi', outputFormat: 't' },
+      req: {
+        word: 'a',
+        context: 'b',
+        url: '',
+        title: '',
+        target: 'vi',
+        outputFormat: 't',
+        promptEnvelope: '',
+      },
       apiKey: 'leaked',
     });
     expect(ok.success).toBe(true);
@@ -129,7 +147,15 @@ describe('wire-schema', () => {
     expect(
       WireMessageSchema.safeParse({
         type: 'lookup',
-        req: { word: 'a', context: 'b', url: '', title: '', target: 'vi', outputFormat: 't' },
+        req: {
+          word: 'a',
+          context: 'b',
+          url: '',
+          title: '',
+          target: 'vi',
+          outputFormat: 't',
+          promptEnvelope: '',
+        },
         // requestId intentionally omitted
       }).success,
     ).toBe(false);
@@ -183,6 +209,7 @@ describe('wire-schema', () => {
       settings: {
         targetLang: 'vi',
         outputFormat: 'f',
+        promptEnvelope: '',
         hasKey: true,
         theme: 'sepia',
         configuredProviders: ['gemini'],
@@ -192,7 +219,15 @@ describe('wire-schema', () => {
   });
 
   it('lookup req accepts an optional provider override and rejects unknown providers', () => {
-    const base = { word: 'w', context: 'c', url: '', title: '', target: 'vi', outputFormat: 'f' };
+    const base = {
+      word: 'w',
+      context: 'c',
+      url: '',
+      title: '',
+      target: 'vi',
+      outputFormat: 'f',
+      promptEnvelope: '',
+    };
     const ok = WireMessageSchema.safeParse({
       type: 'lookup',
       requestId: '1',
@@ -225,6 +260,43 @@ describe('wire-schema', () => {
         type: 'lookup',
         requestId: '1',
         result: { ...result, provider: 'anthropic', fallbackFrom: 'gemini' },
+      }).success,
+    ).toBe(true);
+  });
+
+  it('promptEnvelope is required on settings and carried on the lookup req (like outputFormat)', () => {
+    const base = {
+      targetLang: 'vi',
+      outputFormat: 't',
+      hasKey: true,
+      theme: 'sepia' as const,
+      configuredProviders: [],
+    };
+    // Present (even '') → parses; omitted → rejected, exactly like outputFormat.
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'settings',
+        settings: { ...base, promptEnvelope: '' },
+      }).success,
+    ).toBe(true);
+    expect(WireReplySchema.safeParse({ ok: true, type: 'settings', settings: base }).success).toBe(
+      false,
+    );
+    // A non-empty envelope override round-trips on the lookup req.
+    expect(
+      WireMessageSchema.safeParse({
+        type: 'lookup',
+        requestId: 'r1',
+        req: {
+          word: 'a',
+          context: 'b',
+          url: '',
+          title: '',
+          target: 'vi',
+          outputFormat: 't',
+          promptEnvelope: 'CUSTOM {word}',
+        },
       }).success,
     ).toBe(true);
   });

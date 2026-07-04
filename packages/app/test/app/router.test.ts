@@ -24,6 +24,7 @@ const req = {
   title: '',
   target: 'vi',
   outputFormat: 'tpl',
+  promptEnvelope: '',
 };
 const lookupMsg = (requestId: string): WireMessage => ({ type: 'lookup', req, requestId });
 
@@ -46,6 +47,7 @@ function deps(over: DepsOverrides = {}) {
     Promise.resolve({
       targetLang: 'vi',
       outputFormat: 'tpl',
+      promptEnvelope: 'ENV-R',
       hasKey: true,
       theme: 'sepia' as const,
       configuredProviders: [],
@@ -243,6 +245,7 @@ describe('buildRouter', () => {
           Promise.resolve({
             targetLang: 'vi',
             outputFormat: 'tpl',
+            promptEnvelope: '',
             hasKey: true,
             theme: 'sepia' as const,
             configuredProviders: [],
@@ -296,6 +299,7 @@ describe('buildRouter', () => {
       settings: {
         targetLang: 'vi',
         outputFormat: 'tpl',
+        promptEnvelope: 'ENV-R',
         hasKey: true,
         theme: 'sepia' as const,
         configuredProviders: [],
@@ -304,8 +308,11 @@ describe('buildRouter', () => {
   });
 
   it('connection.test → ack when lookup succeeds', async () => {
-    const reply = await buildRouter(deps())({ type: 'connection.test' });
+    const d = deps();
+    const reply = await buildRouter(d)({ type: 'connection.test' });
     expect(reply).toMatchObject({ ok: true, type: 'ack' });
+    // The probe request forwards the resolved envelope override from settings.
+    expect(d.client.lookup.mock.calls[0]?.[0]).toMatchObject({ promptEnvelope: 'ENV-R' });
   });
 
   it('connection.test → error reply when lookup throws', async () => {

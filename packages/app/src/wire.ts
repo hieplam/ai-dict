@@ -21,6 +21,8 @@ const LookupRequestSchema = z.strictObject({
   title: z.string(),
   target: z.string(),
   outputFormat: z.string(),
+  // Full prompt envelope override (advanced, #62); '' = built-in envelope.
+  promptEnvelope: z.string(),
   // One-shot manual provider override from the card picker; absent on normal lookups.
   provider: ProviderEnum.optional(),
 });
@@ -41,6 +43,7 @@ const LookupResultSchema = z.strictObject({
 const PublicSettingsSchema = z.strictObject({
   targetLang: z.string(),
   outputFormat: z.string(),
+  promptEnvelope: z.string(),
   hasKey: z.boolean(),
   theme: z.enum(['sepia', 'dark', 'contrast', 'system']),
   configuredProviders: z.array(ProviderEnum),

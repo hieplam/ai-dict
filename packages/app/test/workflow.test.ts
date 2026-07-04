@@ -29,6 +29,7 @@ const pub = (hasKey: boolean, configuredProviders?: Provider[]) => {
   return {
     targetLang: 'vi',
     outputFormat: 'tpl',
+    promptEnvelope: 'ENV-MARKER',
     hasKey,
     theme: 'sepia' as const,
     configuredProviders: configuredProviders ?? fallback,
@@ -73,6 +74,7 @@ describe('runLookupWorkflow', () => {
       context: 'river bank',
       target: 'vi',
       outputFormat: 'tpl',
+      promptEnvelope: 'ENV-MARKER', // envelope override rides settings → request
     });
   });
 

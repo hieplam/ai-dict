@@ -37,6 +37,7 @@ async function readFullSettings(): Promise<Settings> {
     settings ?? {
       targetLang: DEFAULT_TARGET,
       outputFormat: DEFAULT_OUTPUT_FORMAT,
+      promptEnvelope: '',
       hasKey: false,
       configuredProviders: [],
       apiKey: '',

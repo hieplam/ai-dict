@@ -33,6 +33,7 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
     expect(pub).toEqual({
       targetLang: 'vi',
       outputFormat: 'tpl',
+      promptEnvelope: '',
       hasKey: true,
       theme: 'sepia',
       configuredProviders: ['gemini'],
@@ -45,6 +46,7 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
     expect(empty).toEqual({
       targetLang: 'vi',
       outputFormat: DEFAULT_OUTPUT_FORMAT,
+      promptEnvelope: '',
       hasKey: false,
       theme: 'sepia',
       configuredProviders: [],
