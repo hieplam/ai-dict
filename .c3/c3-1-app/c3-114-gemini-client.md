@@ -1,11 +1,11 @@
 ---
 id: c3-114
-c3-seal: 659eded368ad34af40ae2eb6db94934640a1bd3bf21ac6cddacb14f30afe6ba4
+c3-seal: eedef0983bb1aba28f2f868f50e069bd2a1a9c9e87a727cc4d0828ec69fe890a
 title: lookup-clients
 type: component
 category: feature
 parent: c3-1
-goal: Implement the `LookupClient` port once per supported AI provider — Gemini 2.5 Flash (`generateContent` REST), OpenAI ChatGPT (`chat/completions` REST), and Anthropic Claude (`messages` REST) — plus `createProviderPool`, the any-failure fallback pool that tries the selected (or one-shot picked) provider first and silently falls through to the next configured provider. Every client enforces a 20-second timeout, short-circuits when offline, stamps the answering `provider` on the result, and maps every HTTP/parse/offline/timeout failure to a typed `LookupError`.
+goal: Implement the `LookupClient` port once per supported AI provider — Gemini 2.5 Flash (`generateContent` REST), OpenAI ChatGPT (`chat/completions` REST), and Anthropic Claude (`messages` REST) — over one shared HTTP skeleton (`runHttpLookup` in `http-lookup-client.ts`), plus the per-call selector that picks the client for the provider stored in settings. Every client enforces a 20-second timeout, short-circuits when offline, and maps every HTTP/parse/offline/timeout failure to a typed `LookupError` that the service-worker router can serialize and forward to the content script.
 uses:
     - ref-core-dependency-rule
     - ref-dependency-injection
@@ -15,7 +15,7 @@ uses:
 
 ## Goal
 
-Implement the `LookupClient` port once per supported AI provider — Gemini 2.5 Flash (`generateContent` REST) and OpenAI ChatGPT (`chat/completions` REST) — plus the per-call selector that picks the client for the provider stored in settings. Every client enforces a 20-second timeout, short-circuits when offline, and maps every HTTP/parse/offline/timeout failure to a typed `LookupError` that the service-worker router can serialize and forward to the content script.
+Implement the `LookupClient` port once per supported AI provider — Gemini 2.5 Flash (`generateContent` REST), OpenAI ChatGPT (`chat/completions` REST), and Anthropic Claude (`messages` REST) — over one shared HTTP skeleton (`runHttpLookup` in `http-lookup-client.ts`), plus the per-call selector that picks the client for the provider stored in settings. Every client enforces a 20-second timeout, short-circuits when offline, and maps every HTTP/parse/offline/timeout failure to a typed `LookupError` that the service-worker router can serialize and forward to the content script.
 
 ## Parent Fit
 
@@ -24,16 +24,19 @@ Implement the `LookupClient` port once per supported AI provider — Gemini 2.5 
 | Parent container | c3-1 (app) |
 | Category | Feature |
 | Runtime | service worker |
-| Public surface | GeminiLookupClient, GeminiDeps, OpenAILookupClient, OpenAIDeps, createLookupClientSelector, LookupClientSelectorDeps, FetchLike, FetchInit, ResponseLike |
-| Implements port | LookupClient (c3-102) via GeminiLookupClient / OpenAILookupClient / the selector wrapper |
-| Bundled into | packages/app/src/app/gemini-lookup-client.ts, packages/app/src/app/openai-lookup-client.ts, packages/app/src/app/lookup-client-selector.ts |
-| Depends on | c3-113 (renderTemplate for prompt construction), ref-dependency-injection (deps.fetch/getApiKey/getProvider) |
+| Public surface | GeminiLookupClient, GeminiDeps, OpenAILookupClient, OpenAIDeps, AnthropicLookupClient, AnthropicDeps, createLookupClientSelector, LookupClientSelectorDeps, FetchLike, FetchInit, ResponseLike |
+| Internal helper | runHttpLookup, HttpLookupDeps (packages/app/src/app/http-lookup-client.ts) — the shared skeleton, not exported from the barrel |
+| Implements port | LookupClient (c3-102) via GeminiLookupClient / OpenAILookupClient / AnthropicLookupClient / the selector wrapper |
+| Bundled into | packages/app/src/app/http-lookup-client.ts, packages/app/src/app/gemini-lookup-client.ts, packages/app/src/app/openai-lookup-client.ts, packages/app/src/app/anthropic-lookup-client.ts, packages/app/src/app/lookup-client-selector.ts |
+| Depends on | c3-113 (buildPrompt for prompt construction), ref-dependency-injection (deps.fetch/getApiKey/getProvider) |
 
 ## Purpose
 
-Both provider clients follow the same contract. `GeminiLookupClient implements LookupClient` receives a `LookupRequest`, resolves the API key via the injected `GeminiDeps.getApiKey()` (never embedded in source or transmitted on a URL), builds the prompt via `renderTemplate` (`c3-113`), and POSTs to the Gemini 2.5 Flash endpoint with the key in the `X-Goog-Api-Key` header. `OpenAILookupClient` mirrors it exactly against `https://api.openai.com/v1/chat/completions`, with the key only in the `Authorization: Bearer` header, a configurable model (`OpenAIDeps.model`, default `gpt-4o-mini`), and provider-tagged `mapError` inputs so messages name OpenAI. Each client creates an internal `AbortController` that merges a 20-second timer abort with any caller-supplied `signal`, then maps all failure modes (HTTP error status, unparsable response body, offline, timeout, generic fetch throw) to `LookupError` instances via `mapError` and throws them with `rejectWith(Object.assign(new Error(msg), lookupError))` — making the thrown value both an `Error` instance (satisfying `@typescript-eslint/only-throw-error`) and `isLookupError`-recognizable downstream. Caller-cancel aborts that are NOT already-mapped `LookupError`s are re-thrown raw so the router can distinguish user-cancel (suppress) from server errors (show).
+All three provider clients are thin per-provider configuration that delegate to one shared HTTP skeleton, `runHttpLookup` in `http-lookup-client.ts`. The helper owns everything identical across providers: the `getApiKey()` + empty-key guard, the `navigator.onLine` short-circuit, prompt assembly via `buildPrompt` (`c3-113`), an internal `AbortController` that merges a 20-second timer abort with any caller-supplied `signal`, the `try/catch/finally`, and the mapping of every failure mode (HTTP error status, unparsable body, offline, timeout, generic fetch throw) to a `LookupError` thrown via `rejectWith(Object.assign(new Error(msg), lookupError))` — making the thrown value both an `Error` (satisfying `@typescript-eslint/only-throw-error`) and `isLookupError`-recognizable downstream. Caller-cancel aborts that are NOT already-mapped `LookupError`s are re-thrown raw so the router can distinguish user-cancel (suppress) from server errors (show).
 
-`createLookupClientSelector({ clients, getProvider })` wraps both clients in a single `LookupClient` that resolves `getProvider()` per call and delegates — mirroring the per-call `getApiKey()` pattern, so a provider change in settings applies to the next lookup without a router rebuild or settings listener. The clients do NOT cache results, do NOT write to storage, and do NOT know about `requestId` or the chrome.runtime message channel.
+Each client injects only its per-provider `spec`: the `provider` literal, `endpoint`, the resolved `model`, `headers(apiKey)`, `body(prompt, model)`, `parseOk(json) → string | undefined`, and `parseErr(json) → { geminiStatus?, vendorStatus?, vendorMessage? }`. The API key is passed into the `headers()` builder only — never onto a URL or into a body (`rule-api-key-isolation`, S1). `GeminiLookupClient` targets Gemini 2.5 Flash with the key in `X-Goog-Api-Key` and reads `error.status` as `geminiStatus`; `OpenAILookupClient` targets `chat/completions` with `Authorization: Bearer`, a configurable model (`OpenAIDeps.model`, default `gpt-4o-mini`), and no native status vocabulary; `AnthropicLookupClient` targets `/v1/messages` with `x-api-key` + `anthropic-version` + the direct-browser-access header, a configurable model (`AnthropicDeps.model`, default `claude-haiku-4-5-20251001`), `max_tokens`, and reads `error.type` as `vendorStatus`. Passing each provider's own tag into `mapError` selects the user-facing product/vendor wording; Gemini's tag reproduces the original absent-provider wording.
+
+`createLookupClientSelector({ clients, getProvider })` wraps all three clients in a single `LookupClient` that resolves `getProvider()` per call and delegates — mirroring the per-call `getApiKey()` pattern, so a provider change in settings applies to the next lookup without a router rebuild or settings listener. The clients do NOT cache results, do NOT write to storage, and do NOT know about `requestId` or the chrome.runtime message channel.
 
 ## Foundational Flow
 

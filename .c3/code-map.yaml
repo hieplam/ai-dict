@@ -27,7 +27,9 @@ c3-113:
   - packages/app/test/default-template.test.ts
   - packages/app/test/prompt-template.test.ts
 c3-114:
+  - packages/app/src/app/anthropic-lookup-client.ts
   - packages/app/src/app/gemini-lookup-client.ts
+  - packages/app/src/app/http-lookup-client.ts
   - packages/app/src/app/lookup-client-selector.ts
   - packages/app/src/app/openai-lookup-client.ts
 c3-115:
