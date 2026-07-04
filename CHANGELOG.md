@@ -1,5 +1,14 @@
 # Changelog
 
+## [1.8.0](https://github.com/hieplam/ai-dict/compare/v1.7.1...v1.8.0) (2026-07-04)
+
+
+### Features
+
+* advanced prompt envelope override + Konami dev viewer (Closes [#62](https://github.com/hieplam/ai-dict/issues/62)) ([#92](https://github.com/hieplam/ai-dict/issues/92)) ([de26ce1](https://github.com/hieplam/ai-dict/commit/de26ce1b6eedab22c8b4f7fb410c0d8b59302b9b))
+* **app:** add Anthropic (Claude) as third provider with silent fallback pool ([#89](https://github.com/hieplam/ai-dict/issues/89)) ([c39ec11](https://github.com/hieplam/ai-dict/commit/c39ec1142d35323139f3877b7c5b21bf1026d1fd))
+* **landing:** EN | VI language toggle with full Vietnamese translation ([#88](https://github.com/hieplam/ai-dict/issues/88)) ([3c696a6](https://github.com/hieplam/ai-dict/commit/3c696a606dc7409794a702a0797f919bddd79c13))
+
 ## [1.7.1](https://github.com/hieplam/ai-dict/compare/v1.7.0...v1.7.1) (2026-07-03)
 
 
