@@ -1,6 +1,6 @@
 ---
 id: adr-20260704-advanced-prompt-override-and-viewer
-c3-seal: d6328484ca54b430f3daf53176390d8da13b5d7b29808e9cc988f217a7a51d2e
+c3-seal: 4a729e6fd0d4d1d4dc7735f8f3aa41dad1d790364dbdf790292bbd600a5f558c
 title: advanced-prompt-override-and-viewer
 type: adr
 goal: |-
@@ -11,7 +11,7 @@ goal: |-
     `promptEnvelope: string` field rides the exact same path as `outputFormat`
     (Settings -> PublicSettings -> LookupRequest -> clients). Legacy stored `promptTemplate`
     values are mapped to the new envelope by a pure read-time function — no write migration.
-status: accepted
+status: implemented
 date: "2026-07-04"
 ---
 
