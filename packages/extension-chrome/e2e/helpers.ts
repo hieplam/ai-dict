@@ -68,6 +68,7 @@ export interface MockGeminiOpts {
   body?: string;
   headers?: Record<string, string>;
   abort?: boolean; // route.abort('failed') to simulate offline
+  onRequest?: (postData: string) => void; // observe the outbound request body (e.g. assert the prompt)
 }
 
 /**
@@ -82,6 +83,7 @@ export async function mockGemini(
   const calls = { count: 0 };
   await context.route(GEMINI_GLOB, async (route) => {
     calls.count++;
+    opts.onRequest?.(route.request().postData() ?? '');
     if (opts.abort) {
       await route.abort('failed');
       return;
