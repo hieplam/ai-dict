@@ -78,13 +78,17 @@ export async function runHttpLookup(
   // compose these clients, so no existence guard is needed (avoids a dead branch).
   if (navigator.onLine === false) rejectWith(mapError({ kind: 'offline' }));
 
-  const prompt = buildPrompt(req.outputFormat, {
-    word: req.word,
-    context: req.context,
-    target_lang: req.target,
-    url: req.url,
-    title: req.title,
-  });
+  const prompt = buildPrompt(
+    req.outputFormat,
+    {
+      word: req.word,
+      context: req.context,
+      target_lang: req.target,
+      url: req.url,
+      title: req.title,
+    },
+    req.promptEnvelope,
+  );
   const body = spec.body(prompt, spec.model);
 
   const ac = new AbortController();

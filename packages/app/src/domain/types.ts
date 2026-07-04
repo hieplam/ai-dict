@@ -20,6 +20,8 @@ export interface LookupRequest {
   title: string;
   target: string;
   outputFormat: string;
+  /** Full prompt envelope override (advanced, #62). `''` = use the built-in envelope. */
+  promptEnvelope: string;
   /**
    * One-shot provider override from the card's manual picker. When set, the pool
    * tries this provider first (bypassing the stored default) and the router skips
@@ -126,6 +128,11 @@ export function normalizeTheme(value: unknown): Theme {
 export interface PublicSettings {
   targetLang: string;
   outputFormat: string;
+  /**
+   * Full prompt envelope override (advanced, #62). `''` = use the built-in envelope;
+   * resolved from a legacy stored `promptTemplate` at read time (see `resolvePromptEnvelope`).
+   */
+  promptEnvelope: string;
   hasKey: boolean;
   theme: Theme;
   /** Provider names that have an API key configured. Keys themselves are never included. */

@@ -22,6 +22,7 @@ export class MessageRelaySettingsStore implements SettingsStore {
       const stripped: PublicSettings = {
         targetLang: reply.settings.targetLang,
         outputFormat: reply.settings.outputFormat,
+        promptEnvelope: reply.settings.promptEnvelope,
         hasKey: reply.settings.hasKey,
         theme: reply.settings.theme,
         configuredProviders: reply.settings.configuredProviders,

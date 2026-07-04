@@ -3,6 +3,7 @@ import {
   hasKeyFor,
   normalizeTheme,
   configuredProvidersFor,
+  resolvePromptEnvelope,
   type SettingsStore,
   type PublicSettings,
   type Settings,
@@ -14,6 +15,7 @@ function defaults(): Settings {
   return {
     targetLang: DEFAULT_TARGET,
     outputFormat: DEFAULT_OUTPUT_FORMAT,
+    promptEnvelope: '',
     hasKey: false,
     configuredProviders: [],
     apiKey: '',
@@ -39,6 +41,11 @@ export class SafariStorageStore implements SettingsStore {
     return {
       targetLang: s?.targetLang ?? DEFAULT_TARGET,
       outputFormat: s?.outputFormat ?? DEFAULT_OUTPUT_FORMAT,
+      // Read-time legacy resolution: a stored custom `promptTemplate` (pre-#63) becomes the
+      // envelope override; a shipped default or absent value → '' (built-in). No write migration.
+      // (A legacy stored object still carries `promptTemplate` at runtime even though `Settings`
+      // no longer declares it — `resolvePromptEnvelope` reads it structurally.)
+      promptEnvelope: resolvePromptEnvelope(s ?? {}),
       hasKey: hasKeyFor(s ?? {}),
       // Coerce: settings stored before the theme setting existed have no `theme`, and
       // pre-Paperlight settings hold the legacy 'light' value → both normalise to 'sepia'.

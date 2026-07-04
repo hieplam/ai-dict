@@ -65,6 +65,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
       title: e.title,
       target: settings.targetLang,
       outputFormat: settings.outputFormat,
+      promptEnvelope: settings.promptEnvelope,
     };
     // A manual pick re-runs THIS selection once against the chosen provider (one-shot).
     if (providerOverride) req.provider = providerOverride;

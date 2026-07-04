@@ -1,7 +1,30 @@
 import { adoptStyles } from './styles/adopt';
 import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG, ICON_SHIELD } from './styles/tokens';
-import { DEFAULT_OUTPUT_FORMAT } from '../domain/default-template';
+import { DEFAULT_OUTPUT_FORMAT, PROMPT_ENVELOPE } from '../domain/default-template';
+import { buildPrompt } from '../domain/prompt-template';
 import type { Provider, Theme } from '../domain/types';
+
+// The Konami code (↑↑↓↓←→←→BA), matched on `KeyboardEvent.code` so it is layout-independent.
+const KONAMI_SEQUENCE = [
+  'ArrowUp',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowLeft',
+  'ArrowRight',
+  'KeyB',
+  'KeyA',
+] as const;
+
+// Fixed sample fed to the Developer-mode viewer so the assembled prompt is illustrative and
+// stable. The title carries an email to demonstrate live PII redaction inside the panel.
+const DEV_DEMO = {
+  word: 'serendipity',
+  context: 'Finding that café was pure serendipity.',
+  title: 'Reading list — contact john@example.com',
+} as const;
 
 export interface SettingsFormValue {
   provider: Provider;
@@ -10,6 +33,10 @@ export interface SettingsFormValue {
   anthropicApiKey: string;
   targetLang: string;
   outputFormat: string;
+  // Full prompt envelope override (advanced, #62). '' = use the built-in envelope. The textarea
+  // is prefilled with the real built-in envelope for editing, but '' is emitted until the user
+  // actually edits it (or a legacy custom envelope was supplied).
+  promptEnvelope: string;
   cacheEnabled: boolean;
   saveHistory: boolean;
   theme: Theme;
@@ -93,6 +120,20 @@ button.primary:hover{filter:brightness(1.06);background:var(--ad-accent)}
 #status.error{border-left-color:var(--ad-error);background:var(--ad-surface-raised);color:var(--ad-error)}
 footer{display:flex;align-items:center;gap:6px;max-width:640px;margin:0 auto;padding:13px 22px 18px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 footer svg{width:13px;height:13px;flex:none}
+details.advanced{margin:2px 0 0}
+details.advanced>summary{cursor:pointer;font-size:var(--adp-text-sm);font-weight:var(--adp-weight-semi);color:var(--ad-ink-soft);padding:6px 0;list-style:none;user-select:none}
+details.advanced>summary::-webkit-details-marker{display:none}
+details.advanced>summary::before{content:"▸";display:inline-block;margin-right:8px;color:var(--ad-ink-faint);transition:transform var(--adp-dur-fast) var(--adp-ease)}
+details.advanced[open]>summary::before{transform:rotate(90deg)}
+details.advanced>summary:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px;border-radius:4px}
+#envelope-help{margin:8px 0;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
+#envelope{min-height:180px}
+#devpanel{opacity:1}
+#devpanel.unlocked{animation:dev-reveal var(--adp-dur-fast) var(--adp-ease)}
+@keyframes dev-reveal{from{opacity:0}to{opacity:1}}
+#devmode{margin:0 0 10px;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);color:var(--ad-ink-soft)}
+#devprompt{margin:0;font-family:var(--adp-font-mono,monospace);font-size:var(--adp-text-2xs);background:var(--ad-surface-raised);border:1px solid var(--ad-line);border-radius:var(--adp-radius-control);padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ad-ink-soft)}
+@media (prefers-reduced-motion:reduce){details.advanced>summary::before{transition:none}#devpanel.unlocked{animation:none}}
 [hidden]{display:none}`;
 
 const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary</span></span></header>
@@ -129,6 +170,21 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
       <div class="inline-actions">
         <button type="button" id="reset-tpl">Restore default</button>
       </div>
+      <details class="advanced">
+        <summary>Advanced</summary>
+        <p id="envelope-help">Full prompt envelope — placeholders: {word} {context} {target_lang}
+          {source_lang} {title} {output_format}. Editing this takes over the built-in safety
+          constraints. Leave it as-is to keep the default.</p>
+        <textarea id="envelope" rows="10" spellcheck="false"></textarea>
+        <div class="inline-actions">
+          <button type="button" id="envelope-reset">Reset to default</button>
+        </div>
+      </details>
+    </section>
+    <section class="sec" id="devpanel" aria-labelledby="sec-dev" hidden>
+      <h2 class="sec-h" id="sec-dev">Developer mode</h2>
+      <p id="devmode"></p>
+      <pre id="devprompt"></pre>
     </section>
     <section class="sec" aria-labelledby="sec-look">
       <h2 class="sec-h" id="sec-look">Appearance</h2>
@@ -175,6 +231,17 @@ export class SettingsForm extends HTMLElement {
   // One stash per provider; the visible #key field shows only the selected
   // provider's key and is committed back into the stash before any switch/save.
   private _keys: Record<Provider, string> = { gemini: '', openai: '', anthropic: '' };
+  // The envelope textarea is prefilled with the built-in envelope for editing, so a non-empty
+  // textarea does NOT by itself mean an override. This flag records whether the current textarea
+  // content is a real override (a legacy custom envelope was hydrated, or the user typed) — only
+  // then does `collect()` emit it; otherwise it emits '' (= "use the built-in envelope").
+  private _envelopeEdited = false;
+  // Konami-gated Developer mode: how many sequence keys have matched so far, and whether the
+  // panel is revealed. Both are session-only — never persisted (a reload re-locks the panel).
+  private _konamiProgress = 0;
+  private _devUnlocked = false;
+  // Bound once so add/removeEventListener reference the SAME function across connect/disconnect.
+  private readonly _onKonamiKey = (e: KeyboardEvent): void => this.handleKonamiKey(e);
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -239,6 +306,20 @@ export class SettingsForm extends HTMLElement {
     this.q<HTMLButtonElement>('#reset-tpl').addEventListener('click', () =>
       this.restoreDefaultTemplate(),
     );
+    // Any edit to the envelope textarea promotes its content to a real override, and (once
+    // unlocked) live-refreshes the Developer-mode preview.
+    this.q<HTMLTextAreaElement>('#envelope').addEventListener('input', () => {
+      this._envelopeEdited = true;
+      this.renderDevPanel();
+    });
+    this.q<HTMLButtonElement>('#envelope-reset').addEventListener('click', () =>
+      this.resetEnvelope(),
+    );
+    // The card-format field also feeds the assembled prompt, so refresh the preview on its edits.
+    this.q<HTMLTextAreaElement>('#tpl').addEventListener('input', () => this.renderDevPanel());
+    // The Konami listener is on window (not the shadow) so the code works with focus anywhere on
+    // the page; it is removed in disconnectedCallback to avoid a leak.
+    window.addEventListener('keydown', this._onKonamiKey);
 
     if (this._pendingValue !== null) {
       this.value = this._pendingValue;
@@ -247,6 +328,65 @@ export class SettingsForm extends HTMLElement {
     // Enforce the lock last so it wins over any value just hydrated above.
     this.syncKeyField();
     this.q<HTMLInputElement>('#error-reporting').checked = this._errorReporting;
+  }
+
+  disconnectedCallback(): void {
+    window.removeEventListener('keydown', this._onKonamiKey);
+  }
+
+  /**
+   * Advance the Konami matcher on each window keydown. Keys typed into a form control
+   * (input/textarea/select) never advance — otherwise typing "ba" into the envelope editor would
+   * count. `composedPath()[0]` (not `e.target`, which is retargeted to the host at the shadow
+   * boundary) identifies the true focused element. Never calls preventDefault. On the final match
+   * the Developer panel is revealed; any mismatch resets progress (to 1 iff the mismatched key is
+   * itself the first key of the sequence).
+   */
+  private handleKonamiKey(e: KeyboardEvent): void {
+    if (this._devUnlocked) return;
+    const origin = e.composedPath()[0];
+    if (origin instanceof HTMLElement) {
+      const tag = origin.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+    }
+    if (e.code === KONAMI_SEQUENCE[this._konamiProgress]) {
+      this._konamiProgress += 1;
+      if (this._konamiProgress === KONAMI_SEQUENCE.length) this.unlockDevMode();
+    } else {
+      this._konamiProgress = e.code === KONAMI_SEQUENCE[0] ? 1 : 0;
+    }
+  }
+
+  /** Reveal the Developer panel (session-only) with a subtle fade, and render the assembled prompt. */
+  private unlockDevMode(): void {
+    this._devUnlocked = true;
+    const panel = this.q<HTMLElement>('#devpanel');
+    panel.hidden = false;
+    panel.classList.add('unlocked');
+    this.renderDevPanel();
+    this.setStatus('Developer mode unlocked');
+  }
+
+  /**
+   * Render the exact prompt the current settings would send, for a fixed demo selection. Text is
+   * written via textContent into a <pre> (never innerHTML) so a crafted envelope cannot inject
+   * markup (rule-sanitize-model-output). No-op until the panel is unlocked.
+   */
+  private renderDevPanel(): void {
+    if (!this._devUnlocked || !this.shadowRoot) return;
+    const envelope = this._envelopeEdited ? this.q<HTMLTextAreaElement>('#envelope').value : '';
+    this.q<HTMLElement>('#devmode').textContent =
+      envelope !== '' ? 'Advanced — custom envelope' : 'Basic — default envelope';
+    this.q<HTMLElement>('#devprompt').textContent = buildPrompt(
+      this.q<HTMLTextAreaElement>('#tpl').value,
+      {
+        word: DEV_DEMO.word,
+        context: DEV_DEMO.context,
+        target_lang: this.q<HTMLSelectElement>('#target').value,
+        title: DEV_DEMO.title,
+      },
+      envelope,
+    );
   }
 
   /** Lock the Gemini key field because the build supplies GEMINI_API_KEY itself. */
@@ -362,6 +502,17 @@ export class SettingsForm extends HTMLElement {
     this.setStatus('Card format restored — Save settings to apply.');
   }
 
+  /**
+   * Reset the Advanced envelope back to the built-in default: re-prefill the textarea with the
+   * real `PROMPT_ENVELOPE` and clear the edited flag, so `collect()` emits '' (= "use built-in").
+   * Fills the field only — the user must still Save (matches the form's apply-on-save contract).
+   */
+  private resetEnvelope(): void {
+    this.q<HTMLTextAreaElement>('#envelope').value = PROMPT_ENVELOPE;
+    this._envelopeEdited = false;
+    this.setStatus('Envelope reset — Save settings to apply.');
+  }
+
   private q<T extends Element>(sel: string): T {
     const el = this.root.querySelector<T>(sel);
     if (!el) throw new Error(`settings-form: missing ${sel}`);
@@ -385,6 +536,8 @@ export class SettingsForm extends HTMLElement {
       anthropicApiKey: this._keys.anthropic,
       targetLang: this.q<HTMLSelectElement>('#target').value,
       outputFormat: this.q<HTMLTextAreaElement>('#tpl').value,
+      // The prefilled built-in envelope is emitted as '' (use built-in) unless it's a real override.
+      promptEnvelope: this._envelopeEdited ? this.q<HTMLTextAreaElement>('#envelope').value : '',
       cacheEnabled: this.q<HTMLInputElement>('#cache').checked,
       saveHistory: this.q<HTMLInputElement>('#history').checked,
       theme: this.getThemePref(),
@@ -407,6 +560,13 @@ export class SettingsForm extends HTMLElement {
     this.q<HTMLSelectElement>('#provider').value = this._provider;
     this.q<HTMLSelectElement>('#target').value = v.targetLang;
     this.q<HTMLTextAreaElement>('#tpl').value = v.outputFormat;
+    // Prefill-from-reality: an empty override shows the built-in envelope for editing but stays ''
+    // on save; a supplied (legacy custom) override is shown verbatim and counts as edited.
+    const hasOverride = (v.promptEnvelope ?? '') !== '';
+    this.q<HTMLTextAreaElement>('#envelope').value = hasOverride
+      ? v.promptEnvelope
+      : PROMPT_ENVELOPE;
+    this._envelopeEdited = hasOverride;
     this.q<HTMLInputElement>('#cache').checked = v.cacheEnabled;
     this.q<HTMLInputElement>('#history').checked = v.saveHistory;
     this.setThemePref(v.theme);

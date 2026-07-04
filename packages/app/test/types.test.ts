@@ -8,6 +8,7 @@ describe('Settings public shape (FIX 1 — contract lock)', () => {
     const s: Settings = {
       targetLang: 'vi',
       outputFormat: '{word}',
+      promptEnvelope: '',
       hasKey: true,
       configuredProviders: ['gemini'],
       apiKey: 'AIzaFake',

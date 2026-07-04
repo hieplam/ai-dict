@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
 import { SettingsForm, ENV_KEY_NOTICE, type SettingsFormValue } from '../../src/ui/settings-form';
 import { registerSettingsForm } from '../../src/ui/register';
-import { DEFAULT_OUTPUT_FORMAT } from '../../src/domain/default-template';
+import { DEFAULT_OUTPUT_FORMAT, PROMPT_ENVELOPE } from '../../src/domain/default-template';
 
 beforeAll(() => {
   registerSettingsForm();
@@ -34,6 +34,7 @@ describe('<settings-form>', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -145,6 +146,7 @@ describe('<settings-form>', () => {
       apiKey: 'deferred-key',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'en',
       outputFormat: 'P',
       cacheEnabled: false,
@@ -227,6 +229,7 @@ describe('<settings-form> restore default prompt', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'my custom prompt',
       cacheEnabled: true,
@@ -250,6 +253,7 @@ describe('<settings-form> restore default prompt', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'my custom prompt',
       cacheEnabled: true,
@@ -273,6 +277,7 @@ describe('<settings-form> restore default prompt', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: DEFAULT_OUTPUT_FORMAT,
       cacheEnabled: true,
@@ -320,6 +325,7 @@ describe('<settings-form> env-key lock', () => {
       apiKey: 'AIza-stored',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -344,6 +350,7 @@ describe('<settings-form> env-key lock', () => {
       apiKey: 'AIza-stored',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -378,6 +385,7 @@ describe('<settings-form> provider selection', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -483,6 +491,7 @@ describe('<settings-form> error-reporting toggle', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'x',
       cacheEnabled: true,
@@ -545,7 +554,14 @@ describe('<settings-form> fully themed (§5.8)', () => {
   it('groups controls into Connection, Translation, Appearance, and Privacy & data sections', () => {
     const el = mountForm();
     const heads = [...el.shadowRoot!.querySelectorAll('.sec .sec-h')].map((h) => h.textContent);
-    expect(heads).toEqual(['Connection', 'Translation', 'Appearance', 'Privacy & data']);
+    // 'Developer mode' is a hidden section (revealed only by the Konami code) sitting after Translation.
+    expect(heads).toEqual([
+      'Connection',
+      'Translation',
+      'Developer mode',
+      'Appearance',
+      'Privacy & data',
+    ]);
   });
 
   it('keeps every required control (incl. #status) inside the redesigned markup', () => {
@@ -598,6 +614,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -638,5 +655,147 @@ describe('<settings-form> fully themed (§5.8)', () => {
       expect(el.getAttribute('data-ad-theme')).toBe(value);
       expect(btn.getAttribute('aria-pressed')).toBe('true');
     }
+  });
+});
+
+// Shared base for the Advanced-disclosure suite; each case overrides promptEnvelope.
+function baseValue(promptEnvelope: string): SettingsFormValue {
+  return {
+    provider: 'gemini',
+    apiKey: '',
+    openaiApiKey: '',
+    anthropicApiKey: '',
+    promptEnvelope,
+    targetLang: 'vi',
+    outputFormat: 'T',
+    cacheEnabled: true,
+    saveHistory: true,
+    theme: 'sepia',
+  };
+}
+
+describe('<settings-form> Advanced prompt envelope (#62)', () => {
+  const envArea = (el: SettingsForm) =>
+    el.shadowRoot!.querySelector<HTMLTextAreaElement>('#envelope')!;
+  const collect = (el: SettingsForm): SettingsFormValue => {
+    let captured!: SettingsFormValue;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    return captured;
+  };
+
+  it('a stored custom envelope is shown in the Advanced textarea and round-trips on save', () => {
+    const el = mountForm();
+    el.value = baseValue('MY ENV {word}');
+    expect(envArea(el).value).toBe('MY ENV {word}');
+    expect(collect(el).promptEnvelope).toBe('MY ENV {word}');
+  });
+
+  it('an empty envelope prefills the REAL default envelope but still reads "" until edited', () => {
+    const el = mountForm();
+    el.value = baseValue('');
+    // Prefill-from-reality: the textarea shows the built-in envelope so the user can edit from it…
+    expect(envArea(el).value).toBe(PROMPT_ENVELOPE);
+    // …but the emitted value stays '' (meaning "use built-in") until the user actually edits.
+    expect(collect(el).promptEnvelope).toBe('');
+  });
+
+  it('editing the prefilled envelope makes the value read the edited text', () => {
+    const el = mountForm();
+    el.value = baseValue('');
+    const ta = envArea(el);
+    ta.value = 'edited envelope {word}';
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(collect(el).promptEnvelope).toBe('edited envelope {word}');
+  });
+
+  it('Reset to default re-prefills the built-in envelope and returns the value to ""', () => {
+    const el = mountForm();
+    el.value = baseValue('MY ENV {word}');
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#envelope-reset')!.click();
+    expect(envArea(el).value).toBe(PROMPT_ENVELOPE);
+    expect(collect(el).promptEnvelope).toBe('');
+  });
+});
+
+const KONAMI = [
+  'ArrowUp',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowLeft',
+  'ArrowRight',
+  'KeyB',
+  'KeyA',
+] as const;
+
+function press(code: string, target: EventTarget = window): void {
+  target.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true, composed: true }));
+}
+
+describe('<settings-form> Konami-gated Developer mode (#62)', () => {
+  const panel = (el: SettingsForm) => el.shadowRoot!.querySelector<HTMLElement>('#devpanel')!;
+  const prompt = (el: SettingsForm) => el.shadowRoot!.querySelector<HTMLElement>('#devprompt')!;
+  const envArea = (el: SettingsForm) =>
+    el.shadowRoot!.querySelector<HTMLTextAreaElement>('#envelope')!;
+
+  it('the full Konami sequence unlocks the Developer panel and shows the assembled prompt', () => {
+    const el = mountForm();
+    el.value = baseValue(''); // basic mode: default envelope
+    expect(panel(el).hidden).toBe(true);
+    for (const code of KONAMI) press(code);
+    expect(panel(el).hidden).toBe(false);
+    const text = prompt(el).textContent ?? '';
+    expect(text).toContain('serendipity'); // demo word/context
+    expect(text).toContain('[redact]'); // demo title PII redacted live
+    expect(text).toContain('Keep the response under 200 words.'); // default-envelope constraint
+  });
+
+  it('a wrong key mid-sequence resets progress; the full sequence afterwards still unlocks', () => {
+    const el = mountForm();
+    el.value = baseValue('');
+    press('KeyZ'); // bogus — resets progress
+    for (const code of KONAMI) press(code);
+    expect(panel(el).hidden).toBe(false);
+  });
+
+  it('keydown while an input/textarea is focused does NOT advance the sequence', () => {
+    const el = mountForm();
+    el.value = baseValue('');
+    const ta = envArea(el);
+    // Typing the sequence inside the envelope editor must never unlock (composedPath()[0] is the textarea).
+    for (const code of KONAMI) press(code, ta);
+    expect(panel(el).hidden).toBe(true);
+  });
+
+  it('with a custom envelope the mode line reads Advanced and the prompt reflects it, live-updating on edit', () => {
+    const el = mountForm();
+    el.value = baseValue('CUSTOM {word} envelope');
+    for (const code of KONAMI) press(code);
+    expect(el.shadowRoot!.querySelector('#devmode')!.textContent).toBe(
+      'Advanced — custom envelope',
+    );
+    expect(prompt(el).textContent).toBe('CUSTOM serendipity envelope');
+    // Editing the envelope textarea re-renders the panel live.
+    const ta = envArea(el);
+    ta.value = 'X {word}';
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(prompt(el).textContent).toBe('X serendipity');
+  });
+
+  it('does not persist the unlock: a fresh instance starts locked', () => {
+    const first = mountForm();
+    first.value = baseValue('');
+    for (const code of KONAMI) press(code);
+    expect(panel(first).hidden).toBe(false);
+    const second = mountForm();
+    second.value = baseValue('');
+    expect(panel(second).hidden).toBe(true);
   });
 });

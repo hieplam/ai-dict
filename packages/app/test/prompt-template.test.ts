@@ -87,3 +87,24 @@ describe('buildPrompt', () => {
     expect(out).not.toContain('john@acme.com');
   });
 });
+
+describe('buildPrompt with a custom envelope (advanced override)', () => {
+  const vars = { word: 'w', context: 'c', target_lang: 'vi' };
+  it('uses the custom envelope and still inserts {output_format}', () => {
+    const out = buildPrompt('FMT', vars, 'ENV {word} >>{output_format}<<');
+    expect(out).toBe('ENV w >>FMT<<');
+  });
+  it('a custom envelope without {output_format} is the complete prompt (outputFormat unused)', () => {
+    const out = buildPrompt('FMT', vars, 'Only {word} in {target_lang}');
+    expect(out).toBe('Only w in vi');
+    expect(out).not.toContain('FMT');
+  });
+  it('empty/blank envelope falls back to the default envelope', () => {
+    expect(buildPrompt('FMT', vars, '')).toBe(buildPrompt('FMT', vars));
+    expect(buildPrompt('FMT', vars, '   ')).toBe(buildPrompt('FMT', vars));
+  });
+  it('redactPII still masks the title with a custom envelope', () => {
+    const out = buildPrompt('F', { ...vars, title: 'mail me a@b.com' }, 'T:{title}');
+    expect(out).toBe('T:mail me [redact]');
+  });
+});

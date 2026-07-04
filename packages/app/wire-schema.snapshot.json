@@ -30,6 +30,9 @@
               "outputFormat": {
                 "type": "string"
               },
+              "promptEnvelope": {
+                "type": "string"
+              },
               "provider": {
                 "type": "string",
                 "enum": [
@@ -45,7 +48,8 @@
               "url",
               "title",
               "target",
-              "outputFormat"
+              "outputFormat",
+              "promptEnvelope"
             ],
             "additionalProperties": false
           },
@@ -310,6 +314,9 @@
               "outputFormat": {
                 "type": "string"
               },
+              "promptEnvelope": {
+                "type": "string"
+              },
               "hasKey": {
                 "type": "boolean"
               },
@@ -337,6 +344,7 @@
             "required": [
               "targetLang",
               "outputFormat",
+              "promptEnvelope",
               "hasKey",
               "theme",
               "configuredProviders"

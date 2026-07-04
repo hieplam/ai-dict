@@ -1,6 +1,6 @@
 ---
 id: c3-113
-c3-seal: 53bfde4fbebc9dfb2b795396db5615f35d2436b2aaa92d9a2683c515726d266c
+c3-seal: 71de702dc44f58b3086a49ecd713ba0b333eed851148cd8fbe0296108d8fcfc0
 title: prompt-builder
 type: component
 category: feature
@@ -22,14 +22,14 @@ Substitute named placeholders in a prompt template string and ship the default b
 | Parent container | c3-1 (app) |
 | Category | Feature |
 | Runtime | service worker |
-| Public surface | renderTemplate(template, vars): string, TemplateVars (prompt-template); DEFAULT_TEMPLATE: string (default-template) |
-| Bundled into | packages/app/src/domain/prompt-template.ts and packages/app/src/domain/default-template.ts |
+| Public surface | buildPrompt(outputFormat, vars, envelope?): string, renderTemplate(template, vars): string, TemplateVars (prompt-template); PROMPT_ENVELOPE, DEFAULT_OUTPUT_FORMAT (default-template); resolvePromptEnvelope(s), LEGACY_DEFAULT_TEMPLATES (legacy-templates) |
+| Bundled into | packages/app/src/domain/prompt-template.ts, packages/app/src/domain/default-template.ts, and packages/app/src/domain/legacy-templates.ts |
 | Depends on | No port or external import — pure string transformation |
-| Consumed by | c3-114 (lookup-clients) whose provider clients call renderTemplate to build the final prompt body before sending to the API |
+| Consumed by | c3-114 (lookup-clients) via the shared http-lookup-client, which calls buildPrompt(req.outputFormat, vars, req.promptEnvelope); the shell settings stores (c3-201/c3-301) call resolvePromptEnvelope at read time |
 
 ## Purpose
 
-Owns prompt construction: `renderTemplate` replaces only the supported placeholders (`{word}`, `{context}`, `{target_lang}`, `{source_lang}`, `{url}`, `{title}`) in a caller-supplied template string, leaving unknown placeholders untouched and defaulting `{source_lang}` to `"English"` when absent. `DEFAULT_TEMPLATE` is the shipped fallback that deliberately omits `{url}` and `{title}` for data minimisation. This component does NOT validate the template schema, does NOT call any API, and does NOT render any UI.
+Owns prompt construction. `renderTemplate` replaces only the supported placeholders (`{word}`, `{context}`, `{target_lang}`, `{source_lang}`, `{url}`, `{title}`) in a caller-supplied string, leaving unknown placeholders untouched and defaulting `{source_lang}` to `"English"` when absent. `buildPrompt(outputFormat, vars, envelope?)` assembles the final prompt: a non-blank `envelope` replaces the code-owned `PROMPT_ENVELOPE` (advanced override, #62) and — when it omits `{output_format}` — becomes the complete prompt, restoring a legacy full-prompt user's exact behaviour; the title is routed through `redactPII` either way. `legacy-templates.ts` provides `resolvePromptEnvelope`, a pure read-time resolver that promotes a stored custom `promptTemplate` (differing from every shipped default in `LEGACY_DEFAULT_TEMPLATES`) into the envelope override, so no write migration is needed. `DEFAULT_OUTPUT_FORMAT` is the shipped card layout. This component does NOT validate the template schema, does NOT call any API, and does NOT render any UI.
 
 ## Foundational Flow
 
@@ -63,9 +63,11 @@ Owns prompt construction: `renderTemplate` replaces only the supported placehold
 
 | Surface | Direction | Contract | Boundary | Evidence |
 | --- | --- | --- | --- | --- |
-| TemplateVars | IN | Interface: required word, context, target_lang; caller-supplied source_lang, url, title (all defaulted or nullable) | Domain/Gemini client | packages/app/src/domain/prompt-template.ts — export interface TemplateVars |
+| TemplateVars | IN | Interface: required word, context, target_lang; caller-supplied source_lang, url, title (all defaulted or nullable) | Domain/provider clients | packages/app/src/domain/prompt-template.ts — export interface TemplateVars |
+| buildPrompt(outputFormat, vars, envelope?) | OUT | Pure function: assembles the final prompt. A blank/absent envelope uses PROMPT_ENVELOPE; a non-blank envelope replaces it and (when it omits {output_format}) is the complete prompt. Title always routed through redactPII | c3-114 lookup-clients | packages/app/src/domain/prompt-template.ts — export function buildPrompt |
 | renderTemplate(template, vars) | OUT | Pure function: returns the template with supported placeholders substituted; unknown placeholders untouched; no side effects | c3-114 lookup-clients | packages/app/src/domain/prompt-template.ts — export function renderTemplate |
-| DEFAULT_TEMPLATE | OUT | Constant string with {word}, {context}, {target_lang} placeholders; omits {url} and {title} by spec | c3-114 lookup-clients, settings store default | packages/app/src/domain/default-template.ts — export const DEFAULT_TEMPLATE |
+| PROMPT_ENVELOPE / DEFAULT_OUTPUT_FORMAT | OUT | Code-owned envelope (persona + {word}/{context}/{title} + constraints + one {output_format} slot) and the shipped card layout; envelope omits {url} by spec | c3-114, settings store defaults | packages/app/src/domain/default-template.ts |
+| resolvePromptEnvelope(s) / LEGACY_DEFAULT_TEMPLATES | OUT | Pure read-time resolver: explicit promptEnvelope wins; else a stored custom promptTemplate (differing from every shipped default) becomes the envelope; else '' (built-in). No write migration | c3-201/c3-301 storage stores | packages/app/src/domain/legacy-templates.ts — export function resolvePromptEnvelope |
 
 ## Change Safety
 

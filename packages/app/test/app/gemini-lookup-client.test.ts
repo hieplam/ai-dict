@@ -13,6 +13,7 @@ const req: LookupRequest = {
   title: 'T',
   target: 'vi',
   outputFormat: 'Define {word} in {target_lang}: {context}',
+  promptEnvelope: '',
 };
 
 function res(
@@ -97,6 +98,20 @@ describe('GeminiLookupClient', () => {
     expect(sent).toContain('Define bank in vi: river bank'); // user format rendered
     expect(sent).toContain('You are a bilingual dictionary'); // envelope persona
     expect(sent).toContain('Do not include any HTML'); // envelope constraints
+  });
+
+  it('advanced promptEnvelope override replaces the built-in envelope in the sent prompt', async () => {
+    let captured: { url: string; init: Parameters<FetchLike>[1] } | null = null;
+    const c = client((url, init) => {
+      captured = { url, init };
+      return Promise.resolve(res({ ok: true, status: 200, body: okBody }));
+    });
+    await c.lookup({ ...req, promptEnvelope: 'CUSTOM {word}' });
+    const sent =
+      (JSON.parse(captured!.init.body) as { contents: { parts: { text: string }[] }[] }).contents[0]
+        ?.parts[0]?.text ?? '';
+    expect(sent).toBe('CUSTOM bank'); // envelope override = complete prompt (no {output_format})
+    expect(sent).not.toContain('You are a bilingual dictionary'); // built-in envelope bypassed
   });
 
   it('empty key → NO_KEY (defensive; not retryable), no fetch', async () => {

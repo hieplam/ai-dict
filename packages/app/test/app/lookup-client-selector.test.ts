@@ -9,6 +9,7 @@ const req: LookupRequest = {
   title: 'T',
   target: 'vi',
   outputFormat: 't',
+  promptEnvelope: '',
 };
 
 function okResult(model: string): LookupResult {
