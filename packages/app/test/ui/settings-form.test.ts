@@ -554,7 +554,14 @@ describe('<settings-form> fully themed (§5.8)', () => {
   it('groups controls into Connection, Translation, Appearance, and Privacy & data sections', () => {
     const el = mountForm();
     const heads = [...el.shadowRoot!.querySelectorAll('.sec .sec-h')].map((h) => h.textContent);
-    expect(heads).toEqual(['Connection', 'Translation', 'Appearance', 'Privacy & data']);
+    // 'Developer mode' is a hidden section (revealed only by the Konami code) sitting after Translation.
+    expect(heads).toEqual([
+      'Connection',
+      'Translation',
+      'Developer mode',
+      'Appearance',
+      'Privacy & data',
+    ]);
   });
 
   it('keeps every required control (incl. #status) inside the redesigned markup', () => {
@@ -712,5 +719,83 @@ describe('<settings-form> Advanced prompt envelope (#62)', () => {
     el.shadowRoot!.querySelector<HTMLButtonElement>('#envelope-reset')!.click();
     expect(envArea(el).value).toBe(PROMPT_ENVELOPE);
     expect(collect(el).promptEnvelope).toBe('');
+  });
+});
+
+const KONAMI = [
+  'ArrowUp',
+  'ArrowUp',
+  'ArrowDown',
+  'ArrowDown',
+  'ArrowLeft',
+  'ArrowRight',
+  'ArrowLeft',
+  'ArrowRight',
+  'KeyB',
+  'KeyA',
+] as const;
+
+function press(code: string, target: EventTarget = window): void {
+  target.dispatchEvent(new KeyboardEvent('keydown', { code, bubbles: true, composed: true }));
+}
+
+describe('<settings-form> Konami-gated Developer mode (#62)', () => {
+  const panel = (el: SettingsForm) => el.shadowRoot!.querySelector<HTMLElement>('#devpanel')!;
+  const prompt = (el: SettingsForm) => el.shadowRoot!.querySelector<HTMLElement>('#devprompt')!;
+  const envArea = (el: SettingsForm) =>
+    el.shadowRoot!.querySelector<HTMLTextAreaElement>('#envelope')!;
+
+  it('the full Konami sequence unlocks the Developer panel and shows the assembled prompt', () => {
+    const el = mountForm();
+    el.value = baseValue(''); // basic mode: default envelope
+    expect(panel(el).hidden).toBe(true);
+    for (const code of KONAMI) press(code);
+    expect(panel(el).hidden).toBe(false);
+    const text = prompt(el).textContent ?? '';
+    expect(text).toContain('serendipity'); // demo word/context
+    expect(text).toContain('[redact]'); // demo title PII redacted live
+    expect(text).toContain('Keep the response under 200 words.'); // default-envelope constraint
+  });
+
+  it('a wrong key mid-sequence resets progress; the full sequence afterwards still unlocks', () => {
+    const el = mountForm();
+    el.value = baseValue('');
+    press('KeyZ'); // bogus — resets progress
+    for (const code of KONAMI) press(code);
+    expect(panel(el).hidden).toBe(false);
+  });
+
+  it('keydown while an input/textarea is focused does NOT advance the sequence', () => {
+    const el = mountForm();
+    el.value = baseValue('');
+    const ta = envArea(el);
+    // Typing the sequence inside the envelope editor must never unlock (composedPath()[0] is the textarea).
+    for (const code of KONAMI) press(code, ta);
+    expect(panel(el).hidden).toBe(true);
+  });
+
+  it('with a custom envelope the mode line reads Advanced and the prompt reflects it, live-updating on edit', () => {
+    const el = mountForm();
+    el.value = baseValue('CUSTOM {word} envelope');
+    for (const code of KONAMI) press(code);
+    expect(el.shadowRoot!.querySelector('#devmode')!.textContent).toBe(
+      'Advanced — custom envelope',
+    );
+    expect(prompt(el).textContent).toBe('CUSTOM serendipity envelope');
+    // Editing the envelope textarea re-renders the panel live.
+    const ta = envArea(el);
+    ta.value = 'X {word}';
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(prompt(el).textContent).toBe('X serendipity');
+  });
+
+  it('does not persist the unlock: a fresh instance starts locked', () => {
+    const first = mountForm();
+    first.value = baseValue('');
+    for (const code of KONAMI) press(code);
+    expect(panel(first).hidden).toBe(false);
+    const second = mountForm();
+    second.value = baseValue('');
+    expect(panel(second).hidden).toBe(true);
   });
 });
