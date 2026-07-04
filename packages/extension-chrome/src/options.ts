@@ -72,6 +72,7 @@ function toFormValue(s: Settings): SettingsFormValue {
     anthropicApiKey: s.anthropicApiKey ?? '',
     targetLang: s.targetLang,
     outputFormat: s.outputFormat,
+    promptEnvelope: s.promptEnvelope,
     cacheEnabled: s.cacheEnabled,
     saveHistory: s.saveHistory,
     theme: s.theme,

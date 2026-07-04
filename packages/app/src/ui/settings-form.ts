@@ -1,6 +1,6 @@
 import { adoptStyles } from './styles/adopt';
 import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG, ICON_SHIELD } from './styles/tokens';
-import { DEFAULT_OUTPUT_FORMAT } from '../domain/default-template';
+import { DEFAULT_OUTPUT_FORMAT, PROMPT_ENVELOPE } from '../domain/default-template';
 import type { Provider, Theme } from '../domain/types';
 
 export interface SettingsFormValue {
@@ -10,6 +10,10 @@ export interface SettingsFormValue {
   anthropicApiKey: string;
   targetLang: string;
   outputFormat: string;
+  // Full prompt envelope override (advanced, #62). '' = use the built-in envelope. The textarea
+  // is prefilled with the real built-in envelope for editing, but '' is emitted until the user
+  // actually edits it (or a legacy custom envelope was supplied).
+  promptEnvelope: string;
   cacheEnabled: boolean;
   saveHistory: boolean;
   theme: Theme;
@@ -93,6 +97,15 @@ button.primary:hover{filter:brightness(1.06);background:var(--ad-accent)}
 #status.error{border-left-color:var(--ad-error);background:var(--ad-surface-raised);color:var(--ad-error)}
 footer{display:flex;align-items:center;gap:6px;max-width:640px;margin:0 auto;padding:13px 22px 18px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 footer svg{width:13px;height:13px;flex:none}
+details.advanced{margin:2px 0 0}
+details.advanced>summary{cursor:pointer;font-size:var(--adp-text-sm);font-weight:var(--adp-weight-semi);color:var(--ad-ink-soft);padding:6px 0;list-style:none;user-select:none}
+details.advanced>summary::-webkit-details-marker{display:none}
+details.advanced>summary::before{content:"▸";display:inline-block;margin-right:8px;color:var(--ad-ink-faint);transition:transform var(--adp-dur-fast) var(--adp-ease)}
+details.advanced[open]>summary::before{transform:rotate(90deg)}
+details.advanced>summary:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px;border-radius:4px}
+#envelope-help{margin:8px 0;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
+#envelope{min-height:180px}
+@media (prefers-reduced-motion:reduce){details.advanced>summary::before{transition:none}}
 [hidden]{display:none}`;
 
 const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary</span></span></header>
@@ -129,6 +142,16 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
       <div class="inline-actions">
         <button type="button" id="reset-tpl">Restore default</button>
       </div>
+      <details class="advanced">
+        <summary>Advanced</summary>
+        <p id="envelope-help">Full prompt envelope — placeholders: {word} {context} {target_lang}
+          {source_lang} {title} {output_format}. Editing this takes over the built-in safety
+          constraints. Leave it as-is to keep the default.</p>
+        <textarea id="envelope" rows="10" spellcheck="false"></textarea>
+        <div class="inline-actions">
+          <button type="button" id="envelope-reset">Reset to default</button>
+        </div>
+      </details>
     </section>
     <section class="sec" aria-labelledby="sec-look">
       <h2 class="sec-h" id="sec-look">Appearance</h2>
@@ -175,6 +198,11 @@ export class SettingsForm extends HTMLElement {
   // One stash per provider; the visible #key field shows only the selected
   // provider's key and is committed back into the stash before any switch/save.
   private _keys: Record<Provider, string> = { gemini: '', openai: '', anthropic: '' };
+  // The envelope textarea is prefilled with the built-in envelope for editing, so a non-empty
+  // textarea does NOT by itself mean an override. This flag records whether the current textarea
+  // content is a real override (a legacy custom envelope was hydrated, or the user typed) — only
+  // then does `collect()` emit it; otherwise it emits '' (= "use the built-in envelope").
+  private _envelopeEdited = false;
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -238,6 +266,13 @@ export class SettingsForm extends HTMLElement {
     });
     this.q<HTMLButtonElement>('#reset-tpl').addEventListener('click', () =>
       this.restoreDefaultTemplate(),
+    );
+    // Any edit to the envelope textarea promotes its content to a real override.
+    this.q<HTMLTextAreaElement>('#envelope').addEventListener('input', () => {
+      this._envelopeEdited = true;
+    });
+    this.q<HTMLButtonElement>('#envelope-reset').addEventListener('click', () =>
+      this.resetEnvelope(),
     );
 
     if (this._pendingValue !== null) {
@@ -362,6 +397,17 @@ export class SettingsForm extends HTMLElement {
     this.setStatus('Card format restored — Save settings to apply.');
   }
 
+  /**
+   * Reset the Advanced envelope back to the built-in default: re-prefill the textarea with the
+   * real `PROMPT_ENVELOPE` and clear the edited flag, so `collect()` emits '' (= "use built-in").
+   * Fills the field only — the user must still Save (matches the form's apply-on-save contract).
+   */
+  private resetEnvelope(): void {
+    this.q<HTMLTextAreaElement>('#envelope').value = PROMPT_ENVELOPE;
+    this._envelopeEdited = false;
+    this.setStatus('Envelope reset — Save settings to apply.');
+  }
+
   private q<T extends Element>(sel: string): T {
     const el = this.root.querySelector<T>(sel);
     if (!el) throw new Error(`settings-form: missing ${sel}`);
@@ -385,6 +431,8 @@ export class SettingsForm extends HTMLElement {
       anthropicApiKey: this._keys.anthropic,
       targetLang: this.q<HTMLSelectElement>('#target').value,
       outputFormat: this.q<HTMLTextAreaElement>('#tpl').value,
+      // The prefilled built-in envelope is emitted as '' (use built-in) unless it's a real override.
+      promptEnvelope: this._envelopeEdited ? this.q<HTMLTextAreaElement>('#envelope').value : '',
       cacheEnabled: this.q<HTMLInputElement>('#cache').checked,
       saveHistory: this.q<HTMLInputElement>('#history').checked,
       theme: this.getThemePref(),
@@ -407,6 +455,13 @@ export class SettingsForm extends HTMLElement {
     this.q<HTMLSelectElement>('#provider').value = this._provider;
     this.q<HTMLSelectElement>('#target').value = v.targetLang;
     this.q<HTMLTextAreaElement>('#tpl').value = v.outputFormat;
+    // Prefill-from-reality: an empty override shows the built-in envelope for editing but stays ''
+    // on save; a supplied (legacy custom) override is shown verbatim and counts as edited.
+    const hasOverride = (v.promptEnvelope ?? '') !== '';
+    this.q<HTMLTextAreaElement>('#envelope').value = hasOverride
+      ? v.promptEnvelope
+      : PROMPT_ENVELOPE;
+    this._envelopeEdited = hasOverride;
     this.q<HTMLInputElement>('#cache').checked = v.cacheEnabled;
     this.q<HTMLInputElement>('#history').checked = v.saveHistory;
     this.setThemePref(v.theme);

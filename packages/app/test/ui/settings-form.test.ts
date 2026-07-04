@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
 import { SettingsForm, ENV_KEY_NOTICE, type SettingsFormValue } from '../../src/ui/settings-form';
 import { registerSettingsForm } from '../../src/ui/register';
-import { DEFAULT_OUTPUT_FORMAT } from '../../src/domain/default-template';
+import { DEFAULT_OUTPUT_FORMAT, PROMPT_ENVELOPE } from '../../src/domain/default-template';
 
 beforeAll(() => {
   registerSettingsForm();
@@ -34,6 +34,7 @@ describe('<settings-form>', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -145,6 +146,7 @@ describe('<settings-form>', () => {
       apiKey: 'deferred-key',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'en',
       outputFormat: 'P',
       cacheEnabled: false,
@@ -227,6 +229,7 @@ describe('<settings-form> restore default prompt', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'my custom prompt',
       cacheEnabled: true,
@@ -250,6 +253,7 @@ describe('<settings-form> restore default prompt', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'my custom prompt',
       cacheEnabled: true,
@@ -273,6 +277,7 @@ describe('<settings-form> restore default prompt', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: DEFAULT_OUTPUT_FORMAT,
       cacheEnabled: true,
@@ -320,6 +325,7 @@ describe('<settings-form> env-key lock', () => {
       apiKey: 'AIza-stored',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -344,6 +350,7 @@ describe('<settings-form> env-key lock', () => {
       apiKey: 'AIza-stored',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -378,6 +385,7 @@ describe('<settings-form> provider selection', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -483,6 +491,7 @@ describe('<settings-form> error-reporting toggle', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'x',
       cacheEnabled: true,
@@ -598,6 +607,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
       apiKey: '',
       openaiApiKey: '',
       anthropicApiKey: '',
+      promptEnvelope: '',
       targetLang: 'vi',
       outputFormat: 'T',
       cacheEnabled: true,
@@ -638,5 +648,69 @@ describe('<settings-form> fully themed (§5.8)', () => {
       expect(el.getAttribute('data-ad-theme')).toBe(value);
       expect(btn.getAttribute('aria-pressed')).toBe('true');
     }
+  });
+});
+
+// Shared base for the Advanced-disclosure suite; each case overrides promptEnvelope.
+function baseValue(promptEnvelope: string): SettingsFormValue {
+  return {
+    provider: 'gemini',
+    apiKey: '',
+    openaiApiKey: '',
+    anthropicApiKey: '',
+    promptEnvelope,
+    targetLang: 'vi',
+    outputFormat: 'T',
+    cacheEnabled: true,
+    saveHistory: true,
+    theme: 'sepia',
+  };
+}
+
+describe('<settings-form> Advanced prompt envelope (#62)', () => {
+  const envArea = (el: SettingsForm) =>
+    el.shadowRoot!.querySelector<HTMLTextAreaElement>('#envelope')!;
+  const collect = (el: SettingsForm): SettingsFormValue => {
+    let captured!: SettingsFormValue;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    return captured;
+  };
+
+  it('a stored custom envelope is shown in the Advanced textarea and round-trips on save', () => {
+    const el = mountForm();
+    el.value = baseValue('MY ENV {word}');
+    expect(envArea(el).value).toBe('MY ENV {word}');
+    expect(collect(el).promptEnvelope).toBe('MY ENV {word}');
+  });
+
+  it('an empty envelope prefills the REAL default envelope but still reads "" until edited', () => {
+    const el = mountForm();
+    el.value = baseValue('');
+    // Prefill-from-reality: the textarea shows the built-in envelope so the user can edit from it…
+    expect(envArea(el).value).toBe(PROMPT_ENVELOPE);
+    // …but the emitted value stays '' (meaning "use built-in") until the user actually edits.
+    expect(collect(el).promptEnvelope).toBe('');
+  });
+
+  it('editing the prefilled envelope makes the value read the edited text', () => {
+    const el = mountForm();
+    el.value = baseValue('');
+    const ta = envArea(el);
+    ta.value = 'edited envelope {word}';
+    ta.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(collect(el).promptEnvelope).toBe('edited envelope {word}');
+  });
+
+  it('Reset to default re-prefills the built-in envelope and returns the value to ""', () => {
+    const el = mountForm();
+    el.value = baseValue('MY ENV {word}');
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#envelope-reset')!.click();
+    expect(envArea(el).value).toBe(PROMPT_ENVELOPE);
+    expect(collect(el).promptEnvelope).toBe('');
   });
 });
