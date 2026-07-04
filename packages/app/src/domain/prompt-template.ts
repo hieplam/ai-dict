@@ -37,11 +37,15 @@ export function renderTemplate(template: string, vars: TemplateVars): string {
  * The page title is passed through `redactPII` here so masking is guaranteed for
  * every caller, independent of the lookup client.
  *
- * TODO(advanced-prompt): the full-prompt override for power users is deferred —
- * see https://github.com/hieplam/ai-dict/issues/62. An advanced override would
- * bypass this envelope while still routing the title through `redactPII`.
+ * Advanced override (#62): a non-blank `envelope` replaces the code-owned
+ * `PROMPT_ENVELOPE`. If it omits `{output_format}` it becomes the complete prompt
+ * (restoring a legacy full-prompt user's exact behavior); the title is still
+ * routed through `redactPII` either way. A blank/absent `envelope` means "built-in".
  */
-export function buildPrompt(outputFormat: string, vars: TemplateVars): string {
-  const composed = PROMPT_ENVELOPE.replace('{output_format}', outputFormat);
+export function buildPrompt(outputFormat: string, vars: TemplateVars, envelope?: string): string {
+  const env = envelope !== undefined && envelope.trim() !== '' ? envelope : PROMPT_ENVELOPE;
+  const composed = env.includes('{output_format}')
+    ? env.replace('{output_format}', outputFormat)
+    : env;
   return renderTemplate(composed, { ...vars, title: redactPII(vars.title ?? '') });
 }
