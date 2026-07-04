@@ -1,6 +1,6 @@
 ---
 id: adr-20260704-dedupe-http-lookup-clients
-c3-seal: b618d539fd4dbe3a29efbd1058117d7acfcea1128a5e3c26ae202e2c69ac5f16
+c3-seal: b8a371a01401bfeec745843cc3dbc0aec71e9785aac301a229a00388fc250cee
 title: dedupe-http-lookup-clients
 type: adr
 goal: |-
@@ -11,7 +11,7 @@ goal: |-
     the near-duplicate client bodies so SonarCloud `new_duplicated_lines_density` drops from 4.7% to
     under the 3% quality-gate threshold, while keeping every public class, `*Deps` interface, default
     model, and behavioural contract byte-for-byte unchanged.
-status: accepted
+status: implemented
 date: "2026-07-04"
 ---
 
