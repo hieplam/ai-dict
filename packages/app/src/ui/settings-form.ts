@@ -112,7 +112,8 @@ button:hover{background:var(--ad-surface-raised)}
 button:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 button.link{border:none;background:none;color:var(--ad-accent-ink);padding:0;font-size:14px;text-decoration:underline;text-underline-offset:2px}
 button.link:hover{background:none;text-decoration:none}
-.savebar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+.savebar{position:sticky;bottom:0;z-index:1;display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:16px -22px 0;padding:14px 22px;background:var(--ad-surface);border-top:1px solid var(--ad-line)}
+.savebar .dirty{font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);color:var(--ad-accent-ink)}
 button.primary{background:var(--ad-accent);border-color:transparent;color:var(--ad-on-accent);padding:11px 22px}
 button.primary:hover{filter:brightness(1.06);background:var(--ad-accent)}
 .savebar .muted{font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
@@ -212,6 +213,7 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
     <div class="savebar">
       <button type="submit" id="save" class="primary">Save settings</button>
       <span class="muted">Changes apply after saving</span>
+      <span id="dirty" class="dirty" hidden>● Unsaved changes</span>
     </div>
     <p id="status" role="status" aria-live="polite" hidden></p>
   </div>
@@ -242,6 +244,8 @@ export class SettingsForm extends HTMLElement {
   private _devUnlocked = false;
   // Bound once so add/removeEventListener reference the SAME function across connect/disconnect.
   private readonly _onKonamiKey = (e: KeyboardEvent): void => this.handleKonamiKey(e);
+  // A16: the save bar shows an "Unsaved changes" cue while the form holds unsaved edits.
+  private _dirty = false;
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -279,6 +283,7 @@ export class SettingsForm extends HTMLElement {
       const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-pref]');
       if (!btn) return;
       this.setThemePref(btn.dataset['pref'] as Theme);
+      this.markDirty();
     });
     this.q<HTMLFormElement>('form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -289,7 +294,18 @@ export class SettingsForm extends HTMLElement {
           composed: true,
         }),
       );
+      this.clearDirty();
     });
+    // Mark the form dirty on any edit to a save-form control so the sticky bar can cue it.
+    // #error-reporting is excluded — it persists via its own event and is not part of
+    // SettingsFormValue, so toggling it is not an unsaved *settings* change.
+    const markDirtyOnEdit = (e: Event): void => {
+      if ((e.target as HTMLElement | null)?.id === 'error-reporting') return;
+      this.markDirty();
+    };
+    const dirtyForm = this.q<HTMLFormElement>('form');
+    dirtyForm.addEventListener('input', markDirtyOnEdit);
+    dirtyForm.addEventListener('change', markDirtyOnEdit);
     this.relay('#test', 'test-connection');
     this.relay('#clear-cache', 'clear-cache');
     this.relay('#clear-history', 'clear-history');
@@ -481,6 +497,23 @@ export class SettingsForm extends HTMLElement {
     status.classList.toggle('error', tone === 'error');
   }
 
+  /** Flag the form as holding unsaved edits and reflect it in the sticky save bar. */
+  private markDirty(): void {
+    this._dirty = true;
+    this.refreshDirty();
+  }
+  /** Clear the unsaved-edits state (on save dispatch, and on hydration = clean baseline). */
+  private clearDirty(): void {
+    this._dirty = false;
+    this.refreshDirty();
+  }
+  /** Swap the resting hint for the "Unsaved changes" cue (or back) to match `_dirty`. */
+  private refreshDirty(): void {
+    if (!this.shadowRoot) return;
+    this.q<HTMLElement>('#dirty').hidden = !this._dirty;
+    this.q<HTMLElement>('.savebar .muted').hidden = this._dirty;
+  }
+
   /**
    * Re-populate the card-format field with the shipped DEFAULT_OUTPUT_FORMAT.
    * Fills the field only — the user must still Save (matches the form's
@@ -499,6 +532,7 @@ export class SettingsForm extends HTMLElement {
     );
     if (!ok) return;
     tpl.value = DEFAULT_OUTPUT_FORMAT;
+    this.markDirty();
     this.setStatus('Card format restored — Save settings to apply.');
   }
 
@@ -510,6 +544,7 @@ export class SettingsForm extends HTMLElement {
   private resetEnvelope(): void {
     this.q<HTMLTextAreaElement>('#envelope').value = PROMPT_ENVELOPE;
     this._envelopeEdited = false;
+    this.markDirty();
     this.setStatus('Envelope reset — Save settings to apply.');
   }
 
@@ -572,5 +607,6 @@ export class SettingsForm extends HTMLElement {
     this.setThemePref(v.theme);
     // Render the key row for the (possibly changed) provider + lock state.
     this.syncKeyField();
+    this.clearDirty();
   }
 }

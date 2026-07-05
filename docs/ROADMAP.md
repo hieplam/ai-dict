@@ -141,6 +141,12 @@ These ideas shrink the tax._
 
 #### A16 — Sticky save bar on Settings `Impact 3 · Effort S · Score 3.0`
 
+> **Status: ✅ Implemented (2026-07-05) — landing via squash-merge PR with before/after evidence.**
+> The `.savebar` is now `position: sticky; bottom: 0` with a token surface + top border, and a
+> dirty-state "Unsaved changes" cue that clears on save/hydration — in
+> `packages/app/src/ui/settings-form.ts` (positioning + dirty-state only; Save's behavior and the
+> field set are unchanged). Design/plan under `docs/superpowers/`.
+
 - **Today:** The **Save settings** button sits in a normal `.savebar` div at the very bottom of
   a long settings form (provider, key, language, the Card-format textarea, appearance, history)
   — see `settings-form.ts:156`. It is not sticky.

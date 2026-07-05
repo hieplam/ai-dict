@@ -799,3 +799,128 @@ describe('<settings-form> Konami-gated Developer mode (#62)', () => {
     expect(panel(second).hidden).toBe(true);
   });
 });
+
+describe('<settings-form> sticky save bar + dirty state (A16)', () => {
+  const val = (over: Partial<SettingsFormValue> = {}): SettingsFormValue => ({
+    provider: 'gemini',
+    apiKey: '',
+    openaiApiKey: '',
+    anthropicApiKey: '',
+    promptEnvelope: '',
+    targetLang: 'vi',
+    outputFormat: 'T',
+    cacheEnabled: true,
+    saveHistory: true,
+    theme: 'sepia',
+    ...over,
+  });
+  const dirty = (el: SettingsForm) => el.shadowRoot!.querySelector<HTMLElement>('#dirty')!;
+  const hint = (el: SettingsForm) => el.shadowRoot!.querySelector<HTMLElement>('.savebar .muted')!;
+
+  it('starts clean after hydration: cue hidden, resting hint shown', () => {
+    const el = mountForm();
+    el.value = val();
+    expect(dirty(el).hidden).toBe(true);
+    expect(hint(el).hidden).toBe(false);
+  });
+
+  it('typing in a field marks the form dirty (cue shown, hint hidden)', () => {
+    const el = mountForm();
+    el.value = val();
+    const tpl = el.shadowRoot!.querySelector<HTMLTextAreaElement>('#tpl')!;
+    tpl.value = 'edited';
+    tpl.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(dirty(el).hidden).toBe(false);
+    expect(hint(el).hidden).toBe(true);
+  });
+
+  it('changing a checkbox marks the form dirty', () => {
+    const el = mountForm();
+    el.value = val();
+    const cache = el.shadowRoot!.querySelector<HTMLInputElement>('#cache')!;
+    cache.checked = false;
+    cache.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(dirty(el).hidden).toBe(false);
+  });
+
+  it('changing the provider marks the form dirty', () => {
+    const el = mountForm();
+    el.value = val();
+    const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#provider')!;
+    select.value = 'openai';
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(dirty(el).hidden).toBe(false);
+  });
+
+  it('pressing a theme segment marks the form dirty', () => {
+    const el = mountForm();
+    el.value = val();
+    const btn = el.shadowRoot!.querySelector<HTMLButtonElement>('#theme button[data-pref="dark"]')!;
+    btn.click();
+    expect(dirty(el).hidden).toBe(false);
+  });
+
+  it('saving clears the dirty cue', () => {
+    const el = mountForm();
+    el.value = val();
+    const tpl = el.shadowRoot!.querySelector<HTMLTextAreaElement>('#tpl')!;
+    tpl.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(dirty(el).hidden).toBe(false);
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(dirty(el).hidden).toBe(true);
+    expect(hint(el).hidden).toBe(false);
+  });
+
+  it('re-hydrating via value resets a dirty form to clean', () => {
+    const el = mountForm();
+    el.value = val();
+    el.shadowRoot!.querySelector('#tpl')!.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(dirty(el).hidden).toBe(false);
+    el.value = val({ outputFormat: 'fresh' });
+    expect(dirty(el).hidden).toBe(true);
+  });
+
+  it('Restore default template marks the form dirty', () => {
+    const el = mountForm();
+    el.value = val({ outputFormat: 'my custom prompt' });
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#reset-tpl')!.click();
+    expect(dirty(el).hidden).toBe(false);
+    confirmSpy.mockRestore();
+  });
+
+  it('Reset envelope marks the form dirty', () => {
+    const el = mountForm();
+    el.value = val({ promptEnvelope: 'MY ENV {word}' });
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#envelope-reset')!.click();
+    expect(dirty(el).hidden).toBe(false);
+  });
+
+  it('toggling error-reporting does NOT mark the save form dirty', () => {
+    const el = mountForm();
+    el.value = val();
+    const cb = el.shadowRoot!.querySelector<HTMLInputElement>('#error-reporting')!;
+    cb.checked = true;
+    cb.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(dirty(el).hidden).toBe(true);
+  });
+
+  it('pins the save bar with position:sticky using tokens', () => {
+    const el = mountForm();
+    const css = [...el.shadowRoot!.adoptedStyleSheets[0]!.cssRules]
+      .map((r) => r.cssText)
+      .join('\n')
+      .replace(/\s+/g, '');
+    expect(css).toContain('position:sticky');
+    expect(css).toContain('.savebar'); // rule present
+  });
+
+  it('has no axe violations with the dirty cue shown', async () => {
+    const el = mountForm();
+    el.value = val();
+    el.shadowRoot!.querySelector('#tpl')!.dispatchEvent(new Event('input', { bubbles: true }));
+    expect(await axeViolations(el)).toEqual([]);
+  });
+});
