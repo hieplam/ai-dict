@@ -22,6 +22,7 @@ import {
   type SidePanelFocus,
   type SidePanelFocusReply,
 } from './side-panel-messages';
+import { type CommandMessage } from './command-messages';
 
 const DEFAULT_TARGET = 'vi';
 
@@ -179,6 +180,19 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
       });
     });
   return true; // async sendResponse → keep channel open
+});
+
+// A4: relay a fired chrome.commands keyboard shortcut to the active tab's content script.
+// tab.id can be undefined for certain tab kinds (devtools, etc.) — skip those defensively.
+// The `command` cast is safe: Chrome only fires onCommand for names declared in
+// manifest.json's "commands" key (Task 3), which are exactly LookupCommand's 3 values.
+chrome.commands.onCommand.addListener((command, tab) => {
+  if (tab.id === undefined) return;
+  const message: CommandMessage = {
+    type: 'command',
+    command: command as CommandMessage['command'],
+  };
+  void chrome.tabs.sendMessage(tab.id, message).catch(() => undefined); // no listener/tab gone
 });
 
 // Side panel: open only via toolbar click (§6.5); never the primary surface.
