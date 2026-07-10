@@ -45,6 +45,9 @@ c3-116:
 c3-117:
   - packages/app/src/ui/**
   - packages/app/test/ui/**
+c3-118:
+  - packages/app/src/domain/saved-words-policy.ts
+  - packages/app/test/saved-words-policy.test.ts
 c3-201:
   - packages/extension-chrome/src/adapters/**
 c3-210:
@@ -81,6 +84,7 @@ c3-312:
 ref-kv-storage-prefixes:
   - packages/app/src/domain/cache-policy.ts
   - packages/app/src/domain/history-policy.ts
+  - packages/app/src/domain/saved-words-policy.ts
 ref-web-components-shadow-dom:
   - packages/app/src/ui/**
 ref-wire-protocol-validation:
