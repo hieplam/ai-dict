@@ -105,6 +105,12 @@ These ideas shrink the tax._
 
 #### A4 — Keyboard-only flow `Impact 4 · Effort S · Score 4.0`
 
+> **Status: ✅ Implemented (2026-07-10) — landed via squash-merge PR [#97](https://github.com/hieplam/ai-dict/pull/97) with before/after evidence (video).**
+> Ships exactly 3 `chrome.commands` (`define-selection` / `dismiss-lookup` / `send-to-panel`),
+> with no default keybindings — users assign keys themselves in
+> `chrome://extensions/shortcuts`. No manifest permission change. Design/plan under
+> `docs/superpowers/`.
+
 - **Today:** After selecting a word you must move the mouse to the ~20px Define button and
   click it. Esc dismisses the card, but there is no keyboard way to _start_ a lookup.
 - **Missing:** A shortcut meaning "define what I just selected."
@@ -116,6 +122,13 @@ These ideas shrink the tax._
 - **Depends on:** — · **Lead decides:** command names, panel behavior. **Escalate:** none.
 
 #### A8 — Phrase & idiom expansion `Impact 4 · Effort S · Score 4.0`
+
+> **Status: ✅ Implemented (2026-07-10) — landed via squash-merge PR [#98](https://github.com/hieplam/ai-dict/pull/98) with before/after evidence (video).**
+> A code-owned prompt instruction plus a machine-parseable `DEFINED_AS: "<term>" |
+idiom|literal` signal line (stripped by `domain/defined-as.ts`) drives the card's idiom
+> label and a "Show literal word" button that re-runs the lookup forcing the literal
+> reading. No idiom-detection engine, no new manifest permission. Design/plan under
+> `docs/superpowers/`.
 
 - **Today:** Select just "bucket" in "kick the bucket" and the model _may_ mention the idiom or
   _may_ define the literal pail — it's luck, and nothing on the card says which happened.
@@ -332,6 +345,13 @@ personal vocabulary, without turning reading into homework. Local-only throughou
 
 #### B1 — Save word (star) `Impact 5 · Effort S · Score 5.0` · **foundation**
 
+> **Status: ✅ Implemented (2026-07-10) — landed via squash-merge PR [#99](https://github.com/hieplam/ai-dict/pull/99) with before/after evidence (video).**
+> Ships the owner-ratified entry shape verbatim (see §8 Decision Log, E1) in an independent
+> `saved:*` keyspace (`domain/saved-words-policy.ts`), fully isolated from `history:*`/
+> `cache:*` — clearing history never touches saved words. `translation` ships as `''` for
+> every B1-era save; B2 fills it in without touching the schema. Design/plan under
+> `docs/superpowers/`.
+
 - **Today:** Every lookup lands in one flat auto-history ("Recent") — the word you'll want forever
   sits next to 40 words you clicked once by accident. History can also be toggled off or purged,
   taking everything with it.
@@ -347,6 +367,14 @@ personal vocabulary, without turning reading into homework. Local-only throughou
   important escalation in the roadmap.
 
 #### B2 — Rich context capture `Impact 4 · Effort S · Score 4.0`
+
+> **Status: ✅ Implemented (2026-07-10) — landed via squash-merge PR [#100](https://github.com/hieplam/ai-dict/pull/100) with before/after evidence (screenshots).**
+> Populates the `translation` field B1 left empty, via the same signal-line pattern A8
+> established: a `{translation_instruction}` prompt slot asks the model for a
+> `TRANSLATION: "..."` line, parsed by the new `domain/translation-line.ts`. The ratified
+> entry schema (`SavedWordEntry`/`SavedWordSense`/`SavedWordStatus`) is untouched — verified
+> field-for-field at every checkpoint audit and by the Shaman independently at ship time.
+> Design/plan under `docs/superpowers/`.
 
 - **Today:** A history entry is essentially the word and its definition; where you met it — the
   sentence, the page — is gone.
@@ -375,6 +403,14 @@ savedAt, status, senses[] }`. **Depends on:** B1.
   **Lead decides:** popup layout. **Escalate:** none.
 
 #### B7 — Repeat-offender nudge `Impact 4 · Effort S · Score 4.0`
+
+> **Status: ✅ Implemented (2026-07-10) — landed via squash-merge PR [#101](https://github.com/hieplam/ai-dict/pull/101) with before/after evidence (video).**
+> On the 3rd lookup of a headword within 30 days, the card nudges "3rd time meeting this
+> word — save it?" and reuses B1's exact save path (the identical `toggle-save` event the
+> star button dispatches — no parallel save mechanism). A permanent `nudge:<word>` marker
+> (`domain/nudge-policy.ts`, an independent keyspace from `saved:*`/`history:*`/`cache:*`)
+> is set the instant the threshold first crosses, enforcing one nudge per word, ever, even
+> with zero user interaction. Design/plan under `docs/superpowers/`.
 
 - **Today:** You can look up "ubiquitous" five times in a month and the extension never notices —
   each lookup is a stranger.
@@ -571,34 +607,126 @@ The lead runs everything else. Bring these — and only these — to the human:
 | E5  | **Matching beyond naive** (B3)                    | A lemmatizer raises false-positive highlights — a product-feel tradeoff. | B3 v2                         |
 | E6  | **Any new manifest permission** (general)         | Permissions change the store listing and user-trust story.               | any idea that needs one       |
 
-Everything not in this table, the lead decides and directs.
+Everything not in this table, the lead decides and directs. **E1 is resolved — see §8 Decision Log.**
 
 ---
 
 ## 7. Ranked summary (flat, by score)
 
-| Rank | Idea                     | Score | Rank | Idea                      | Score |
-| ---- | ------------------------ | ----- | ---- | ------------------------- | ----- |
-| 1    | B1 Save word ·foundation | 5.0   | 9    | A15 Latency budget        | 3.0   |
-| 2    | A4 Keyboard flow         | 4.0   | 10   | B5 Status lifecycle       | 3.0   |
-| 3    | A8 Idiom expansion       | 4.0   | 11   | B9 Backup/restore         | 3.0   |
-| 4    | B2 Context capture       | 4.0   | 12   | A1 Streamed answers       | 2.5   |
-| 5    | B4 Hover-recall          | 4.0   | 13   | B3 Re-encounter highlight | 2.5   |
-| 6    | B7 Repeat nudge          | 4.0   | 14   | A2 Recursive lookup       | 2.0   |
-| 7    | B8 Anki export           | 4.0   | 15   | A3 Follow-up chips        | 2.0   |
-| 8    | A6 Smart placement       | 3.0   | 16   | A5 Gloss mode             | 2.0   |
-| 8    | A16 Sticky save bar      | 3.0   | 17   | A13 Quiet mode            | 2.0   |
-| 8    | A9 Instant cache         | 3.0   | 18   | A14 Double-click          | 2.0   |
-| 8    | A10 TTS                  | 3.0   | 19   | B13 Related words         | 2.0   |
-| —    |                          |       | 19   | B15 Site stats            | 2.0   |
-| —    |                          |       | 21   | A7 Pin cards              | 1.5   |
-| —    |                          |       | 21   | A12 Non-English source    | 1.5   |
-| —    |                          |       | 21   | B10 Weekly digest         | 1.5   |
-| —    |                          |       | 21   | B11 Review flip           | 1.5   |
-| —    |                          |       | 21   | B12 Auto-grouping         | 1.5   |
-| —    |                          |       | 21   | B14 Sense dedup           | 1.5   |
-| —    |                          |       | 27   | A11 PDF (spike)           | 1.3   |
+| Rank | Idea                                | Score | Rank | Idea                      | Score |
+| ---- | ----------------------------------- | ----- | ---- | ------------------------- | ----- |
+| 1    | B1 Save word ·foundation ✅ Shipped | 5.0   | 9    | A15 Latency budget        | 3.0   |
+| 2    | A4 Keyboard flow ✅ Shipped         | 4.0   | 10   | B5 Status lifecycle       | 3.0   |
+| 3    | A8 Idiom expansion ✅ Shipped       | 4.0   | 11   | B9 Backup/restore         | 3.0   |
+| 4    | B2 Context capture ✅ Shipped       | 4.0   | 12   | A1 Streamed answers       | 2.5   |
+| 5    | B4 Hover-recall                     | 4.0   | 13   | B3 Re-encounter highlight | 2.5   |
+| 6    | B7 Repeat nudge ✅ Shipped          | 4.0   | 14   | A2 Recursive lookup       | 2.0   |
+| 7    | B8 Anki export                      | 4.0   | 15   | A3 Follow-up chips        | 2.0   |
+| 8    | A6 Smart placement                  | 3.0   | 16   | A5 Gloss mode             | 2.0   |
+| 8    | A16 Sticky save bar ✅ Shipped      | 3.0   | 17   | A13 Quiet mode            | 2.0   |
+| 8    | A9 Instant cache                    | 3.0   | 18   | A14 Double-click          | 2.0   |
+| 8    | A10 TTS                             | 3.0   | 19   | B13 Related words         | 2.0   |
+| —    |                                     |       | 19   | B15 Site stats            | 2.0   |
+| —    |                                     |       | 21   | A7 Pin cards              | 1.5   |
+| —    |                                     |       | 21   | A12 Non-English source    | 1.5   |
+| —    |                                     |       | 21   | B10 Weekly digest         | 1.5   |
+| —    |                                     |       | 21   | B11 Review flip           | 1.5   |
+| —    |                                     |       | 21   | B12 Auto-grouping         | 1.5   |
+| —    |                                     |       | 21   | B14 Sense dedup           | 1.5   |
+| —    |                                     |       | 27   | A11 PDF (spike)           | 1.3   |
 
 **Score ≠ sequence.** B1 leads despite being foundational-first, not because of raw score; the lead
 sequences by dependency (B1→B2→B5→B3) and by quick-win clustering (the S-effort A-ideas), escalating
 only the six items in §6.
+
+---
+
+## 8. Decision Log
+
+_(append-only; date · card · question · ruling · decided by)_
+
+**Campaign: "Top 5 value" batch (2026-07-10).** Owner directive: dispatch the Warchief to
+implement the 5 highest-scored, dependency-clear roadmap items — **A4 → A8 → B1 → B2 → B7** —
+one at a time, verifying each before starting the next. All 5 shipped and independently
+verified. A16 (§4) had already shipped before this campaign started.
+
+- 2026-07-10 · B4 vs B7/B8 tie-break · "Which 4.0-score cards fill the remaining 4 batch slots
+  behind B1?" · Picked A4, A8, B2, B7 over B4 (needs a 2-hop unshipped chain B5→B3) and B8
+  (needs B1+B2, weaker adoption-flywheel effect than B7 — B7 actively funnels repeat-lookup
+  users into saving, compounding B1's value more than an export feature would on its own) ·
+  decided by Shaman (ordinary sequencing call, not an escalation item).
+- 2026-07-10 · B1/B2 · **E1 escalation — saved-word entry schema.** Owner ratified **Option A**
+  (full shape), with one refinement the owner made explicit over the Shaman's flatter proposal:
+  per-encounter fields (definition, translation, sentence, url, title) live **inside** each
+  `senses[]` entry, not at the top level, so a headword's multiple senses (B14) each carry
+  their own context:
+
+  ```
+  {
+    word:    string                   // headword; case-insensitive unique key (B14 fence)
+    status:  "learning" | "known"     // defaults to "learning" on save (B5)
+    savedAt: number                   // timestamp of first save
+    senses: [{                        // starts as a single-entry array
+      definition:  string             // as shown at save time
+      translation: string             // as shown at save time
+      sentence:    string             // the sentence the word was selected in
+      url:         string             // source page
+      title:       string             // source page title
+    }]
+  }
+  ```
+
+  Governance the owner attached: future **additive** fields (e.g. B13 related-words, a
+  per-sense timestamp for B14) stay lead-decidable through this same B2 lock —
+  **restructuring or removing a ratified field is a new escalation.** Standing constraints
+  still bind: new storage keyspace separate from history (`ref-kv-storage-prefixes`), clearing
+  history never touches saved words, API key never appears near this data or its future
+  exports (S1) · decided by Owner (irreversible data shape, register item E1).
+  **Fully delivered and held unchanged across 3 dependent cards** — B1 implemented the shape
+  verbatim; B2 populated the last empty field (`translation`) without touching it; B7 added a
+  nudge feature entirely via a transient `LookupResult.nudge` field and an independent
+  `nudge:<word>` keyspace, again without touching it. Verified by the Shaman independently at
+  every ship via `git diff` on `packages/app/src/domain/types.ts` across all three merges.
+
+- 2026-07-10 · (campaign-wide) · Successor-Shaman resume after an owner-machine crash
+  mid-campaign · Verified surviving git/GitHub state independently (a branch fully pushed with
+  evidence captured but its PR never opened) matched a reconstructed handoff report exactly;
+  treated all prior selection and E1 rulings as already decided; dispatched a successor
+  Warchief to adopt the existing worktree/branch rather than re-implement · decided by Shaman
+  (operational continuity, not a new product decision).
+- 2026-07-10 · A4 · A Warchief's own turn ended mid-wait on a still-running background e2e test
+  process, with a non-terminal filler result · Ruled this was **not** a stale/dead agent —
+  independently confirmed the underlying OS process was still alive and progressing — so
+  resumed the same agent rather than dispatching a duplicate onto the same branch · decided by
+  Shaman (operational/liveness judgment, not a product decision). **This exact failure mode
+  recurred on B2's CI wait and was handled the same way both times** — a lesson worth keeping
+  for future campaigns: a Warchief ending its turn with a non-terminal result is not
+  necessarily a dead agent; check the real process/CI state before assuming so.
+- 2026-07-10 · A8 · The wire protocol gained 2 new **optional** fields
+  (`LookupRequest.forceLiteral`, `LookupResult.definedAs`) · Ruled this is ordinary
+  wire-protocol evolution within A8's own scope fence, **not** an E1-style irreversible
+  persisted-data-shape escalation — E1 covers the saved-word storage entry and the B9 backup
+  file envelope specifically; optional in-flight request/response fields aren't persisted user
+  data · decided by Shaman (routine What/Why boundary call, not a register item). The same
+  reasoning was applied again for B2's optional `LookupResult.translation` and B7's optional
+  `LookupResult.nudge`.
+- 2026-07-10 · B1 · A request to have the Shaman directly read a Warchief's spec file to
+  pre-verify E1 schema conformance before its Hunters started building · **Declined** —
+  reading a Warchief's spec/plan/diff is a hard Shaman role boundary; a Warchief's artifacts
+  are graded by its own audit process, not by the Shaman. Achieved the same early-catch value
+  through an in-bounds channel instead: asked the Warchief to self-verify its own spec against
+  the ratified shape field-for-field and log a one-line attestation before proceeding — later
+  independently re-confirmed by multiple audit checkpoints during the build · decided by Shaman
+  (role-boundary preservation, not a What/Why call). The same self-verify pattern was reused
+  successfully on B2 and B7.
+- 2026-07-10 · B1 · `translation` ships as `''` (empty) for every B1-created entry, since the
+  model returns one markdown blob with no separable translation field without B2's dedicated
+  parsing work · Ruled acceptable as an interim state, not a schema deviation — the field
+  exists per the ratified shape, populating it is explicitly B2's job · decided by Shaman
+  (routine scope-boundary confirmation).
+- 2026-07-10 · (campaign-wide) · **Batch complete.** All 5 cards (A4, A8, B1, B2, B7) verified
+  `SHIPPED` — each with a mechanical proof pass (merge state, squash strategy, base-branch sync,
+  worktree cleanup) plus an independent outcome-vs-goal check from evidence (CI results, PR
+  evidence media, and — for the three schema-adjacent cards — a direct read of the merged
+  `types.ts` on `master`, never by reading implementation diffs) · decided by Shaman
+  (definition-of-done confirmation per §1).
