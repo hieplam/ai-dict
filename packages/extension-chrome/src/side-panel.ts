@@ -70,7 +70,16 @@ function trackSaveContext(
  * else; no-op when the focus region isn't a result (mirrors InlineBottomSheetRenderer.setSaved). */
 function setSaved(saved: boolean): void {
   if (view.focusState.kind !== 'result') return;
-  view.focusState = { ...view.focusState, saved };
+  // B7: any save toggle also clears the nudge banner — the reader has acted on the signal.
+  view.focusState = { ...view.focusState, saved, nudge: false };
+}
+
+/** B7: hide the nudge banner without touching `saved` — mirrors
+ * InlineBottomSheetRenderer.dismissNudge(). No wire round-trip: the backend already permanently
+ * marked this word as nudged before this focus state was ever set (domain/nudge-policy.ts). */
+function dismissNudge(): void {
+  if (view.focusState.kind !== 'result') return;
+  view.focusState = { ...view.focusState, nudge: false };
 }
 
 function isLookupResult(v: unknown): v is LookupResult {
@@ -95,6 +104,9 @@ function resultToFocus(r: LookupResult): PanelFocusState {
     target: r.target,
     ...(r.provider !== undefined ? { provider: r.provider } : {}),
     ...(r.fallbackFrom !== undefined ? { fallbackFrom: r.fallbackFrom } : {}),
+    // B7: nudge is a transient per-reply annotation on LookupResult (never persisted); thread it
+    // through so the panel's own focus region shows the same banner the in-page card does.
+    ...(r.nudge === true ? { nudge: true } : {}),
   };
 }
 
@@ -157,6 +169,10 @@ view.addEventListener('toggle-save', () => {
     : { type: 'saved.delete' as const, word: lastSavePayload.word };
   void chrome.runtime.sendMessage(message).catch(() => undefined);
 });
+
+// B7: the panel's own focus region bubbles the same composed dismiss-nudge event the in-page
+// card does. No wire message needed — see dismissNudge()'s doc comment above.
+view.addEventListener('dismiss-nudge', () => dismissNudge());
 
 // On open, one settings probe drives two things: stamp the reader's theme on the panel,
 // and — if no key is configured — swap the teaching empty state for the same setup invite
