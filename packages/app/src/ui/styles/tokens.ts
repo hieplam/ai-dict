@@ -207,3 +207,9 @@ export const ICON_TRASH =
 export const ICON_SIDE_PANEL =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<rect x="3.5" y="5" width="17" height="14" rx="2.5"/><line x1="14" y1="5" x2="14" y2="19"/></svg>';
+
+// Star (save/unsave a word) — card + panel save row, B1. Outline by default; filled via CSS
+// when the button's aria-pressed="true" (see lookup-card.ts's CARD_DOC_CSS / side-panel-view.ts).
+export const ICON_STAR =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M12 3.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg>';

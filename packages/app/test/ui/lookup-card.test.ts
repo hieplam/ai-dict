@@ -517,3 +517,65 @@ describe('<lookup-card> idiom label + force-literal button (A8)', () => {
     expect(el.querySelector('.defined-as')).toBeNull();
   });
 });
+
+describe('<lookup-card> save/star affordance (B1)', () => {
+  it('an unsaved result renders a Save button with aria-pressed=false', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+    };
+    const btn = el.querySelector<HTMLButtonElement>('.save-btn')!;
+    expect(btn.getAttribute('aria-pressed')).toBe('false');
+    expect(btn.textContent).toContain('Save');
+    expect(btn.getAttribute('aria-label')).toBe('Save bank to your word list');
+  });
+
+  it('a saved result renders aria-pressed=true and the Saved label', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+      saved: true,
+    };
+    const btn = el.querySelector<HTMLButtonElement>('.save-btn')!;
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+    expect(btn.textContent).toContain('Saved');
+    expect(btn.getAttribute('aria-label')).toBe('Remove bank from saved words');
+  });
+
+  it('clicking the save button fires a composed toggle-save event with the word in detail', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+    };
+    const handler = vi.fn();
+    document.body.addEventListener('toggle-save', handler);
+    el.querySelector<HTMLButtonElement>('.save-btn')!.click();
+    document.body.removeEventListener('toggle-save', handler);
+    expect(handler).toHaveBeenCalledTimes(1);
+    const event = handler.mock.calls[0]![0] as CustomEvent<{ word: string }>;
+    expect(event.detail).toEqual({ word: 'bank' });
+  });
+
+  it('the loading and error states render no save row (only result carries it)', () => {
+    const { nodes } = loadingCaption();
+    expect(nodes.some((n) => n instanceof HTMLElement && n.classList.contains('save-row'))).toBe(
+      false,
+    );
+    const errorNodes = renderCardState({
+      kind: 'error',
+      error: { code: 'NETWORK', message: 'x', retryable: true },
+    });
+    expect(
+      errorNodes.some((n) => n instanceof HTMLElement && n.classList.contains('save-row')),
+    ).toBe(false);
+  });
+});
