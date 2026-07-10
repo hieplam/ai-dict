@@ -51,6 +51,9 @@ const LookupResultSchema = z.strictObject({
   fallbackFrom: ProviderEnum.optional(),
   // A8: the idiom/literal unit actually defined; absent for legacy/non-compliant responses.
   definedAs: DefinedAsSchema.optional(),
+  // B2: the model's direct target-language translation; absent for legacy/non-compliant
+  // responses or a custom envelope override that omits {translation_instruction}.
+  translation: z.string().optional(),
 });
 
 const PublicSettingsSchema = z.strictObject({

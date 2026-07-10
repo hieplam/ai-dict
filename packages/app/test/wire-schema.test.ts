@@ -297,6 +297,29 @@ describe('wire-schema', () => {
     ).toBe(true);
   });
 
+  it('lookup result carries an optional translation; back-compat with results that omit it', () => {
+    const result = {
+      markdown: 'm',
+      word: 'w',
+      target: 'vi',
+      model: 'x',
+      fromCache: false,
+      fetchedAt: 1,
+    };
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'lookup',
+        requestId: '1',
+        result: { ...result, translation: 'ngân hàng' },
+      }).success,
+    ).toBe(true);
+    // Old-shaped result (no translation) still parses — back-compat.
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'lookup', requestId: '1', result }).success,
+    ).toBe(true);
+  });
+
   it('lookup result carries optional provider + fallbackFrom; old results still parse', () => {
     const result = {
       markdown: 'm',

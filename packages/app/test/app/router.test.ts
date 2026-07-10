@@ -436,6 +436,37 @@ describe('buildRouter', () => {
     expect(typeof (reply as { entry: { savedAt: number } }).entry.savedAt).toBe('number');
   });
 
+  it('saved.save persists a non-empty translation verbatim (B2 regression guard — no truncation/transform in the pass-through)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    const reply = await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'a financial institution',
+      translation: 'ngân hàng',
+      sentence: 'the river bank',
+      url: 'https://example.com',
+      title: 'Example',
+    });
+    expect(reply).toMatchObject({
+      ok: true,
+      type: 'saved',
+      entry: {
+        word: 'bank',
+        status: 'learning',
+        senses: [
+          {
+            definition: 'a financial institution',
+            translation: 'ngân hàng',
+            sentence: 'the river bank',
+            url: 'https://example.com',
+            title: 'Example',
+          },
+        ],
+      },
+    });
+  });
+
   it('a second saved.save for the same word (different casing) preserves savedAt, replaces senses', async () => {
     const d = deps();
     const route = buildRouter(d);

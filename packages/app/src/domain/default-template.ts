@@ -18,6 +18,8 @@ Page title: "{title}"
 
 {idiom_instruction}
 
+{translation_instruction}
+
 Output Markdown with these sections, in this exact order:
 {output_format}
 
@@ -50,3 +52,14 @@ DEFINED_AS: "{word}" | literal`;
  */
 export const IDIOM_FORCE_LITERAL_INSTRUCTION = `Define ONLY the literal, standalone word "{word}" exactly as selected, even if it is part of a larger idiom or phrasal verb in the sentence context. Do not define the idiom. Begin your response with exactly this line before any other output:
 DEFINED_AS: "{word}" | literal`;
+
+/**
+ * B2 — rich context capture. Asks the model to emit a machine-parseable TRANSLATION signal line
+ * immediately after DEFINED_AS, decoupled from the user-customizable Card format
+ * (`{output_format}`) so a saved word's translation survives no matter how the reader has
+ * renamed/reordered/removed the visible "Eng -> {target_lang}" section. Read by
+ * domain/translation-line.ts's parseTranslation, which strips the line before the markdown
+ * reaches the card — same contract as parseDefinedAs/DEFINED_AS above.
+ */
+export const TRANSLATION_INSTRUCTION = `Immediately after the DEFINED_AS line, before any other output, also emit exactly this line:
+TRANSLATION: "<a natural, concise {target_lang} translation of the meaning of "{word}" in this context>"`;

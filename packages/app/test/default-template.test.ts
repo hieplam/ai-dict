@@ -4,6 +4,7 @@ import {
   DEFAULT_OUTPUT_FORMAT,
   IDIOM_AUTO_INSTRUCTION,
   IDIOM_FORCE_LITERAL_INSTRUCTION,
+  TRANSLATION_INSTRUCTION,
 } from '../src/domain/default-template';
 
 describe('PROMPT_ENVELOPE', () => {
@@ -49,5 +50,19 @@ describe('IDIOM_AUTO_INSTRUCTION / IDIOM_FORCE_LITERAL_INSTRUCTION', () => {
     expect(IDIOM_FORCE_LITERAL_INSTRUCTION).toContain('DEFINED_AS:');
     expect(IDIOM_FORCE_LITERAL_INSTRUCTION).toContain('{word}');
     expect(IDIOM_FORCE_LITERAL_INSTRUCTION.toLowerCase()).toContain('literal');
+  });
+});
+
+describe('PROMPT_ENVELOPE (B2 translation slot)', () => {
+  it('carries the {translation_instruction} placeholder', () => {
+    expect(PROMPT_ENVELOPE).toContain('{translation_instruction}');
+  });
+});
+
+describe('TRANSLATION_INSTRUCTION', () => {
+  it('asks the model to emit a TRANSLATION line and mentions {word}/{target_lang}', () => {
+    expect(TRANSLATION_INSTRUCTION).toContain('TRANSLATION:');
+    expect(TRANSLATION_INSTRUCTION).toContain('{word}');
+    expect(TRANSLATION_INSTRUCTION).toContain('{target_lang}');
   });
 });

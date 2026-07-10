@@ -141,3 +141,29 @@ describe('buildPrompt idiom instruction (A8)', () => {
     expect(out).toContain('DEFINED_AS: "bucket" | literal'); // resolved inside the instruction text
   });
 });
+
+describe('buildPrompt translation instruction (B2)', () => {
+  const vars = { word: 'bank', context: 'river bank', target_lang: 'Vietnamese' };
+
+  it('emits a TRANSLATION instruction alongside DEFINED_AS by default', () => {
+    const out = buildPrompt('1. define it', vars);
+    expect(out).toContain('TRANSLATION:');
+  });
+
+  it('does not leak the {translation_instruction} slot into the final prompt', () => {
+    expect(buildPrompt('1. define it', vars)).not.toContain('{translation_instruction}');
+  });
+
+  it('a custom envelope without {translation_instruction} is unaffected (opt-out, mirrors the idiom slot)', () => {
+    const out = buildPrompt('FMT', vars, 'ENV {word}');
+    expect(out).toBe('ENV bank');
+    expect(out).not.toContain('TRANSLATION:');
+  });
+
+  it('a custom envelope WITH {translation_instruction} resolves the nested {word}/{target_lang}', () => {
+    const out = buildPrompt('FMT', vars, 'E {translation_instruction}');
+    expect(out).toContain('TRANSLATION:');
+    expect(out).toContain('bank');
+    expect(out).toContain('Vietnamese');
+  });
+});

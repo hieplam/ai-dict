@@ -2,6 +2,7 @@ import {
   PROMPT_ENVELOPE,
   IDIOM_AUTO_INSTRUCTION,
   IDIOM_FORCE_LITERAL_INSTRUCTION,
+  TRANSLATION_INSTRUCTION,
 } from './default-template';
 import { redactPII } from './pii';
 
@@ -66,6 +67,9 @@ export function buildPrompt(
   const idiomInstruction = forceLiteral ? IDIOM_FORCE_LITERAL_INSTRUCTION : IDIOM_AUTO_INSTRUCTION;
   composed = composed.includes('{idiom_instruction}')
     ? composed.replace('{idiom_instruction}', idiomInstruction)
+    : composed;
+  composed = composed.includes('{translation_instruction}')
+    ? composed.replace('{translation_instruction}', TRANSLATION_INSTRUCTION)
     : composed;
   return renderTemplate(composed, { ...vars, title: redactPII(vars.title ?? '') });
 }

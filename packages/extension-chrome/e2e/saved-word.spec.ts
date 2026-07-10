@@ -133,3 +133,70 @@ test.describe('B1 save word (star)', () => {
     ).toHaveLength(0);
   });
 });
+
+const GEMINI_WITH_TRANSLATION_BODY = JSON.stringify({
+  candidates: [
+    {
+      content: {
+        parts: [
+          {
+            text: 'DEFINED_AS: "bank" | literal\nTRANSLATION: "ngân hàng"\n\n## bank\nA financial institution.',
+          },
+        ],
+      },
+    },
+  ],
+});
+
+test.describe('B2 rich context capture (translation)', () => {
+  test('tapping the star persists a real translation when the model emits a TRANSLATION line', async ({
+    context,
+    extensionId,
+  }) => {
+    await mockGemini(context, { body: GEMINI_WITH_TRANSLATION_BODY });
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/options.html`);
+    await seedSettings(page);
+    await doLookup(page);
+
+    // The visible card never leaks the machine-readable signal lines.
+    await expect(page.locator('bottom-sheet lookup-card')).not.toContainText('TRANSLATION:');
+    await expect(page.locator('bottom-sheet lookup-card')).not.toContainText('DEFINED_AS:');
+
+    const star = page.locator('bottom-sheet lookup-card .save-btn');
+    await star.click();
+    await expect.poll(async () => (await swStorageDump(context))['saved:bank']).toBeDefined();
+
+    const dump = await swStorageDump(context);
+    const entry = JSON.parse(dump['saved:bank'] as string);
+    // New in B2: translation is populated with real content, not ''.
+    expect(entry.senses[0].translation).toBe('ngân hàng');
+    // Regression guard (B1): definition/sentence/url/title are still correctly populated and
+    // the machine-readable signal lines never leak into the stored definition.
+    expect(entry.senses[0].definition).toContain('financial institution');
+    expect(entry.senses[0].definition).not.toContain('TRANSLATION:');
+    expect(entry.senses[0].definition).not.toContain('DEFINED_AS:');
+    expect(entry.senses[0].sentence.length).toBeGreaterThan(0);
+    expect(typeof entry.senses[0].url).toBe('string');
+    expect(typeof entry.senses[0].title).toBe('string');
+  });
+
+  test('a mocked response with no TRANSLATION line still saves translation as "" (B1 back-compat)', async ({
+    context,
+    extensionId,
+  }) => {
+    await mockGemini(context); // default GEMINI_OK_BODY — no signal lines at all
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/options.html`);
+    await seedSettings(page);
+    await doLookup(page);
+
+    await page.locator('bottom-sheet lookup-card .save-btn').click();
+    await expect.poll(async () => (await swStorageDump(context))['saved:bank']).toBeDefined();
+
+    const dump = await swStorageDump(context);
+    const entry = JSON.parse(dump['saved:bank'] as string);
+    expect(entry.senses[0].translation).toBe('');
+    expect(entry.senses[0].definition).toContain('financial institution');
+  });
+});
