@@ -41,6 +41,20 @@ export class ChromeFloatingTrigger implements TriggerUI {
     this.el.style.top = `${anchor.y + anchor.h}px`;
   }
 
+  /**
+   * Keyboard-shortcut path (A4 define-selection): fire the same click the mouse would, on
+   * whatever trigger bubble is currently showing. Returns false (no-op) if nothing is
+   * selected/shown — matches "define what I just selected": nothing selected, nothing to do.
+   */
+  activate(): boolean {
+    const btn = this.el?.shadowRoot?.querySelector('button');
+    if (btn instanceof HTMLButtonElement && !btn.disabled) {
+      btn.click();
+      return true;
+    }
+    return false;
+  }
+
   hide(): void {
     this.el?.removeEventListener('lookup-click', this.handler);
     this.el?.remove();

@@ -38,4 +38,14 @@ describe('manifest.json (S5 CSP + S8 permissions — exact)', () => {
     expect(manifest.icons).toEqual(expected);
     expect(manifest.action.default_icon).toEqual(expected);
   });
+  it('declares exactly 3 A4 commands with NO default binding (roadmap A4 scope fence)', () => {
+    expect(manifest.commands).toEqual({
+      'define-selection': { description: 'Define the current text selection' },
+      'dismiss-lookup': { description: 'Dismiss the lookup card' },
+      'send-to-panel': { description: 'Send the current lookup to the side panel' },
+    });
+    for (const cmd of Object.values(manifest.commands)) {
+      expect('suggested_key' in cmd).toBe(false);
+    }
+  });
 });

@@ -16,6 +16,17 @@
     "service_worker": "sw.js",
     "type": "module"
   },
+  "commands": {
+    "define-selection": {
+      "description": "Define the current text selection"
+    },
+    "dismiss-lookup": {
+      "description": "Dismiss the lookup card"
+    },
+    "send-to-panel": {
+      "description": "Send the current lookup to the side panel"
+    }
+  },
   "content_scripts": [
     {
       "matches": ["<all_urls>"],

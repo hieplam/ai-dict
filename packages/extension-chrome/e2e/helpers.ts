@@ -1,4 +1,4 @@
-import type { Page, BrowserContext } from '@playwright/test';
+import type { Page, BrowserContext, Worker } from '@playwright/test';
 
 export const GEMINI_GLOB = 'https://generativelanguage.googleapis.com/**';
 
@@ -216,4 +216,33 @@ export async function selectWord(page: Page, id: string, word: string): Promise<
 export async function openTrigger(page: Page): Promise<void> {
   await page.locator('lookup-trigger').waitFor({ state: 'attached', timeout: 5_000 });
   await page.locator('lookup-trigger').click();
+}
+
+/** Resolve the extension's service worker handle, waiting for registration if needed. */
+export async function getServiceWorker(context: BrowserContext): Promise<Worker> {
+  let [sw] = context.serviceWorkers();
+  if (!sw) sw = await context.waitForEvent('serviceworker', { timeout: 10_000 });
+  return sw;
+}
+
+/**
+ * Simulate a chrome.commands keyboard shortcut firing (A4). Playwright/CDP cannot synthesize a
+ * real OS-level extension shortcut (Chrome intercepts it before any JS sees a keydown), so this
+ * calls chrome.tabs.sendMessage directly from the service worker — the literal call the
+ * onCommand listener makes — exercising every line downstream of that (Chrome-owned) listener.
+ * Mirrors sw.ts's own `.catch(() => undefined)` on that call: when there is no content-script
+ * listener registered for the tab (e.g. relaying against a build that predates this feature,
+ * as the before/after evidence spec does), sendMessage rejects with "Could not establish
+ * connection" — swallowed here the same way production swallows it, rather than failing the test.
+ */
+export async function relayCommand(
+  sw: Worker,
+  command: 'define-selection' | 'dismiss-lookup' | 'send-to-panel',
+): Promise<void> {
+  await sw.evaluate(async (cmd) => {
+    const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+    const tab = tabs[0];
+    if (!tab?.id) throw new Error('no active tab found for command relay');
+    await chrome.tabs.sendMessage(tab.id, { type: 'command', command: cmd }).catch(() => undefined);
+  }, command);
 }

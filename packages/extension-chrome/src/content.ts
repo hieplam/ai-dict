@@ -13,6 +13,7 @@ import { ChromeFloatingTrigger } from './adapters/chrome-floating-trigger';
 import { MessageRelaySettingsStore } from './adapters/message-relay-settings-store';
 import { ChromeSidePanelMirror } from './adapters/chrome-side-panel-mirror';
 import type { SidePanelFocus, OpenSidePanelMessage } from './side-panel-messages';
+import { isCommandMessage } from './command-messages';
 
 const inline = new InlineBottomSheetRenderer(document.body, undefined, { sidePanel: true });
 const mirror = new ChromeSidePanelMirror(chrome.runtime);
@@ -36,6 +37,14 @@ void themedSettings.get().catch(() => undefined); // seed before the first looku
 
 let lastFocus: SidePanelFocus | undefined;
 
+/** Close everything the in-page surfaces are currently showing (card + mirror). Shared by the
+ * workflow's normal close path and the A4 dismiss-lookup command. */
+function dismissAll(): void {
+  lastFocus = undefined;
+  inline.close();
+  mirror.close();
+}
+
 runLookupWorkflow({
   selection: new DomSelectionSource(document),
   trigger,
@@ -58,11 +67,7 @@ runLookupWorkflow({
       mirror.renderError(e);
       void maybeShowConsent();
     },
-    close() {
-      lastFocus = undefined;
-      inline.close();
-      mirror.close();
-    },
+    close: dismissAll,
   },
   client: new MessageRelayLookupClient(chrome.runtime),
   settings: themedSettings,
@@ -108,4 +113,24 @@ document.addEventListener('open-side-panel', () => {
       : { type: 'open-side-panel' };
   void chrome.runtime.sendMessage(message).catch(() => undefined);
   inline.close();
+});
+
+// A4: keyboard-only flow. The service worker relays a fired chrome.commands shortcut here.
+chrome.runtime.onMessage.addListener((msg: unknown, sender) => {
+  if (sender.id !== chrome.runtime.id) return; // S3: same-extension only
+  if (!isCommandMessage(msg)) return;
+  switch (msg.command) {
+    case 'define-selection':
+      trigger.activate();
+      break;
+    case 'dismiss-lookup':
+      trigger.hide();
+      dismissAll();
+      break;
+    case 'send-to-panel':
+      // Only meaningful with an active lookup on screen; reuses the exact same document event
+      // the card's own "Open in side panel" button already dispatches (see above).
+      if (lastFocus !== undefined) document.dispatchEvent(new CustomEvent('open-side-panel'));
+      break;
+  }
 });

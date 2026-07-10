@@ -12,7 +12,13 @@ export default defineConfig({
       reporter: ['text', ['lcov', { projectRoot: '../..' }]],
       // side-panel-messages.ts is a pure, fully unit-tested module (not a composition root),
       // so it is measured like the adapters/router/inbound logic.
-      include: ['src/adapters/**', 'src/router.ts', 'src/inbound.ts', 'src/side-panel-messages.ts'],
+      include: [
+        'src/adapters/**',
+        'src/router.ts',
+        'src/inbound.ts',
+        'src/side-panel-messages.ts',
+        'src/command-messages.ts',
+      ],
       exclude: [
         'src/content.ts',
         'src/options.ts',
