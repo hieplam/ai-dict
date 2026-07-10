@@ -8,6 +8,7 @@ import {
   ICON_SHIELD,
   ICON_SETTINGS,
   ICON_SIDE_PANEL,
+  ICON_STAR,
 } from './styles/tokens';
 
 // Re-exported so existing consumers (side-panel-view) and the c3-117 public surface keep
@@ -40,6 +41,8 @@ export type CardState =
       /** A8: the idiom/literal unit actually defined; renders a label + "Show literal word"
        * button when `isIdiom` is true. */
       definedAs?: { term: string; isIdiom: boolean };
+      /** B1: whether this word is currently starred/saved — drives the save row's fill state. */
+      saved?: boolean;
     }
   | { kind: 'error'; error: LookupError };
 
@@ -123,7 +126,8 @@ button[data-act="settings"] .lbl{line-height:1}
    children's own box decorations live in CARD_DOC_CSS (::slotted cannot reach a slotted node's
    descendants). */
 ::slotted(.meta-row){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
-::slotted(.defined-as){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 8px;font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}`;
+::slotted(.defined-as){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 8px;font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
+::slotted(.save-row){display:flex;margin:6px 0 10px}`;
 
 // Descendants of the slotted .meta-row cannot be reached by ::slotted() (it only matches the
 // top-level assigned node), so their box decorations are injected ONCE into the document, scoped
@@ -144,7 +148,14 @@ lookup-card .prov-menu [role=option][disabled]{opacity:.55;cursor:default}
 lookup-card .defined-as__label{font-style:italic}
 lookup-card .defined-as__literal-btn{border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:2px 10px;font:inherit;font-size:var(--adp-text-2xs);cursor:pointer}
 lookup-card .defined-as__literal-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
-lookup-card .defined-as__literal-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}`;
+lookup-card .defined-as__literal-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .save-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:5px 12px;font:inherit;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);cursor:pointer;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease),border-color var(--adp-dur-fast) var(--adp-ease)}
+lookup-card .save-btn svg{width:15px;height:15px;pointer-events:none;fill:none;stroke:currentColor}
+lookup-card .save-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
+lookup-card .save-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .save-btn[aria-pressed="true"]{border-color:var(--ad-accent);color:var(--ad-accent-ink)}
+lookup-card .save-btn[aria-pressed="true"] svg{fill:var(--ad-accent);stroke:var(--ad-accent)}
+@media (prefers-reduced-motion:reduce){lookup-card .save-btn{transition:none}}`;
 
 // Inject the document-scoped card styles once: the @keyframes spin (so Firefox/Safari, which
 // follow CSS Scoping Level 1 strictly, can resolve the animation on the light-DOM spinner) and
@@ -244,7 +255,7 @@ export function renderCardState(state: CardState): Node[] {
   h.textContent = state.word;
   const body = document.createElement('div');
   body.innerHTML = state.safeHtml; // trusted: sanitized upstream by adapters-shared (S4)
-  const nodes: Node[] = [h];
+  const nodes: Node[] = [h, renderSaveRow(state)];
   const definedAsRow = state.definedAs ? renderDefinedAsRow(state.definedAs) : null;
   if (definedAsRow) nodes.push(definedAsRow);
   nodes.push(body);
@@ -274,6 +285,44 @@ function renderDefinedAsRow(definedAs: { term: string; isIdiom: boolean }): HTML
     btn.dispatchEvent(new CustomEvent('force-literal', { bubbles: true, composed: true })),
   );
   row.append(label, btn);
+  return row;
+}
+
+/**
+ * B1: the star affordance for saving a word. Always rendered for a 'result' state (a top-level
+ * slotted SIBLING of the headword — NOT a wrapper around it, so the existing ::slotted(h2) rule
+ * stays untouched). Dispatches a composed `toggle-save` event carrying only the word; the
+ * composition root already holds the full save payload (word/definition/sentence/url/title) in
+ * closure from `ResultRenderContext` (see ports.ts) and performs the actual persistence — this
+ * function is pure UI, no chrome.* awareness, same separation every other card action already has.
+ */
+function renderSaveRow(state: { word: string; saved?: boolean }): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'save-row';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'save-btn';
+  const isSaved = state.saved === true;
+  btn.setAttribute('aria-pressed', String(isSaved));
+  btn.setAttribute(
+    'aria-label',
+    isSaved ? `Remove ${state.word} from saved words` : `Save ${state.word} to your word list`,
+  );
+  btn.innerHTML = ICON_STAR; // decorative aria-hidden SVG; name comes from aria-label
+  const lbl = document.createElement('span');
+  lbl.className = 'save-lbl';
+  lbl.textContent = isSaved ? 'Saved' : 'Save';
+  btn.append(lbl);
+  btn.addEventListener('click', () =>
+    btn.dispatchEvent(
+      new CustomEvent('toggle-save', {
+        detail: { word: state.word },
+        bubbles: true,
+        composed: true,
+      }),
+    ),
+  );
+  row.append(btn);
   return row;
 }
 

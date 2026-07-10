@@ -6,7 +6,16 @@ import type { LookupResult, LookupError } from '@ai-dict/app';
  */
 export type SidePanelFocus =
   | { state: 'loading'; word?: string }
-  | { state: 'result'; payload: LookupResult }
+  | {
+      state: 'result';
+      payload: LookupResult;
+      /** B1: carried alongside the mirrored result so the side panel can build a save payload
+       * without re-deriving it; absent for a "Recent" entry re-shown from HistoryEntry (no
+       * url/title until B2). */
+      sentence?: string;
+      url?: string;
+      title?: string;
+    }
   | { state: 'error'; payload: LookupError };
 
 /** content script → service worker. Relayed inside a user gesture so the SW may open the panel. */

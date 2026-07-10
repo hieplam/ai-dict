@@ -209,3 +209,43 @@ describe('InlineBottomSheetRenderer', () => {
     expect(card(h).querySelector('.defined-as')).toBeNull();
   });
 });
+
+describe('InlineBottomSheetRenderer — save state (B1)', () => {
+  it('renderResult defaults CardState.saved to false when ctx.saved is absent', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderResult(result);
+    const btn = card(h).querySelector<HTMLButtonElement>('.save-btn')!;
+    expect(btn.getAttribute('aria-pressed')).toBe('false');
+  });
+
+  it('renderResult reflects ctx.saved=true', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderResult(result, { saved: true });
+    const btn = card(h).querySelector<HTMLButtonElement>('.save-btn')!;
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('setSaved(true) re-renders the last result with the star flipped', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result);
+    r.setSaved(true);
+    const btn = card(h).querySelector<HTMLButtonElement>('.save-btn')!;
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('setSaved is a no-op when the last state was loading, not a result', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderLoading();
+    expect(() => r.setSaved(true)).not.toThrow();
+    expect(card(h).querySelector('.save-btn')).toBeNull();
+  });
+
+  it('setSaved is a no-op before any render (no card mounted)', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    expect(() => r.setSaved(true)).not.toThrow();
+    expect(h.querySelector('bottom-sheet')).toBeNull();
+  });
+});

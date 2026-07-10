@@ -40,6 +40,33 @@ describe('ChromeSidePanelMirror', () => {
     expect(sendMessage).toHaveBeenCalledWith({ to: 'side-panel', state: 'error', payload: e });
   });
 
+  it('renderResult(r, ctx) posts sentence/url/title alongside payload when present', async () => {
+    const sendMessage = vi.fn(() => Promise.resolve({}));
+    const m = new ChromeSidePanelMirror({ sendMessage });
+    m.renderResult(result, { sentence: 'a sentence', url: 'https://x', title: 'Title' });
+    await Promise.resolve();
+    expect(sendMessage).toHaveBeenCalledWith({
+      to: 'side-panel',
+      state: 'result',
+      payload: result,
+      sentence: 'a sentence',
+      url: 'https://x',
+      title: 'Title',
+    });
+  });
+
+  it('renderResult(r) without ctx omits sentence/url/title (back-compat)', async () => {
+    const sendMessage = vi.fn(() => Promise.resolve({}));
+    const m = new ChromeSidePanelMirror({ sendMessage });
+    m.renderResult(result);
+    await Promise.resolve();
+    expect(sendMessage).toHaveBeenCalledWith({
+      to: 'side-panel',
+      state: 'result',
+      payload: result,
+    });
+  });
+
   it('swallows a rejected send (panel closed → no receiver)', async () => {
     const m = new ChromeSidePanelMirror({
       sendMessage: vi.fn(() => Promise.reject(new Error('no receiving end'))),

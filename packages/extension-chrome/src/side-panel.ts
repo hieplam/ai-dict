@@ -30,6 +30,47 @@ const view = document.querySelector('side-panel-view') as SidePanelView;
 // its full stored result without another round-trip to the service worker.
 let recent: HistoryEntry[] = [];
 
+// B1: the save payload for whatever the panel's focus region currently shows, plus a local
+// optimistic flag. Independent of content.ts's own tracking — the panel is its own composition
+// root and may show a result the in-page card never rendered (e.g. a "Recent" click).
+let lastSavePayload:
+  | {
+      word: string;
+      definition: string;
+      translation: string;
+      sentence: string;
+      url: string;
+      title: string;
+    }
+  | undefined;
+let lastSaved = false;
+
+function trackSaveContext(
+  r: LookupResult,
+  extra: {
+    sentence?: string | undefined;
+    url?: string | undefined;
+    title?: string | undefined;
+  } = {},
+): void {
+  lastSavePayload = {
+    word: r.word,
+    definition: r.markdown,
+    translation: '',
+    sentence: extra.sentence ?? '',
+    url: extra.url ?? '',
+    title: extra.title ?? '',
+  };
+  lastSaved = false;
+}
+
+/** Flip the star on the panel's currently-shown result without a full re-render of everything
+ * else; no-op when the focus region isn't a result (mirrors InlineBottomSheetRenderer.setSaved). */
+function setSaved(saved: boolean): void {
+  if (view.focusState.kind !== 'result') return;
+  view.focusState = { ...view.focusState, saved };
+}
+
 function isLookupResult(v: unknown): v is LookupResult {
   return (
     v !== null &&
@@ -70,11 +111,15 @@ async function refreshRecent(): Promise<void> {
   }
 }
 
-// Re-show a past lookup in the focus region when its row is clicked.
+// Re-show a past lookup in the focus region when its row is clicked. HistoryEntry has no
+// url/title (that gap is exactly why B2 exists) — sentence comes from the stored context.
 view.addEventListener('select', (e) => {
   const { id } = (e as CustomEvent<{ id: string }>).detail;
   const entry = recent.find((x) => x.id === id);
-  if (entry) view.focusState = resultToFocus(entry.result);
+  if (entry) {
+    view.focusState = resultToFocus(entry.result);
+    trackSaveContext(entry.result, { sentence: entry.context });
+  }
 });
 
 // A row's delete button removes the stored entry AND its cached definition (the SW derives the
@@ -95,6 +140,20 @@ view.addEventListener('delete', (e) => {
 // region. The panel is an extension page, so it can open the options page directly.
 view.addEventListener('open-settings', () => {
   void chrome.runtime.openOptionsPage();
+});
+
+// B1: the panel's own save row bubbles the same composed `toggle-save` event the in-page card
+// does. The panel is a trusted extension page, so it sends `saved.save`/`saved.delete` directly
+// — same style as `history.delete`/`settings.get` above.
+view.addEventListener('toggle-save', () => {
+  if (!lastSavePayload) return;
+  const willSave = !lastSaved;
+  lastSaved = willSave;
+  setSaved(willSave);
+  const message = willSave
+    ? { type: 'saved.save' as const, ...lastSavePayload }
+    : { type: 'saved.delete' as const, word: lastSavePayload.word };
+  void chrome.runtime.sendMessage(message).catch(() => undefined);
 });
 
 // On open, one settings probe drives two things: stamp the reader's theme on the panel,
@@ -118,7 +177,18 @@ async function initFromSettings(): Promise<void> {
 
 // Live mirror of the in-page lookup (posted by ChromeSidePanelMirror over runtime messaging).
 chrome.runtime.onMessage.addListener(
-  (msg: { to?: string; state?: string; word?: unknown; payload?: unknown }, sender) => {
+  (
+    msg: {
+      to?: string;
+      state?: string;
+      word?: unknown;
+      payload?: unknown;
+      sentence?: unknown;
+      url?: unknown;
+      title?: unknown;
+    },
+    sender,
+  ) => {
     // S3: reject anything from outside this extension.
     if (sender.id !== chrome.runtime.id) return;
     if (msg.to !== 'side-panel') return;
@@ -131,6 +201,11 @@ chrome.runtime.onMessage.addListener(
         return;
       }
       view.focusState = resultToFocus(msg.payload);
+      trackSaveContext(msg.payload, {
+        sentence: typeof msg.sentence === 'string' ? msg.sentence : undefined,
+        url: typeof msg.url === 'string' ? msg.url : undefined,
+        title: typeof msg.title === 'string' ? msg.title : undefined,
+      });
       // The router just appended this lookup to history; pull it into Recent.
       void refreshRecent();
     } else if (msg.state === 'error') {
@@ -151,6 +226,11 @@ function applyFocus(focus: SidePanelFocus): void {
       focus.word !== undefined ? { kind: 'loading', word: focus.word } : { kind: 'loading' };
   } else if (focus.state === 'result' && isLookupResult(focus.payload)) {
     view.focusState = resultToFocus(focus.payload);
+    trackSaveContext(focus.payload, {
+      sentence: focus.sentence,
+      url: focus.url,
+      title: focus.title,
+    });
   } else if (focus.state === 'error') {
     // LookupError is display-only text (no HTML); unlike the result branch it needs no isLookupResult guard (S4).
     view.focusState = { kind: 'error', error: focus.payload };

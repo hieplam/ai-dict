@@ -194,3 +194,37 @@ export interface Settings extends PublicSettings {
   openaiApiKey: string;
   anthropicApiKey: string;
 }
+
+/**
+ * B1 — save word (star). Status lifecycle is exactly 2 states, manual only (B5's future job is
+ * the toggle UI); 'learning' is the default on first save.
+ */
+export type SavedWordStatus = 'learning' | 'known';
+
+/**
+ * One saved word's context at save time. B1 stores what's trivially available today
+ * (word/definition/sentence/url/title); `translation` is '' until B2 does the dedicated work of
+ * separating it from the single markdown blob the model returns (see the design spec's "Field
+ * sourcing" table for why that split isn't reliably available yet).
+ */
+export interface SavedWordSense {
+  definition: string;
+  translation: string;
+  sentence: string;
+  url: string;
+  title: string;
+}
+
+/**
+ * B1's ratified entry shape (escalation E1, owner-approved before this card was dispatched).
+ * `word` is the case-insensitive unique key (enforced by saved-words-policy's
+ * normalizeWordKey — B14 is the future richer merge-on-collision UX, not the uniqueness itself).
+ * `senses` starts as a single-entry array; growing it into a real multi-sense collection is
+ * B14's job.
+ */
+export interface SavedWordEntry {
+  word: string;
+  status: SavedWordStatus;
+  savedAt: number;
+  senses: SavedWordSense[];
+}

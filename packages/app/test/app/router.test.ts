@@ -404,6 +404,102 @@ describe('buildRouter', () => {
     expect(reply).toMatchObject({ ok: true, type: 'ack' });
   });
 
+  it('saved.save persists a new entry with status learning and returns it', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    const reply = await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'a financial institution',
+      translation: '',
+      sentence: 'the river bank',
+      url: 'https://example.com',
+      title: 'Example',
+    });
+    expect(reply).toMatchObject({
+      ok: true,
+      type: 'saved',
+      entry: {
+        word: 'bank',
+        status: 'learning',
+        senses: [
+          {
+            definition: 'a financial institution',
+            translation: '',
+            sentence: 'the river bank',
+            url: 'https://example.com',
+            title: 'Example',
+          },
+        ],
+      },
+    });
+    expect(typeof (reply as { entry: { savedAt: number } }).entry.savedAt).toBe('number');
+  });
+
+  it('a second saved.save for the same word (different casing) preserves savedAt, replaces senses', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    const first = await route({
+      type: 'saved.save',
+      word: 'Bank',
+      definition: 'first def',
+      translation: '',
+      sentence: 's1',
+      url: 'u1',
+      title: 't1',
+    });
+    const firstSavedAt = (first as { entry: { savedAt: number } }).entry.savedAt;
+    const second = await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'second def',
+      translation: '',
+      sentence: 's2',
+      url: 'u2',
+      title: 't2',
+    });
+    const entry = (second as { entry: { savedAt: number; senses: unknown[] } }).entry;
+    expect(entry.savedAt).toBe(firstSavedAt);
+    expect(entry.senses).toHaveLength(1);
+    expect((entry.senses[0] as { definition: string }).definition).toBe('second def');
+  });
+
+  it('saved.delete removes the entry; idempotent on an unknown word', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'd',
+      translation: '',
+      sentence: 's',
+      url: 'u',
+      title: 't',
+    });
+    const reply = await route({ type: 'saved.delete', word: 'BANK' });
+    expect(reply).toMatchObject({ ok: true, type: 'ack' });
+    const again = await route({ type: 'saved.delete', word: 'ghost' });
+    expect(again).toMatchObject({ ok: true, type: 'ack' });
+  });
+
+  it('history.clear and cache.clear never touch saved:* (independent keyspace scope fence)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route(lookupMsg('a')); // populates history + cache
+    await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'd',
+      translation: '',
+      sentence: 's',
+      url: 'u',
+      title: 't',
+    });
+    await route({ type: 'history.clear' });
+    await route({ type: 'cache.clear' });
+    expect(await d.kv.getItem('saved:bank')).not.toBeNull();
+  });
+
   it('lookup.cancel with no inflight request still returns ack (no crash)', async () => {
     const route = buildRouter(deps());
     const ack = await route({ type: 'lookup.cancel', requestId: 'nonexistent' });

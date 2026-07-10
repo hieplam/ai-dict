@@ -18,6 +18,9 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   private onSwitch: ((p: Provider) => void) | undefined;
   // A8: same pattern for the card's one `force-literal` listener.
   private onForceLiteral: (() => void) | undefined;
+  // B1: the last CardState rendered, so setSaved() can re-emit it with the flag flipped without
+  // a full re-lookup. null before any render, or after close().
+  private lastState: CardState | null = null;
 
   constructor(
     private readonly host: HTMLElement,
@@ -73,6 +76,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // isolated world; the LookupCard class lives in the page's MAIN world, so a JS property
     // write (`card.state = …`) never reaches it (Chromium 390807) and the card would stay
     // stuck on "Looking up…". Shared-DOM mutations like replaceChildren do cross the boundary.
+    this.lastState = state;
     this.ensureCard().replaceChildren(...renderCardState(state));
   }
 
@@ -94,6 +98,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
       ...(r.fallbackFrom !== undefined ? { fallbackFrom: r.fallbackFrom } : {}),
       ...(r.definedAs !== undefined ? { definedAs: r.definedAs } : {}),
       ...(ctx?.providers !== undefined ? { providers: ctx.providers } : {}),
+      saved: ctx?.saved === true,
     });
   }
 
@@ -112,9 +117,20 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     return true;
   }
 
+  /**
+   * B1: flip the star's local optimistic state on the currently-shown result without a full
+   * re-lookup. No-op when the last rendered state isn't a result (e.g. loading/error) or no card
+   * has been rendered yet — mirrors the guard pattern `appendToCard` already uses.
+   */
+  setSaved(saved: boolean): void {
+    if (this.lastState?.kind !== 'result') return;
+    this.setState({ ...this.lastState, saved });
+  }
+
   close(): void {
     this.sheet?.remove();
     this.sheet = null;
     this.card = null;
+    this.lastState = null;
   }
 }

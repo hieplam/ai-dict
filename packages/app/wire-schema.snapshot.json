@@ -151,6 +151,60 @@
         "properties": {
           "type": {
             "type": "string",
+            "const": "saved.save"
+          },
+          "word": {
+            "type": "string"
+          },
+          "definition": {
+            "type": "string"
+          },
+          "translation": {
+            "type": "string"
+          },
+          "sentence": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "word",
+          "definition",
+          "translation",
+          "sentence",
+          "url",
+          "title"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "saved.delete"
+          },
+          "word": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "word"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
             "const": "cache.clear"
           }
         },
@@ -520,6 +574,81 @@
           },
           "type": {
             "type": "string",
+            "const": "saved"
+          },
+          "entry": {
+            "type": "object",
+            "properties": {
+              "word": {
+                "type": "string"
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "learning",
+                  "known"
+                ]
+              },
+              "savedAt": {
+                "type": "number"
+              },
+              "senses": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "definition": {
+                      "type": "string"
+                    },
+                    "translation": {
+                      "type": "string"
+                    },
+                    "sentence": {
+                      "type": "string"
+                    },
+                    "url": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "definition",
+                    "translation",
+                    "sentence",
+                    "url",
+                    "title"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "word",
+              "status",
+              "savedAt",
+              "senses"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "entry"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
             "const": "errlog"
           },
           "consent": {
@@ -566,7 +695,9 @@
               "connection.test",
               "open-options",
               "errlog.status",
-              "errlog.set-consent"
+              "errlog.set-consent",
+              "saved.save",
+              "saved.delete"
             ]
           },
           "error": {

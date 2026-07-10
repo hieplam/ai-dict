@@ -105,12 +105,17 @@ describe('runLookupWorkflow', () => {
     expect(typeof h.renderer.lastCtx?.onSwitchProvider).toBe('function');
   });
 
-  it('omits picker context when only one provider is configured', async () => {
+  it('ctx always carries sentence/url/title, even with only one provider configured (no picker)', async () => {
     const h = harness({ configuredProviders: ['gemini'] });
     h.selection.emit(sel);
     h.trigger.click();
     await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
-    expect(h.renderer.lastCtx).toBeUndefined();
+    expect(h.renderer.lastCtx).toBeDefined();
+    expect(h.renderer.lastCtx?.sentence).toBe('river bank');
+    expect(h.renderer.lastCtx?.url).toBe('u');
+    expect(h.renderer.lastCtx?.title).toBe('t');
+    expect(h.renderer.lastCtx?.providers).toBeUndefined();
+    expect(h.renderer.lastCtx?.onSwitchProvider).toBeUndefined();
   });
 
   it('onSwitchProvider re-runs the SAME selection with req.provider override, bypassing cooldown', async () => {
@@ -178,12 +183,14 @@ describe('runLookupWorkflow', () => {
     expect(h.renderer.lastError).toBeNull();
   });
 
-  it('a literal result (no definedAs) with only 1 provider still yields ctx===undefined (regression guard)', async () => {
+  it('a literal result (no definedAs) with only 1 provider still yields no picker/force-literal, but ctx is defined for sentence/url/title (B1)', async () => {
     const h = harness({ configuredProviders: ['gemini'] }); // okResult has no definedAs
     h.selection.emit(sel);
     h.trigger.click();
     await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
-    expect(h.renderer.lastCtx).toBeUndefined();
+    expect(h.renderer.lastCtx).toBeDefined();
+    expect(h.renderer.lastCtx?.onForceLiteral).toBeUndefined();
+    expect(h.renderer.lastCtx?.sentence).toBe('river bank');
   });
 
   it('maps a rejected lookup (LookupError-shaped) to renderError', async () => {
