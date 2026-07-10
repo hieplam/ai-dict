@@ -180,4 +180,32 @@ describe('InlineBottomSheetRenderer', () => {
     // the appended node is now a child of the card element
     expect(document.body.querySelector('lookup-card')!.contains(extra)).toBe(true);
   });
+
+  it('renderResult forwards r.definedAs → the idiom label appears in light DOM', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult({ ...result, definedAs: { term: 'kick the bucket', isIdiom: true } });
+    const c = card(h);
+    expect(c.querySelector('.defined-as__label')!.textContent).toBe(
+      'Defined as "kick the bucket" (idiom)',
+    );
+  });
+
+  it("clicking the card's force-literal button invokes ctx.onForceLiteral", () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    const calls: number[] = [];
+    r.renderResult(
+      { ...result, definedAs: { term: 'kick the bucket', isIdiom: true } },
+      { onForceLiteral: () => calls.push(1) },
+    );
+    card(h).querySelector<HTMLButtonElement>('.defined-as__literal-btn')!.click();
+    expect(calls).toEqual([1]);
+  });
+
+  it('a result with no definedAs renders no .defined-as row (back-compat)', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderResult(result);
+    expect(card(h).querySelector('.defined-as')).toBeNull();
+  });
 });

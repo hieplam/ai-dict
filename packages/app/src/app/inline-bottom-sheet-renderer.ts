@@ -16,6 +16,8 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   // Set on every renderResult from the render context; the card's one `switch-provider`
   // listener (attached in ensureCard) reads whatever the latest result installed.
   private onSwitch: ((p: Provider) => void) | undefined;
+  // A8: same pattern for the card's one `force-literal` listener.
+  private onForceLiteral: (() => void) | undefined;
 
   constructor(
     private readonly host: HTMLElement,
@@ -56,6 +58,9 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     card.addEventListener('switch-provider', (e) =>
       this.onSwitch?.((e as CustomEvent<{ provider: Provider }>).detail.provider),
     );
+    // One-shot idiom-literal override (A8): the card fires `force-literal` when the reader taps
+    // "Show literal word"; delegate to the handler the workflow installed via the render context.
+    card.addEventListener('force-literal', () => this.onForceLiteral?.());
     this.host.append(sheet); // connection upgrades both elements + builds their shadow roots
     this.sheet = sheet;
     this.card = card;
@@ -79,6 +84,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // `sanitize` already returns `SafeHtml` (the trust boundary lives in sanitizeMarkdown, S4).
     // No cast needed here — the DI param type `(md: string) => SafeHtml` guarantees it.
     this.onSwitch = ctx?.onSwitchProvider;
+    this.onForceLiteral = ctx?.onForceLiteral;
     this.setState({
       kind: 'result',
       safeHtml: this.sanitize(r.markdown),
@@ -86,6 +92,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
       target: r.target,
       ...(r.provider !== undefined ? { provider: r.provider } : {}),
       ...(r.fallbackFrom !== undefined ? { fallbackFrom: r.fallbackFrom } : {}),
+      ...(r.definedAs !== undefined ? { definedAs: r.definedAs } : {}),
       ...(ctx?.providers !== undefined ? { providers: ctx.providers } : {}),
     });
   }
