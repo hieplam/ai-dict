@@ -37,6 +37,9 @@ export type CardState =
       fallbackFrom?: Provider;
       /** Providers the reader may switch to; when ≥2, the card shows a one-shot picker. */
       providers?: Provider[];
+      /** A8: the idiom/literal unit actually defined; renders a label + "Show literal word"
+       * button when `isIdiom` is true. */
+      definedAs?: { term: string; isIdiom: boolean };
     }
   | { kind: 'error'; error: LookupError };
 
@@ -119,7 +122,8 @@ button[data-act="settings"] .lbl{line-height:1}
    direct slotted child, so ::slotted sets its layout + the color/font its children inherit; the
    children's own box decorations live in CARD_DOC_CSS (::slotted cannot reach a slotted node's
    descendants). */
-::slotted(.meta-row){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}`;
+::slotted(.meta-row){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
+::slotted(.defined-as){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 8px;font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}`;
 
 // Descendants of the slotted .meta-row cannot be reached by ::slotted() (it only matches the
 // top-level assigned node), so their box decorations are injected ONCE into the document, scoped
@@ -136,7 +140,11 @@ lookup-card .prov-menu[hidden]{display:none}
 lookup-card .prov-menu [role=option]{border:1px solid var(--ad-line);background:var(--ad-surface);color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:2px 10px;font:inherit;font-size:var(--adp-text-2xs);cursor:pointer}
 lookup-card .prov-menu [role=option]:hover:not([disabled]){background:var(--ad-surface-raised);color:var(--ad-ink)}
 lookup-card .prov-menu [role=option]:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
-lookup-card .prov-menu [role=option][disabled]{opacity:.55;cursor:default}`;
+lookup-card .prov-menu [role=option][disabled]{opacity:.55;cursor:default}
+lookup-card .defined-as__label{font-style:italic}
+lookup-card .defined-as__literal-btn{border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:2px 10px;font:inherit;font-size:var(--adp-text-2xs);cursor:pointer}
+lookup-card .defined-as__literal-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
+lookup-card .defined-as__literal-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}`;
 
 // Inject the document-scoped card styles once: the @keyframes spin (so Firefox/Safari, which
 // follow CSS Scoping Level 1 strictly, can resolve the animation on the light-DOM spinner) and
@@ -236,10 +244,37 @@ export function renderCardState(state: CardState): Node[] {
   h.textContent = state.word;
   const body = document.createElement('div');
   body.innerHTML = state.safeHtml; // trusted: sanitized upstream by adapters-shared (S4)
-  const nodes: Node[] = [h, body];
+  const nodes: Node[] = [h];
+  const definedAsRow = state.definedAs ? renderDefinedAsRow(state.definedAs) : null;
+  if (definedAsRow) nodes.push(definedAsRow);
+  nodes.push(body);
   const meta = renderMetaRow(state);
   if (meta) nodes.push(meta);
   return nodes;
+}
+
+/**
+ * A8: the idiom label + "Show literal word" override button, shown only when the model
+ * reported the selection as part of an idiom/phrasal verb. A literal result needs no extra
+ * label (the headword already says the word), so this returns null for `isIdiom: false` —
+ * avoiding noise for the overwhelmingly common non-idiom case.
+ */
+function renderDefinedAsRow(definedAs: { term: string; isIdiom: boolean }): HTMLElement | null {
+  if (!definedAs.isIdiom) return null;
+  const row = document.createElement('div');
+  row.className = 'defined-as';
+  const label = document.createElement('span');
+  label.className = 'defined-as__label';
+  label.textContent = `Defined as "${definedAs.term}" (idiom)`;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'defined-as__literal-btn';
+  btn.textContent = 'Show literal word';
+  btn.addEventListener('click', () =>
+    btn.dispatchEvent(new CustomEvent('force-literal', { bubbles: true, composed: true })),
+  );
+  row.append(label, btn);
+  return row;
 }
 
 /**
