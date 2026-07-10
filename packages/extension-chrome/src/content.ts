@@ -37,6 +37,21 @@ void themedSettings.get().catch(() => undefined); // seed before the first looku
 
 let lastFocus: SidePanelFocus | undefined;
 
+// B1: the save payload for whatever the card currently shows, plus a local optimistic flag.
+// Reset on every renderLoading/renderResult — a fresh render always starts unstarred (no
+// is-already-saved round trip; see the design spec's "Toggle semantics" section for why).
+let lastSavePayload:
+  | {
+      word: string;
+      definition: string;
+      translation: string;
+      sentence: string;
+      url: string;
+      title: string;
+    }
+  | undefined;
+let lastSaved = false;
+
 /** Close everything the in-page surfaces are currently showing (card + mirror). Shared by the
  * workflow's normal close path and the A4 dismiss-lookup command. */
 function dismissAll(): void {
@@ -51,15 +66,26 @@ runLookupWorkflow({
   renderer: {
     renderLoading(word) {
       lastFocus = word === undefined ? { state: 'loading' } : { state: 'loading', word };
+      lastSavePayload = undefined;
+      lastSaved = false;
       inline.renderLoading(word);
       mirror.renderLoading(word);
     },
     renderResult(r, ctx) {
       lastFocus = { state: 'result', payload: r };
+      lastSavePayload = {
+        word: r.word,
+        definition: r.markdown,
+        translation: '',
+        sentence: ctx?.sentence ?? '',
+        url: ctx?.url ?? '',
+        title: ctx?.title ?? '',
+      };
+      lastSaved = false;
       // Forward the picker context to the in-page card only; the side-panel mirror shows the
       // badge/note from `r` but no one-shot picker (it's a persistent surface).
       inline.renderResult(r, ctx);
-      mirror.renderResult(r);
+      mirror.renderResult(r, ctx);
     },
     renderError(e) {
       lastFocus = { state: 'error', payload: e };
@@ -99,6 +125,21 @@ async function maybeShowConsent(): Promise<void> {
 // chrome.runtime.openOptionsPage).
 document.addEventListener('open-settings', () => {
   void chrome.runtime.sendMessage({ type: 'open-options' });
+});
+
+// B1: the card's star button bubbles a composed `toggle-save` event (no persistence payload —
+// the full save context lives in the closure above, captured from ResultRenderContext at the
+// moment the result rendered). Optimistic local toggle: no is-already-saved round trip (see the
+// design spec's "Toggle semantics").
+document.addEventListener('toggle-save', () => {
+  if (!lastSavePayload) return;
+  const willSave = !lastSaved;
+  lastSaved = willSave;
+  inline.setSaved(willSave);
+  const message = willSave
+    ? { type: 'saved.save' as const, ...lastSavePayload }
+    : { type: 'saved.delete' as const, word: lastSavePayload.word };
+  void chrome.runtime.sendMessage(message).catch(() => undefined);
 });
 
 // The card's "Open in side panel" action (Chrome only) bubbles a composed `open-side-panel`
