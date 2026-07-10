@@ -42,7 +42,11 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
   let lastFireAt = -Infinity;
   const now = deps.now ?? (() => Date.now());
 
-  async function runLookup(e: SelectionEvent, providerOverride?: Provider): Promise<void> {
+  async function runLookup(
+    e: SelectionEvent,
+    providerOverride?: Provider,
+    forceLiteral?: boolean,
+  ): Promise<void> {
     inFlight?.abort();
     const controller = new AbortController();
     inFlight = controller;
@@ -69,19 +73,40 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
     };
     // A manual pick re-runs THIS selection once against the chosen provider (one-shot).
     if (providerOverride) req.provider = providerOverride;
+    // A8: a manual "Show literal word" pick re-runs THIS selection once, forcing the literal
+    // single-word reading (one-shot).
+    if (forceLiteral) req.forceLiteral = true;
     try {
       const result = await deps.client.lookup(req, { signal: controller.signal });
       // Offer the one-shot picker only when there's more than one provider to choose from.
+      const showPicker = settings.configuredProviders.length >= 2;
+      // A8: offer the "Show literal word" override only when THIS result is an idiom.
+      const isIdiom = result.definedAs?.isIdiom === true;
       const ctx: ResultRenderContext | undefined =
-        settings.configuredProviders.length >= 2
+        showPicker || isIdiom
           ? {
-              providers: settings.configuredProviders,
-              onSwitchProvider: (p) => {
-                // Deliberate switch bypasses the Define-spam cooldown — it's not spam.
-                void runLookup(e, p).catch((err) =>
-                  deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
-                );
-              },
+              ...(showPicker
+                ? {
+                    providers: settings.configuredProviders,
+                    onSwitchProvider: (p: Provider) => {
+                      // Deliberate switch bypasses the Define-spam cooldown — it's not spam.
+                      void runLookup(e, p).catch((err) =>
+                        deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
+                      );
+                    },
+                  }
+                : {}),
+              ...(isIdiom
+                ? {
+                    onForceLiteral: () => {
+                      // Deliberate override bypasses the Define-spam cooldown — same reasoning
+                      // as onSwitchProvider above.
+                      void runLookup(e, undefined, true).catch((err) =>
+                        deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
+                      );
+                    },
+                  }
+                : {}),
             }
           : undefined;
       if (!controller.signal.aborted) deps.renderer.renderResult(result, ctx);
