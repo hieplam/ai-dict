@@ -249,3 +249,51 @@ describe('InlineBottomSheetRenderer — save state (B1)', () => {
     expect(h.querySelector('bottom-sheet')).toBeNull();
   });
 });
+
+describe('InlineBottomSheetRenderer — repeat-offender nudge (B7)', () => {
+  it('renderResult reflects r.nudge=true', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderResult({ ...result, nudge: true });
+    expect(card(h).querySelector('.nudge-row')).not.toBeNull();
+  });
+
+  it('renderResult defaults nudge to false when r.nudge is absent', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderResult(result);
+    expect(card(h).querySelector('.nudge-row')).toBeNull();
+  });
+
+  it('setSaved(true) also clears the nudge banner', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult({ ...result, nudge: true });
+    r.setSaved(true);
+    expect(card(h).querySelector('.nudge-row')).toBeNull();
+  });
+
+  it('dismissNudge() clears the nudge banner without touching saved', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult({ ...result, nudge: true }, { saved: true });
+    r.dismissNudge();
+    const c = card(h);
+    expect(c.querySelector('.nudge-row')).toBeNull();
+    expect(c.querySelector<HTMLButtonElement>('.save-btn')!.getAttribute('aria-pressed')).toBe(
+      'true',
+    );
+  });
+
+  it('dismissNudge is a no-op when the last state was loading, not a result', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderLoading();
+    expect(() => r.dismissNudge()).not.toThrow();
+  });
+
+  it('dismissNudge is a no-op before any render (no card mounted)', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    expect(() => r.dismissNudge()).not.toThrow();
+    expect(h.querySelector('bottom-sheet')).toBeNull();
+  });
+});

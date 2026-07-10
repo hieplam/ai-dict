@@ -99,6 +99,9 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
       ...(r.definedAs !== undefined ? { definedAs: r.definedAs } : {}),
       ...(ctx?.providers !== undefined ? { providers: ctx.providers } : {}),
       saved: ctx?.saved === true,
+      // B7: r.nudge is a transient per-reply annotation (never persisted — see router.ts);
+      // always explicit true/false, same style as `saved` above.
+      nudge: r.nudge === true,
     });
   }
 
@@ -124,7 +127,20 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
    */
   setSaved(saved: boolean): void {
     if (this.lastState?.kind !== 'result') return;
-    this.setState({ ...this.lastState, saved });
+    // B7: any save toggle (star OR the nudge banner's own Save button — both dispatch the same
+    // toggle-save event) also clears the nudge banner; the reader has acted on the signal.
+    this.setState({ ...this.lastState, saved, nudge: false });
+  }
+
+  /**
+   * B7: hide the nudge banner on the currently-shown result without touching `saved`. The
+   * backend already permanently marked this word as nudged before this reply was ever sent
+   * (domain/nudge-policy.ts), so dismissal needs no wire round-trip — a pure local re-render,
+   * mirroring the guard pattern `setSaved`/`appendToCard` already use.
+   */
+  dismissNudge(): void {
+    if (this.lastState?.kind !== 'result') return;
+    this.setState({ ...this.lastState, nudge: false });
   }
 
   close(): void {
