@@ -12,6 +12,7 @@ import {
   historyDelete,
   savedWordUpsert,
   savedWordDelete,
+  evaluateNudge,
   type WireMessage,
   type WireReply,
   type LookupError,
@@ -42,6 +43,13 @@ export interface RouterDeps {
   kv: Storage; // single store; core owns cache:/history: prefixes
   readToggles: () => Promise<{ cacheEnabled: boolean; saveHistory: boolean }>;
   queue: WriteQueue;
+  /**
+   * B7: wall clock for the repeat-offender nudge's 30-day window; injectable so tests control it
+   * deterministically. Defaults to Date.now inside evaluateNudge when omitted (composition roots
+   * omit it and get the real clock) — mirrors the `now` DI seam CacheDeps/HistoryDeps/
+   * SavedWordsDeps already use.
+   */
+  now?: () => number;
   // Open the extension's options page. Injected by the composition root because the act
   // itself (chrome.runtime.openOptionsPage) is platform code that has no place in the pure
   // router. Optional: a shell that never sends 'open-options' need not provide it.
@@ -104,8 +112,17 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       // would echo back the smart idiom-aware answer instead of the literal one requested.
       if (cacheEnabled && req.provider === undefined && req.forceLiteral !== true) {
         const hit = await cacheGet({ storage: deps.kv }, keyReq);
-        if (hit)
-          return { ok: true, type: 'lookup', result: { ...hit, fromCache: true }, requestId };
+        if (hit) {
+          const nudge = await deps.queue.run(() =>
+            evaluateNudge({ storage: deps.kv, ...(deps.now ? { now: deps.now } : {}) }, req.word),
+          );
+          return {
+            ok: true,
+            type: 'lookup',
+            result: { ...hit, fromCache: true, ...(nudge ? { nudge: true } : {}) },
+            requestId,
+          };
+        }
       }
 
       // A cancel that arrived during readToggles/cacheGet will have found requestId in inflight,
@@ -129,7 +146,21 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
         };
         await deps.queue.run(() => historyAppend({ storage: deps.kv }, entry));
       }
-      return { ok: true, type: 'lookup', result, requestId };
+      // B7: evaluated AFTER the history write above so a fresh lookup's own entry counts toward
+      // its own threshold-crossing. Queued through the same WriteQueue as every other KV write
+      // so concurrent lookups of the same word never double-mark it. `result` here still lacks
+      // `fallbackFrom` in storage only (storableResult) — the LIVE reply keeps it; `nudge` is
+      // computed fresh here and was never part of storableResult, so it can never leak into the
+      // persisted history entry.
+      const nudge = await deps.queue.run(() =>
+        evaluateNudge({ storage: deps.kv, ...(deps.now ? { now: deps.now } : {}) }, req.word),
+      );
+      return {
+        ok: true,
+        type: 'lookup',
+        result: { ...result, ...(nudge ? { nudge: true } : {}) },
+        requestId,
+      };
     } catch (err) {
       if (cancelled.has(requestId)) return SUPPRESS; // our-cancel: reply channel abandoned (§6.10)
       return { ok: false, type: 'lookup', error: toLookupError(err), requestId };
