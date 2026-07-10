@@ -230,6 +230,10 @@ export async function getServiceWorker(context: BrowserContext): Promise<Worker>
  * real OS-level extension shortcut (Chrome intercepts it before any JS sees a keydown), so this
  * calls chrome.tabs.sendMessage directly from the service worker — the literal call the
  * onCommand listener makes — exercising every line downstream of that (Chrome-owned) listener.
+ * Mirrors sw.ts's own `.catch(() => undefined)` on that call: when there is no content-script
+ * listener registered for the tab (e.g. relaying against a build that predates this feature,
+ * as the before/after evidence spec does), sendMessage rejects with "Could not establish
+ * connection" — swallowed here the same way production swallows it, rather than failing the test.
  */
 export async function relayCommand(
   sw: Worker,
@@ -239,6 +243,6 @@ export async function relayCommand(
     const tabs = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
     const tab = tabs[0];
     if (!tab?.id) throw new Error('no active tab found for command relay');
-    await chrome.tabs.sendMessage(tab.id, { type: 'command', command: cmd });
+    await chrome.tabs.sendMessage(tab.id, { type: 'command', command: cmd }).catch(() => undefined);
   }, command);
 }
