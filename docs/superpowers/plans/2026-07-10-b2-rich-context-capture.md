@@ -1039,12 +1039,12 @@ git commit -m "test(b2): before/after evidence recording spec (gated, not run in
    into that scratch checkout (its only imports — `seedSettings`, `gotoFixture`, `selectWord`,
    `openTrigger`, `GEMINI_OK_BODY`, `E2E_HEADLESS` — already exist on `master` since B1/A8
    shipped them, so no other file needs copying). `bun run build:chrome` there, then run
-   `PLAYWRIGHT_RUN_EVIDENCE=1 SHOT_LABEL=before B2_OUT_DIR=<abs path> bunx playwright test
-b2-evidence` to capture BEFORE (`translation: ''`).
+   `PLAYWRIGHT_RUN_EVIDENCE=1 SHOT_LABEL=before B2_OUT_DIR=/private/tmp/b2-evidence bunx
+playwright test b2-evidence` to capture BEFORE (`translation: ''`).
 2. On this branch, `bun run build:chrome`, then run
-   `PLAYWRIGHT_RUN_EVIDENCE=1 SHOT_LABEL=after B2_OUT_DIR=<abs path> bunx playwright test
-b2-evidence` to capture AFTER (`translation: "ngân hàng"`, definition/sentence/url/title still
-   correctly populated in the same dump).
+   `PLAYWRIGHT_RUN_EVIDENCE=1 SHOT_LABEL=after B2_OUT_DIR=/private/tmp/b2-evidence bunx
+playwright test b2-evidence` to capture AFTER (`translation: "ngân hàng"`,
+   definition/sentence/url/title still correctly populated in the same dump).
 3. Push both `.png` files to a throwaway `pr-assets/b2-rich-context-capture` branch; embed via
    same-origin `https://github.com/hieplam/ai-dict/raw/pr-assets/b2-rich-context-capture/<file>`
    URLs only.
