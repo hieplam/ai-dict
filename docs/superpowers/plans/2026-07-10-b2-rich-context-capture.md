@@ -1057,3 +1057,75 @@ playwright test b2-evidence` to capture AFTER (`translation: "ngân hàng"`,
 4. Remove the scratch `master` worktree.
 5. Full-branch `skinner` audit against this plan + the design spec before opening the PR.
 6. Open the PR into `master` with the embedded evidence, wait for CI green, squash-merge.
+
+---
+
+### Task 7 (fix-round, added after the full-branch audit): `router.test.ts` non-empty-translation regression case
+
+The design spec's Testing strategy names this case explicitly ("`router.test.ts` (extend): `saved.save`
+with a non-empty `translation` in the wire message persists it verbatim into
+`senses[0].translation`... proves no accidental truncation/transform happens in the pass-through")
+but it was never allocated a task in Tasks 1-6 above, and the full-branch `skinner` audit
+correctly caught the gap. `router.ts` itself needs no code change (it already forwards
+`msg.translation` verbatim) — this task only adds the missing unit-level regression guard.
+
+**Files:**
+
+- Modify: `packages/app/test/app/router.test.ts`
+
+**Interfaces:** None new — pure test addition, proving existing `router.ts` behavior.
+
+- [ ] **Step 1: Add the test.** In `packages/app/test/app/router.test.ts`, insert a new test
+      directly after the existing `'saved.save persists a new entry with status learning and
+returns it'` test (which only ever exercises `translation: ''`):
+
+```ts
+it('saved.save persists a non-empty translation verbatim (B2 regression guard — no truncation/transform in the pass-through)', async () => {
+  const d = deps();
+  const route = buildRouter(d);
+  const reply = await route({
+    type: 'saved.save',
+    word: 'bank',
+    definition: 'a financial institution',
+    translation: 'ngân hàng',
+    sentence: 'the river bank',
+    url: 'https://example.com',
+    title: 'Example',
+  });
+  expect(reply).toMatchObject({
+    ok: true,
+    type: 'saved',
+    entry: {
+      word: 'bank',
+      status: 'learning',
+      senses: [
+        {
+          definition: 'a financial institution',
+          translation: 'ngân hàng',
+          sentence: 'the river bank',
+          url: 'https://example.com',
+          title: 'Example',
+        },
+      ],
+    },
+  });
+});
+```
+
+This test is expected to PASS immediately (not a red→green TDD cycle) — `router.ts`'s
+`saved.save` handler already forwards `msg.translation` verbatim into `savedWordUpsert`'s input
+with zero transformation, so no implementation change is needed. This is a coverage-completion
+step closing a spec-vs-plan gap, not new behavior.
+
+- [ ] **Step 2: Run the test, verify it passes**
+
+Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
+Expected: PASS — all tests in the file green (including every pre-existing test; none were
+modified).
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add packages/app/test/app/router.test.ts
+git commit -m "test(b2): router.test.ts non-empty-translation regression guard (closes spec gap found by skinner audit)"
+```
