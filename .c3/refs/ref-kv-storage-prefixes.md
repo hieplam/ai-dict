@@ -1,6 +1,6 @@
 ---
 id: ref-kv-storage-prefixes
-c3-seal: 8fd16139f0393badffaed30fccb0d1606622f48d4d16f3e19a5186ce98f06b14
+c3-seal: 7ba59369c3ab844cc766a37312547b7c038ee40b2fb234c176940bd1e69f910b
 title: kv-storage-prefixes
 type: ref
 goal: Both platforms expose one flat key-value store. Standardize persistence so all key layout and eviction logic lives in the (testable) domain and the platform adapters stay dumb string stores — one cache/history implementation for both extensions.
@@ -12,7 +12,7 @@ Both platforms expose one flat key-value store. Standardize persistence so all k
 
 ## Choice
 
-A single `Storage` string-KV **port** with four methods (`getItem` / `setItem` / `removeItem` / `keys(prefix?)`); the **domain owns reserved key prefixes** — `cache:<hash>` and `history:<…>` plus index keys `cache:index` / `history:index`. Adapters never interpret keys.
+A single `Storage` string-KV **port** with four methods (`getItem` / `setItem` / `removeItem` / `keys(prefix?)`); the **domain owns reserved key prefixes** — `cache:<hash>`, `history:<…>`, `saved:<word>`, and `nudge:<word>` (B7) plus index keys `cache:index` / `history:index` / `saved:index`. Adapters never interpret keys.
 
 ## Why
 

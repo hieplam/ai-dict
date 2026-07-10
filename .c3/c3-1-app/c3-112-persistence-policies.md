@@ -1,6 +1,6 @@
 ---
 id: c3-112
-c3-seal: ee59d0b5308365ed44599f6190fe3ecbc986daf3955363c4896a44012f245e7a
+c3-seal: b5c96abc093302ebd598d82f366a16c620190c28c564c2228c299ea9a2db497c
 title: persistence-policies
 type: component
 category: feature
@@ -23,9 +23,9 @@ Provide pure, KV-backed domain policies for result caching (LRU, cap 1000) and l
 | Parent container | c3-1 (app) |
 | Category | Feature |
 | Runtime | service worker |
-| Public surface | cacheGet, cachePut, cacheClear, cacheDelete, CacheDeps, deriveCacheKey, fnv1a64Hex (cache-policy); historyAppend, historyList, historyClear, historyGet, historyDelete, HistoryDeps, HistoryPage (history-policy) |
-| Bundled into | packages/app/src/domain/cache-policy.ts and packages/app/src/domain/history-policy.ts |
-| Depends on | c3-102 Storage port; c3-101 LookupResult and HistoryEntry types |
+| Public surface | cacheGet, cachePut, cacheClear, cacheDelete, CacheDeps, deriveCacheKey, fnv1a64Hex (cache-policy); historyAppend, historyList, historyListSince, historyClear, historyGet, historyDelete, HistoryDeps, HistoryPage (history-policy); evaluateNudge, nudgeAlreadyShown, nudgeMarkShown, NudgeDeps, NUDGE_THRESHOLD, NUDGE_WINDOW_MS (nudge-policy, B7) |
+| Bundled into | packages/app/src/domain/cache-policy.ts, packages/app/src/domain/history-policy.ts, and packages/app/src/domain/nudge-policy.ts |
+| Depends on | c3-102 Storage port; c3-101 LookupResult and HistoryEntry types; c3-118 saved-words-policy (normalizeWordKey, reused) |
 | Consumed by | c3-111 (lookup-router) which calls these functions after a successful lookup and for single-entry deletion (history.delete) |
 
 ## Purpose
