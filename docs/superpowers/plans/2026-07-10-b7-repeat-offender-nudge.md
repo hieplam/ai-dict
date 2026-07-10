@@ -63,7 +63,7 @@ panel's `resultToFocus`) with zero extra threading. Full design rationale:
 export async function historyListSince(deps: HistoryDeps, sinceMs: number): Promise<HistoryEntry[]>;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to
+- [x] **Step 1: Write the failing tests.** Append to
       `packages/app/test/history-policy.test.ts`, just before the closing `});` of the
       `describe('history-policy', ...)` block (after the existing `it('clear removes all', ...)`
       test):
@@ -123,7 +123,7 @@ import {
 Run: `cd packages/app && bunx vitest run test/history-policy.test.ts`
 Expected: 3 new failures — `historyListSince is not a function` (or a TS error to that effect).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/domain/history-policy.ts`, add this export
+- [x] **Step 2: Implement.** In `packages/app/src/domain/history-policy.ts`, add this export
       right after `historyList` (before `historyGet`):
 
 ```ts
@@ -154,7 +154,7 @@ export async function historyListSince(
 Run: `cd packages/app && bunx vitest run test/history-policy.test.ts`
 Expected: all tests pass (existing + 3 new).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```bash
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -186,7 +186,7 @@ export async function nudgeMarkShown(deps: NudgeDeps, word: string): Promise<voi
 export async function evaluateNudge(deps: NudgeDeps, word: string): Promise<boolean>;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/nudge-policy.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/nudge-policy.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -312,7 +312,7 @@ describe('nudge-policy', () => {
 Run: `cd packages/app && bunx vitest run test/nudge-policy.test.ts`
 Expected: fails — `Cannot find module '../src/domain/nudge-policy'`.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/nudge-policy.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/nudge-policy.ts`:
 
 ```ts
 import type { Storage } from '../ports';
@@ -375,7 +375,7 @@ export * from './domain/nudge-policy';
 Run: `cd packages/app && bunx vitest run test/nudge-policy.test.ts`
 Expected: all 9 tests pass.
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```bash
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -395,7 +395,7 @@ git commit -m "feat(b7): nudge-policy domain module (evaluateNudge, one-per-word
 
 **Interfaces:** `LookupResult` gains `nudge?: boolean | undefined`.
 
-- [ ] **Step 1: Write the failing test.** Append to `packages/app/test/wire-schema.test.ts`,
+- [x] **Step 1: Write the failing test.** Append to `packages/app/test/wire-schema.test.ts`,
       right after the existing `it('lookup result carries optional provider + fallbackFrom; old
 results still parse', ...)` test (inside the same `describe` block):
 
@@ -428,7 +428,7 @@ Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts`
 Expected: fails — `result: { ...result, nudge: true }` is rejected by `z.strictObject` (unknown
 key `nudge`), so `.success` is `false`, not `true`.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/domain/types.ts`, add to `LookupResult` (right
+- [x] **Step 2: Implement.** In `packages/app/src/domain/types.ts`, add to `LookupResult` (right
       after the `translation?: string | undefined;` field, before the closing `}`):
 
 ```ts
@@ -455,7 +455,7 @@ z.string().optional(),` line):
 Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts`
 Expected: all tests pass.
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```bash
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -475,7 +475,7 @@ git commit -m "feat(b7): LookupResult.nudge transient field + wire schema"
 **Interfaces:** `RouterDeps` gains an optional `now?: () => number` (DI seam, mirrors
 `CacheDeps`/`HistoryDeps`/`SavedWordsDeps`).
 
-- [ ] **Step 1: Write the failing tests.** In `packages/app/test/app/router.test.ts`, update the
+- [x] **Step 1: Write the failing tests.** In `packages/app/test/app/router.test.ts`, update the
       imports at the top to also bring in `historyAppend` and `cachePut`:
 
 ```ts
@@ -637,7 +637,7 @@ describe('B7 repeat-offender nudge', () => {
 Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: the 6 new tests fail — `result.nudge` is always `undefined` (not wired yet).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/router.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/app/router.ts`:
 
 Add `evaluateNudge` to the existing import block from `'../index'` (alongside `savedWordUpsert`,
 etc.):
@@ -738,7 +738,7 @@ return {
 Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: all tests pass (existing + 6 new).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```bash
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -746,7 +746,7 @@ git add packages/app/src/app/router.ts packages/app/test/app/router.test.ts
 git commit -m "feat(b7): router evaluates the repeat-offender nudge on every lookup reply"
 ```
 
-- [ ] **Step 4 (Warchief, not the Hunter): sync C3.** From the worktree root:
+- [x] **Step 4 (Warchief, not the Hunter): sync C3.** From the worktree root:
 
 ```bash
 c3 write c3-112 --section "Parent Fit" --file /dev/stdin <<'EOF'
@@ -803,7 +803,7 @@ finding with a fresh Hunter and re-audit (cap 3 rounds) before continuing to Tas
 
 **Interfaces:** `CardState`'s `'result'` variant gains `nudge?: boolean`.
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/lookup-card.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/lookup-card.test.ts`,
       as a new top-level `describe` block placed right after the existing B1 save/star affordance
       describe block (the one titled "save/star affordance (B1)"):
 
@@ -887,7 +887,7 @@ describe('<lookup-card> repeat-offender nudge (B7)', () => {
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: fails — `.nudge-row` is `null` (no such element exists yet).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
 
 Add `nudge?: boolean;` to the `CardState` `'result'` variant, right after `saved?: boolean;`:
 
@@ -989,7 +989,7 @@ if (definedAsRow) nodes.push(definedAsRow);
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all tests pass (existing + 6 new).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```bash
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1008,7 +1008,7 @@ git commit -m "feat(b7): CardState.nudge + the nudge banner (Save reuses toggle-
 
 **Interfaces:** new public method `dismissNudge(): void`.
 
-- [ ] **Step 1: Write the failing tests.** Append to
+- [x] **Step 1: Write the failing tests.** Append to
       `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`, as a new `describe` block
       after the existing `describe('InlineBottomSheetRenderer — save state (B1)', ...)` block:
 
@@ -1066,7 +1066,7 @@ Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.t
 Expected: fails — `r.dismissNudge is not a function`, and `.nudge-row` assertions fail since
 `nudge` isn't threaded yet.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, change
+- [x] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, change
       `renderResult`:
 
 ```ts
@@ -1144,7 +1144,7 @@ to:
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: all tests pass (existing + 6 new).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```bash
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1166,7 +1166,7 @@ git commit -m "feat(b7): InlineBottomSheetRenderer threads r.nudge, adds dismiss
 Task 8's e2e spec against the built extension, exactly like B1's `content.ts`/`side-panel.ts`
 tasks were.
 
-- [ ] **Step 1: Implement `content.ts` directly** (no unit test — composition root). In
+- [x] **Step 1: Implement `content.ts` directly** (no unit test — composition root). In
       `packages/extension-chrome/src/content.ts`, add a new listener right after the existing
       `toggle-save` listener block:
 
@@ -1197,7 +1197,7 @@ document.addEventListener('dismiss-nudge', () => {
 Expected: no test to run here — `content.ts` is a composition root (coverage-gate-exempt); the
 change is proven correct by Task 8's e2e spec once the extension is rebuilt.
 
-- [ ] **Step 2: Implement `side-panel.ts` directly** (no unit test — composition root). In
+- [x] **Step 2: Implement `side-panel.ts` directly** (no unit test — composition root). In
       `packages/extension-chrome/src/side-panel.ts`, change `resultToFocus`:
 
 ```ts
@@ -1281,7 +1281,7 @@ view.addEventListener('toggle-save', () => {
 view.addEventListener('dismiss-nudge', () => dismissNudge());
 ```
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```bash
 cd packages/extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1311,7 +1311,7 @@ re-audit (cap 3 rounds) before continuing to Task 8.
 
 - Create: `packages/extension-chrome/e2e/b7-repeat-nudge.spec.ts`
 
-- [ ] **Step 1: Write the spec.**
+- [x] **Step 1: Write the spec.**
 
 ```ts
 import { test, expect } from './fixtures';
@@ -1432,7 +1432,7 @@ test.describe('B7 repeat-offender nudge', () => {
 });
 ```
 
-- [ ] **Step 2: Build + run.**
+- [x] **Step 2: Build + run.**
 
 ```bash
 bun run build:chrome
@@ -1441,7 +1441,7 @@ cd packages/extension-chrome && bunx playwright test b7-repeat-nudge
 
 Expected: all 4 tests pass against the built extension.
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```bash
 cd .. && bun run lint && bun run format:check
@@ -1457,7 +1457,7 @@ git commit -m "test(b7): e2e functional coverage for the repeat-offender nudge"
 
 - Create: `packages/extension-chrome/e2e/b7-evidence.spec.ts`
 
-- [ ] **Step 1: Write the spec** (mirrors `b1-evidence.spec.ts` exactly, adapted for 3 lookups +
+- [x] **Step 1: Write the spec** (mirrors `b1-evidence.spec.ts` exactly, adapted for 3 lookups +
       the nudge's Save button):
 
 ```ts
@@ -1537,7 +1537,7 @@ test.describe('B7 repeat-offender nudge — evidence', () => {
 });
 ```
 
-- [ ] **Step 2: Gate + commit** (recording itself happens after Task 9, driven by the Warchief —
+- [x] **Step 2: Gate + commit** (recording itself happens after Task 9, driven by the Warchief —
       see "After all tasks" below; this step just lands the harness file).
 
 ```bash
