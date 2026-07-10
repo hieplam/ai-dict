@@ -33,6 +33,18 @@ export interface ResultRenderContext {
    * when the result just rendered is an idiom (`result.definedAs?.isIdiom === true`).
    */
   onForceLiteral?: () => void;
+  /**
+   * B1: the sentence/page url/page title captured at lookup time — the only place
+   * `SelectionEvent` and `LookupResult` are both in scope simultaneously is
+   * `runLookupWorkflow`'s `runLookup`, so these ride along on every result so a later star tap
+   * (which may happen well after the DOM selection is gone) can still persist them. Plain data,
+   * not a callback — the composition root owns the actual `chrome.runtime.sendMessage` call.
+   */
+  sentence?: string;
+  url?: string;
+  title?: string;
+  /** Whether this word is currently starred/saved — drives the star's filled/outline state. */
+  saved?: boolean;
 }
 
 export interface ResultRenderer {

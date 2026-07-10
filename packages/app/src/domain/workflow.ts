@@ -82,33 +82,36 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
       const showPicker = settings.configuredProviders.length >= 2;
       // A8: offer the "Show literal word" override only when THIS result is an idiom.
       const isIdiom = result.definedAs?.isIdiom === true;
-      const ctx: ResultRenderContext | undefined =
-        showPicker || isIdiom
+      // B1: sentence/url/title always ride along (see ResultRenderContext's doc comment) so a
+      // star tap after render can still persist them — ctx is therefore now always defined for
+      // a completed result, not just when the picker/idiom override applies.
+      const ctx: ResultRenderContext = {
+        sentence: e.sentence,
+        url: e.url,
+        title: e.title,
+        ...(showPicker
           ? {
-              ...(showPicker
-                ? {
-                    providers: settings.configuredProviders,
-                    onSwitchProvider: (p: Provider) => {
-                      // Deliberate switch bypasses the Define-spam cooldown — it's not spam.
-                      void runLookup(e, p).catch((err) =>
-                        deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
-                      );
-                    },
-                  }
-                : {}),
-              ...(isIdiom
-                ? {
-                    onForceLiteral: () => {
-                      // Deliberate override bypasses the Define-spam cooldown — same reasoning
-                      // as onSwitchProvider above.
-                      void runLookup(e, undefined, true).catch((err) =>
-                        deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
-                      );
-                    },
-                  }
-                : {}),
+              providers: settings.configuredProviders,
+              onSwitchProvider: (p: Provider) => {
+                // Deliberate switch bypasses the Define-spam cooldown — it's not spam.
+                void runLookup(e, p).catch((err) =>
+                  deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
+                );
+              },
             }
-          : undefined;
+          : {}),
+        ...(isIdiom
+          ? {
+              onForceLiteral: () => {
+                // Deliberate override bypasses the Define-spam cooldown — same reasoning
+                // as onSwitchProvider above.
+                void runLookup(e, undefined, true).catch((err) =>
+                  deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
+                );
+              },
+            }
+          : {}),
+      };
       if (!controller.signal.aborted) deps.renderer.renderResult(result, ctx);
     } catch (err) {
       if (!controller.signal.aborted) deps.renderer.renderError(toLookupError(err));
