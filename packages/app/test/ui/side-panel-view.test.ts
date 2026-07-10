@@ -98,6 +98,14 @@ describe('<side-panel-view>', () => {
     expect(focus.innerHTML).toContain('money place');
   });
 
+  it('a result focus state renders the save row (B1, shared renderCardState)', () => {
+    const el = mount();
+    el.focusState = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>x</p>') };
+    const btn = el.shadowRoot!.querySelector<HTMLButtonElement>('.save-btn')!;
+    expect(btn).not.toBeNull();
+    expect(btn.getAttribute('aria-pressed')).toBe('false');
+  });
+
   it('renders an error focus', () => {
     const el = mount();
     el.focusState = {
