@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import type { LookupRequest, LookupResult, PublicSettings, HistoryEntry } from './domain/types';
+import type {
+  LookupRequest,
+  LookupResult,
+  PublicSettings,
+  HistoryEntry,
+  SavedWordEntry,
+} from './domain/types';
 
 const LookupErrorSchema = z.strictObject({
   code: z.enum(['NO_KEY', 'INVALID_KEY', 'RATE_LIMIT', 'NETWORK', 'PARSE', 'UNKNOWN']),
@@ -64,6 +70,23 @@ const HistoryEntrySchema = z.strictObject({
   createdAt: z.number(),
 });
 
+const SavedWordSenseSchema = z.strictObject({
+  definition: z.string(),
+  translation: z.string(),
+  sentence: z.string(),
+  url: z.string(),
+  title: z.string(),
+});
+
+// B1: the ratified saved-word entry shape (escalation E1). No `id` field — the (normalized)
+// `word` itself is the storage key.
+const SavedWordEntrySchema = z.strictObject({
+  word: z.string(),
+  status: z.enum(['learning', 'known']),
+  savedAt: z.number(),
+  senses: z.array(SavedWordSenseSchema),
+});
+
 export const WireMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('lookup'), req: LookupRequestSchema, requestId: z.string() }),
   z.object({ type: z.literal('lookup.cancel'), requestId: z.string() }),
@@ -78,6 +101,18 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
   // stored entry's word/context/target to derive the cache key), so the next lookup of the same
   // selection re-queries Gemini with the current prompt template. Sent by the side panel.
   z.object({ type: z.literal('history.delete'), id: z.string() }),
+  // B1: save/unsave a word into the independent `saved:*` keyspace. Sent by the card's star
+  // button (via the composition root) or the side panel's own toggle-save listener.
+  z.object({
+    type: z.literal('saved.save'),
+    word: z.string(),
+    definition: z.string(),
+    translation: z.string(),
+    sentence: z.string(),
+    url: z.string(),
+    title: z.string(),
+  }),
+  z.object({ type: z.literal('saved.delete'), word: z.string() }),
   z.object({ type: z.literal('cache.clear') }),
   z.object({ type: z.literal('connection.test') }),
   // Open the extension's options page. Sent by a content script (which cannot call
@@ -105,6 +140,8 @@ const MessageTypeEnum = z.enum([
   'open-options',
   'errlog.status',
   'errlog.set-consent',
+  'saved.save',
+  'saved.delete',
 ]);
 
 export const WireReplySchema = z.union([
@@ -122,6 +159,7 @@ export const WireReplySchema = z.union([
     nextCursor: z.string().optional(),
   }),
   z.object({ ok: z.literal(true), type: z.literal('ack') }),
+  z.object({ ok: z.literal(true), type: z.literal('saved'), entry: SavedWordEntrySchema }),
   z.object({
     ok: z.literal(true),
     type: z.literal('errlog'),
@@ -154,5 +192,6 @@ const _checks: [
   AssertEqual<z.infer<typeof LookupResultSchema>, LookupResult>,
   AssertEqual<z.infer<typeof PublicSettingsSchema>, PublicSettings>,
   AssertEqual<z.infer<typeof HistoryEntrySchema>, HistoryEntry>,
-] = [true, true, true, true];
+  AssertEqual<z.infer<typeof SavedWordEntrySchema>, SavedWordEntry>,
+] = [true, true, true, true, true];
 void _checks;

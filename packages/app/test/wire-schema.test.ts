@@ -363,6 +363,66 @@ describe('wire-schema', () => {
   });
 });
 
+describe('saved.save / saved.delete wire messages (B1)', () => {
+  const senseFields = {
+    word: 'bank',
+    definition: 'a financial institution',
+    translation: '',
+    sentence: 'the river bank',
+    url: 'https://example.com',
+    title: 'Example',
+  };
+
+  it('accepts a valid saved.save message', () => {
+    const parsed = WireMessageSchema.safeParse({ type: 'saved.save', ...senseFields });
+    expect(parsed.success).toBe(true);
+  });
+
+  it('rejects a saved.save message missing a required field', () => {
+    const { title: _title, ...missingTitle } = senseFields;
+    void _title;
+    const parsed = WireMessageSchema.safeParse({ type: 'saved.save', ...missingTitle });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('accepts a valid saved.delete message', () => {
+    expect(WireMessageSchema.safeParse({ type: 'saved.delete', word: 'bank' }).success).toBe(true);
+  });
+
+  it('a saved reply carries the ratified entry shape; rejects an unknown key inside a sense (strictObject)', () => {
+    const entry = {
+      word: 'bank',
+      status: 'learning',
+      savedAt: 1,
+      senses: [
+        {
+          definition: 'd',
+          translation: 't',
+          sentence: 's',
+          url: 'u',
+          title: 'ti',
+        },
+      ],
+    };
+    expect(WireReplySchema.safeParse({ ok: true, type: 'saved', entry }).success).toBe(true);
+    const bad = {
+      ...entry,
+      senses: [{ ...entry.senses[0], extra: 'nope' }],
+    };
+    expect(WireReplySchema.safeParse({ ok: true, type: 'saved', entry: bad }).success).toBe(false);
+  });
+
+  it('rejects an invalid status value inside a saved reply entry', () => {
+    const entry = {
+      word: 'bank',
+      status: 'archived', // not 'learning' | 'known'
+      savedAt: 1,
+      senses: [{ definition: 'd', translation: 't', sentence: 's', url: 'u', title: 'ti' }],
+    };
+    expect(WireReplySchema.safeParse({ ok: true, type: 'saved', entry }).success).toBe(false);
+  });
+});
+
 describe('errlog wire messages', () => {
   it('accepts errlog.status and errlog.set-consent', () => {
     expect(WireMessageSchema.safeParse({ type: 'errlog.status' }).success).toBe(true);
