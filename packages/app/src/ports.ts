@@ -20,14 +20,19 @@ export interface TriggerUI {
 
 /**
  * Optional context handed to `renderResult` so the card can offer a one-shot
- * provider picker. Omitted when fewer than two providers are configured (nothing
- * to switch to). The picker re-runs the SAME lookup once with the chosen provider.
+ * provider picker and/or a one-shot "force literal" re-run. Omitted entirely when
+ * neither applies (fewer than two providers configured AND the result isn't an idiom).
  */
 export interface ResultRenderContext {
   /** Providers the reader may switch to (>=2 entries when present). */
   providers?: Provider[];
   /** Re-run the SAME lookup once with this provider; does not persist the choice. */
   onSwitchProvider?: (p: Provider) => void;
+  /**
+   * A8: re-run the SAME selection once, forcing the literal single-word reading. Present only
+   * when the result just rendered is an idiom (`result.definedAs?.isIdiom === true`).
+   */
+  onForceLiteral?: () => void;
 }
 
 export interface ResultRenderer {

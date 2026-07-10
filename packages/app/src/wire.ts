@@ -14,6 +14,9 @@ const LookupErrorSchema = z.strictObject({
 
 const ProviderEnum = z.enum(['gemini', 'openai', 'anthropic']);
 
+// A8: the idiom/literal unit the model actually defined.
+const DefinedAsSchema = z.strictObject({ term: z.string(), isIdiom: z.boolean() });
+
 const LookupRequestSchema = z.strictObject({
   word: z.string(),
   context: z.string(),
@@ -25,6 +28,8 @@ const LookupRequestSchema = z.strictObject({
   promptEnvelope: z.string(),
   // One-shot manual provider override from the card picker; absent on normal lookups.
   provider: ProviderEnum.optional(),
+  // A8: one-shot "Show literal word" override; absent on normal lookups.
+  forceLiteral: z.boolean().optional(),
 });
 
 const LookupResultSchema = z.strictObject({
@@ -38,6 +43,8 @@ const LookupResultSchema = z.strictObject({
   fetchedAt: z.number(),
   provider: ProviderEnum.optional(),
   fallbackFrom: ProviderEnum.optional(),
+  // A8: the idiom/literal unit actually defined; absent for legacy/non-compliant responses.
+  definedAs: DefinedAsSchema.optional(),
 });
 
 const PublicSettingsSchema = z.strictObject({

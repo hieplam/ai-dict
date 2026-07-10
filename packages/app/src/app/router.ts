@@ -98,7 +98,9 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
 
       // A manual provider pick (req.provider set) must reach the picked provider: the cache key
       // ignores provider, so a hit would echo back the previous provider's answer. Skip the read.
-      if (cacheEnabled && req.provider === undefined) {
+      // A8: the same reasoning applies to a forced-literal re-run (req.forceLiteral) — a hit
+      // would echo back the smart idiom-aware answer instead of the literal one requested.
+      if (cacheEnabled && req.provider === undefined && req.forceLiteral !== true) {
         const hit = await cacheGet({ storage: deps.kv }, keyReq);
         if (hit)
           return { ok: true, type: 'lookup', result: { ...hit, fromCache: true }, requestId };

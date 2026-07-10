@@ -133,6 +133,59 @@ describe('runLookupWorkflow', () => {
     expect(h.renderer.lastError).toBeNull();
   });
 
+  it('a result with definedAs.isIdiom=true yields ctx.onForceLiteral even with only 1 provider configured', async () => {
+    const idiomResult: LookupResult = {
+      ...okResult,
+      definedAs: { term: 'kick the bucket', isIdiom: true },
+    };
+    const h = harness({
+      configuredProviders: ['gemini'],
+      impl: () => Promise.resolve(idiomResult),
+    });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(h.renderer.lastCtx).toBeDefined();
+    expect(typeof h.renderer.lastCtx?.onForceLiteral).toBe('function');
+    expect(h.renderer.lastCtx?.providers).toBeUndefined(); // still no picker (only 1 provider)
+  });
+
+  it('onForceLiteral re-runs the SAME selection with req.forceLiteral, bypassing cooldown', async () => {
+    let t = 5000;
+    const idiomResult: LookupResult = {
+      ...okResult,
+      definedAs: { term: 'kick the bucket', isIdiom: true },
+    };
+    const literalResult: LookupResult = { ...okResult, word: 'bucket' };
+    let calls = 0;
+    const h = harness({
+      configuredProviders: ['gemini'],
+      now: () => t,
+      impl: () => Promise.resolve(calls++ === 0 ? idiomResult : literalResult),
+    });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    const forceLiteral = h.renderer.lastCtx!.onForceLiteral!;
+    t = 5001; // still inside the cooldown window — a deliberate override must NOT be blocked
+    forceLiteral();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+    expect(h.client.lastReq).toMatchObject({
+      word: 'bank',
+      context: 'river bank',
+      forceLiteral: true,
+    });
+    expect(h.renderer.lastError).toBeNull();
+  });
+
+  it('a literal result (no definedAs) with only 1 provider still yields ctx===undefined (regression guard)', async () => {
+    const h = harness({ configuredProviders: ['gemini'] }); // okResult has no definedAs
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(h.renderer.lastCtx).toBeUndefined();
+  });
+
   it('maps a rejected lookup (LookupError-shaped) to renderError', async () => {
     const err = Object.assign(new Error('rate'), {
       code: 'RATE_LIMIT',

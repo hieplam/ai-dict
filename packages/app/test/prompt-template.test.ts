@@ -108,3 +108,36 @@ describe('buildPrompt with a custom envelope (advanced override)', () => {
     expect(out).toBe('T:mail me [redact]');
   });
 });
+
+describe('buildPrompt idiom instruction (A8)', () => {
+  const vars = { word: 'bucket', context: 'He kicked the bucket.', target_lang: 'Vietnamese' };
+
+  it('default (no forceLiteral) emits the auto-detect idiom instruction', () => {
+    const out = buildPrompt('1. define it', vars);
+    expect(out).toContain('DEFINED_AS:');
+    expect(out).toContain('is part of an idiom');
+  });
+
+  it('forceLiteral=true emits the force-literal instruction, not the auto-detect one', () => {
+    const out = buildPrompt('1. define it', vars, undefined, true);
+    expect(out).toContain('DEFINED_AS:');
+    expect(out).toContain('Define ONLY the literal');
+    expect(out).not.toContain('is part of an idiom');
+  });
+
+  it('does not leak the {idiom_instruction} slot into the final prompt', () => {
+    expect(buildPrompt('1. define it', vars)).not.toContain('{idiom_instruction}');
+  });
+
+  it('a custom envelope without {idiom_instruction} is unaffected by forceLiteral', () => {
+    const withFlag = buildPrompt('FMT', vars, 'ENV {word}', true);
+    const without = buildPrompt('FMT', vars, 'ENV {word}', false);
+    expect(withFlag).toBe(without);
+    expect(withFlag).toBe('ENV bucket');
+  });
+
+  it('a custom envelope WITH {idiom_instruction} still resolves the nested {word}', () => {
+    const out = buildPrompt('FMT', vars, 'E {idiom_instruction}');
+    expect(out).toContain('DEFINED_AS: "bucket" | literal'); // resolved inside the instruction text
+  });
+});

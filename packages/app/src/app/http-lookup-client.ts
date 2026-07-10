@@ -6,6 +6,7 @@ import {
   type LookupError,
   type Provider,
 } from '../index';
+import { parseDefinedAs } from '../domain/defined-as';
 
 const DEFAULT_TIMEOUT_MS = 20000;
 
@@ -88,6 +89,7 @@ export async function runHttpLookup(
       title: req.title,
     },
     req.promptEnvelope,
+    req.forceLiteral,
   );
   const body = spec.body(prompt, spec.model);
 
@@ -151,14 +153,16 @@ export async function runHttpLookup(
     if (typeof text !== 'string' || text.length === 0)
       rejectWith(mapError({ kind: 'parse', provider: spec.provider }));
 
+    const { definedAs, body: parsedBody } = parseDefinedAs(text);
     return {
-      markdown: text,
+      markdown: parsedBody,
       word: req.word,
       target: req.target,
       model: spec.model,
       provider: spec.provider,
       fromCache: false,
       fetchedAt: Date.now(),
+      ...(definedAs !== undefined ? { definedAs } : {}),
     };
   } catch (err) {
     // Guard: caller-cancel propagates raw ONLY when the error is NOT already a mapped

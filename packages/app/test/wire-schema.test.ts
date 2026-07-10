@@ -242,6 +242,61 @@ describe('wire-schema', () => {
     expect(bad.success).toBe(false);
   });
 
+  it('lookup req accepts an optional forceLiteral flag and rejects a non-boolean', () => {
+    const base = {
+      word: 'w',
+      context: 'c',
+      url: '',
+      title: '',
+      target: 'vi',
+      outputFormat: 'f',
+      promptEnvelope: '',
+    };
+    const ok = WireMessageSchema.safeParse({
+      type: 'lookup',
+      requestId: '1',
+      req: { ...base, forceLiteral: true },
+    });
+    expect(ok.success).toBe(true);
+    const bad = WireMessageSchema.safeParse({
+      type: 'lookup',
+      requestId: '1',
+      req: { ...base, forceLiteral: 'yes' },
+    });
+    expect(bad.success).toBe(false);
+  });
+
+  it('lookup result carries an optional definedAs; rejects an unknown key inside it (strictObject)', () => {
+    const result = {
+      markdown: 'm',
+      word: 'w',
+      target: 'vi',
+      model: 'x',
+      fromCache: false,
+      fetchedAt: 1,
+    };
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'lookup',
+        requestId: '1',
+        result: { ...result, definedAs: { term: 'kick the bucket', isIdiom: true } },
+      }).success,
+    ).toBe(true);
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'lookup',
+        requestId: '1',
+        result: { ...result, definedAs: { term: 'x', isIdiom: true, extra: 'nope' } },
+      }).success,
+    ).toBe(false);
+    // Old-shaped result (no definedAs) still parses — back-compat.
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'lookup', requestId: '1', result }).success,
+    ).toBe(true);
+  });
+
   it('lookup result carries optional provider + fallbackFrom; old results still parse', () => {
     const result = {
       markdown: 'm',

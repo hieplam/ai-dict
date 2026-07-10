@@ -464,3 +464,56 @@ describe('<lookup-card> provider metadata row (badge, fallback note, picker)', (
     expect(await axeViolations(el)).toEqual([]);
   });
 });
+
+describe('<lookup-card> idiom label + force-literal button (A8)', () => {
+  it('an idiom result renders the defined-as label and a "Show literal word" button', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bucket',
+      target: 'vi',
+      safeHtml: safe('<p>To die.</p>'),
+      definedAs: { term: 'kick the bucket', isIdiom: true },
+    };
+    expect(el.querySelector('.defined-as__label')!.textContent).toBe(
+      'Defined as "kick the bucket" (idiom)',
+    );
+    expect(el.querySelector<HTMLButtonElement>('.defined-as__literal-btn')!.textContent).toBe(
+      'Show literal word',
+    );
+  });
+
+  it('clicking the button fires a composed force-literal event', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bucket',
+      target: 'vi',
+      safeHtml: safe('<p>To die.</p>'),
+      definedAs: { term: 'kick the bucket', isIdiom: true },
+    };
+    const handler = vi.fn();
+    document.body.addEventListener('force-literal', handler);
+    el.querySelector<HTMLButtonElement>('.defined-as__literal-btn')!.click();
+    document.body.removeEventListener('force-literal', handler);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('a literal result (isIdiom: false) renders no .defined-as row', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bucket',
+      target: 'vi',
+      safeHtml: safe('<p>A pail.</p>'),
+      definedAs: { term: 'bucket', isIdiom: false },
+    };
+    expect(el.querySelector('.defined-as')).toBeNull();
+  });
+
+  it('a result with no definedAs renders no .defined-as row (back-compat)', () => {
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>money place</p>') };
+    expect(el.querySelector('.defined-as')).toBeNull();
+  });
+});
