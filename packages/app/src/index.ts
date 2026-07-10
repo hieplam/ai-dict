@@ -6,6 +6,7 @@ export * from './domain/legacy-templates';
 export * from './domain/pii';
 export * from './domain/cache-policy';
 export * from './domain/history-policy';
+export * from './domain/saved-words-policy';
 export * from './domain/error-mapper';
 export {
   toErrorRecord,
