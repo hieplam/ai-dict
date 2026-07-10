@@ -40,6 +40,9 @@
                   "openai",
                   "anthropic"
                 ]
+              },
+              "forceLiteral": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -270,6 +273,22 @@
                   "openai",
                   "anthropic"
                 ]
+              },
+              "definedAs": {
+                "type": "object",
+                "properties": {
+                  "term": {
+                    "type": "string"
+                  },
+                  "isIdiom": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "term",
+                  "isIdiom"
+                ],
+                "additionalProperties": false
               }
             },
             "required": [
@@ -421,6 +440,22 @@
                         "openai",
                         "anthropic"
                       ]
+                    },
+                    "definedAs": {
+                      "type": "object",
+                      "properties": {
+                        "term": {
+                          "type": "string"
+                        },
+                        "isIdiom": {
+                          "type": "boolean"
+                        }
+                      },
+                      "required": [
+                        "term",
+                        "isIdiom"
+                      ],
+                      "additionalProperties": false
                     }
                   },
                   "required": [

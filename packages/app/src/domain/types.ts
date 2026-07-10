@@ -29,6 +29,13 @@ export interface LookupRequest {
    * `Provider | undefined` for Zod/EOP alignment with the optional wire field.
    */
   provider?: Provider | undefined;
+  /**
+   * A8: one-shot request to define ONLY the literal, single selected word, bypassing idiom/
+   * phrasal-verb detection (the card's "Show literal word" button). Re-runs the SAME selection
+   * once; does not persist. The router skips the cache read for the same reason as `provider`
+   * above — a hit would echo back the smart idiom-aware answer instead.
+   */
+  forceLiteral?: boolean | undefined;
 }
 
 export interface LookupResult {
@@ -47,6 +54,14 @@ export interface LookupResult {
    * Declared `Provider | undefined` (not just `Provider`) for Zod/EOP alignment.
    */
   fallbackFrom?: Provider | undefined;
+  /**
+   * A8: the unit the model actually defined — its literal selection, or, when the selection is
+   * part of an idiom/phrasal verb, the whole idiomatic unit. Stamped by the shared HTTP lookup
+   * skeleton from the model's DEFINED_AS line (see domain/defined-as.ts). Absent when the model
+   * didn't emit a recognisable line (legacy cached/history entries, a non-compliant model, or a
+   * custom envelope override that omits the instruction) — never blocks rendering.
+   */
+  definedAs?: { term: string; isIdiom: boolean } | undefined;
 }
 
 /**
