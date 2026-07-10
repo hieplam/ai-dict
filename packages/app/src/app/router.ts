@@ -10,6 +10,8 @@ import {
   historyClear,
   historyGet,
   historyDelete,
+  savedWordUpsert,
+  savedWordDelete,
   type WireMessage,
   type WireReply,
   type LookupError,
@@ -205,6 +207,25 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
         }
         return { ok: true, type: 'ack' };
       }
+      case 'saved.save': {
+        const entry = await deps.queue.run(() =>
+          savedWordUpsert(
+            { storage: deps.kv },
+            {
+              word: msg.word,
+              definition: msg.definition,
+              translation: msg.translation,
+              sentence: msg.sentence,
+              url: msg.url,
+              title: msg.title,
+            },
+          ),
+        );
+        return { ok: true, type: 'saved', entry };
+      }
+      case 'saved.delete':
+        await deps.queue.run(() => savedWordDelete({ storage: deps.kv }, msg.word));
+        return { ok: true, type: 'ack' };
       case 'cache.clear':
         await cacheClear({ storage: deps.kv });
         return { ok: true, type: 'ack' };
