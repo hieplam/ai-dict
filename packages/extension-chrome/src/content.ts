@@ -144,6 +144,13 @@ document.addEventListener('toggle-save', () => {
   void chrome.runtime.sendMessage(message).catch(() => undefined);
 });
 
+// B7: the card's nudge banner bubbles a composed `dismiss-nudge` event when its × is tapped.
+// No wire message: the router already permanently marked this word as nudged before this reply
+// was sent (domain/nudge-policy.ts) — dismissal is purely local, hiding the banner on this card.
+document.addEventListener('dismiss-nudge', () => {
+  inline.dismissNudge();
+});
+
 // The card's "Open in side panel" action (Chrome only) bubbles a composed `open-side-panel`
 // event out of the bottom sheet. A content script can't call chrome.sidePanel.open(), so we
 // relay it (synchronously, preserving the user gesture) to the service worker, then dismiss the

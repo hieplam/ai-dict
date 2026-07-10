@@ -579,3 +579,78 @@ describe('<lookup-card> save/star affordance (B1)', () => {
     ).toBe(false);
   });
 });
+
+describe('<lookup-card> repeat-offender nudge (B7)', () => {
+  it('a result with nudge:true renders the banner with the exact copy', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+      nudge: true,
+    };
+    const row = el.querySelector('.nudge-row')!;
+    expect(row).not.toBeNull();
+    expect(row.textContent).toContain('3rd time meeting this word — save it?');
+  });
+
+  it('clicking the nudge Save button fires the SAME composed toggle-save event the star uses', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+      nudge: true,
+    };
+    const handler = vi.fn();
+    document.body.addEventListener('toggle-save', handler);
+    el.querySelector<HTMLButtonElement>('.nudge-row__save-btn')!.click();
+    document.body.removeEventListener('toggle-save', handler);
+    expect(handler).toHaveBeenCalledTimes(1);
+    const event = handler.mock.calls[0]![0] as CustomEvent<{ word: string }>;
+    expect(event.detail).toEqual({ word: 'bank' });
+  });
+
+  it('clicking the dismiss button fires a composed dismiss-nudge event', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+      nudge: true,
+    };
+    const handler = vi.fn();
+    document.body.addEventListener('dismiss-nudge', handler);
+    el.querySelector<HTMLButtonElement>('.nudge-row__dismiss-btn')!.click();
+    document.body.removeEventListener('dismiss-nudge', handler);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('nudge absent/false renders no banner (back-compat)', () => {
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>money place</p>') };
+    expect(el.querySelector('.nudge-row')).toBeNull();
+  });
+
+  it('the loading and error states render no nudge row (only result carries it)', () => {
+    const { nodes } = loadingCaption();
+    expect(nodes.some((n) => n instanceof HTMLElement && n.classList.contains('nudge-row'))).toBe(
+      false,
+    );
+  });
+
+  it('has no axe violations (result state with nudge banner)', async () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+      nudge: true,
+    };
+    expect(await axeViolations(el)).toEqual([]);
+  });
+});

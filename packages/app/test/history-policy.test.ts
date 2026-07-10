@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   historyAppend,
   historyList,
+  historyListSince,
   historyClear,
   historyGet,
   historyDelete,
@@ -130,5 +131,42 @@ describe('history-policy', () => {
     await historyAppend({ storage: s }, entry('1'));
     await historyClear({ storage: s });
     expect((await historyList({ storage: s }, {})).entries).toEqual([]);
+  });
+
+  it('historyListSince returns only entries with createdAt >= sinceMs, newest-first', async () => {
+    const s = memStorage();
+    await historyAppend({ storage: s }, entry('1000'));
+    await historyAppend({ storage: s }, entry('2000'));
+    await historyAppend({ storage: s }, entry('3000'));
+    const recent = await historyListSince({ storage: s }, 2000);
+    expect(recent.map((e) => e.id)).toEqual(['3000', '2000']);
+  });
+
+  it('historyListSince stops scanning at the first stale entry (bounded read)', async () => {
+    const s = memStorage();
+    await historyAppend({ storage: s }, entry('1000'));
+    await historyAppend({ storage: s }, entry('2000'));
+    await historyAppend({ storage: s }, entry('3000'));
+    const calls: string[] = [];
+    const spied: Storage = {
+      ...s,
+      getItem: (k) => {
+        calls.push(k);
+        return s.getItem(k);
+      },
+    };
+    await historyListSince({ storage: spied }, 2000);
+    // Newest-first walk: history:3000 (kept), history:2000 (kept), history:1000 (stale — the
+    // scan reads it once to discover it's stale, then breaks). Never a read beyond that.
+    expect(calls.filter((k) => k.startsWith('history:') && k !== 'history:index')).toEqual([
+      'history:3000',
+      'history:2000',
+      'history:1000',
+    ]);
+  });
+
+  it('historyListSince on empty history returns []', async () => {
+    const s = memStorage();
+    expect(await historyListSince({ storage: s }, 0)).toEqual([]);
   });
 });

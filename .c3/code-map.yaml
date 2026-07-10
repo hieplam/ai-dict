@@ -19,6 +19,7 @@ c3-111:
 c3-112:
   - packages/app/src/domain/cache-policy.ts
   - packages/app/src/domain/history-policy.ts
+  - packages/app/src/domain/nudge-policy.ts,packages/app/test/nudge-policy.test.ts
   - packages/app/test/cache-policy.test.ts
   - packages/app/test/history-policy.test.ts
 c3-113:
@@ -84,6 +85,7 @@ c3-312:
 ref-kv-storage-prefixes:
   - packages/app/src/domain/cache-policy.ts
   - packages/app/src/domain/history-policy.ts
+  - packages/app/src/domain/nudge-policy.ts
   - packages/app/src/domain/saved-words-policy.ts
 ref-web-components-shadow-dom:
   - packages/app/src/ui/**

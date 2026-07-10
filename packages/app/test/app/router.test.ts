@@ -3,11 +3,13 @@ import { buildRouter, WriteQueue, SUPPRESS } from '../../src/app/router';
 import { fakeStorage } from '../fakes';
 import {
   historyList,
+  historyAppend,
   type LookupResult,
   type WireMessage,
   type LookupRequest,
   type PublicSettings,
 } from '../../src';
+import { cachePut } from '../../src/domain/cache-policy';
 
 const result: LookupResult = {
   markdown: '#',
@@ -38,6 +40,7 @@ function makeLookupMock(impl: LookupFn = () => Promise.resolve(result)): LookupM
 interface DepsOverrides {
   client?: { lookup: LookupMock };
   readToggles?: () => Promise<{ cacheEnabled: boolean; saveHistory: boolean }>;
+  now?: () => number;
 }
 
 function deps(over: DepsOverrides = {}) {
@@ -65,6 +68,7 @@ function deps(over: DepsOverrides = {}) {
     readToggles:
       over.readToggles ?? vi.fn(() => Promise.resolve({ cacheEnabled: true, saveHistory: true })),
     queue: new WriteQueue(),
+    ...(over.now ? { now: over.now } : {}),
   };
 }
 
@@ -631,5 +635,112 @@ describe('errlog routing', () => {
       pending: false,
       count: 0,
     });
+  });
+});
+
+describe('B7 repeat-offender nudge', () => {
+  it('does not nudge on the 1st or 2nd lookup of a word', async () => {
+    let t = 1_000_000;
+    const d = deps({
+      readToggles: () => Promise.resolve({ cacheEnabled: false, saveHistory: true }),
+      now: () => t,
+    });
+    const route = buildRouter(d);
+    const r1 = await route(lookupMsg('a'));
+    expect(
+      r1 !== SUPPRESS && r1.ok && r1.type === 'lookup' ? r1.result.nudge : undefined,
+    ).toBeUndefined();
+    t += 1000;
+    const r2 = await route(lookupMsg('b'));
+    expect(
+      r2 !== SUPPRESS && r2.ok && r2.type === 'lookup' ? r2.result.nudge : undefined,
+    ).toBeUndefined();
+  });
+
+  it('nudges on the 3rd lookup of the same word within the window', async () => {
+    let t = 1_000_000;
+    const d = deps({
+      readToggles: () => Promise.resolve({ cacheEnabled: false, saveHistory: true }),
+      now: () => t,
+    });
+    const route = buildRouter(d);
+    await route(lookupMsg('a'));
+    t += 1000;
+    await route(lookupMsg('b'));
+    t += 1000;
+    const r3 = await route(lookupMsg('c'));
+    expect(r3).toMatchObject({ ok: true, result: { nudge: true } });
+  });
+
+  it('never nudges again after the 3rd (4th+ lookups)', async () => {
+    let t = 1_000_000;
+    const d = deps({
+      readToggles: () => Promise.resolve({ cacheEnabled: false, saveHistory: true }),
+      now: () => t,
+    });
+    const route = buildRouter(d);
+    for (const id of ['a', 'b', 'c']) {
+      await route(lookupMsg(id));
+      t += 1000;
+    }
+    const r4 = await route(lookupMsg('d'));
+    expect(
+      r4 !== SUPPRESS && r4.ok && r4.type === 'lookup' ? r4.result.nudge : undefined,
+    ).toBeUndefined();
+  });
+
+  it('a stored history entry never carries a nudge field', async () => {
+    let t = 1_000_000;
+    const d = deps({
+      readToggles: () => Promise.resolve({ cacheEnabled: false, saveHistory: true }),
+      now: () => t,
+    });
+    const route = buildRouter(d);
+    for (const id of ['a', 'b', 'c']) {
+      await route(lookupMsg(id));
+      t += 1000;
+    }
+    const { entries } = await historyList({ storage: d.kv }, {});
+    expect(entries.every((e) => !('nudge' in e.result))).toBe(true);
+  });
+
+  it('entries outside the 30-day window are not counted', async () => {
+    let t = 1_000_000;
+    const d = deps({
+      readToggles: () => Promise.resolve({ cacheEnabled: false, saveHistory: true }),
+      now: () => t,
+    });
+    const route = buildRouter(d);
+    await route(lookupMsg('a'));
+    await route(lookupMsg('b'));
+    t += 31 * 24 * 60 * 60 * 1000; // jump past the 30-day window
+    const r3 = await route(lookupMsg('c'));
+    expect(
+      r3 !== SUPPRESS && r3.ok && r3.type === 'lookup' ? r3.result.nudge : undefined,
+    ).toBeUndefined();
+  });
+
+  it('a cache-hit reply can also carry nudge:true once the pre-existing history count already met the threshold', async () => {
+    const d = deps({
+      readToggles: () => Promise.resolve({ cacheEnabled: true, saveHistory: true }),
+    });
+    // Seed 3 prior history entries directly (bypassing the router/evaluateNudge), simulating a
+    // reader who already has 3 recent lookups before this cache-hit request.
+    for (const id of ['x', 'y', 'z']) {
+      await historyAppend(
+        { storage: d.kv },
+        { id, word: req.word, context: req.context, result, createdAt: Date.now() },
+      );
+    }
+    // Seed the cache so this request is a genuine cache hit.
+    await cachePut(
+      { storage: d.kv },
+      { word: req.word, context: req.context, target: req.target },
+      result,
+    );
+    const route = buildRouter(d);
+    const reply = await route(lookupMsg('a'));
+    expect(reply).toMatchObject({ ok: true, result: { fromCache: true, nudge: true } });
+    expect(d.client.lookup).not.toHaveBeenCalled();
   });
 });

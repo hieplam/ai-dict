@@ -48,6 +48,29 @@ export async function historyList(
   return next !== undefined ? { entries, nextCursor: next } : { entries };
 }
 
+/**
+ * B7: entries with `createdAt >= sinceMs`, newest-first — used to count recent same-word
+ * lookups without reading the full (cap-500) history log on every lookup. History is
+ * insertion-ordered newest-first (`historyAppend` always prepends the newest id), so
+ * `createdAt` only decreases as the index is walked; this stops at the first entry older than
+ * `sinceMs` instead of scanning to the end.
+ */
+export async function historyListSince(
+  deps: HistoryDeps,
+  sinceMs: number,
+): Promise<HistoryEntry[]> {
+  const idx = await readIndex(deps.storage);
+  const out: HistoryEntry[] = [];
+  for (const id of idx) {
+    const raw = await deps.storage.getItem(`history:${id}`);
+    if (!raw) continue;
+    const parsed = JSON.parse(raw) as HistoryEntry;
+    if (parsed.createdAt < sinceMs) break;
+    out.push(parsed);
+  }
+  return out;
+}
+
 export async function historyGet(deps: HistoryDeps, id: string): Promise<HistoryEntry | null> {
   const raw = await deps.storage.getItem(`history:${id}`);
   return raw ? (JSON.parse(raw) as HistoryEntry) : null;

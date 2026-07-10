@@ -43,6 +43,9 @@ export type CardState =
       definedAs?: { term: string; isIdiom: boolean };
       /** B1: whether this word is currently starred/saved — drives the save row's fill state. */
       saved?: boolean;
+      /** B7: whether to show the repeat-offender nudge banner — stamped once, ever, per word by
+       * the router the moment its within-30-day history count first crosses the threshold. */
+      nudge?: boolean;
     }
   | { kind: 'error'; error: LookupError };
 
@@ -127,7 +130,8 @@ button[data-act="settings"] .lbl{line-height:1}
    descendants). */
 ::slotted(.meta-row){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 ::slotted(.defined-as){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 8px;font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
-::slotted(.save-row){display:flex;margin:6px 0 10px}`;
+::slotted(.save-row){display:flex;margin:6px 0 10px}
+::slotted(.nudge-row){display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:7px 10px;border:1px solid var(--ad-accent);border-radius:var(--adp-radius-control);background:var(--ad-surface-raised)}`;
 
 // Descendants of the slotted .meta-row cannot be reached by ::slotted() (it only matches the
 // top-level assigned node), so their box decorations are injected ONCE into the document, scoped
@@ -155,7 +159,15 @@ lookup-card .save-btn:hover{background:var(--ad-surface-raised);color:var(--ad-i
 lookup-card .save-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 lookup-card .save-btn[aria-pressed="true"]{border-color:var(--ad-accent);color:var(--ad-accent-ink)}
 lookup-card .save-btn[aria-pressed="true"] svg{fill:var(--ad-accent);stroke:var(--ad-accent)}
-@media (prefers-reduced-motion:reduce){lookup-card .save-btn{transition:none}}`;
+@media (prefers-reduced-motion:reduce){lookup-card .save-btn{transition:none}}
+lookup-card .nudge-row__text{flex:1 1 auto;min-width:0;font-size:var(--adp-text-2xs);color:var(--ad-ink)}
+lookup-card .nudge-row__save-btn{flex:none;border:1px solid var(--ad-accent);background:var(--ad-accent);color:var(--ad-on-accent);border-radius:var(--adp-radius-control);padding:3px 11px;font:inherit;font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-semi);cursor:pointer}
+lookup-card .nudge-row__save-btn:hover{filter:brightness(1.06)}
+lookup-card .nudge-row__save-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .nudge-row__dismiss-btn{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border:0;background:transparent;color:var(--ad-ink-faint);border-radius:var(--adp-radius-control);cursor:pointer}
+lookup-card .nudge-row__dismiss-btn svg{width:12px;height:12px;pointer-events:none}
+lookup-card .nudge-row__dismiss-btn:hover{background:var(--ad-surface);color:var(--ad-ink)}
+lookup-card .nudge-row__dismiss-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}`;
 
 // Inject the document-scoped card styles once: the @keyframes spin (so Firefox/Safari, which
 // follow CSS Scoping Level 1 strictly, can resolve the animation on the light-DOM spinner) and
@@ -256,6 +268,7 @@ export function renderCardState(state: CardState): Node[] {
   const body = document.createElement('div');
   body.innerHTML = state.safeHtml; // trusted: sanitized upstream by adapters-shared (S4)
   const nodes: Node[] = [h, renderSaveRow(state)];
+  if (state.nudge === true) nodes.push(renderNudgeRow(state));
   const definedAsRow = state.definedAs ? renderDefinedAsRow(state.definedAs) : null;
   if (definedAsRow) nodes.push(definedAsRow);
   nodes.push(body);
@@ -323,6 +336,46 @@ function renderSaveRow(state: { word: string; saved?: boolean }): HTMLElement {
     ),
   );
   row.append(btn);
+  return row;
+}
+
+/**
+ * B7: the repeat-offender nudge banner — shown once per word, ever, when `state.nudge === true`
+ * (stamped by the router the moment a word's within-30-day lookup count first crosses the
+ * threshold; see domain/nudge-policy.ts). "Save" dispatches the exact same `toggle-save` event
+ * the star button dispatches — not a second save path. "Dismiss" is a pure client-side action:
+ * the backend has already permanently marked this word as nudged before this reply was ever
+ * sent, so there is nothing left for a dismiss round-trip to tell it.
+ */
+function renderNudgeRow(state: { word: string }): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'nudge-row';
+  row.setAttribute('role', 'status');
+  const text = document.createElement('span');
+  text.className = 'nudge-row__text';
+  text.textContent = '3rd time meeting this word — save it?';
+  const saveBtn = document.createElement('button');
+  saveBtn.type = 'button';
+  saveBtn.className = 'nudge-row__save-btn';
+  saveBtn.textContent = 'Save';
+  saveBtn.addEventListener('click', () =>
+    saveBtn.dispatchEvent(
+      new CustomEvent('toggle-save', {
+        detail: { word: state.word },
+        bubbles: true,
+        composed: true,
+      }),
+    ),
+  );
+  const dismissBtn = document.createElement('button');
+  dismissBtn.type = 'button';
+  dismissBtn.className = 'nudge-row__dismiss-btn';
+  dismissBtn.setAttribute('aria-label', 'Dismiss nudge');
+  dismissBtn.innerHTML = ICON_CLOSE; // decorative aria-hidden SVG; name comes from aria-label
+  dismissBtn.addEventListener('click', () =>
+    dismissBtn.dispatchEvent(new CustomEvent('dismiss-nudge', { bubbles: true, composed: true })),
+  );
+  row.append(text, saveBtn, dismissBtn);
   return row;
 }
 
