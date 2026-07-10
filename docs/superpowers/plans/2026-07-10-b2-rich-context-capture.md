@@ -780,12 +780,18 @@ git commit -m "feat(b2): read real translation into the save payload (in-page ca
 - Modify: `packages/extension-chrome/e2e/saved-word.spec.ts`
 
 **Interfaces:** Uses the existing `mockGemini`/`seedSettings`/`gotoFixture`/`selectWord`/
-`openTrigger`/`storageDump` helpers (`packages/extension-chrome/e2e/helpers.ts`) unmodified. Adds
-one new mock-response constant local to the spec file. Does NOT modify any existing `test(...)`
-block in this file — the original B1 tests (including the `translation).toBe('')` assertion on
-the default mock body) stay byte-for-byte as they are, since they remain valid regression
-coverage: the default `GEMINI_OK_BODY` fixture has no signal lines, so `translation` correctly
-stays `''` there, exactly as B1 shipped it.
+`openTrigger` helpers (`packages/extension-chrome/e2e/helpers.ts`) unmodified, plus the file's own
+module-level `swStorageDump(context)` helper (already defined at the top of
+`saved-word.spec.ts`, lines 19-22 — **not** the `storageDump(page)` helper from `helpers.ts`).
+`swStorageDump` is required here because by the time these new tests read storage,
+`page` (via `doLookup`) has navigated to the `http://test.fixture/` content page, whose main
+world has no `chrome` global — exactly the same reason 3 of the 4 existing B1 tests in this file
+already use `swStorageDump(context)` instead of `storageDump(page)` (see the file's own doc
+comment on `swStorageDump`). Adds one new mock-response constant local to the spec file. Does NOT
+modify any existing `test(...)` block in this file — the original B1 tests (including the
+`translation).toBe('')` assertion on the default mock body) stay byte-for-byte as they are, since
+they remain valid regression coverage: the default `GEMINI_OK_BODY` fixture has no signal lines,
+so `translation` correctly stays `''` there, exactly as B1 shipped it.
 
 - [ ] **Step 1: Write the new tests** — append to
       `packages/extension-chrome/e2e/saved-word.spec.ts`, as a new `test.describe` block placed
@@ -824,9 +830,9 @@ test.describe('B2 rich context capture (translation)', () => {
 
     const star = page.locator('bottom-sheet lookup-card .save-btn');
     await star.click();
-    await expect.poll(async () => (await storageDump(page))['saved:bank']).toBeDefined();
+    await expect.poll(async () => (await swStorageDump(context))['saved:bank']).toBeDefined();
 
-    const dump = await storageDump(page);
+    const dump = await swStorageDump(context);
     const entry = JSON.parse(dump['saved:bank'] as string);
     // New in B2: translation is populated with real content, not ''.
     expect(entry.senses[0].translation).toBe('ngân hàng');
@@ -851,9 +857,9 @@ test.describe('B2 rich context capture (translation)', () => {
     await doLookup(page);
 
     await page.locator('bottom-sheet lookup-card .save-btn').click();
-    await expect.poll(async () => (await storageDump(page))['saved:bank']).toBeDefined();
+    await expect.poll(async () => (await swStorageDump(context))['saved:bank']).toBeDefined();
 
-    const dump = await storageDump(page);
+    const dump = await swStorageDump(context);
     const entry = JSON.parse(dump['saved:bank'] as string);
     expect(entry.senses[0].translation).toBe('');
     expect(entry.senses[0].definition).toContain('financial institution');
