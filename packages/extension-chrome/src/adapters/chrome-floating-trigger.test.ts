@@ -82,4 +82,21 @@ describe('ChromeFloatingTrigger (TriggerUI via <lookup-trigger>)', () => {
     btn.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }));
     expect(host.querySelector('lookup-trigger')).not.toBeNull();
   });
+
+  it("activate() fires the shown bubble's click, same as a real mouse click", () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const trigger = new ChromeFloatingTrigger(host);
+    const onClick = vi.fn();
+    trigger.show({ x: 10, y: 20, w: 5, h: 5 }, onClick);
+    expect(trigger.activate()).toBe(true);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('activate() is a safe no-op when nothing is shown', () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const trigger = new ChromeFloatingTrigger(host);
+    expect(() => expect(trigger.activate()).toBe(false)).not.toThrow();
+  });
 });
