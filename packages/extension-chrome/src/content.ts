@@ -76,7 +76,9 @@ runLookupWorkflow({
       lastSavePayload = {
         word: r.word,
         definition: r.markdown,
-        translation: '',
+        // B2: real translation from the parsed TRANSLATION signal line, when the model emitted
+        // one; '' fallback preserves B1's exact behavior for legacy/non-compliant responses.
+        translation: r.translation ?? '',
         sentence: ctx?.sentence ?? '',
         url: ctx?.url ?? '',
         title: ctx?.title ?? '',
