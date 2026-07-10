@@ -353,3 +353,44 @@ describe('GeminiLookupClient', () => {
     expect((err as { vendorMessage?: string }).vendorMessage).toContain('overloaded');
   });
 });
+
+describe('A8 idiom expansion via runHttpLookup', () => {
+  it('a DEFINED_AS idiom line is parsed into result.definedAs and stripped from markdown', async () => {
+    const body = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              { text: 'DEFINED_AS: "kick the bucket" | idiom\n\n## kick the bucket\nTo die.' },
+            ],
+          },
+        },
+      ],
+    };
+    const c = client(() => Promise.resolve(res({ ok: true, status: 200, body })));
+    const out = await c.lookup(req);
+    expect(out.definedAs).toEqual({ term: 'kick the bucket', isIdiom: true });
+    expect(out.markdown).toBe('## kick the bucket\nTo die.');
+  });
+
+  it('a response with no DEFINED_AS line leaves definedAs undefined and markdown unchanged (back-compat)', async () => {
+    const c = client(() => Promise.resolve(res({ ok: true, status: 200, body: okBody })));
+    const out = await c.lookup(req);
+    expect(out.definedAs).toBeUndefined();
+    expect(out.markdown).toBe('# def');
+  });
+
+  it('req.forceLiteral=true reaches the prompt as the force-literal instruction', async () => {
+    let captured: { url: string; init: Parameters<FetchLike>[1] } | null = null;
+    const c = client((url, init) => {
+      captured = { url, init };
+      return Promise.resolve(res({ ok: true, status: 200, body: okBody }));
+    });
+    await c.lookup({ ...req, forceLiteral: true });
+    const sent =
+      (JSON.parse(captured!.init.body) as { contents: { parts: { text: string }[] }[] }).contents[0]
+        ?.parts[0]?.text ?? '';
+    expect(sent).toContain('Define ONLY the literal');
+    expect(sent).not.toContain('is part of an idiom');
+  });
+});
