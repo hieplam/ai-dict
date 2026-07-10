@@ -394,3 +394,63 @@ describe('A8 idiom expansion via runHttpLookup', () => {
     expect(sent).not.toContain('is part of an idiom');
   });
 });
+
+describe('B2 translation extraction via runHttpLookup', () => {
+  it('a DEFINED_AS + TRANSLATION pair is parsed into result.translation and both lines are stripped from markdown', async () => {
+    const body = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: 'DEFINED_AS: "bank" | literal\nTRANSLATION: "ngân hàng"\n\n## bank\nA financial institution.',
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const c = client(() => Promise.resolve(res({ ok: true, status: 200, body })));
+    const out = await c.lookup(req);
+    expect(out.definedAs).toEqual({ term: 'bank', isIdiom: false });
+    expect(out.translation).toBe('ngân hàng');
+    expect(out.markdown).toBe('## bank\nA financial institution.');
+  });
+
+  it('a response with DEFINED_AS but no TRANSLATION line leaves translation undefined (back-compat)', async () => {
+    const body = {
+      candidates: [
+        {
+          content: {
+            parts: [{ text: 'DEFINED_AS: "bank" | literal\n\n## bank\nA financial institution.' }],
+          },
+        },
+      ],
+    };
+    const c = client(() => Promise.resolve(res({ ok: true, status: 200, body })));
+    const out = await c.lookup(req);
+    expect(out.translation).toBeUndefined();
+    expect(out.markdown).toBe('## bank\nA financial institution.');
+  });
+
+  it('a response with neither DEFINED_AS nor TRANSLATION leaves both undefined and markdown unchanged (regression guard)', async () => {
+    const c = client(() => Promise.resolve(res({ ok: true, status: 200, body: okBody })));
+    const out = await c.lookup(req);
+    expect(out.definedAs).toBeUndefined();
+    expect(out.translation).toBeUndefined();
+    expect(out.markdown).toBe('# def');
+  });
+
+  it('the sent prompt includes the TRANSLATION instruction by default', async () => {
+    let captured: { url: string; init: Parameters<FetchLike>[1] } | null = null;
+    const c = client((url, init) => {
+      captured = { url, init };
+      return Promise.resolve(res({ ok: true, status: 200, body: okBody }));
+    });
+    await c.lookup(req);
+    const sent =
+      (JSON.parse(captured!.init.body) as { contents: { parts: { text: string }[] }[] }).contents[0]
+        ?.parts[0]?.text ?? '';
+    expect(sent).toContain('TRANSLATION:');
+  });
+});

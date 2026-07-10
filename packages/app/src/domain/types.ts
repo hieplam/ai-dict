@@ -62,6 +62,17 @@ export interface LookupResult {
    * custom envelope override that omits the instruction) — never blocks rendering.
    */
   definedAs?: { term: string; isIdiom: boolean } | undefined;
+  /**
+   * B2: the model's direct {target_lang} translation of the word's meaning, extracted from the
+   * TRANSLATION: "..." signal line (see domain/translation-line.ts's parseTranslation) —
+   * decoupled from the user-customizable Card format so it survives regardless of how the reader
+   * has edited the visible "Eng -> {target_lang}" section. Absent when the model didn't emit a
+   * recognisable line (legacy cached/history entries, a non-compliant model, or a custom prompt
+   * envelope override that omits {translation_instruction}) — never blocks rendering; saved-word
+   * writers fall back to '' exactly as B1 already does. NOT part of the ratified SavedWordEntry
+   * shape — this is display/result metadata on LookupResult only.
+   */
+  translation?: string | undefined;
 }
 
 /**

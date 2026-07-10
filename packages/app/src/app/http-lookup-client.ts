@@ -7,6 +7,7 @@ import {
   type Provider,
 } from '../index';
 import { parseDefinedAs } from '../domain/defined-as';
+import { parseTranslation } from '../domain/translation-line';
 
 const DEFAULT_TIMEOUT_MS = 20000;
 
@@ -153,7 +154,8 @@ export async function runHttpLookup(
     if (typeof text !== 'string' || text.length === 0)
       rejectWith(mapError({ kind: 'parse', provider: spec.provider }));
 
-    const { definedAs, body: parsedBody } = parseDefinedAs(text);
+    const { definedAs, body: afterDefinedAs } = parseDefinedAs(text);
+    const { translation, body: parsedBody } = parseTranslation(afterDefinedAs);
     return {
       markdown: parsedBody,
       word: req.word,
@@ -163,6 +165,7 @@ export async function runHttpLookup(
       fromCache: false,
       fetchedAt: Date.now(),
       ...(definedAs !== undefined ? { definedAs } : {}),
+      ...(translation !== undefined ? { translation } : {}),
     };
   } catch (err) {
     // Guard: caller-cancel propagates raw ONLY when the error is NOT already a mapped
