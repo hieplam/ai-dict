@@ -103,6 +103,20 @@ describe('buildRouter', () => {
     expect(d.client.lookup).toHaveBeenCalledTimes(1);
   });
 
+  it('forceLiteral override (req.forceLiteral) skips the cache read — the literal answer is fetched fresh', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route(lookupMsg('a')); // populate cache with the default (idiom-aware) answer
+    d.client.lookup.mockClear();
+    const reply = await route({
+      type: 'lookup',
+      req: { ...req, forceLiteral: true },
+      requestId: 'b',
+    });
+    expect(reply).toMatchObject({ ok: true, type: 'lookup', result: { fromCache: false } });
+    expect(d.client.lookup).toHaveBeenCalledTimes(1);
+  });
+
   it('fallbackFrom is never persisted, but provider IS (cache + history strip transient only)', async () => {
     const d = deps({
       client: {
