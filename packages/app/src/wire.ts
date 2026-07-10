@@ -54,6 +54,8 @@ const LookupResultSchema = z.strictObject({
   // B2: the model's direct target-language translation; absent for legacy/non-compliant
   // responses or a custom envelope override that omits {translation_instruction}.
   translation: z.string().optional(),
+  // B7: set once, ever, per word — see LookupResult.nudge's doc comment (domain/types.ts).
+  nudge: z.boolean().optional(),
 });
 
 const PublicSettingsSchema = z.strictObject({

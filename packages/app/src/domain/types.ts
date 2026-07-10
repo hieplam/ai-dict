@@ -73,6 +73,16 @@ export interface LookupResult {
    * shape — this is display/result metadata on LookupResult only.
    */
   translation?: string | undefined;
+  /**
+   * B7: set by the router the instant this lookup's within-30-day history count for `word`
+   * first reaches the repeat-offender threshold (3). Transient per-reply annotation, like
+   * `fallbackFrom` — stripped before cache/history writes (never computed until after
+   * `storableResult` is built in router.ts) so a stored/replayed entry never re-triggers the
+   * nudge. Once stamped `true` for a word, `domain/nudge-policy.ts`'s `nudge:<word>` marker
+   * guarantees every later reply for that word omits this field forever — "one nudge per word,
+   * ever" (roadmap B7 scope fence).
+   */
+  nudge?: boolean | undefined;
 }
 
 /**

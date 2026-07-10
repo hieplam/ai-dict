@@ -346,6 +346,9 @@
               },
               "translation": {
                 "type": "string"
+              },
+              "nudge": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -516,6 +519,9 @@
                     },
                     "translation": {
                       "type": "string"
+                    },
+                    "nudge": {
+                      "type": "boolean"
                     }
                   },
                   "required": [

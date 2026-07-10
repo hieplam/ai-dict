@@ -342,6 +342,29 @@ describe('wire-schema', () => {
     ).toBe(true);
   });
 
+  it('lookup result carries an optional nudge flag; old results still parse (B7)', () => {
+    const result = {
+      markdown: 'm',
+      word: 'w',
+      target: 'vi',
+      model: 'x',
+      fromCache: false,
+      fetchedAt: 1,
+    };
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'lookup',
+        requestId: '1',
+        result: { ...result, nudge: true },
+      }).success,
+    ).toBe(true);
+    // Old-shaped result (no nudge) still parses — back-compat.
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'lookup', requestId: '1', result }).success,
+    ).toBe(true);
+  });
+
   it('promptEnvelope is required on settings and carried on the lookup req (like outputFormat)', () => {
     const base = {
       targetLang: 'vi',
