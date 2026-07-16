@@ -8,7 +8,7 @@ page (exact word-boundary + naive plural/-ed/-ing matching only), known words ne
 added page-load cost ≤ 50 ms on the 100KB fixture, off-switch in settings.
 
 **Commit subject convention:** `feat: re-encounter highlighting — <task summary> (B3)`; trailer
-`Tribe-Card: b3-re-encounter-highlighting`, `Tribe-Task: n/7`. No Co-Authored-By, no attribution.
+`Tribe-Card: b3-re-encounter-highlighting`, `Tribe-Task: n/6`. No Co-Authored-By, no attribution.
 
 ## Global Constraints
 
@@ -51,7 +51,7 @@ w+'ing']`, plus when `w` ends with `'e'`: `w.slice(0,-1)+'ing'` and `w+'d'`. Low
 trailing `'s`/`'` → `matcher.get(token)`; on hit push `{start: m.index, end: m.index +
 m[0].length, headword}` (span covers the WHOLE token as it appears).
 
-Step 3 — gate + commit (`Tribe-Task: 1/7`):
+Step 3 — gate + commit (`Tribe-Task: 1/6`):
 `cd packages/app && bunx vitest run test/highlight-policy.test.ts && bun run typecheck && cd ../.. && bun run lint && bun run format:check`.
 
 ---
@@ -95,7 +95,7 @@ case 'saved.learningWords': {
 (read-only — no `deps.queue.run` needed; mirrors how reads elsewhere skip the write queue).
 
 Step 3 — regen snapshot (`bunx vitest run test/wire-schema.test.ts -u`; diff shows only the new
-arms), single gate run, ONE commit of all five files (`Tribe-Task: 2/7`).
+arms), single gate run, ONE commit of all five files (`Tribe-Task: 2/6`).
 
 ---
 
@@ -126,7 +126,7 @@ Default true; legacy stored settings lack the key — every reader applies \`?? 
 - Every other constructor of a `PublicSettings` literal (tests, mocks, safari sw if it compiles
   one) gains the field — let typecheck find them all; fix each with `highlightSavedWords: true`.
 
-Step 3 — gates on BOTH packages + commit (`Tribe-Task: 3/7`).
+Step 3 — gates on BOTH packages + commit (`Tribe-Task: 3/6`).
 
 ---
 
@@ -174,7 +174,7 @@ apply+refresh; `clear()` removes style + empties ranges and is idempotent; refre
 now-known word's list drops its ranges; when `CSS.highlights` is truly absent (delete the shim)
 everything no-ops. Use fake timers for idle-fallback + debounce.
 
-Step 2 — implement. Step 3 — gates + commit (`Tribe-Task: 4/7`).
+Step 2 — implement. Step 3 — gates + commit (`Tribe-Task: 4/6`).
 
 ---
 
@@ -198,7 +198,7 @@ type: 'saved.learningWords' })` → on `{ok:true, type:'savedWords'}` reply call
 - Settings-change reactivity across tabs/pages: out of scope v1 (spec §D7) — do NOT add storage
   listeners.
 
-Gates on both packages + commit (`Tribe-Task: 5/7`).
+Gates on both packages + commit (`Tribe-Task: 5/6`).
 
 ---
 
@@ -229,23 +229,11 @@ Tests:
    either (the no-op path must also be cheap).
 
 Run: `bun run build:chrome && cd packages/extension-chrome && bunx playwright test b3-highlight`.
-Gates + commit (`Tribe-Task: 6/7`).
+Gates + commit (`Tribe-Task: 6/6`).
 
 ---
 
-### Task 7: evidence-video spec
-
-Files: create `packages/extension-chrome/e2e/b3-evidence.spec.ts` — copy `b5-evidence.spec.ts`'s
-structure (`PLAYWRIGHT_RUN_EVIDENCE=1` skip gate, `SHOT_LABEL`, `B3_OUT_DIR`, recordVideo, same
-viewport). Flow: seed saved words (as Task 6) + settings → open the large fixture → slow scroll
-(two `page.mouse.wheel` steps with 1200 ms holds) so the underlines are visible on camera →
-open `options.html`, toggle "Highlight saved words on pages" off, save → back to fixture, reload,
-hold 1500 ms (no underlines). BEFORE build no-ops gracefully (no setting, no underlines — same
-scroll path). `--list` compile check. Gates + commit (`Tribe-Task: 7/7`).
-
----
-
-## Final gate (after Task 7, before PR)
+## Final gate (after Task 6, before PR)
 
 ```
 cd packages/app && bun run typecheck
@@ -261,7 +249,9 @@ cd packages/extension-chrome && bunx playwright test saved-word b5-status-lifecy
 Title: `feat: re-encounter highlighting — underline saved learning words on pages (B3)`.
 Body: 1–3 sentences; design bullets (≤3): CSS Custom Highlight API — zero DOM mutation; pure
 domain matcher, naive variants only (E5 fence); `saved.learningWords` wire read, S1-safe.
-Before/after videos per repo evidence rules (`pr-assets/b3-re-encounter-highlighting` branch,
-same-origin `github.com/.../raw/...` URLs). ALL CI checks green → `gh pr merge --merge
+Evidence policy (owner ruling 2026-07-16): NO media capture — the PR body carries a
+"Testing performed" section instead: unit suites + counts, the e2e scenarios exercised
+(highlight present / known-word negative / naive variants / off-switch / perf measure < 50 ms),
+and the gates that passed. ALL CI checks green → `gh pr merge --merge
 --delete-branch` (regular merge; squash prohibited). Verify merge commit has 2 parents; master CI
 green; remove worktree.

@@ -1,6 +1,9 @@
 # Conventions
 
-- Always add evidence Before/After when open PR, screenshot for trivial change, video record for flow, behavior changes
+- Evidence policy (owner ruling 2026-07-16): do NOT capture screenshots/videos for PRs. Every
+  PR body carries a written **"Testing performed"** section instead — suites run, test counts,
+  e2e scenarios exercised, gates passed. (The pre-2026-07-16 before/after media convention is
+  retired; historical `pr-assets/*` branches remain valid for old PRs.)
 - Always start work even trivial work with git worktree. Default worktree path is `.claude/worktrees`.
 - Run `bun run lint` and `bun run format:check` before committing — the `.githooks/pre-commit` hook and CI also gate this.
 
@@ -56,3 +59,12 @@ This repo is documented with **C3** in `.c3/` (a queryable architecture model). 
 - Rules (enforced): `rule-api-key-isolation` (S1), `rule-sanitize-model-output` (S4), `rule-gate-runtime-messages` (S3), `rule-domain-purity` (§8.3), `rule-typed-errors`.
 
 Operations: query, audit, change, ref, rule, sweep.
+
+# Long-running work — resume protocol
+
+Multi-task efforts (roadmap campaigns etc.) follow the owner's global standard: a live state
+file at `.okra/runs/<run-id>/SHAMAN-STATE.md` (single "read this first" entry point, updated at
+every transition) plus a committed snapshot under `docs/superpowers/campaign/` at every card
+boundary. A new session resumes by reading state FIRST, then verifying every claim against live
+GitHub/git reality (`gh pr view`, `git log`, worktrees, CI) before acting — the file is data,
+the world is authority.

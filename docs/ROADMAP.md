@@ -438,6 +438,15 @@ savedAt, status, senses[] }`. **Depends on:** B1.
 
 #### B5 — Status lifecycle `Impact 3 · Effort S · Score 3.0`
 
+> **Status: ✅ Implemented (2026-07-16) — landed via regular-merge PR [#105](https://github.com/hieplam/ai-dict/pull/105) (merge commit `c667cf8a`, no-squash policy).**
+> Manual learning⇄known toggle on the existing save-row surface (in-page card + side panel via
+> the shared `renderSaveRow`), backed by a new `savedWordSetStatus` domain write path and a
+> `saved.setStatus` wire message. E1 schema untouched (0-line diff on `domain/types.ts`,
+> verified at ship). First card delivered under the executor protocol: Shaman-authored
+> spec/plan, Sonnet Warchief, 9 TDD tasks + dual-skinner audit (2 findings fixed, incl. a
+> stale-async-reply race → shared unit-tested `createSaveReplyGuard()`), 687 unit tests +
+> 9 e2e green. Design/plan under `docs/superpowers/`.
+
 - **Today:** (With B1) a saved list only grows; mastered words sit forever beside ones you struggle
   with, and the list becomes noise.
 - **Missing:** Two statuses — **learning** (default on save) → **known** (manual, from the hover
@@ -777,3 +786,21 @@ API key (S1)> } }`; import offers merge or replace, and importers ignore unknown
   (resolved as approved mechanical sequencing: both on disk, one gate run, per-task-scoped
   commits); B3's plan was patched before dispatch and the rule binds every future card plan ·
   decided by Shaman (How-level convention).
+
+- 2026-07-16 · B5 · **SonarCloud outage waiver.** PR #105's advisory `sonarcloud` check failed
+  on an official SonarCloud platform incident (scanner bootstrap 504; no analysis ever ran; 3
+  spaced reruns byte-identical). With all 14 substantive checks green and a dual-skinner audit
+  closed, the owner ruled merge-with-exception. Master's own post-merge run then came back
+  fully green including sonarcloud (outage recovered) — the quality gate is confirmed on the
+  merged code and the follow-up re-verification is closed · decided by Owner.
+- 2026-07-16 · (campaign-wide) · **Evidence policy change: media capture retired.** PRs no
+  longer attach before/after screenshots/videos; each PR instead carries a written "Testing
+  performed" section (suites run, test counts, e2e scenarios, gates). Rationale: token cost.
+  Repo conventions (CLAUDE.md, workflow-conventions) updated in this same change; B3's plan
+  loses its evidence-video task · decided by Owner.
+- 2026-07-16 · (campaign-wide) · **Resume protocol standardized.** Every long-running effort
+  keeps a live Shaman-scope state file (`.okra/runs/<run>/SHAMAN-STATE.md`) updated at each
+  transition, plus a committed snapshot under `docs/superpowers/campaign/` at every card
+  boundary; a new session resumes by reading state first, then verifying every claim against
+  live GitHub/git reality before acting. Adopted as the owner's global standard across
+  projects · decided by Owner.

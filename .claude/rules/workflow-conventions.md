@@ -11,7 +11,9 @@ Project workflow conventions — an imperative checklist that complements the na
 ## Always
 
 - Start even trivial work in a git worktree under `.claude/worktrees`.
-- Attach before/after evidence to every PR (screenshot for trivial changes, video for flows/behavior).
-- Embed private-repo evidence via same-origin `github.com/<owner>/<repo>/raw/...` URLs.
-- Do real-browser work and screenshots through the project Playwright e2e harness.
+- Include a "Testing performed" section in every PR body (owner ruling 2026-07-16 — media
+  evidence retired; suites, counts, e2e scenarios, gates).
+- Do real-browser work through the project Playwright e2e harness.
+- If media is ever explicitly requested again: same-origin `github.com/<owner>/<repo>/raw/...`
+  URLs only (raw.githubusercontent.com 404s on this private repo).
 - Consult C3 (`/c3` or read `.c3/`) before architecture changes.
