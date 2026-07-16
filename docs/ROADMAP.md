@@ -595,7 +595,19 @@ user-triggered · no new manifest permissions · privacy surface unchanged · S1
 **No new §6 escalations:** every C-idea fits existing permissions and the existing product promise.
 
 **Sequencing the lead should follow:** C10 first (it is the proof harness the others' DoD cites),
-then C1 → C2 → C5 → C6 → C7 → C8 → C3 → C4 → C9.
+then C1 → C2 → C5 → C6 → C7 → C8 → C3 → C4 → C9 (→ C11).
+
+**The landing page is an onboarding asset (revision 2026-07-16).** The project ships a public,
+bilingual (EN/VI) landing page at <https://hieplam.github.io/ai-dict/> — source is
+`docs/index.html` in THIS repo, served by GitHub Pages from `/docs` on `master`, running the same
+Paperlight tokens. Two properties make it load-bearing for onboarding: (1) it is a real webpage,
+so **the extension's content script actually runs on it** — the real select→Define→card flow
+works there with zero special hosting; (2) it already carries a demo passage, a 3-step
+"Get started" section, and a troubleshooting FAQ. C3 is revised to complete the funnel there,
+C11 makes the page install-aware, and several cards gain page touchpoints (noted per card).
+**One wall governs all page integrations: the website must NEVER collect, receive, or render the
+API key (S1) — key entry stays inside the extension's own pages. And the C10 funnel e2e must
+never depend on the live site** — it uses a local fixture standing in for the page.
 
 ---
 
@@ -614,6 +626,10 @@ then C1 → C2 → C5 → C6 → C7 → C8 → C3 → C4 → C9.
   tab, once — no re-prompting loop; skipped entirely when the build bakes an env key. No new
   permission (`runtime.onInstalled` needs none).
 - **Depends on:** — · **Lead decides:** nothing else; this is deliberately minimal. **Escalate:** none.
+- **Landing-page note (2026-07-16):** the install target stays the extension's OWN welcome screen,
+  not the landing page — key entry must stay inside the extension (S1: the website never touches
+  the key), and the welcome screen works offline. The welcome screen may link to the landing page
+  as "the full guide"; the funnel's try-it step moves there only after activation (C3).
 
 #### C2 — Verified activation `Impact 5 · Effort S · Score 5.0` · **foundation**
 
@@ -648,6 +664,10 @@ then C1 → C2 → C5 → C6 → C7 → C8 → C3 → C4 → C9.
 - **Scope fence:** Pure UI demo — **0 API calls**, no video assets, `--ad-*`/`--adp-*` tokens only,
   honors reduced-motion. Works before a key exists.
 - **Depends on:** — (pairs naturally with C3) · **Lead decides:** demo copy/animation. **Escalate:** none.
+- **Landing-page note (2026-07-16):** the landing page's hero already renders a static demo card
+  (`docs/index.html`); the animated gesture snippet built here should be authored so the page can
+  reuse it (same tokens both sides). The on-welcome demo stays — it must work offline and before
+  any tab switch — but "see it in action" may link to the landing demo.
 
 #### C5 — Key paste hygiene & format hints `Impact 3 · Effort S · Score 3.0`
 
@@ -679,6 +699,9 @@ then C1 → C2 → C5 → C6 → C7 → C8 → C3 → C4 → C9.
   taxonomy, no provider-specific diagnosis beyond the existing error mapper.
 - **Depends on:** — (C2 builds the retest UX it reuses) · **Lead decides:** deep-link mechanism
   (hash param vs. stored flag). **Escalate:** none.
+- **Landing-page note (2026-07-16):** the fix-key causes copy may link the landing page FAQ's
+  troubleshooting entries (<https://hieplam.github.io/ai-dict/#faq>) for the long-form "why did
+  Google reject my key" explanations — the card itself stays terse.
 
 #### C7 — Finish-setup toolbar badge `Impact 3 · Effort S · Score 3.0`
 
@@ -710,23 +733,37 @@ then C1 → C2 → C5 → C6 → C7 → C8 → C3 → C4 → C9.
   stays exactly as is.
 - **Depends on:** — (sequenced first as the category's proof harness) · **Lead decides:** build-flag
   mechanics. **Escalate:** none.
+- **Landing-page note (2026-07-16):** the funnel spec's "first lookup" page is a LOCAL fixture
+  (the harness's `gotoFixture` pattern) that stands in for the landing page's try-it section —
+  the e2e suite must never fetch the live site.
 
-#### C3 — Guided first lookup `Impact 5 · Effort M · Score 2.5` · _needs C2_
+#### C3 — Guided first lookup `Impact 5 · Effort S · Score 5.0` · _needs C2_ · **revised 2026-07-16**
+
+> **Revision (2026-07-16, landing-page leverage):** the original mechanism recomposed the lookup
+> pipeline inside the options page (Effort M). Superseded: the landing page
+> (<https://hieplam.github.io/ai-dict/>) is a real webpage where **the real content script already
+> runs** — so the guided first lookup happens THERE, with zero special hosting code. Effort drops
+> M → S; the 2026-07-16 C3 spec/plan pair must be amended to this mechanism before dispatch.
 
 - **Today:** After activation the settings status says "Highlight any word while reading and choose
   Define" — the user is sent away to complete the funnel alone, and the aha moment happens
   off-screen or never.
-- **Missing:** Right after verified activation, a "Try it now" sentence appears on the same page;
-  the user selects a word there and runs a **real** lookup (their key, one explicitly-labelled
-  call), seeing the real card render in place. Funnel completes inside onboarding.
+- **Missing:** After verified activation (C2), the success screen offers one primary action —
+  **"Try it on a real page"** — which opens the landing page's try-it section: a curated practice
+  passage where the user performs the REAL gesture (select a word → the real Define pill → the
+  real card, their key, one explicitly-labelled call). The funnel ends inside the actual product
+  experience, on a page we control.
 - **Why:** The distance between "key saved" and "first definition seen" is where the remaining
-  drop lives; closing it on-page makes activation end in the product's actual value.
-- **Payoff:** Every activated user sees their first definition within seconds, guaranteed.
-- **Scope fence:** User-triggered only, with visible "uses your key" microcopy (constraint 4);
-  reuses the real lookup pipeline and card rendering (S4 sanitization included) — no separate demo
-  renderer; skipped silently if the page can't host it.
-- **Depends on:** C2 (only a verified key makes try-it reliable) · **Lead decides:** hosting
-  mechanism (options page sends `lookup.request` like the panel vs. bundled demo page).
+  drop lives — and the practiced environment should BE the real environment, not a simulation.
+- **Payoff:** Every activated user sees their first real definition within seconds, on a page
+  where nothing can be "wrong with the site."
+- **Scope fence:** User-triggered only — the try-it lookup runs when the user selects and clicks,
+  never automatically; "uses your key" microcopy appears on the activation success screen
+  (constraint 4). The real pipeline end-to-end (S4 sanitization included) — no demo renderer, no
+  new wire messages. Offline fallback: today's "highlight any word" copy stays when the page can't
+  load. The landing page **never touches the key** (S1) — it is only a practice surface.
+- **Depends on:** C2 (only a verified key makes try-it reliable) · **Lead decides:** the try-it
+  section's passage + anchor (`docs/index.html`), and the button's open-tab mechanics.
   **Escalate:** none.
 
 #### C4 — Any-provider onboarding `Impact 4 · Effort M · Score 2.0`
@@ -744,6 +781,10 @@ then C1 → C2 → C5 → C6 → C7 → C8 → C3 → C4 → C9.
   the "free" path; store listing already names all three providers — **no product-promise change**.
 - **Depends on:** C2 (verification must test the chosen provider) · **Lead decides:** picker UI.
   **Escalate:** none.
+- **Landing-page note (2026-07-16):** the landing page's "Get started" section
+  (`docs/index.html#start`) documents the Gemini key steps; when C4 ships, that section gains the
+  matching per-provider instructions in the same change — the page and the welcome screen must
+  never disagree about how to get a key.
 
 #### C9 — Setup health check `Impact 3 · Effort M · Score 1.5`
 
@@ -759,6 +800,30 @@ then C1 → C2 → C5 → C6 → C7 → C8 → C3 → C4 → C9.
   nothing in the background; no new permissions (`commands` API is already granted by the
   `commands` manifest key).
 - **Depends on:** — · **Lead decides:** check list v1. **Escalate:** none.
+- **Landing-page note (2026-07-16):** failing rows may link the landing FAQ
+  (<https://hieplam.github.io/ai-dict/#faq>) for long-form remedies; the row itself stays a
+  one-line fix.
+
+#### C11 — Install-aware landing page `Impact 3 · Effort S · Score 3.0` · **added 2026-07-16**
+
+- **Today:** The landing page's "Get started" section (`docs/index.html#start`) shows the same
+  3 static steps (install → get a key → activate) to everyone — including a visitor who already
+  installed and only needs the key, and a fully-configured user who needs nothing.
+- **Missing:** Because the content script already runs on the landing page, it can stamp an
+  install marker on that page (e.g. a `data-` attribute on the document element, gated to the
+  landing origin only). The page's checklist then adapts: "Install ✓ — next: add your key", with
+  the CTA switching from "Add to Chrome" to "Open setup".
+- **Why:** The page is the funnel's public front door (store listing, README, search all point at
+  it); a door that knows which step you're on removes the "which step am I on?" re-reading tax.
+- **Payoff:** Visitors always see exactly one next action; the page, the welcome screen, and the
+  badge (C7) tell one consistent story.
+- **Scope fence:** The marker carries **install state and version only — never settings, never
+  key state beyond a boolean "setup finished", never any user data** (privacy surface unchanged);
+  stamped ONLY on the landing origin; the page must render perfectly without it (no extension =
+  today's static page). No new permissions (`<all_urls>` content script already covers it).
+- **Depends on:** — (richer with C1/C2 shipped) · **Lead decides:** marker shape, checklist UX.
+  **Escalate:** none (the boolean "setup finished" bit is deliberately fenced as non-sensitive; if
+  anyone proposes exposing more state to the page, THAT is a privacy escalation per §1).
 
 ---
 
@@ -787,12 +852,15 @@ graph LR
     C10[C10 Funnel e2e] -.proof harness for.-> C1[C1 Open on install]
     C8[C8 Gesture demo] -.pairs with.-> C3
     C2 -.retest UX reused by.-> C6[C6 Invalid-key recovery]
+    LP[(Landing page docs/index.html)] -.hosts try-it for.-> C3
+    LP -.adapts via.-> C11[C11 Install-aware landing]
 ```
 
 **Reading order that respects dependencies:** B1 → B2 (lock schema) → B5 → B3 → B4 unlocks the whole
 learning spine. Everything in Category A except A13→A4 and B13→A3 is independent and safe to pick in
 any order. In Category C, C10 goes first (it is the proof harness every other C-card's DoD cites),
-C3/C4 wait for C2; the rest are independent.
+C3/C4 wait for C2; the rest are independent. C3 and C11 also touch `docs/index.html` (the landing
+page) — coordinate those two edits if they run concurrently.
 
 ---
 
@@ -819,29 +887,27 @@ new permission remain owner calls, as does E5 and E6).
 
 | Rank | Idea                                | Score | Rank | Idea                       | Score |
 | ---- | ----------------------------------- | ----- | ---- | -------------------------- | ----- |
-| 1    | B1 Save word ·foundation ✅ Shipped | 5.0   | 12   | C5 Key paste hygiene       | 3.0   |
-| 1    | C1 Open on install ·foundation      | 5.0   | 12   | C6 Invalid-key recovery    | 3.0   |
-| 1    | C2 Verified activation ·foundation  | 5.0   | 12   | C7 Finish-setup badge      | 3.0   |
-| 4    | A4 Keyboard flow ✅ Shipped         | 4.0   | 12   | C10 Funnel e2e ·harness    | 3.0   |
-| 4    | A8 Idiom expansion ✅ Shipped       | 4.0   | 19   | A1 Streamed answers        | 2.5   |
-| 4    | B2 Context capture ✅ Shipped       | 4.0   | 19   | B3 Re-encounter highlight  | 2.5   |
-| 4    | B4 Hover-recall                     | 4.0   | 19   | C3 Guided first lookup     | 2.5   |
-| 4    | B7 Repeat nudge ✅ Shipped          | 4.0   | 22   | A2 Recursive lookup        | 2.0   |
-| 4    | B8 Anki export                      | 4.0   | 22   | A3 Follow-up chips         | 2.0   |
-| 4    | C8 Gesture demo                     | 4.0   | 22   | A5 Gloss mode              | 2.0   |
-| 11   | A6 Smart placement                  | 3.0   | 22   | A13 Quiet mode             | 2.0   |
-| 11   | A16 Sticky save bar ✅ Shipped      | 3.0   | 22   | A14 Double-click           | 2.0   |
-| 12   | A9 Instant cache                    | 3.0   | 22   | B13 Related words          | 2.0   |
-| 12   | A10 TTS                             | 3.0   | 22   | B15 Site stats             | 2.0   |
-| 12   | A15 Latency budget                  | 3.0   | 22   | C4 Any-provider onboarding | 2.0   |
-| 12   | B5 Status lifecycle ✅ Shipped      | 3.0   | 30   | A7 Pin cards               | 1.5   |
-| 12   | B9 Backup/restore                   | 3.0   | 30   | A12 Non-English source     | 1.5   |
-| —    |                                     |       | 30   | B10 Weekly digest          | 1.5   |
-| —    |                                     |       | 30   | B11 Review flip            | 1.5   |
-| —    |                                     |       | 30   | B12 Auto-grouping          | 1.5   |
-| —    |                                     |       | 30   | B14 Sense dedup            | 1.5   |
-| —    |                                     |       | 30   | C9 Setup health check      | 1.5   |
-| —    |                                     |       | 37   | A11 PDF (spike)            | 1.3   |
+| 1    | B1 Save word ·foundation ✅ Shipped | 5.0   | 12   | C10 Funnel e2e ·harness    | 3.0   |
+| 1    | C1 Open on install ·foundation      | 5.0   | 12   | C11 Install-aware landing  | 3.0   |
+| 1    | C2 Verified activation ·foundation  | 5.0   | 24   | A1 Streamed answers        | 2.5   |
+| 1    | C3 Guided first lookup ·revised     | 5.0   | 24   | B3 Re-encounter highlight  | 2.5   |
+| 5    | A4 Keyboard flow ✅ Shipped         | 4.0   | 26   | A2 Recursive lookup        | 2.0   |
+| 5    | A8 Idiom expansion ✅ Shipped       | 4.0   | 26   | A3 Follow-up chips         | 2.0   |
+| 5    | B2 Context capture ✅ Shipped       | 4.0   | 26   | A5 Gloss mode              | 2.0   |
+| 5    | B4 Hover-recall                     | 4.0   | 26   | A13 Quiet mode             | 2.0   |
+| 5    | B7 Repeat nudge ✅ Shipped          | 4.0   | 26   | A14 Double-click           | 2.0   |
+| 5    | B8 Anki export                      | 4.0   | 26   | B13 Related words          | 2.0   |
+| 5    | C8 Gesture demo                     | 4.0   | 26   | B15 Site stats             | 2.0   |
+| 12   | A6 Smart placement                  | 3.0   | 26   | C4 Any-provider onboarding | 2.0   |
+| 12   | A16 Sticky save bar ✅ Shipped      | 3.0   | 34   | A7 Pin cards               | 1.5   |
+| 12   | A9 Instant cache                    | 3.0   | 34   | A12 Non-English source     | 1.5   |
+| 12   | A10 TTS                             | 3.0   | 34   | B10 Weekly digest          | 1.5   |
+| 12   | A15 Latency budget                  | 3.0   | 34   | B11 Review flip            | 1.5   |
+| 12   | B5 Status lifecycle ✅ Shipped      | 3.0   | 34   | B12 Auto-grouping          | 1.5   |
+| 12   | B9 Backup/restore                   | 3.0   | 34   | B14 Sense dedup            | 1.5   |
+| 12   | C5 Key paste hygiene                | 3.0   | 34   | C9 Setup health check      | 1.5   |
+| 12   | C6 Invalid-key recovery             | 3.0   | 41   | A11 PDF (spike)            | 1.3   |
+| 12   | C7 Finish-setup badge               | 3.0   | —    |                            |       |
 
 **Score ≠ sequence.** B1 leads despite being foundational-first, not because of raw score; the lead
 sequences by dependency (B1→B2→B5→B3) and by quick-win clustering (the S-effort A-ideas), escalating
@@ -1007,6 +1073,18 @@ API key (S1)> } }`; import offers merge or replace, and importers ignore unknown
   existing permissions and the existing product promise · decided by Owner (directive) with the
   category drafted per the reverse-tornado frame (objective metric + standing walls).
 
+- 2026-07-16 · Category C revision · **The landing page becomes an onboarding asset.** Owner
+  surfaced that <https://hieplam.github.io/ai-dict/> (source: `docs/index.html`, GitHub Pages
+  from `/docs` on `master`) introduces all features, is bilingual, runs the same Paperlight
+  tokens — and, decisively, is a real webpage where the extension's content script runs. Rulings:
+  C3's hosting mechanism is superseded (options-page pipeline recomposition → open the landing
+  page's try-it section; Effort M → S, Score 2.5 → 5.0; the C3 spec/plan pair must be amended
+  before dispatch); C11 added (install-aware landing checklist; marker = install boolean +
+  version only, landing origin only — anything richer is a §1 privacy escalation); C1 keeps the
+  extension's own welcome as the install target because the website must never touch the API key
+  (S1) and setup must work offline; C4/C6/C8/C9 gain page touchpoints; C10's funnel e2e must
+  never fetch the live site (local fixture stands in) · decided by Owner (directive) + Shaman
+  (mechanism calls within each card's existing fence).
 - 2026-07-16 · (campaign-wide) · **Resume protocol standardized.** Every long-running effort
   keeps a live Shaman-scope state file (`.okra/runs/<run>/SHAMAN-STATE.md`) updated at each
   transition, plus a committed snapshot under `docs/superpowers/campaign/` at every card
