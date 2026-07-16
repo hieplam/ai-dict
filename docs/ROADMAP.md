@@ -718,6 +718,15 @@ never depend on the live site** — it uses a local fixture standing in for the 
 
 #### C10 — Deterministic funnel e2e `Impact 3 · Effort S · Score 3.0` · **proof harness**
 
+> **Status: ✅ Implemented (2026-07-17) — landed via regular-merge PR [#113](https://github.com/hieplam/ai-dict/pull/113) (merge commit `f80ab629`, no-squash policy).**
+> Ships `build:chrome:e2e` (clears `GEMINI_API_KEY` for the build subprocess) plus a
+> boolean-only `dist/build-meta.json` marker asserted fail-fast in the e2e `fixtures.ts`
+> (S1 held: the marker never carries a key value), and `c10-funnel.spec.ts` — fresh profile →
+> onboarding → activation → first mocked lookup. Acceptance reproduced literally: with the
+> key exported in the shell, full suite 111 passed / 0 failed. Dual-skinner audit: 1 Critical
+> fixed + re-verified (marker went stale on partial build failure), 1 Minor recorded as debt.
+> First card of the Category C campaign; spec/plan under `docs/superpowers/`.
+
 - **Today:** `esbuild.config.mjs` bakes `GEMINI_API_KEY` from the builder's shell into the bundle;
   with a key exported in `~/.zshrc`, every local build silently disables onboarding
   (`options.ts` `KEY_FROM_ENV` routing) and **all three onboarding e2e specs fail** — hit live
