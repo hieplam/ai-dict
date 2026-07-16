@@ -275,6 +275,16 @@ describe('InlineBottomSheetRenderer — status toggle (B5)', () => {
     expect(() => r.setStatus('known')).not.toThrow();
     expect(h.querySelector('bottom-sheet')).toBeNull();
   });
+
+  it('setSaved(false) clears any stale status, so a later re-save never flashes a leaked status', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { saved: true });
+    r.setStatus('known');
+    r.setSaved(false);
+    r.setSaved(true);
+    expect(card(h).querySelector('.status-btn')).toBeNull();
+  });
 });
 
 describe('InlineBottomSheetRenderer — repeat-offender nudge (B7)', () => {

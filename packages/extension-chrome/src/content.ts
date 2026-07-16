@@ -57,6 +57,11 @@ let lastSaved = false;
 // limitation" section for why an unsaved word starts with no known status). undefined hides the
 // status toggle (renderSaveRow's own guard).
 let lastStatus: SavedWordStatus | undefined;
+// B5 fix: invalidates a stale toggle-save reply that resolves after a later click/render has
+// already superseded it (e.g. save -> unsave before the save reply lands) — without this, the
+// stale reply's `willSave` closure value is still true and would resurrect a status value on a
+// word that is no longer saved. Bumped on every toggle-save click and every fresh render.
+let saveToken = 0;
 
 /** Close everything the in-page surfaces are currently showing (card + mirror). Shared by the
  * workflow's normal close path and the A4 dismiss-lookup command. */
@@ -75,6 +80,7 @@ runLookupWorkflow({
       lastSavePayload = undefined;
       lastSaved = false;
       lastStatus = undefined;
+      saveToken++;
       inline.renderLoading(word);
       mirror.renderLoading(word);
     },
@@ -92,6 +98,7 @@ runLookupWorkflow({
       };
       lastSaved = false;
       lastStatus = undefined;
+      saveToken++;
       // Forward the picker context to the in-page card only; the side-panel mirror shows the
       // badge/note from `r` but no one-shot picker (it's a persistent surface).
       inline.renderResult(r, ctx);
@@ -147,12 +154,14 @@ document.addEventListener('toggle-save', () => {
   lastSaved = willSave;
   inline.setSaved(willSave);
   if (!willSave) lastStatus = undefined;
+  const token = ++saveToken;
   const message = willSave
     ? { type: 'saved.save' as const, ...lastSavePayload }
     : { type: 'saved.delete' as const, word: lastSavePayload.word };
   void chrome.runtime
     .sendMessage(message)
     .then((raw: unknown) => {
+      if (token !== saveToken) return; // a later click/render already superseded this reply
       const reply = raw as WireReply | undefined;
       if (willSave && reply?.ok && reply.type === 'saved') {
         lastStatus = reply.entry.status;

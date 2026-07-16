@@ -130,7 +130,17 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     if (this.lastState?.kind !== 'result') return;
     // B7: any save toggle (star OR the nudge banner's own Save button — both dispatch the same
     // toggle-save event) also clears the nudge banner; the reader has acted on the signal.
-    this.setState({ ...this.lastState, saved, nudge: false });
+    // B5: unsaving also clears any stale `status` — the isSaved gate already hides the toggle,
+    // but clearing avoids a stale value if the state object is inspected directly (spec §3.5).
+    // `exactOptionalPropertyTypes` forbids assigning `status: undefined` directly, so the key is
+    // omitted (not set to undefined) when unsaving.
+    const { status: _status, ...rest } = this.lastState;
+    this.setState({
+      ...rest,
+      saved,
+      nudge: false,
+      ...(saved && _status !== undefined ? { status: _status } : {}),
+    });
   }
 
   /**

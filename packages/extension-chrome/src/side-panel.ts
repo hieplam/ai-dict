@@ -48,6 +48,11 @@ let lastSaved = false;
 // B5: mirrors content.ts's own lastStatus tracking — the panel is its own independent
 // composition root (see the B1-era comment above trackSaveContext).
 let lastStatus: SavedWordStatus | undefined;
+// B5 fix: invalidates a stale toggle-save reply that resolves after a later click/render has
+// already superseded it (e.g. save -> unsave before the save reply lands) — without this, the
+// stale reply's `willSave` closure value is still true and would resurrect a status value on a
+// word that is no longer saved. Bumped on every toggle-save click and every fresh render.
+let saveToken = 0;
 
 function trackSaveContext(
   r: LookupResult,
@@ -69,6 +74,7 @@ function trackSaveContext(
   };
   lastSaved = false;
   lastStatus = undefined;
+  saveToken++;
 }
 
 /** Flip the star on the panel's currently-shown result without a full re-render of everything
@@ -177,12 +183,14 @@ view.addEventListener('toggle-save', () => {
   lastSaved = willSave;
   setSaved(willSave);
   if (!willSave) lastStatus = undefined;
+  const token = ++saveToken;
   const message = willSave
     ? { type: 'saved.save' as const, ...lastSavePayload }
     : { type: 'saved.delete' as const, word: lastSavePayload.word };
   void chrome.runtime
     .sendMessage(message)
     .then((raw: unknown) => {
+      if (token !== saveToken) return; // a later click/render already superseded this reply
       const reply = raw as WireReply | undefined;
       if (willSave && reply?.ok && reply.type === 'saved') {
         lastStatus = reply.entry.status;
