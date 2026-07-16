@@ -1,0 +1,85 @@
+{
+  "v": 1,
+  "campaign": "onboarding-category-c",
+  "planning": { "mode": "shaman" },
+  "mergePolicy": "regular-merge-only — squash-merge prohibited (owner ruling 2026-07-16, ROADMAP §8)",
+  "sequence": ["C1", "C2", "C5", "C6", "C7", "C8"],
+  "schemaLockPaths": ["packages/app/src/domain/types.ts"],
+  "docsOnlyPaths": ["docs/superpowers/", "docs/tribe/", "docs/ROADMAP.md"],
+  "ownerOnlyEscalations": [
+    "irreversible-data-shape",
+    "product-promise-change",
+    "new-manifest-permission",
+    "privacy-surface-change",
+    "cutting-a-scope-fence"
+  ],
+  "cards": {
+    "C1": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c1-open-on-install-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c1-open-on-install.md",
+      "branch": "feature/C1OpenOnInstall",
+      "baseSha": "f80ab62938637426df96e2976a450a250f3185f1",
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null
+    },
+    "C2": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c2-verified-activation-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c2-verified-activation.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null
+    },
+    "C5": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c5-key-paste-hygiene-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c5-key-paste-hygiene.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null
+    },
+    "C6": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c6-invalid-key-recovery-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c6-invalid-key-recovery.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null,
+      "dependsOn": ["C2"]
+    },
+    "C7": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c7-finish-setup-badge-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c7-finish-setup-badge.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null
+    },
+    "C8": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c8-gesture-demo-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c8-gesture-demo.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null
+    }
+  }
+}
