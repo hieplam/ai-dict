@@ -371,7 +371,7 @@ git commit -m "feat: deterministic funnel e2e — wire assertDeterministicBuild 
 
 - Create: `packages/extension-chrome/e2e/c10-funnel.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Model the activation half on
+- [x] **Step 1: Write the spec.** Model the activation half on
       `onboarding.spec.ts`'s first test (`onboarding-view #key`/`#activate`, `settings-form
 #status`) and the lookup half on `saved-word.spec.ts`'s `doLookup` pattern
       (`gotoFixture`/`selectWord`/`openTrigger`/assert card text):
@@ -416,7 +416,7 @@ test.describe('C10 deterministic funnel', () => {
 });
 ```
 
-- [ ] **Step 2: Build and run.**
+- [x] **Step 2: Build and run.**
 
 ```
 bun run build:chrome:e2e
@@ -425,7 +425,7 @@ cd packages/extension-chrome && bunx playwright test c10-funnel
 
 Expected: 1 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 bun run lint && bun run format:check
