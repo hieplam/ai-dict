@@ -5,6 +5,7 @@ import {
   MessageRelayLookupClient,
   buildConsentFooter,
   type SettingsStore,
+  type SavedWordStatus,
   type WireReply,
 } from '@ai-dict/app';
 // Custom elements are defined by content-elements.ts (world:MAIN) — see manifest.json.
@@ -51,6 +52,11 @@ let lastSavePayload:
     }
   | undefined;
 let lastSaved = false;
+// B5: the current saved word's status, sourced from the saved.save/saved.setStatus reply's
+// entry.status (NOT a fresh optimistic default — see the design spec's "Known, accepted
+// limitation" section for why an unsaved word starts with no known status). undefined hides the
+// status toggle (renderSaveRow's own guard).
+let lastStatus: SavedWordStatus | undefined;
 
 /** Close everything the in-page surfaces are currently showing (card + mirror). Shared by the
  * workflow's normal close path and the A4 dismiss-lookup command. */
@@ -68,6 +74,7 @@ runLookupWorkflow({
       lastFocus = word === undefined ? { state: 'loading' } : { state: 'loading', word };
       lastSavePayload = undefined;
       lastSaved = false;
+      lastStatus = undefined;
       inline.renderLoading(word);
       mirror.renderLoading(word);
     },
@@ -84,6 +91,7 @@ runLookupWorkflow({
         title: ctx?.title ?? '',
       };
       lastSaved = false;
+      lastStatus = undefined;
       // Forward the picker context to the in-page card only; the side-panel mirror shows the
       // badge/note from `r` but no one-shot picker (it's a persistent surface).
       inline.renderResult(r, ctx);
@@ -138,10 +146,34 @@ document.addEventListener('toggle-save', () => {
   const willSave = !lastSaved;
   lastSaved = willSave;
   inline.setSaved(willSave);
+  if (!willSave) lastStatus = undefined;
   const message = willSave
     ? { type: 'saved.save' as const, ...lastSavePayload }
     : { type: 'saved.delete' as const, word: lastSavePayload.word };
-  void chrome.runtime.sendMessage(message).catch(() => undefined);
+  void chrome.runtime
+    .sendMessage(message)
+    .then((raw: unknown) => {
+      const reply = raw as WireReply | undefined;
+      if (willSave && reply?.ok && reply.type === 'saved') {
+        lastStatus = reply.entry.status;
+        inline.setStatus(lastStatus);
+      }
+    })
+    .catch(() => undefined);
+});
+
+// B5: the card's status toggle bubbles a composed `toggle-status` event (no direction carried —
+// the flip direction is computed here from the last known status, mirroring toggle-save's own
+// design). No-op if the word isn't confirmed-saved yet (lastStatus undefined mirrors
+// lastSavePayload's own guard above).
+document.addEventListener('toggle-status', () => {
+  if (!lastSavePayload || lastStatus === undefined) return;
+  const next: SavedWordStatus = lastStatus === 'known' ? 'learning' : 'known';
+  lastStatus = next;
+  inline.setStatus(next);
+  void chrome.runtime
+    .sendMessage({ type: 'saved.setStatus', word: lastSavePayload.word, status: next })
+    .catch(() => undefined);
 });
 
 // B7: the card's nudge banner bubbles a composed `dismiss-nudge` event when its × is tapped.

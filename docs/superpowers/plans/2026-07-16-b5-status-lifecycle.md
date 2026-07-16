@@ -700,7 +700,7 @@ e2e only (same precedent as B1's/B7's own `content.ts` edits). This task's corre
 Task 8's e2e test; still run the TDD gate commands below at the end of this task so a regression in
 existing behavior is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/content.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/content.ts`:
   1. Add a `lastStatus` closure var right after the existing `let lastSaved = false;` (around line
      53):
 
@@ -794,7 +794,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
