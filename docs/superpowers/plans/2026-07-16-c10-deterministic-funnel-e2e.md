@@ -194,7 +194,7 @@ git commit -m "feat: deterministic funnel e2e — add build:chrome:e2e env-clear
 export async function assertDeterministicBuild(distDir: string): Promise<void>;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create
+- [x] **Step 1: Write the failing tests.** Create
       `packages/extension-chrome/test/build-guard.test.ts`:
 
 ```ts
@@ -240,7 +240,7 @@ describe('assertDeterministicBuild (C10)', () => {
 Run: `cd packages/extension-chrome && bunx vitest run test/build-guard.test.ts`
 Expected: all 3 fail — `Cannot find module '../e2e/build-guard'` (the file doesn't exist yet).
 
-- [ ] **Step 2: Implement.** Create `packages/extension-chrome/e2e/build-guard.ts`:
+- [x] **Step 2: Implement.** Create `packages/extension-chrome/e2e/build-guard.ts`:
 
 ```ts
 import { readFile } from 'node:fs/promises';
@@ -281,7 +281,7 @@ export async function assertDeterministicBuild(distDir: string): Promise<void> {
 Run: `cd packages/extension-chrome && bunx vitest run test/build-guard.test.ts`
 Expected: all 3 pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
