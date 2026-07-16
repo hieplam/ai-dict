@@ -49,16 +49,16 @@ Rules of the file:
 
 ## B. Lookup core flow
 
-| Case                                                            | Status                                |
-| --------------------------------------------------------------- | ------------------------------------- |
-| Cache hit renders without a network call                        | [covered] `lookup.spec.ts`            |
-| Cache miss calls the provider and renders the result            | [covered] `lookup.spec.ts`            |
-| Repeat lookup of the same word served from cache                | [covered] `lookup.spec.ts`            |
-| Cooldown: rapid second Define within 2s blocked, no extra call  | [covered] `cooldown.spec.ts`          |
-| Context disambiguation: same word, two sentences, two senses    | [covered] `context-bank-demo.spec.ts` |
-| New selection while a lookup is in-flight (abort / ordering)    | [gap:P1]                              |
-| Dismiss the card while a lookup is pending — no orphaned render | [gap:P1]                              |
-| In-page card loading state (before result arrives)              | [gap:P2]                              |
+| Case                                                            | Status                                     |
+| --------------------------------------------------------------- | ------------------------------------------ |
+| Cache hit renders without a network call                        | [covered] `lookup.spec.ts`                 |
+| Cache miss calls the provider and renders the result            | [covered] `lookup.spec.ts`                 |
+| Repeat lookup of the same word served from cache                | [covered] `lookup.spec.ts`                 |
+| Cooldown: rapid second Define within 2s blocked, no extra call  | [covered] `cooldown.spec.ts`               |
+| Context disambiguation: same word, two sentences, two senses    | [covered] `context-bank-demo.spec.ts`      |
+| New selection while a lookup is in-flight (abort / ordering)    | [gap:P1]                                   |
+| Dismiss the card while a lookup is pending — no orphaned render | [covered] `lookup-pending-dismiss.spec.ts` |
+| In-page card loading state (before result arrives)              | [gap:P2]                                   |
 
 ## C. Providers
 
@@ -71,30 +71,30 @@ Rules of the file:
 | Any-failure fallback: Gemini 500 → Claude answers, with note   | [covered] `provider-fallback.spec.ts`  |
 | One-shot picker switch re-runs the lookup on the new provider  | [covered] `provider-fallback.spec.ts`  |
 | Claude/Anthropic as the _primary_ provider, end to end         | [gap:P1]                               |
-| Fallback exhaustion: primary AND fallback fail → clean error   | [gap:P1]                               |
-| Fallback path when no fallback key is configured               | [gap:P1]                               |
+| Fallback exhaustion: primary AND fallback fail → clean error   | [covered] `provider-fallback.spec.ts`  |
+| Fallback path when no fallback key is configured               | [covered] `provider-fallback.spec.ts`  |
 
 ## D. Error paths (in-page card)
 
-| Case                                                                 | Status                            |
-| -------------------------------------------------------------------- | --------------------------------- |
-| Offline / aborted → "Network failed. Check connection and retry."    | [covered] `lookup-errors.spec.ts` |
-| HTTP 401 → "Google rejected the API key."                            | [covered] `lookup-errors.spec.ts` |
-| HTTP 400 INVALID_ARGUMENT → key rejection message                    | [covered] `lookup-errors.spec.ts` |
-| HTTP 429 → "Hit Gemini rate limit."                                  | [covered] `lookup-errors.spec.ts` |
-| HTTP 500 → "Gemini server error. Retry."                             | [covered] `lookup-errors.spec.ts` |
-| Malformed body → "Gemini returned unexpected output."                | [covered] `lookup-errors.spec.ts` |
-| No-key → setup invite card (not a plain error)                       | [covered] `onboarding.spec.ts`    |
-| Timeout (`TimeoutError` in `http-lookup-client.ts`) → mapped message | [gap:P1]                          |
-| OpenAI error mapping: 401 (wrong key)                                | [gap:P1]                          |
-| OpenAI error mapping: 429 / 500                                      | [gap:P1]                          |
+| Case                                                                 | Status                              |
+| -------------------------------------------------------------------- | ----------------------------------- |
+| Offline / aborted → "Network failed. Check connection and retry."    | [covered] `lookup-errors.spec.ts`   |
+| HTTP 401 → "Google rejected the API key."                            | [covered] `lookup-errors.spec.ts`   |
+| HTTP 400 INVALID_ARGUMENT → key rejection message                    | [covered] `lookup-errors.spec.ts`   |
+| HTTP 429 → "Hit Gemini rate limit."                                  | [covered] `lookup-errors.spec.ts`   |
+| HTTP 500 → "Gemini server error. Retry."                             | [covered] `lookup-errors.spec.ts`   |
+| Malformed body → "Gemini returned unexpected output."                | [covered] `lookup-errors.spec.ts`   |
+| No-key → setup invite card (not a plain error)                       | [covered] `onboarding.spec.ts`      |
+| Timeout (`TimeoutError` in `http-lookup-client.ts`) → mapped message | [covered] `lookup-timeout.spec.ts`  |
+| OpenAI error mapping: 401 (wrong key)                                | [covered] `provider-errors.spec.ts` |
+| OpenAI error mapping: 429 / 500                                      | [gap:P1]                            |
 
 ## E. Security — `rule-sanitize-model-output` (S4)
 
-| Case                                                                         | Status   |
-| ---------------------------------------------------------------------------- | -------- |
-| Hostile model output (`<script>`, `<img onerror>`) renders inert in the card | [gap:P1] |
-| Hostile model output renders inert in the side panel mirror                  | [gap:P2] |
+| Case                                                                         | Status                                      |
+| ---------------------------------------------------------------------------- | ------------------------------------------- |
+| Hostile model output (`<script>`, `<img onerror>`) renders inert in the card | [covered] `sanitize-hostile-output.spec.ts` |
+| Hostile model output renders inert in the side panel mirror                  | [gap:P2]                                    |
 
 ## F. Prompt & template
 
