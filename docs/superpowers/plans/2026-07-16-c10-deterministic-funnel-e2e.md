@@ -306,7 +306,7 @@ No dedicated unit test for this one-line wiring — same precedent as B1/B5/B7's
 `side-panel.ts` composition-root edits: proven by the full e2e suite run (Task 5's acceptance
 check, and this task's own Step 2 below).
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/e2e/fixtures.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/e2e/fixtures.ts`:
   1. Add the import, alongside the existing ones at the top of the file:
 
 ```ts
@@ -330,7 +330,7 @@ context: async ({}, use) => {
 (`dist` is the already-defined `const dist = path.resolve(...)` at `fixtures.ts:6` — no new
 variable needed.)
 
-- [ ] **Step 2: Verify the backstop fires (manual — this IS this task's red/green check).**
+- [x] **Step 2: Verify the backstop fires (manual — this IS this task's red/green check).**
 
 ```
 cd packages/extension-chrome
@@ -350,7 +350,7 @@ cd packages/extension-chrome && bunx playwright test onboarding
 
 Expected (green): 3 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
