@@ -761,3 +761,19 @@ API key (S1)> } }`; import offers merge or replace, and importers ignore unknown
   definition of done is updated accordingly, and mechanical SHIPPED verification checks
   merge-commit strategy instead of squash. Historical squash merges (A4–B7 era) remain valid
   under the old rule · decided by Owner (governance conflict surfaced by the Shaman).
+
+- 2026-07-16 · (campaign-wide) · **Operating-protocol change: the Shaman authors How.** Owner
+  directive: the Shaman now writes every card's spec + implementation plan + task order before
+  dispatch, and the Warchief runs on the Sonnet model as a pure workflow executor (observe,
+  dispatch Hunters per pre-written task, verify gates by running them, evidence, PR, CI, regular
+  merge) with zero design authority — any plan-vs-reality mismatch beyond trivial mechanical
+  drift hands back NEEDS_DIRECTION. B5 was mid-flight at the ruling: its big-model Warchief was
+  stopped right after committing spec+plan; the Shaman adopted those artifacts as its own and
+  re-dispatched execution to a Sonnet Warchief, which adopted the same worktree/branch · decided
+  by Owner (role/authority change).
+- 2026-07-16 · B5/B3 · **Plan-authoring rule from a live gap:** `router.ts`'s exhaustive
+  `switch(msg.type)` (no default) couples every new wire-message arm to its router case — they
+  cannot typecheck apart, so a plan must put them in ONE task. Discovered by the B5 executor
+  (resolved as approved mechanical sequencing: both on disk, one gate run, per-task-scoped
+  commits); B3's plan was patched before dispatch and the rule binds every future card plan ·
+  decided by Shaman (How-level convention).
