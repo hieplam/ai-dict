@@ -152,7 +152,7 @@ is proven by Task 3's e2e spec; still run the typecheck gate below so a regressi
 `sw.ts` behavior is caught immediately, and confirm the existing manifest permission regression
 guard stays green untouched.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/sw.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/sw.ts`:
   1. Add `shouldOpenOnboardingOnInstall` to the existing `@ai-dict/app` import block (top of the
      file):
 
@@ -207,7 +207,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Regression-check the manifest guard.** Confirm the existing permission test still
+- [x] **Step 2: Regression-check the manifest guard.** Confirm the existing permission test still
       passes untouched (no manifest edit was made in this task):
 
 ```
@@ -218,7 +218,7 @@ Expected: all existing assertions pass, including
 `'declares only storage + sidePanel; no scripting / externally_connectable (S8)'` — proving no
 permission was added by this change.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
