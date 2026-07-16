@@ -2,6 +2,7 @@ import { test as base, expect, chromium, type BrowserContext } from '@playwright
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { E2E_HEADLESS } from '../playwright.config';
+import { assertDeterministicBuild } from './build-guard';
 
 const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist');
 
@@ -13,6 +14,7 @@ const dist = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist
  */
 export const test = base.extend<{ context: BrowserContext; extensionId: string }>({
   context: async ({}, use) => {
+    await assertDeterministicBuild(dist);
     const context = await chromium.launchPersistentContext('', {
       // Optional real-Chrome channel for local runs; undefined = bundled Chromium.
       channel: process.env.PLAYWRIGHT_CHROME_CHANNEL || undefined,

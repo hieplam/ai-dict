@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild';
-import { mkdir, copyFile } from 'node:fs/promises';
+import { mkdir, copyFile, writeFile } from 'node:fs/promises';
 
 await mkdir('dist', { recursive: true });
 
@@ -13,6 +13,13 @@ const GEMINI_API_KEY = process.env.GEMINI_API_KEY ?? '';
 const HAS_ENV_KEY = GEMINI_API_KEY.length > 0;
 const GA4_MEASUREMENT_ID = process.env.GA4_MEASUREMENT_ID ?? '';
 const GA4_API_SECRET = process.env.GA4_API_SECRET ?? '';
+
+// C10: a small, boolean-only marker the e2e harness reads to refuse running against a dist/
+// built with a leaked GEMINI_API_KEY (see build-guard.ts). Never the key itself — S1. Written
+// BEFORE any esbuild.build() call so that if a later build step throws, the marker written for
+// THIS attempt still correctly reflects whether GEMINI_API_KEY was present — it can never lag
+// behind the sw.ts build (the first build, and the one that bakes the real key into sw.js).
+await writeFile('dist/build-meta.json', JSON.stringify({ geminiKeyFromEnv: HAS_ENV_KEY }));
 
 const common = {
   bundle: true,

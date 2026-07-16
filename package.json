@@ -16,6 +16,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "build:chrome": "bun run --filter '@ai-dict/extension-chrome' build",
+    "build:chrome:e2e": "bun run --filter '@ai-dict/extension-chrome' build:e2e",
     "build:safari": "bun run --filter '@ai-dict/extension-safari' build",
     "e2e:chrome": "bun run --filter '@ai-dict/extension-chrome' e2e",
     "release:bump": "bun scripts/release-bump.mjs"

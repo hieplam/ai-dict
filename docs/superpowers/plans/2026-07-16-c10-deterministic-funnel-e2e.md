@@ -52,7 +52,7 @@ No existing test harness covers `esbuild.config.mjs` (it is a composition-root b
 category as `content.ts`/`side-panel.ts` — proven by running the build, not a unit test). The
 "failing check" for this task is a manual, reproducible red state, not a vitest run:
 
-- [ ] **Step 1: Confirm the red state.** From `packages/extension-chrome/`, run:
+- [x] **Step 1: Confirm the red state.** From `packages/extension-chrome/`, run:
 
 ```
 bun esbuild.config.mjs
@@ -62,7 +62,7 @@ test -f dist/build-meta.json && echo "UNEXPECTED: marker already exists" || echo
 Expected: `RED: no marker file (expected)` — `dist/build-meta.json` does not exist before this
 task's change.
 
-- [ ] **Step 2: Implement.** In `packages/extension-chrome/esbuild.config.mjs`:
+- [x] **Step 2: Implement.** In `packages/extension-chrome/esbuild.config.mjs`:
   1. Add the import at the top of the file, alongside the existing `node:fs/promises` import:
 
 ```js
@@ -78,7 +78,7 @@ import { mkdir, copyFile, writeFile } from 'node:fs/promises';
 await writeFile('dist/build-meta.json', JSON.stringify({ geminiKeyFromEnv: HAS_ENV_KEY }));
 ```
 
-- [ ] **Step 3: Confirm the green state.**
+- [x] **Step 3: Confirm the green state.**
 
 ```
 bun esbuild.config.mjs
@@ -95,7 +95,7 @@ cat dist/build-meta.json
 Expected: `{"geminiKeyFromEnv":true}` — confirming the marker faithfully reflects the env, with the
 dummy value itself never appearing in the file.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -117,7 +117,7 @@ git commit -m "feat: deterministic funnel e2e — write build-meta.json geminiKe
 - Modify: `packages/extension-chrome/package.json`
 - Modify: `package.json` (root)
 
-- [ ] **Step 1: Confirm the red state.** From the repo root:
+- [x] **Step 1: Confirm the red state.** From the repo root:
 
 ```
 bun run build:chrome:e2e
@@ -126,7 +126,7 @@ bun run build:chrome:e2e
 Expected: `error: Script not found "build:chrome:e2e"` (or bun's equivalent "unknown script"
 message) — the script does not exist yet.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
   1. In `packages/extension-chrome/package.json`, add `build:e2e` next to the existing `build`:
 
 ```json
@@ -154,7 +154,7 @@ message) — the script does not exist yet.
 }
 ```
 
-- [ ] **Step 3: Confirm the green state — the exact repro condition, cleared.**
+- [x] **Step 3: Confirm the green state — the exact repro condition, cleared.**
 
 ```
 export GEMINI_API_KEY=dummy-local-value
@@ -166,7 +166,7 @@ Expected: `{"geminiKeyFromEnv":false}` **even though `GEMINI_API_KEY` is still e
 current shell** (confirm with `echo "$GEMINI_API_KEY"` — it prints `dummy-local-value`, proving the
 override was scoped to the build subprocess only, not the shell).
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -194,7 +194,7 @@ git commit -m "feat: deterministic funnel e2e — add build:chrome:e2e env-clear
 export async function assertDeterministicBuild(distDir: string): Promise<void>;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create
+- [x] **Step 1: Write the failing tests.** Create
       `packages/extension-chrome/test/build-guard.test.ts`:
 
 ```ts
@@ -240,7 +240,7 @@ describe('assertDeterministicBuild (C10)', () => {
 Run: `cd packages/extension-chrome && bunx vitest run test/build-guard.test.ts`
 Expected: all 3 fail — `Cannot find module '../e2e/build-guard'` (the file doesn't exist yet).
 
-- [ ] **Step 2: Implement.** Create `packages/extension-chrome/e2e/build-guard.ts`:
+- [x] **Step 2: Implement.** Create `packages/extension-chrome/e2e/build-guard.ts`:
 
 ```ts
 import { readFile } from 'node:fs/promises';
@@ -281,7 +281,7 @@ export async function assertDeterministicBuild(distDir: string): Promise<void> {
 Run: `cd packages/extension-chrome && bunx vitest run test/build-guard.test.ts`
 Expected: all 3 pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -306,7 +306,7 @@ No dedicated unit test for this one-line wiring — same precedent as B1/B5/B7's
 `side-panel.ts` composition-root edits: proven by the full e2e suite run (Task 5's acceptance
 check, and this task's own Step 2 below).
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/e2e/fixtures.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/e2e/fixtures.ts`:
   1. Add the import, alongside the existing ones at the top of the file:
 
 ```ts
@@ -330,7 +330,7 @@ context: async ({}, use) => {
 (`dist` is the already-defined `const dist = path.resolve(...)` at `fixtures.ts:6` — no new
 variable needed.)
 
-- [ ] **Step 2: Verify the backstop fires (manual — this IS this task's red/green check).**
+- [x] **Step 2: Verify the backstop fires (manual — this IS this task's red/green check).**
 
 ```
 cd packages/extension-chrome
@@ -350,7 +350,7 @@ cd packages/extension-chrome && bunx playwright test onboarding
 
 Expected (green): 3 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -371,7 +371,7 @@ git commit -m "feat: deterministic funnel e2e — wire assertDeterministicBuild 
 
 - Create: `packages/extension-chrome/e2e/c10-funnel.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Model the activation half on
+- [x] **Step 1: Write the spec.** Model the activation half on
       `onboarding.spec.ts`'s first test (`onboarding-view #key`/`#activate`, `settings-form
 #status`) and the lookup half on `saved-word.spec.ts`'s `doLookup` pattern
       (`gotoFixture`/`selectWord`/`openTrigger`/assert card text):
@@ -416,7 +416,7 @@ test.describe('C10 deterministic funnel', () => {
 });
 ```
 
-- [ ] **Step 2: Build and run.**
+- [x] **Step 2: Build and run.**
 
 ```
 bun run build:chrome:e2e
@@ -425,7 +425,7 @@ cd packages/extension-chrome && bunx playwright test c10-funnel
 
 Expected: 1 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 bun run lint && bun run format:check
