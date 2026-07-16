@@ -9,6 +9,6 @@ plan: docs/superpowers/plans/2026-07-16-b5-status-lifecycle.md
 
 ## Milestones
 
-- [ ] spec committed
+- [x] spec committed
 - [ ] plan committed
 - [ ] wave 1 integrated
