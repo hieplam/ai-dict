@@ -2,7 +2,7 @@
 
 > **For agentic workers:** implement task-by-task; the orchestrator dispatches each task to a
 > subagent (`hunter` for code fixes) and adjudicates between tasks. Steps use checkbox
-> (`- [ ]`) syntax for tracking.
+> (`- [x]`) syntax for tracking.
 
 **Goal:** raise e2e case coverage from 77.3% (99/128) to ≥ 80% by repairing the red master
 suite and landing the six staged P1 specs (→ 105/128 = 82.0%), with every wall held.
@@ -45,11 +45,11 @@ The 3× baseline read (build + `bun run e2e:chrome` ×3 on master) found run 1 r
 
 **Steps:**
 
-- [ ] **Extract the failure set of each run** and compare:
+- [x] **Extract the failure set of each run** and compare:
       `grep -E "✘" /tmp/e2e-3x.log | sed 's/.*✘ *//' | sort | uniq -c | sort -rn` - Same tests fail in all 3 runs → **deterministic breakage**: the tests or the surface
       changed; diagnose per cluster below. - Failure sets differ across runs → **flakiness**: diagnose the unstable tests
       individually (timing, ordering, contention).
-- [ ] **Dispatch one hunter per failure cluster** (the onboarding/no-key cluster is one unit —
+- [x] **Dispatch one hunter per failure cluster** (the onboarding/no-key cluster is one unit —
       12 of the 15 share a surface; `bottom-sheet-overflow`, `cache-history`,
       `error-reporting` are separate). Each hunter brief: reproduce the failure headed
       (`HEADED=1 bunx playwright test <spec> --project=chromium` from
@@ -57,12 +57,22 @@ The 3× baseline read (build + `bun run e2e:chrome` ×3 on master) found run 1 r
       determine whether the TEST is stale or the PRODUCT is broken, and hand back the
       diagnosis BEFORE fixing. Product regressions come back to the orchestrator for a
       routing decision (fix vs revert vs owner escalation) — they are not silently patched.
-- [ ] **Apply the adjudicated fixes** (hunter implements; no skips, no assertion loosening).
-- [ ] **Verify: full suite green 3× consecutively** — `for i in 1 2 3; do bun run e2e:chrome || break; done`
+- [x] **Apply the adjudicated fixes** (hunter implements; no skips, no assertion loosening).
+- [x] **Verify: full suite green 3× consecutively** — `for i in 1 2 3; do bun run e2e:chrome || break; done`
       Expected: 3 × exit 0, stable pass count.
-- [ ] **Commit** on a `fix/E2eBaselineRepair` branch:
+- [x] **Commit** on a `fix/E2eBaselineRepair` branch:
       `git commit -m "[E2eBaselineRepair] fix: <diagnosis summary>"`, PR with a "Testing
       performed" section quoting the 3× green results, regular-merge after review.
+
+**Task 1 outcome (2026-07-17): no code change — the suite was never broken.** All 15 failures
+were build-environment artifacts: 11 tests need the no-key state but `GEMINI_API_KEY` in the
+build shell baked `__GEMINI_KEY_FROM_ENV__=true` (onboarding skipped by design);
+`error-reporting.spec.ts:93`'s GA4-flush assertion needs GA4 vars baked in; 3 were one-off
+contention flakes. **Binding env law for every e2e build:**
+`GEMINI_API_KEY='' GA4_MEASUREMENT_ID='G-E2ETEST' GA4_API_SECRET='e2e-test-secret' bun run build:chrome`.
+Clean 3× read: 110/110 green each run (~5.2m/run). No commit was needed on
+`fix/E2eBaselineRepair`. Follow-up candidate (not in this PR): bake the env law into the
+`e2e:chrome` script.
 
 ### Task 2: Verify and land the staged P1 specs
 
@@ -84,18 +94,18 @@ The 3× baseline read (build + `bun run e2e:chrome` ×3 on master) found run 1 r
 
 **Steps:**
 
-- [ ] **Rebase the branch onto master** (after Task 1 and the docs PR merge):
+- [x] **Rebase the branch onto master** (after Task 1 and the docs PR merge):
       `git -C .claude/worktrees/e2e-p1-cases rebase origin/master`
-- [ ] **Build and run only the new specs 3×** (they must meet the wall they are gated by):
+- [x] **Build and run only the new specs 3×** (they must meet the wall they are gated by):
       `bun run build:chrome && cd packages/extension-chrome && for i in 1 2 3; do bunx playwright test sanitize-hostile-output lookup-timeout provider-errors provider-fallback lookup-pending-dismiss || break; done`
       Expected: 3 × all green (9 tests per run: 5 new + 4 pre-existing fallback/picker tests).
-- [ ] **Red specs go to a hunter** with the failure output + the spec's assertion contract
+- [x] **Red specs go to a hunter** with the failure output + the spec's assertion contract
       (above); the contract is the requirement — fix the test's mechanics or hand back a
       product finding, never weaken the assertion.
-- [ ] **Replay the metric** from the worktree:
+- [x] **Replay the metric** from the worktree:
       `grep -c '| \[covered\]' docs/testing/e2e-case-inventory.md` → expected **105**;
       gaps → **23**; 105/128 = **82.0% ≥ 80% target**.
-- [ ] **Commit**: `[E2eP1Cases] test: Add six P1 e2e cases (S4 sanitize, timeout, provider errors, fallback edges, pending dismiss)`
+- [x] **Commit**: `[E2eP1Cases] test: Add six P1 e2e cases (S4 sanitize, timeout, provider errors, fallback edges, pending dismiss)`
 
 ### Task 3: Wall read — full suite + no-weakening
 
