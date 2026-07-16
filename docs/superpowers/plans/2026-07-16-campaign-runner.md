@@ -2,7 +2,9 @@
 
 > **For the implementing session:** TDD per task (failing test → implement → gates → commit).
 > Design decisions live in `docs/superpowers/specs/2026-07-16-campaign-runner-design.md` —
-> do not re-open them. The runner is repo tooling (Node-side TypeScript run by bun), NOT part
+> do not re-open them. The WHY (measured context costs, lessons, rejected alternatives) lives
+> in `docs/superpowers/campaign/2026-07-16-campaign-runner-context.md` — read it first if you
+> are tempted to change the architecture. The runner is repo tooling (Node-side TypeScript run by bun), NOT part
 > of `@ai-dict/app` — the core dependency rule and browser constraints don't apply, but
 > lint/format gates do.
 
