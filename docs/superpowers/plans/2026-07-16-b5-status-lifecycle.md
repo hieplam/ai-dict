@@ -62,7 +62,7 @@ export async function savedWordSetStatus(
 ): Promise<SavedWordEntry | null>;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/saved-words-policy.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/saved-words-policy.test.ts`,
       just before the closing `});` of the `describe('saved-words-policy', ...)` block (after the
       existing `savedWordsClear` test):
 
@@ -116,7 +116,7 @@ import {
 Run: `cd packages/app && bunx vitest run test/saved-words-policy.test.ts`
 Expected: 4 new failures — `savedWordSetStatus is not a function` (or a TS error to that effect).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/domain/saved-words-policy.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/domain/saved-words-policy.ts`:
   1. Add `SavedWordStatus` to the existing type import:
 
   ```ts
@@ -152,7 +152,7 @@ export async function savedWordSetStatus(
 Run: `cd packages/app && bunx vitest run test/saved-words-policy.test.ts`
 Expected: all tests pass (existing + 4 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

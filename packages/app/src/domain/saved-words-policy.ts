@@ -1,5 +1,5 @@
 import type { Storage } from '../ports';
-import type { SavedWordEntry, SavedWordSense } from './types';
+import type { SavedWordEntry, SavedWordSense, SavedWordStatus } from './types';
 
 const INDEX_KEY = 'saved:index';
 
@@ -73,6 +73,28 @@ export async function savedWordDelete(deps: SavedWordsDeps, word: string): Promi
   await deps.storage.removeItem(`saved:${key}`);
   const idx = (await readIndex(deps.storage)).filter((k) => k !== key);
   await deps.storage.setItem(INDEX_KEY, JSON.stringify(idx));
+}
+
+/**
+ * B5: manually flip an existing saved word's status between 'learning' (default) and 'known'.
+ * Exactly 2 states, no auto-promotion (roadmap B5 scope fence) — this is the only place status
+ * ever changes after the initial save/re-save (savedWordUpsert preserves it). No-op (returns
+ * null) when the word isn't currently saved — the toggle only ever renders on an already-saved
+ * word's own surface, so this guards a race (e.g. deleted between render and click), not the
+ * expected path.
+ */
+export async function savedWordSetStatus(
+  deps: SavedWordsDeps,
+  word: string,
+  status: SavedWordStatus,
+): Promise<SavedWordEntry | null> {
+  const key = normalizeWordKey(word);
+  const raw = await deps.storage.getItem(`saved:${key}`);
+  if (!raw) return null;
+  const existing = JSON.parse(raw) as SavedWordEntry;
+  const entry: SavedWordEntry = { ...existing, status };
+  await deps.storage.setItem(`saved:${key}`, JSON.stringify(entry));
+  return entry;
 }
 
 export async function savedWordGet(
