@@ -28,6 +28,23 @@ This is the **project-scoped exception to the global "prefer agent-browser for b
 
 **Guardrail: never drive your installed Google Chrome** — Chrome 136+ silently ignores `--remote-debugging-port` (default profile) and `--load-extension`. The Playwright-managed Chromium (a bundled/standalone build, not Google Chrome) honors both, which is exactly why the harness uses it.
 
+# Public landing page (GitHub Pages)
+
+The project ships a public landing page at **<https://hieplam.github.io/ai-dict/>** that
+introduces all features. Facts every session should know:
+
+- **Source lives in THIS repo:** `docs/index.html` (single file, ~1,900 lines), served by GitHub
+  Pages from `/docs` on `master` — merging to `master` IS deploying the page.
+- **Bilingual (EN/VI) with a language toggle; theme-aware** — it runs the same Paperlight
+  `--ad-*`/`--adp-*` tokens as the extension. Section anchors: `#why`, `#compare`, `#guide`,
+  `#start` (3-step setup), `#faq` (troubleshooting).
+- **The extension's content script runs on it** (it is a normal webpage under `<all_urls>`), so
+  the real select → Define → card flow works there. Roadmap Category C leans on this: C3 (guided
+  first lookup opens the page's try-it section) and C11 (install-aware `#start` checklist).
+- **Rules:** the page must NEVER collect, receive, or render the API key (S1) — key entry stays
+  inside extension pages. Keep `#start` in sync whenever onboarding/provider setup changes (C4).
+  E2e suites must never fetch the live site — use a local fixture standing in for it.
+
 # Frontend design system — "Paperlight" (source of truth)
 
 The **single source of truth for the frontend design system is the [`design-system/`](design-system/) folder.** Start at [`design-system/README.md`](design-system/README.md) — it is the folder map. Layout:
