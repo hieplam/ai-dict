@@ -52,7 +52,7 @@ No existing test harness covers `esbuild.config.mjs` (it is a composition-root b
 category as `content.ts`/`side-panel.ts` — proven by running the build, not a unit test). The
 "failing check" for this task is a manual, reproducible red state, not a vitest run:
 
-- [ ] **Step 1: Confirm the red state.** From `packages/extension-chrome/`, run:
+- [x] **Step 1: Confirm the red state.** From `packages/extension-chrome/`, run:
 
 ```
 bun esbuild.config.mjs
@@ -62,7 +62,7 @@ test -f dist/build-meta.json && echo "UNEXPECTED: marker already exists" || echo
 Expected: `RED: no marker file (expected)` — `dist/build-meta.json` does not exist before this
 task's change.
 
-- [ ] **Step 2: Implement.** In `packages/extension-chrome/esbuild.config.mjs`:
+- [x] **Step 2: Implement.** In `packages/extension-chrome/esbuild.config.mjs`:
   1. Add the import at the top of the file, alongside the existing `node:fs/promises` import:
 
 ```js
@@ -78,7 +78,7 @@ import { mkdir, copyFile, writeFile } from 'node:fs/promises';
 await writeFile('dist/build-meta.json', JSON.stringify({ geminiKeyFromEnv: HAS_ENV_KEY }));
 ```
 
-- [ ] **Step 3: Confirm the green state.**
+- [x] **Step 3: Confirm the green state.**
 
 ```
 bun esbuild.config.mjs
@@ -95,7 +95,7 @@ cat dist/build-meta.json
 Expected: `{"geminiKeyFromEnv":true}` — confirming the marker faithfully reflects the env, with the
 dummy value itself never appearing in the file.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check

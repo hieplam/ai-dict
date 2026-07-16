@@ -1,5 +1,5 @@
 import * as esbuild from 'esbuild';
-import { mkdir, copyFile } from 'node:fs/promises';
+import { mkdir, copyFile, writeFile } from 'node:fs/promises';
 
 await mkdir('dist', { recursive: true });
 
@@ -77,6 +77,10 @@ await esbuild.build({
   // this flag defined too (same as options.js); without it the reference throws at runtime.
   define: { __GEMINI_KEY_FROM_ENV__: JSON.stringify(HAS_ENV_KEY) },
 });
+
+// C10: a small, boolean-only marker the e2e harness reads to refuse running against a dist/
+// built with a leaked GEMINI_API_KEY (see build-guard.ts). Never the key itself — S1.
+await writeFile('dist/build-meta.json', JSON.stringify({ geminiKeyFromEnv: HAS_ENV_KEY }));
 
 await copyFile('src/manifest.json', 'dist/manifest.json');
 await copyFile('src/options.html', 'dist/options.html');
