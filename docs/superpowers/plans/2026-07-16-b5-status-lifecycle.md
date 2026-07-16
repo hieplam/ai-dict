@@ -819,7 +819,7 @@ git commit -m "feat: status lifecycle — wire the in-page card's status toggle 
 Same rationale as Task 6 — no dedicated unit test for this composition root; proven by Task 8's e2e
 side-panel test.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
   1. Add `lastStatus` next to the existing `let lastSaved = false;` (around line 46):
 
 ```ts
@@ -911,7 +911,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
