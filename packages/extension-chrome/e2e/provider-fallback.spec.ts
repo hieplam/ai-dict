@@ -90,3 +90,51 @@ test('one-shot picker: switch from Gemini to ChatGPT re-runs the lookup', async 
   await expect.poll(() => openai.count, { timeout: 5_000 }).toBe(1);
   await page.close();
 });
+
+test('fallback exhaustion: primary AND fallback fail → the primary error surfaces', async ({
+  context,
+  extensionId,
+}) => {
+  const gemini = await mockGemini(context, { status: 500 }); // primary fails
+  const anthropic = await mockAnthropic(context, { status: 500 }); // fallback fails too
+
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page, { provider: 'gemini', anthropicApiKey: 'sk-ant-e2e' });
+  await gotoFixture(page);
+  await page.waitForTimeout(1_000);
+  await selectWord(page, 't', 'bank');
+  await openTrigger(page);
+
+  // The selector attributes the failure to the PRIMARY provider (correct failure
+  // attribution), so the card wording names Gemini even though Claude also failed.
+  const card = page.locator('bottom-sheet lookup-card');
+  await expect(card).toContainText('Gemini server error. Retry.', { timeout: 10_000 });
+  await expect.poll(() => gemini.count, { timeout: 5_000 }).toBe(1);
+  await expect.poll(() => anthropic.count, { timeout: 5_000 }).toBe(1);
+  await page.close();
+});
+
+test('primary failure with no fallback key configured errors cleanly, trying no one else', async ({
+  context,
+  extensionId,
+}) => {
+  const gemini = await mockGemini(context, { status: 500 });
+  const openai = await mockOpenAI(context); // tripwires: must never be called
+  const anthropic = await mockAnthropic(context);
+
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await seedSettings(page, { provider: 'gemini' }); // only the Gemini key exists
+  await gotoFixture(page);
+  await page.waitForTimeout(1_000);
+  await selectWord(page, 't', 'bank');
+  await openTrigger(page);
+
+  const card = page.locator('bottom-sheet lookup-card');
+  await expect(card).toContainText('Gemini server error. Retry.', { timeout: 10_000 });
+  await expect.poll(() => gemini.count, { timeout: 5_000 }).toBe(1);
+  expect(openai.count).toBe(0);
+  expect(anthropic.count).toBe(0);
+  await page.close();
+});

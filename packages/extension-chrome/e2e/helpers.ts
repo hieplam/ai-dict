@@ -68,6 +68,7 @@ export interface MockGeminiOpts {
   body?: string;
   headers?: Record<string, string>;
   abort?: boolean; // route.abort('failed') to simulate offline
+  delayMs?: number; // hold the response this long before fulfilling (in-flight/race specs)
   onRequest?: (postData: string) => void; // observe the outbound request body (e.g. assert the prompt)
 }
 
@@ -88,6 +89,7 @@ export async function mockGemini(
       await route.abort('failed');
       return;
     }
+    if (opts.delayMs) await new Promise((r) => setTimeout(r, opts.delayMs));
     await route.fulfill({
       status: opts.status ?? 200,
       contentType: 'application/json',
