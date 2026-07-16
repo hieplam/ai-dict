@@ -467,6 +467,33 @@ describe('saved.save / saved.delete wire messages (B1)', () => {
     };
     expect(WireReplySchema.safeParse({ ok: true, type: 'saved', entry }).success).toBe(false);
   });
+
+  it('accepts a valid saved.setStatus message (B5)', () => {
+    expect(
+      WireMessageSchema.safeParse({ type: 'saved.setStatus', word: 'bank', status: 'known' })
+        .success,
+    ).toBe(true);
+    expect(
+      WireMessageSchema.safeParse({ type: 'saved.setStatus', word: 'bank', status: 'learning' })
+        .success,
+    ).toBe(true);
+  });
+
+  it('rejects a saved.setStatus message with an invalid status value (B5)', () => {
+    expect(
+      WireMessageSchema.safeParse({ type: 'saved.setStatus', word: 'bank', status: 'mastered' })
+        .success,
+    ).toBe(false);
+  });
+
+  it('rejects a saved.setStatus message missing word or status (B5)', () => {
+    expect(WireMessageSchema.safeParse({ type: 'saved.setStatus', status: 'known' }).success).toBe(
+      false,
+    );
+    expect(WireMessageSchema.safeParse({ type: 'saved.setStatus', word: 'bank' }).success).toBe(
+      false,
+    );
+  });
 });
 
 describe('errlog wire messages', () => {

@@ -176,7 +176,7 @@ git commit -m "feat: status lifecycle — add savedWordSetStatus domain write pa
 - Modify: `packages/app/test/wire-schema.test.ts`
 - Modify: `packages/app/wire-schema.snapshot.json` (regenerated, not hand-edited)
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/wire-schema.test.ts`, inside
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/wire-schema.test.ts`, inside
       the existing `describe('saved.save / saved.delete wire messages (B1)', ...)` block, just
       before its closing `});`:
 
@@ -214,7 +214,7 @@ Expected: 3 new failures (message type not recognized by the schema) plus the pr
 snapshot won't match until Step 3 regenerates it) — that snapshot failure is expected and handled
 in Step 3, not a regression to chase here.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/wire.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/wire.ts`:
   1. Add a new arm to `WireMessageSchema`'s array, right after the existing `saved.delete` arm:
 
 ```ts
@@ -253,7 +253,7 @@ Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts`
 Expected: the 3 new tests pass; the snapshot test fails (`toMatchFileSnapshot` mismatch) — this is
 expected, resolved in Step 3.
 
-- [ ] **Step 3: Commit** — regenerate the snapshot, then gate and commit:
+- [x] **Step 3: Commit** — regenerate the snapshot, then gate and commit:
 
 ```
 cd packages/app && bunx vitest run test/wire-schema.test.ts -u

@@ -205,6 +205,31 @@
         "properties": {
           "type": {
             "type": "string",
+            "const": "saved.setStatus"
+          },
+          "word": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "learning",
+              "known"
+            ]
+          }
+        },
+        "required": [
+          "type",
+          "word",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
             "const": "cache.clear"
           }
         },
@@ -709,7 +734,8 @@
               "errlog.status",
               "errlog.set-consent",
               "saved.save",
-              "saved.delete"
+              "saved.delete",
+              "saved.setStatus"
             ]
           },
           "error": {

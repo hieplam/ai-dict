@@ -118,6 +118,13 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
     title: z.string(),
   }),
   z.object({ type: z.literal('saved.delete'), word: z.string() }),
+  // B5: manually set an existing saved word's status ('learning' default | 'known' manual).
+  // No-op server-side when the word isn't currently saved — see savedWordSetStatus's doc comment.
+  z.object({
+    type: z.literal('saved.setStatus'),
+    word: z.string(),
+    status: z.enum(['learning', 'known']),
+  }),
   z.object({ type: z.literal('cache.clear') }),
   z.object({ type: z.literal('connection.test') }),
   // Open the extension's options page. Sent by a content script (which cannot call
@@ -147,6 +154,7 @@ const MessageTypeEnum = z.enum([
   'errlog.set-consent',
   'saved.save',
   'saved.delete',
+  'saved.setStatus',
 ]);
 
 export const WireReplySchema = z.union([
