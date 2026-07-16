@@ -19,3 +19,6 @@ e2e-evidence/
 # Local secrets (e.g. GA4_MEASUREMENT_ID / GA4_API_SECRET for build) — never commit
 .env
 .env.local
+
+# OKRA campaign run store (local-only orchestration ledger)
+.okra/
