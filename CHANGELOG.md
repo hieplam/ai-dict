@@ -1,5 +1,36 @@
 # Changelog
 
+## [1.9.0](https://github.com/hieplam/ai-dict/compare/v1.8.0...v1.9.0) (2026-07-16)
+
+
+### Features
+
+* keyboard-only lookup flow (A4) ([#97](https://github.com/hieplam/ai-dict/issues/97)) ([f616627](https://github.com/hieplam/ai-dict/commit/f61662733149acf0dfaa23db9dcf85aa935abf6f))
+* phrase & idiom expansion — define the whole unit, label it (A8) ([#98](https://github.com/hieplam/ai-dict/issues/98)) ([acb87a5](https://github.com/hieplam/ai-dict/commit/acb87a5d318e69e45a4f52e7bf868e479481c829))
+* repeat-offender nudge — save prompt on 3rd lookup in 30d (B7) ([#101](https://github.com/hieplam/ai-dict/issues/101)) ([de7db51](https://github.com/hieplam/ai-dict/commit/de7db51ffcf5f7fad4a65a41272cb1534dc7aff3))
+* rich context capture — populate saved-word translation (B2) ([#100](https://github.com/hieplam/ai-dict/issues/100)) ([df3129c](https://github.com/hieplam/ai-dict/commit/df3129cccbe6213c208c94de64c982a2276f41d9))
+* save word (star) — B1 ([#99](https://github.com/hieplam/ai-dict/issues/99)) ([59bbec6](https://github.com/hieplam/ai-dict/commit/59bbec67556526563a0f0c33b2fc88d5f01c25be))
+* **settings:** sticky save bar with unsaved-changes cue (A16) ([#95](https://github.com/hieplam/ai-dict/issues/95)) ([0704b2f](https://github.com/hieplam/ai-dict/commit/0704b2ff4ee8313335107f68e3da09f9d3d11322))
+* status lifecycle — add before/after evidence-video spec (B5) ([3f10fef](https://github.com/hieplam/ai-dict/commit/3f10fef5f76347f58024092c8d0556bea94b1703))
+* status lifecycle — add e2e coverage for the learning/known toggle (B5) ([8219ce1](https://github.com/hieplam/ai-dict/commit/8219ce149e93d10cddac95cdcfc224d86ede07f6))
+* status lifecycle — add InlineBottomSheetRenderer.setStatus (B5) ([38b99d9](https://github.com/hieplam/ai-dict/commit/38b99d9b42a89e9ba0b6344e0c485602cf0a8f6a))
+* status lifecycle — add saved.setStatus wire message (B5) ([d41e4fb](https://github.com/hieplam/ai-dict/commit/d41e4fb819abbde7f4e5a27788553f9bd059cbe3))
+* status lifecycle — add savedWordSetStatus domain write path (B5) ([ecbcb13](https://github.com/hieplam/ai-dict/commit/ecbcb13503ec990a2d3b227035f8cd970ad6d715))
+* status lifecycle — add status toggle to the save row (B5) ([02f502f](https://github.com/hieplam/ai-dict/commit/02f502f7455a2d19f7931fc02e356438ae08a2ad))
+* status lifecycle — clear stale status on unsave, guard stale save replies (B5) ([c5b67f1](https://github.com/hieplam/ai-dict/commit/c5b67f12ecdf798b881137a1ba8925c7102f95d3))
+* status lifecycle — learning/known toggle (B5) ([8b6afaa](https://github.com/hieplam/ai-dict/commit/8b6afaa5fc59bb062495e6a1d02111bc1e6c4a8c))
+* status lifecycle — learning/known toggle (B5) ([f94fa6e](https://github.com/hieplam/ai-dict/commit/f94fa6e075a70fde5aa6eec4c945d8483f4008f1))
+* status lifecycle — learning/known toggle (B5) ([6ecff56](https://github.com/hieplam/ai-dict/commit/6ecff569a01e153dd3085e6ea5e095e4b9a45374))
+* status lifecycle — learning/known toggle on saved words (B5) ([c667cf8](https://github.com/hieplam/ai-dict/commit/c667cf8a146b6f7db5d78528fe4a4388604c87ea))
+* status lifecycle — wire router case for saved.setStatus (B5) ([665a1be](https://github.com/hieplam/ai-dict/commit/665a1bef186609029d5f35fcb8724d71a0627f54))
+* status lifecycle — wire the in-page card's status toggle (B5) ([f8348e0](https://github.com/hieplam/ai-dict/commit/f8348e067b4853831e626300ef09d62c17a803af))
+* status lifecycle — wire the side panel's status toggle (B5) ([f266a0a](https://github.com/hieplam/ai-dict/commit/f266a0a894705230eb1f99a045f45364c9b57d6b))
+
+
+### Reverts
+
+* campaign-runner docs — superseded by todd-skills tribe plugin ([286295a](https://github.com/hieplam/ai-dict/commit/286295aa1e675a4ab797e1fa601b470f90f481b8))
+
 ## [1.8.0](https://github.com/hieplam/ai-dict/compare/v1.7.1...v1.8.0) (2026-07-04)
 
 
