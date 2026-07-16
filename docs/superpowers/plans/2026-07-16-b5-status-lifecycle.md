@@ -1078,7 +1078,7 @@ This spec is not run by the normal suite (`test.skip(!RUN, ...)`, same gate as `
 — it exists to (re)record the before/after video during PR delivery (Warchief step 7), not as part
 of this task's own gate.
 
-- [ ] **Step 1: Write the spec**, modeled byte-for-byte on
+- [x] **Step 1: Write the spec**, modeled byte-for-byte on
       `packages/extension-chrome/e2e/b1-evidence.spec.ts`:
 
 ```ts
@@ -1159,7 +1159,7 @@ test.describe('B5 status lifecycle — evidence', () => {
 });
 ```
 
-- [ ] **Step 2: Sanity-check the spec compiles and its skip guard works** (does not require a real
+- [x] **Step 2: Sanity-check the spec compiles and its skip guard works** (does not require a real
       Gemini key or the `RUN` flag):
 
 ```
@@ -1168,7 +1168,7 @@ cd packages/extension-chrome && bunx playwright test b5-evidence --list
 
 Expected: lists the one test, no compile errors.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 bun run lint && bun run format:check
