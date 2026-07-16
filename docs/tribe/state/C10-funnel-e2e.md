@@ -11,4 +11,5 @@ plan: docs/superpowers/plans/2026-07-16-c10-deterministic-funnel-e2e.md
 
 - [x] spec committed (pre-written by Shaman, already on master via PR #109)
 - [x] plan committed (pre-written by Shaman, already on master via PR #109)
-- [ ] wave 1 integrated (single-wave plan, tasks 1-5 sequential)
+- [x] wave 1 integrated (single-wave plan, tasks 1-5 sequential + 1 audit fix round, all
+      committed directly on feature/C10FunnelE2e)
