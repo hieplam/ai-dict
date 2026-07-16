@@ -12,6 +12,7 @@ import {
   historyDelete,
   savedWordUpsert,
   savedWordDelete,
+  savedWordSetStatus,
   evaluateNudge,
   type WireMessage,
   type WireReply,
@@ -257,6 +258,12 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       case 'saved.delete':
         await deps.queue.run(() => savedWordDelete({ storage: deps.kv }, msg.word));
         return { ok: true, type: 'ack' };
+      case 'saved.setStatus': {
+        const entry = await deps.queue.run(() =>
+          savedWordSetStatus({ storage: deps.kv }, msg.word, msg.status),
+        );
+        return entry ? { ok: true, type: 'saved', entry } : { ok: true, type: 'ack' };
+      }
       case 'cache.clear':
         await cacheClear({ storage: deps.kv });
         return { ok: true, type: 'ack' };

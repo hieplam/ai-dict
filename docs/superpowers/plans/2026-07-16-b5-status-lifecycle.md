@@ -283,7 +283,7 @@ git commit -m "feat: status lifecycle — add saved.setStatus wire message (B5)"
 - Modify: `packages/app/src/app/router.ts`
 - Modify: `packages/app/test/app/router.test.ts`
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/app/router.test.ts`, just
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/app/router.test.ts`, just
       before the closing `});` of the `describe('buildRouter', ...)` block (after the existing
       `'history.clear and cache.clear never touch saved:* ...'` test — find and keep that test's
       own closing, then add these after it):
@@ -336,7 +336,7 @@ it('saved.setStatus is case-insensitive on the word key (B5)', async () => {
 Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: 3 new failures — the router has no `saved.setStatus` case (falls through / TS error).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/router.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/app/router.ts`:
   1. Add `savedWordSetStatus` to the existing import block:
 
 ```ts
@@ -383,7 +383,7 @@ import {
 Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: all tests pass (existing + 3 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
