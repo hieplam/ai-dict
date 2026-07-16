@@ -58,7 +58,7 @@ rationale: `docs/superpowers/specs/2026-07-16-c1-open-on-install-design.md`.
 export function shouldOpenOnboardingOnInstall(reason: string, envKeyBaked: boolean): boolean;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/onboarding-policy.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/onboarding-policy.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -91,7 +91,7 @@ describe('shouldOpenOnboardingOnInstall (C1)', () => {
 Run: `cd packages/app && bunx vitest run test/onboarding-policy.test.ts`
 Expected: fails to resolve — `../src/domain/onboarding-policy` does not exist yet.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/onboarding-policy.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/onboarding-policy.ts`:
 
 ```ts
 /**
@@ -122,7 +122,7 @@ export * from './domain/onboarding-policy'; // C1
 Run: `cd packages/app && bunx vitest run test/onboarding-policy.test.ts`
 Expected: all 6 assertions pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
