@@ -933,7 +933,7 @@ git commit -m "feat: status lifecycle — wire the side panel's status toggle (B
 
 - Create: `packages/extension-chrome/e2e/b5-status-lifecycle.spec.ts`
 
-- [ ] **Step 1: Write the test.** Model it directly on
+- [x] **Step 1: Write the test.** Model it directly on
       `packages/extension-chrome/e2e/saved-word.spec.ts`'s existing `swStorageDump`/`doLookup`
       helpers (duplicate the two small helper functions verbatim at the top of the new file — the
       existing suite doesn't export them for reuse, matching how `saved-word.spec.ts` itself is
@@ -1043,7 +1043,7 @@ test.describe('B5 status lifecycle', () => {
 });
 ```
 
-- [ ] **Step 2: Build and run.**
+- [x] **Step 2: Build and run.**
 
 ```
 bun run build:chrome
@@ -1052,7 +1052,7 @@ cd packages/extension-chrome && bunx playwright test b5-status-lifecycle
 
 Expected: 3 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 bun run lint && bun run format:check
