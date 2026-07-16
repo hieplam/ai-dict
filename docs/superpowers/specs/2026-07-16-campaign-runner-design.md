@@ -4,6 +4,13 @@ Owner directive (2026-07-16): move the campaign's outer loop out of a long-lived
 into a deterministic script. Authored by the Shaman; the owner implements this in a following
 session.
 
+> **Full rationale & lessons-learnt:**
+> [`docs/superpowers/campaign/2026-07-16-campaign-runner-context.md`](../campaign/2026-07-16-campaign-runner-context.md)
+> — the measured context-cost breakdown of the Shaman-as-loop model, why the Agent SDK
+> specifically, alternatives rejected, and the 8 session lessons each design mechanism
+> encodes. Implementation plan:
+> [`docs/superpowers/plans/2026-07-16-campaign-runner.md`](../plans/2026-07-16-campaign-runner.md).
+
 ## 1. Problem
 
 The campaign currently runs with the Shaman (a large-model session) as the loop: it dispatches
