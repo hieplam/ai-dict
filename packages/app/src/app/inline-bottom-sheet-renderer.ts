@@ -5,6 +5,7 @@ import type {
   LookupError,
   Provider,
   Theme,
+  SavedWordStatus,
 } from '../index';
 import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '../ui/index';
 import { sanitizeMarkdown } from './markdown-sanitize';
@@ -130,6 +131,16 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // B7: any save toggle (star OR the nudge banner's own Save button — both dispatch the same
     // toggle-save event) also clears the nudge banner; the reader has acted on the signal.
     this.setState({ ...this.lastState, saved, nudge: false });
+  }
+
+  /**
+   * B5: flip the status toggle's local state on the currently-shown result without a full
+   * re-lookup. No-op when the last rendered state isn't a result (e.g. loading/error) or no card
+   * has been rendered yet — mirrors the guard pattern `setSaved` already uses.
+   */
+  setStatus(status: SavedWordStatus): void {
+    if (this.lastState?.kind !== 'result') return;
+    this.setState({ ...this.lastState, status });
   }
 
   /**

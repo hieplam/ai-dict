@@ -614,7 +614,7 @@ git commit -m "feat: status lifecycle — add status toggle to the save row (B5)
 - Modify: `packages/app/src/app/inline-bottom-sheet-renderer.ts`
 - Modify: `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`
 
-- [ ] **Step 1: Write the failing tests.** Append to
+- [x] **Step 1: Write the failing tests.** Append to
       `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`, as a new `describe` block right
       after the existing `describe('InlineBottomSheetRenderer — save state (B1)', ...)` block's
       closing `});`:
@@ -651,7 +651,7 @@ describe('InlineBottomSheetRenderer — status toggle (B5)', () => {
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: 3 new failures — `setStatus is not a function` (or a TS error to that effect).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, add this
+- [x] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, add this
       method right after the existing `setSaved` method:
 
 ```ts
@@ -673,7 +673,7 @@ that pulls `ResultRenderer`, `ResultRenderContext`, `LookupResult`, etc. from `.
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: all tests pass (existing + 3 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
