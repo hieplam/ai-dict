@@ -406,7 +406,7 @@ git commit -m "feat: status lifecycle — wire router case for saved.setStatus (
 - Modify: `packages/app/src/ui/lookup-card.ts`
 - Modify: `packages/app/test/ui/lookup-card.test.ts`
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/lookup-card.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/lookup-card.test.ts`,
       inside the existing `describe('<lookup-card> save/star affordance (B1)', ...)` block, just
       before its closing `});` (after the existing `'the loading and error states render no save
 row ...'` test):
@@ -494,7 +494,7 @@ Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: 5 new failures — `.status-btn` never renders / TS error on `status` not existing on the
 state literal.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
   1. Add `status?: SavedWordStatus` to the `'result'` variant of `CardState` (import
      `SavedWordStatus` from `../domain/types` alongside the existing type-only imports at the top
      of the file — check the current import line and extend it, e.g.
@@ -591,7 +591,7 @@ lookup-card .status-btn[aria-pressed="true"]{border-color:var(--ad-accent);color
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all tests pass (existing + 5 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
