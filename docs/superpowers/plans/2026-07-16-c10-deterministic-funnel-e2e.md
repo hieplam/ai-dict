@@ -117,7 +117,7 @@ git commit -m "feat: deterministic funnel e2e — write build-meta.json geminiKe
 - Modify: `packages/extension-chrome/package.json`
 - Modify: `package.json` (root)
 
-- [ ] **Step 1: Confirm the red state.** From the repo root:
+- [x] **Step 1: Confirm the red state.** From the repo root:
 
 ```
 bun run build:chrome:e2e
@@ -126,7 +126,7 @@ bun run build:chrome:e2e
 Expected: `error: Script not found "build:chrome:e2e"` (or bun's equivalent "unknown script"
 message) — the script does not exist yet.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
   1. In `packages/extension-chrome/package.json`, add `build:e2e` next to the existing `build`:
 
 ```json
@@ -154,7 +154,7 @@ message) — the script does not exist yet.
 }
 ```
 
-- [ ] **Step 3: Confirm the green state — the exact repro condition, cleared.**
+- [x] **Step 3: Confirm the green state — the exact repro condition, cleared.**
 
 ```
 export GEMINI_API_KEY=dummy-local-value
@@ -166,7 +166,7 @@ Expected: `{"geminiKeyFromEnv":false}` **even though `GEMINI_API_KEY` is still e
 current shell** (confirm with `echo "$GEMINI_API_KEY"` — it prints `dummy-local-value`, proving the
 override was scoped to the build subprocess only, not the shell).
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
