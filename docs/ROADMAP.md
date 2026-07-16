@@ -5,8 +5,9 @@
 > pick up any single idea without guessing. This document answers **What** and **Why**.
 > It deliberately does **not** answer **How** — implementation design is the next phase.
 >
-> **Two themes:** (A) seamless reading UX that preserves the reader's context, and
-> (B) structuring the words a reader learns. Target user is **70% reader / 30% learner**.
+> **Three themes:** (A) seamless reading UX that preserves the reader's context,
+> (B) structuring the words a reader learns, and (C) first-run onboarding & activation —
+> getting a new install to its first successful lookup. Target user is **70% reader / 30% learner**.
 
 ---
 
@@ -576,6 +577,191 @@ savedAt, status, senses[] }`. **Depends on:** B1.
 
 ---
 
+### Category C — First-run onboarding & activation
+
+_A funnel audit (2026-07-16, live extension driven through the Playwright harness) found the
+install → key → first-lookup funnel leaks at every step: nothing opens onboarding on install,
+activation claims success without ever testing the key, and a bad key fails minutes later as a
+red error mid-reading. These ideas close the seven audited dead-ends._
+
+**Measured goal for the whole category:** audited funnel dead-ends go **7 → 0**, each closure
+proven by a fresh-profile e2e run that walks install → onboarding → verified key → first
+successful lookup (C10 is that proof harness). Real-user funnel telemetry is deliberately **not**
+proposed — it would widen the privacy surface (standing constraint 1 + §1 escalation rules); the
+e2e-simulated funnel is the measurement.
+
+**Standing walls all C-ideas inherit (verbatim from §3):** no backend/accounts · every LLM call
+user-triggered · no new manifest permissions · privacy surface unchanged · S1 key isolation.
+**No new §6 escalations:** every C-idea fits existing permissions and the existing product promise.
+
+**Sequencing the lead should follow:** C10 first (it is the proof harness the others' DoD cites),
+then C1 → C2 → C5 → C6 → C7 → C8 → C3 → C4 → C9.
+
+---
+
+#### C1 — Open onboarding on install `Impact 5 · Effort S · Score 5.0` · **foundation**
+
+- **Today:** Installing the extension does nothing — `sw.ts` has no `chrome.runtime.onInstalled`
+  listener. The welcome screen (`onboarding-view`, options page) is only ever reached if the user
+  happens to select text, spot the ~20px Define button, click it, get the no-key card, and click
+  "Open Settings" — or finds the side panel via the toolbar icon.
+- **Missing:** On `onInstalled` with `reason === 'install'`, open `options.html` once so the very
+  first thing a new user sees is the welcome screen.
+- **Why:** The drop happens before the product's first screen is ever seen; an onboarding page that
+  nobody reaches cannot onboard anybody.
+- **Payoff:** 100% of new installs see Welcome → key setup, instead of the lucky few.
+- **Scope fence:** Fires **only** on `reason === 'install'` (never on `'update'`); opens exactly one
+  tab, once — no re-prompting loop; skipped entirely when the build bakes an env key. No new
+  permission (`runtime.onInstalled` needs none).
+- **Depends on:** — · **Lead decides:** nothing else; this is deliberately minimal. **Escalate:** none.
+
+#### C2 — Verified activation `Impact 5 · Effort S · Score 5.0` · **foundation**
+
+- **Today:** "Save & activate" accepts any non-empty string — `onboarding-view.submit()` checks only
+  `length > 0`, `options.ts` persists it and immediately shows **"You're all set."** The wire
+  message `connection.test` and its router path already exist but are reachable only from the
+  settings form. A wrong/expired key therefore fails **later**, as a red "Lookup failed" card in
+  the middle of reading.
+- **Missing:** Activation runs one real, user-triggered `connection.test` round-trip with the pasted
+  key and only claims success when the provider answers; failures render inline with actionable
+  copy (typo? expired? quota?).
+- **Why:** A false "all set" converts a setup error into product distrust — the user believes the
+  extension is broken, not the key.
+- **Payoff:** Bad keys are caught at paste time, in the one place the user is already looking.
+- **Scope fence:** Exactly one test call per explicit "Save & activate" click (constraint 4 holds:
+  user-triggered, and the cost is ~one token). Timeout + offline get their own copy. Reuses the
+  existing `connection.test` path — no new wire message unless the key-under-test can't ride it.
+- **Depends on:** — · **Lead decides:** persist-on-pass vs. persist-with-warning semantics (recommend
+  persist only on pass, with a "save anyway" escape hatch for offline setups). **Escalate:** none.
+
+#### C8 — Gesture demo on the welcome screen `Impact 4 · Effort S · Score 4.0`
+
+- **Today:** The welcome lead paragraph _tells_ ("Look up any English word right where you're
+  reading") but never _shows_ the select → Define gesture; after activation the settings status
+  line again tells ("Highlight any word…") with nothing to practice on.
+- **Missing:** A small inline demo on the onboarding surface itself — a real sentence with a word
+  that visibly gets selected and sprouts the Define pill (CSS/inline-SVG animation, token-themed),
+  so the gesture is understood before the user ever leaves setup.
+- **Why:** The product's trigger is an invisible gesture; users who never learn it churn with a
+  correctly configured key.
+- **Payoff:** Every user leaves onboarding knowing exactly what motion produces a definition.
+- **Scope fence:** Pure UI demo — **0 API calls**, no video assets, `--ad-*`/`--adp-*` tokens only,
+  honors reduced-motion. Works before a key exists.
+- **Depends on:** — (pairs naturally with C3) · **Lead decides:** demo copy/animation. **Escalate:** none.
+
+#### C5 — Key paste hygiene & format hints `Impact 3 · Effort S · Score 3.0`
+
+- **Today:** The key input saves verbatim. A trailing newline from a copy, smart quotes from a chat
+  app, or an OpenAI `sk-…` key pasted into the Gemini-only field are all accepted silently and fail
+  later as INVALID_KEY. The placeholder "AIza…" is the only format guidance.
+- **Missing:** Trim whitespace/quotes on paste; recognize known prefixes (`AIza` Gemini · `sk-ant-`
+  Anthropic · `sk-` OpenAI) and hint when the key looks like a different provider's; flag obviously
+  malformed input inline before activation.
+- **Why:** Key-paste errors are invisible typos — the user did everything right and still fails,
+  with no clue why.
+- **Payoff:** The most common activation failure class disappears before the test call even runs.
+- **Scope fence:** Heuristic **hints**, never hard blocks (providers change formats); the key never
+  appears in any log or message (S1); pure client-side string checks.
+- **Depends on:** — · **Lead decides:** hint copy, prefix table. **Escalate:** none.
+
+#### C6 — Invalid-key recovery flow `Impact 3 · Effort S · Score 3.0`
+
+- **Today:** A rejected key renders "Lookup failed / Google rejected the API key." with an "Open
+  Settings" button that lands on the generic settings form — key field unfocused, no explanation of
+  causes, no retest; the user re-enters a key blind and must find "Test connection" themselves.
+- **Missing:** The INVALID_KEY card deep-links to the options page in a fix-key mode (key row
+  focused, likely causes listed, connection test auto-run after the edit) — the same landing the
+  no-key card already gets via onboarding.
+- **Why:** The one moment a user is told their key is bad is the worst-guided moment in the product.
+- **Payoff:** "Bad key" becomes a 20-second fix loop: focused field → paste → auto-retest → back to
+  reading.
+- **Scope fence:** Copy + deep-link/focus + reuse of the existing `connection.test`; no new error
+  taxonomy, no provider-specific diagnosis beyond the existing error mapper.
+- **Depends on:** — (C2 builds the retest UX it reuses) · **Lead decides:** deep-link mechanism
+  (hash param vs. stored flag). **Escalate:** none.
+
+#### C7 — Finish-setup toolbar badge `Impact 3 · Effort S · Score 3.0`
+
+- **Today:** A keyless install looks identical to a configured one in the toolbar; if the user
+  closes the welcome tab (or never sees it), no surface anywhere says setup is unfinished.
+- **Missing:** While no usable key exists, the action icon carries a small badge (e.g. `!`) and a
+  "Finish AI Dictionary setup" tooltip; both clear the moment activation succeeds.
+- **Why:** An interrupted setup needs a persistent, quiet way back in; today the extension simply
+  goes silent forever.
+- **Payoff:** Every abandoned setup keeps exactly one visible, non-nagging thread back to Welcome.
+- **Scope fence:** Badge is **only** a no-key indicator in v1 — not a general notification channel;
+  env-key builds never show it; `chrome.action.setBadgeText` needs no new permission.
+- **Depends on:** — · **Lead decides:** badge glyph/color (tokens). **Escalate:** none.
+
+#### C10 — Deterministic funnel e2e `Impact 3 · Effort S · Score 3.0` · **proof harness**
+
+- **Today:** `esbuild.config.mjs` bakes `GEMINI_API_KEY` from the builder's shell into the bundle;
+  with a key exported in `~/.zshrc`, every local build silently disables onboarding
+  (`options.ts` `KEY_FROM_ENV` routing) and **all three onboarding e2e specs fail** — hit live
+  during the 2026-07-16 audit. No e2e walks install → first lookup as one journey.
+- **Missing:** The e2e build explicitly clears the env key so onboarding e2e is deterministic on
+  every machine; plus one funnel spec that walks fresh profile → welcome → (mocked) verified key →
+  first successful lookup and becomes the category's definition-of-done gate.
+- **Why:** A funnel the team cannot reproduce cannot be protected; today the suite's outcome depends
+  on whose shell built `dist/`.
+- **Payoff:** "Works on my machine" flake gone; every C-idea lands with a funnel test that keeps it
+  closed.
+- **Scope fence:** Dev-infra only — no product behavior change; the env-key build feature itself
+  stays exactly as is.
+- **Depends on:** — (sequenced first as the category's proof harness) · **Lead decides:** build-flag
+  mechanics. **Escalate:** none.
+
+#### C3 — Guided first lookup `Impact 5 · Effort M · Score 2.5` · _needs C2_
+
+- **Today:** After activation the settings status says "Highlight any word while reading and choose
+  Define" — the user is sent away to complete the funnel alone, and the aha moment happens
+  off-screen or never.
+- **Missing:** Right after verified activation, a "Try it now" sentence appears on the same page;
+  the user selects a word there and runs a **real** lookup (their key, one explicitly-labelled
+  call), seeing the real card render in place. Funnel completes inside onboarding.
+- **Why:** The distance between "key saved" and "first definition seen" is where the remaining
+  drop lives; closing it on-page makes activation end in the product's actual value.
+- **Payoff:** Every activated user sees their first definition within seconds, guaranteed.
+- **Scope fence:** User-triggered only, with visible "uses your key" microcopy (constraint 4);
+  reuses the real lookup pipeline and card rendering (S4 sanitization included) — no separate demo
+  renderer; skipped silently if the page can't host it.
+- **Depends on:** C2 (only a verified key makes try-it reliable) · **Lead decides:** hosting
+  mechanism (options page sends `lookup.request` like the panel vs. bundled demo page).
+  **Escalate:** none.
+
+#### C4 — Any-provider onboarding `Impact 4 · Effort M · Score 2.0`
+
+- **Today:** The manifest and settings already support Gemini, OpenAI, **and** Anthropic — but the
+  welcome screen is hard-wired Gemini (`OnboardingValue = { apiKey, targetLang }`, Gemini copy, AI
+  Studio link). An OpenAI/Claude user must abandon onboarding, discover full settings, and
+  configure there.
+- **Missing:** A provider choice on the welcome screen (Gemini default) with the right get-key link,
+  placeholder, and prefix hint per provider; activation stores the chosen provider's key.
+- **Why:** Users who already pay for one provider are the _most_ motivated cohort, and onboarding
+  currently tells them the product is for someone else.
+- **Payoff:** All three provider audiences activate on the first screen, no detour.
+- **Scope fence:** One key activates (multi-key stays in settings); Gemini remains the default and
+  the "free" path; store listing already names all three providers — **no product-promise change**.
+- **Depends on:** C2 (verification must test the chosen provider) · **Lead decides:** picker UI.
+  **Escalate:** none.
+
+#### C9 — Setup health check `Impact 3 · Effort M · Score 1.5`
+
+- **Today:** When setup breaks later (key revoked, provider outage, shortcut unassigned), the pieces
+  are scattered: `connection.test` hides in settings, shortcut assignment lives in
+  `chrome://extensions/shortcuts`, configured-provider state is invisible.
+- **Missing:** A "Check my setup" section in settings: key present per provider, active provider
+  responds (explicit click, token-cost disclosed), keyboard shortcuts assigned
+  (`chrome.commands.getAll`), each row with its one-click fix or deep link.
+- **Why:** Post-onboarding breakage currently re-runs the whole bad-first-day experience.
+- **Payoff:** Any broken setup diagnoses itself in one screen, one click.
+- **Scope fence:** All checks read-only except the explicit connection test; runs only on click —
+  nothing in the background; no new permissions (`commands` API is already granted by the
+  `commands` manifest key).
+- **Depends on:** — · **Lead decides:** check list v1. **Escalate:** none.
+
+---
+
 ## 5. Dependency map
 
 ```mermaid
@@ -596,11 +782,17 @@ graph LR
     A3[A3 Follow-up chips] --> B13[B13 Related words]
     B1 --> B13
     A4[A4 Keyboard flow] -.nice with.-> A13[A13 Quiet mode]
+    C2[C2 Verified activation] --> C3[C3 Guided first lookup]
+    C2 --> C4[C4 Any-provider onboarding]
+    C10[C10 Funnel e2e] -.proof harness for.-> C1[C1 Open on install]
+    C8[C8 Gesture demo] -.pairs with.-> C3
+    C2 -.retest UX reused by.-> C6[C6 Invalid-key recovery]
 ```
 
 **Reading order that respects dependencies:** B1 → B2 (lock schema) → B5 → B3 → B4 unlocks the whole
 learning spine. Everything in Category A except A13→A4 and B13→A3 is independent and safe to pick in
-any order.
+any order. In Category C, C10 goes first (it is the proof harness every other C-card's DoD cites),
+C3/C4 wait for C2; the rest are independent.
 
 ---
 
@@ -625,27 +817,31 @@ new permission remain owner calls, as does E5 and E6).
 
 ## 7. Ranked summary (flat, by score)
 
-| Rank | Idea                                | Score | Rank | Idea                      | Score |
-| ---- | ----------------------------------- | ----- | ---- | ------------------------- | ----- |
-| 1    | B1 Save word ·foundation ✅ Shipped | 5.0   | 9    | A15 Latency budget        | 3.0   |
-| 2    | A4 Keyboard flow ✅ Shipped         | 4.0   | 10   | B5 Status lifecycle       | 3.0   |
-| 3    | A8 Idiom expansion ✅ Shipped       | 4.0   | 11   | B9 Backup/restore         | 3.0   |
-| 4    | B2 Context capture ✅ Shipped       | 4.0   | 12   | A1 Streamed answers       | 2.5   |
-| 5    | B4 Hover-recall                     | 4.0   | 13   | B3 Re-encounter highlight | 2.5   |
-| 6    | B7 Repeat nudge ✅ Shipped          | 4.0   | 14   | A2 Recursive lookup       | 2.0   |
-| 7    | B8 Anki export                      | 4.0   | 15   | A3 Follow-up chips        | 2.0   |
-| 8    | A6 Smart placement                  | 3.0   | 16   | A5 Gloss mode             | 2.0   |
-| 8    | A16 Sticky save bar ✅ Shipped      | 3.0   | 17   | A13 Quiet mode            | 2.0   |
-| 8    | A9 Instant cache                    | 3.0   | 18   | A14 Double-click          | 2.0   |
-| 8    | A10 TTS                             | 3.0   | 19   | B13 Related words         | 2.0   |
-| —    |                                     |       | 19   | B15 Site stats            | 2.0   |
-| —    |                                     |       | 21   | A7 Pin cards              | 1.5   |
-| —    |                                     |       | 21   | A12 Non-English source    | 1.5   |
-| —    |                                     |       | 21   | B10 Weekly digest         | 1.5   |
-| —    |                                     |       | 21   | B11 Review flip           | 1.5   |
-| —    |                                     |       | 21   | B12 Auto-grouping         | 1.5   |
-| —    |                                     |       | 21   | B14 Sense dedup           | 1.5   |
-| —    |                                     |       | 27   | A11 PDF (spike)           | 1.3   |
+| Rank | Idea                                | Score | Rank | Idea                       | Score |
+| ---- | ----------------------------------- | ----- | ---- | -------------------------- | ----- |
+| 1    | B1 Save word ·foundation ✅ Shipped | 5.0   | 12   | C5 Key paste hygiene       | 3.0   |
+| 1    | C1 Open on install ·foundation      | 5.0   | 12   | C6 Invalid-key recovery    | 3.0   |
+| 1    | C2 Verified activation ·foundation  | 5.0   | 12   | C7 Finish-setup badge      | 3.0   |
+| 4    | A4 Keyboard flow ✅ Shipped         | 4.0   | 12   | C10 Funnel e2e ·harness    | 3.0   |
+| 4    | A8 Idiom expansion ✅ Shipped       | 4.0   | 19   | A1 Streamed answers        | 2.5   |
+| 4    | B2 Context capture ✅ Shipped       | 4.0   | 19   | B3 Re-encounter highlight  | 2.5   |
+| 4    | B4 Hover-recall                     | 4.0   | 19   | C3 Guided first lookup     | 2.5   |
+| 4    | B7 Repeat nudge ✅ Shipped          | 4.0   | 22   | A2 Recursive lookup        | 2.0   |
+| 4    | B8 Anki export                      | 4.0   | 22   | A3 Follow-up chips         | 2.0   |
+| 4    | C8 Gesture demo                     | 4.0   | 22   | A5 Gloss mode              | 2.0   |
+| 11   | A6 Smart placement                  | 3.0   | 22   | A13 Quiet mode             | 2.0   |
+| 11   | A16 Sticky save bar ✅ Shipped      | 3.0   | 22   | A14 Double-click           | 2.0   |
+| 12   | A9 Instant cache                    | 3.0   | 22   | B13 Related words          | 2.0   |
+| 12   | A10 TTS                             | 3.0   | 22   | B15 Site stats             | 2.0   |
+| 12   | A15 Latency budget                  | 3.0   | 22   | C4 Any-provider onboarding | 2.0   |
+| 12   | B5 Status lifecycle ✅ Shipped      | 3.0   | 30   | A7 Pin cards               | 1.5   |
+| 12   | B9 Backup/restore                   | 3.0   | 30   | A12 Non-English source     | 1.5   |
+| —    |                                     |       | 30   | B10 Weekly digest          | 1.5   |
+| —    |                                     |       | 30   | B11 Review flip            | 1.5   |
+| —    |                                     |       | 30   | B12 Auto-grouping          | 1.5   |
+| —    |                                     |       | 30   | B14 Sense dedup            | 1.5   |
+| —    |                                     |       | 30   | C9 Setup health check      | 1.5   |
+| —    |                                     |       | 37   | A11 PDF (spike)            | 1.3   |
 
 **Score ≠ sequence.** B1 leads despite being foundational-first, not because of raw score; the lead
 sequences by dependency (B1→B2→B5→B3) and by quick-win clustering (the S-effort A-ideas), escalating
@@ -798,6 +994,19 @@ API key (S1)> } }`; import offers merge or replace, and importers ignore unknown
   performed" section (suites run, test counts, e2e scenarios, gates). Rationale: token cost.
   Repo conventions (CLAUDE.md, workflow-conventions) updated in this same change; B3's plan
   loses its evidence-video task · decided by Owner.
+  **Campaign: "Onboarding overhaul — Category C" (2026-07-16).** Owner directive: add 10 ideas
+  fixing the flaky first-run funnel (install → key setup → first lookup), then produce a full
+  spec + implementation plan per idea for parallel subagent implementation. Grounded in a live
+  funnel audit (Playwright harness, fresh profile): **no `onInstalled` welcome, unverified
+  activation ("You're all set" without testing the key), Gemini-only onboarding, no guided first
+  lookup, no paste hygiene, dead-end invalid-key recovery, invisible keyless state — and a live
+  dev-infra flake: `esbuild.config.mjs` bakes the builder's shell `GEMINI_API_KEY` into the
+  bundle, silently disabling onboarding and failing all three onboarding e2e specs on any machine
+  with the key exported.** Category C's measured goal: 7 audited dead-ends → 0, proven by the C10
+  funnel e2e (no real-user telemetry — privacy wall). No new §6 escalations: all C-ideas fit
+  existing permissions and the existing product promise · decided by Owner (directive) with the
+  category drafted per the reverse-tornado frame (objective metric + standing walls).
+
 - 2026-07-16 · (campaign-wide) · **Resume protocol standardized.** Every long-running effort
   keeps a live Shaman-scope state file (`.okra/runs/<run>/SHAMAN-STATE.md`) updated at each
   transition, plus a committed snapshot under `docs/superpowers/campaign/` at every card
