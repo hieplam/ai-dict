@@ -47,9 +47,10 @@ promise. Three roles:
 
 ### Definition of done (per repo convention)
 
-An idea is **done** only when its work is **PR squash-merged into master** with before/after
-evidence attached, lint + format + tests green, and the C3 model updated if architecture
-changed. "Code written" is not done.
+An idea is **done** only when its work is **PR merged into master via a regular merge commit
+(squash-merge is prohibited — owner ruling 2026-07-16, §8)** with before/after evidence
+attached, lint + format + tests green, and the C3 model updated if architecture changed.
+"Code written" is not done.
 
 ### Scoring
 
@@ -607,7 +608,9 @@ The lead runs everything else. Bring these — and only these — to the human:
 | E5  | **Matching beyond naive** (B3)                    | A lemmatizer raises false-positive highlights — a product-feel tradeoff. | B3 v2                         |
 | E6  | **Any new manifest permission** (general)         | Permissions change the store listing and user-trust story.               | any idea that needs one       |
 
-Everything not in this table, the lead decides and directs. **E1 is resolved — see §8 Decision Log.**
+Everything not in this table, the lead decides and directs. **E1, E2, E3, and E4 are
+resolved — see §8 Decision Log** (E4's spike is approved; the post-spike go/no-go and any
+new permission remain owner calls, as does E5 and E6).
 
 ---
 
@@ -730,3 +733,31 @@ verified. A16 (§4) had already shipped before this campaign started.
   evidence media, and — for the three schema-adjacent cards — a direct read of the merged
   `types.ts` on `master`, never by reading implementation diffs) · decided by Shaman
   (definition-of-done confirmation per §1).
+
+**Campaign: "Run the roadmap" (2026-07-16).** Owner directive: implement **all remaining
+roadmap ideas**. Shaman sequenced the full backlog by dependency and quick-win clustering:
+learning spine first (B5 → B3 → B4), then B8, the S-effort A-cards (A6, A9, A10, A15), B6,
+B9, A1, A3 → B13, A2, A5, A13, A14, A7, A12, B14, B11, B10, B12, B15, and the A11 spike
+last. One Warchief per card, verified SHIPPED before the next dispatch.
+
+- 2026-07-16 · B9 · **E2 escalation — backup file envelope.** Owner ratified the Shaman's
+  proposal: `{ format: "ai-dict-backup", version: 1, exportedAt: <timestamp>, data: {
+savedWords: SavedWordEntry[], history: HistoryEntry[], settings: <all settings MINUS the
+API key (S1)> } }`; import offers merge or replace, and importers ignore unknown future
+  fields (forward compatibility). Additive fields stay lead-decidable under this lock;
+  restructuring or removing a ratified field is a new escalation (same governance as E1) ·
+  decided by Owner (register item E2).
+- 2026-07-16 · A12 · **E3 escalation — multi-language source.** Owner ruled **build, don't
+  advertise**: fix the hard-coded `{source_lang}` with detection + on-card override and ship
+  it quietly; the store listing, landing page, and marketing story stay "English dictionary"
+  until the owner separately decides to advertise · decided by Owner (register item E3).
+- 2026-07-16 · A11 · **E4 escalation — PDF spike.** Owner approved running the time-boxed
+  feasibility spike. Deliverable is a written go/no-go report (approaches, costs, permission
+  needs) — **not** a feature; the post-spike go/no-go and any new permission return to the
+  owner · decided by Owner (register item E4).
+- 2026-07-16 · (campaign-wide) · **Merge policy changed: squash-merge is prohibited.** The
+  owner's global rule ("Do not Squash merge") now overrides this repo's previous
+  squash-merge DoD. From this campaign on, PRs land via **regular merge commits**; §1's
+  definition of done is updated accordingly, and mechanical SHIPPED verification checks
+  merge-commit strategy instead of squash. Historical squash merges (A4–B7 era) remain valid
+  under the old rule · decided by Owner (governance conflict surfaced by the Shaman).
