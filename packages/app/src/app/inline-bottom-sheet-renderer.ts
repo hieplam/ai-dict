@@ -5,6 +5,7 @@ import type {
   LookupError,
   Provider,
   Theme,
+  SavedWordStatus,
 } from '../index';
 import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '../ui/index';
 import { sanitizeMarkdown } from './markdown-sanitize';
@@ -129,7 +130,27 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     if (this.lastState?.kind !== 'result') return;
     // B7: any save toggle (star OR the nudge banner's own Save button — both dispatch the same
     // toggle-save event) also clears the nudge banner; the reader has acted on the signal.
-    this.setState({ ...this.lastState, saved, nudge: false });
+    // B5: unsaving also clears any stale `status` — the isSaved gate already hides the toggle,
+    // but clearing avoids a stale value if the state object is inspected directly (spec §3.5).
+    // `exactOptionalPropertyTypes` forbids assigning `status: undefined` directly, so the key is
+    // omitted (not set to undefined) when unsaving.
+    const { status: _status, ...rest } = this.lastState;
+    this.setState({
+      ...rest,
+      saved,
+      nudge: false,
+      ...(saved && _status !== undefined ? { status: _status } : {}),
+    });
+  }
+
+  /**
+   * B5: flip the status toggle's local state on the currently-shown result without a full
+   * re-lookup. No-op when the last rendered state isn't a result (e.g. loading/error) or no card
+   * has been rendered yet — mirrors the guard pattern `setSaved` already uses.
+   */
+  setStatus(status: SavedWordStatus): void {
+    if (this.lastState?.kind !== 'result') return;
+    this.setState({ ...this.lastState, status });
   }
 
   /**

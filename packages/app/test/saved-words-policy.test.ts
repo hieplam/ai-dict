@@ -5,6 +5,7 @@ import {
   savedWordGet,
   savedWordsList,
   savedWordsClear,
+  savedWordSetStatus,
   normalizeWordKey,
 } from '../src/domain/saved-words-policy';
 import type { Storage, SavedWordInput } from '../src';
@@ -116,5 +117,36 @@ describe('saved-words-policy', () => {
     await savedWordsClear({ storage: s });
     expect(await savedWordsList({ storage: s })).toEqual([]);
     expect(await s.getItem('history:x')).toBe('{}');
+  });
+
+  it('savedWordSetStatus flips an existing entry to known, preserving senses/savedAt', async () => {
+    const s = memStorage();
+    const original = await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    const updated = await savedWordSetStatus({ storage: s }, 'bank', 'known');
+    expect(updated).not.toBeNull();
+    expect(updated!.status).toBe('known');
+    expect(updated!.savedAt).toBe(original.savedAt);
+    expect(updated!.senses).toEqual(original.senses);
+    expect(await s.getItem('saved:bank')).toBe(JSON.stringify(updated));
+  });
+
+  it('savedWordSetStatus is case-insensitive on the word key', async () => {
+    const s = memStorage();
+    await savedWordUpsert({ storage: s, now: () => 1000 }, input('Bank'));
+    const updated = await savedWordSetStatus({ storage: s }, 'BANK', 'known');
+    expect(updated!.status).toBe('known');
+  });
+
+  it('savedWordSetStatus can flip back from known to learning', async () => {
+    const s = memStorage();
+    await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    await savedWordSetStatus({ storage: s }, 'bank', 'known');
+    const back = await savedWordSetStatus({ storage: s }, 'bank', 'learning');
+    expect(back!.status).toBe('learning');
+  });
+
+  it('savedWordSetStatus on an unsaved word is a no-op returning null (no throw)', async () => {
+    const s = memStorage();
+    await expect(savedWordSetStatus({ storage: s }, 'ghost', 'known')).resolves.toBeNull();
   });
 });

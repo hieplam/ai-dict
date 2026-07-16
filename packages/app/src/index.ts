@@ -30,6 +30,7 @@ export * from './app/openai-lookup-client';
 export * from './app/anthropic-lookup-client';
 export * from './app/lookup-client-selector';
 export * from './app/inline-bottom-sheet-renderer';
+export * from './app/save-reply-guard';
 export * from './app/router';
 export * from './app/history-export';
 export * from './app/inbound';

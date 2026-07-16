@@ -250,6 +250,43 @@ describe('InlineBottomSheetRenderer — save state (B1)', () => {
   });
 });
 
+describe('InlineBottomSheetRenderer — status toggle (B5)', () => {
+  it('setStatus(known) re-renders the last result with the status toggle showing Known', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { saved: true });
+    r.setStatus('known');
+    const btn = card(h).querySelector<HTMLButtonElement>('.status-btn')!;
+    expect(btn.textContent).toContain('Known');
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('setStatus is a no-op when the last state was loading, not a result', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderLoading();
+    expect(() => r.setStatus('known')).not.toThrow();
+    expect(card(h).querySelector('.status-btn')).toBeNull();
+  });
+
+  it('setStatus is a no-op before any render (no card mounted)', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    expect(() => r.setStatus('known')).not.toThrow();
+    expect(h.querySelector('bottom-sheet')).toBeNull();
+  });
+
+  it('setSaved(false) clears any stale status, so a later re-save never flashes a leaked status', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { saved: true });
+    r.setStatus('known');
+    r.setSaved(false);
+    r.setSaved(true);
+    expect(card(h).querySelector('.status-btn')).toBeNull();
+  });
+});
+
 describe('InlineBottomSheetRenderer — repeat-offender nudge (B7)', () => {
   it('renderResult reflects r.nudge=true', () => {
     const h = host();

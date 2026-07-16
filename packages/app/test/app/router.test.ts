@@ -535,6 +535,49 @@ describe('buildRouter', () => {
     expect(await d.kv.getItem('saved:bank')).not.toBeNull();
   });
 
+  it('saved.setStatus flips an existing saved word to known and returns the updated entry (B5)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'd',
+      translation: '',
+      sentence: 's',
+      url: 'u',
+      title: 't',
+    });
+    const reply = await route({ type: 'saved.setStatus', word: 'bank', status: 'known' });
+    expect(reply).toMatchObject({
+      ok: true,
+      type: 'saved',
+      entry: { word: 'bank', status: 'known' },
+    });
+  });
+
+  it('saved.setStatus on an unsaved word replies ack (idempotent no-op) (B5)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    const reply = await route({ type: 'saved.setStatus', word: 'ghost', status: 'known' });
+    expect(reply).toMatchObject({ ok: true, type: 'ack' });
+  });
+
+  it('saved.setStatus is case-insensitive on the word key (B5)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'Bank',
+      definition: 'd',
+      translation: '',
+      sentence: 's',
+      url: 'u',
+      title: 't',
+    });
+    const reply = await route({ type: 'saved.setStatus', word: 'BANK', status: 'known' });
+    expect(reply).toMatchObject({ ok: true, type: 'saved', entry: { status: 'known' } });
+  });
+
   it('lookup.cancel with no inflight request still returns ack (no crash)', async () => {
     const route = buildRouter(deps());
     const ack = await route({ type: 'lookup.cancel', requestId: 'nonexistent' });

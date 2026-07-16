@@ -2,12 +2,14 @@ import {
   registerSidePanel,
   sanitizeMarkdown,
   mapError,
+  createSaveReplyGuard,
   type PanelFocusState,
   type SidePanelView,
   type LookupResult,
   type LookupError,
   type HistoryEntry,
   type WireReply,
+  type SavedWordStatus,
 } from '@ai-dict/app';
 import type {
   GetSidePanelFocusMessage,
@@ -44,6 +46,12 @@ let lastSavePayload:
     }
   | undefined;
 let lastSaved = false;
+// B5: mirrors content.ts's own lastStatus tracking — the panel is its own independent
+// composition root (see the B1-era comment above trackSaveContext).
+let lastStatus: SavedWordStatus | undefined;
+// B5 (F2 audit fix): guards against a stale toggle-save reply resolving after a later
+// click/render has already superseded it — see save-reply-guard.ts's doc comment.
+const saveReplyGuard = createSaveReplyGuard();
 
 function trackSaveContext(
   r: LookupResult,
@@ -64,6 +72,8 @@ function trackSaveContext(
     title: extra.title ?? '',
   };
   lastSaved = false;
+  lastStatus = undefined;
+  saveReplyGuard.next();
 }
 
 /** Flip the star on the panel's currently-shown result without a full re-render of everything
@@ -72,6 +82,13 @@ function setSaved(saved: boolean): void {
   if (view.focusState.kind !== 'result') return;
   // B7: any save toggle also clears the nudge banner — the reader has acted on the signal.
   view.focusState = { ...view.focusState, saved, nudge: false };
+}
+
+/** B5: flip the status toggle on the panel's currently-shown result — mirrors
+ * InlineBottomSheetRenderer.setStatus(); no-op when the focus region isn't a result. */
+function setStatus(status: SavedWordStatus): void {
+  if (view.focusState.kind !== 'result') return;
+  view.focusState = { ...view.focusState, status };
 }
 
 /** B7: hide the nudge banner without touching `saved` — mirrors
@@ -164,10 +181,33 @@ view.addEventListener('toggle-save', () => {
   const willSave = !lastSaved;
   lastSaved = willSave;
   setSaved(willSave);
+  if (!willSave) lastStatus = undefined;
+  const token = saveReplyGuard.next();
   const message = willSave
     ? { type: 'saved.save' as const, ...lastSavePayload }
     : { type: 'saved.delete' as const, word: lastSavePayload.word };
-  void chrome.runtime.sendMessage(message).catch(() => undefined);
+  void chrome.runtime
+    .sendMessage(message)
+    .then((raw: unknown) => {
+      if (!saveReplyGuard.isCurrent(token)) return; // a later click/render already superseded this reply
+      const reply = raw as WireReply | undefined;
+      if (willSave && reply?.ok && reply.type === 'saved') {
+        lastStatus = reply.entry.status;
+        setStatus(lastStatus);
+      }
+    })
+    .catch(() => undefined);
+});
+
+// B5: mirrors content.ts's own toggle-status listener.
+view.addEventListener('toggle-status', () => {
+  if (!lastSavePayload || lastStatus === undefined) return;
+  const next: SavedWordStatus = lastStatus === 'known' ? 'learning' : 'known';
+  lastStatus = next;
+  setStatus(next);
+  void chrome.runtime
+    .sendMessage({ type: 'saved.setStatus', word: lastSavePayload.word, status: next })
+    .catch(() => undefined);
 });
 
 // B7: the panel's own focus region bubbles the same composed dismiss-nudge event the in-page

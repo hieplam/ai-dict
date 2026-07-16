@@ -578,6 +578,83 @@ describe('<lookup-card> save/star affordance (B1)', () => {
       errorNodes.some((n) => n instanceof HTMLElement && n.classList.contains('save-row')),
     ).toBe(false);
   });
+
+  it('a saved result with status learning renders a status toggle showing Learning (B5)', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+      saved: true,
+      status: 'learning',
+    };
+    const btn = el.querySelector<HTMLButtonElement>('.status-btn')!;
+    expect(btn).not.toBeNull();
+    expect(btn.textContent).toContain('Learning');
+    expect(btn.getAttribute('aria-pressed')).toBe('false');
+    expect(btn.getAttribute('aria-label')).toBe('Mark bank as known');
+  });
+
+  it('a saved result with status known renders a status toggle showing Known (B5)', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+      saved: true,
+      status: 'known',
+    };
+    const btn = el.querySelector<HTMLButtonElement>('.status-btn')!;
+    expect(btn.textContent).toContain('Known');
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+    expect(btn.getAttribute('aria-label')).toBe('Mark bank as learning');
+  });
+
+  it('an unsaved result renders no status toggle, even if status were somehow present (B5)', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+      saved: false,
+      status: 'learning',
+    };
+    expect(el.querySelector('.status-btn')).toBeNull();
+  });
+
+  it('a saved result with no status renders no status toggle (back-compat) (B5)', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+      saved: true,
+    };
+    expect(el.querySelector('.status-btn')).toBeNull();
+  });
+
+  it('clicking the status toggle fires a composed toggle-status event with the word in detail (B5)', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+      saved: true,
+      status: 'learning',
+    };
+    const handler = vi.fn();
+    document.body.addEventListener('toggle-status', handler);
+    el.querySelector<HTMLButtonElement>('.status-btn')!.click();
+    document.body.removeEventListener('toggle-status', handler);
+    expect(handler).toHaveBeenCalledTimes(1);
+    const event = handler.mock.calls[0]![0] as CustomEvent<{ word: string }>;
+    expect(event.detail).toEqual({ word: 'bank' });
+  });
 });
 
 describe('<lookup-card> repeat-offender nudge (B7)', () => {

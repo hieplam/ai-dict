@@ -1,4 +1,4 @@
-import type { LookupError, Provider } from '../index';
+import type { LookupError, Provider, SavedWordStatus } from '../index';
 import { adoptStyles } from './styles/adopt';
 import {
   BASE_VARS,
@@ -43,6 +43,11 @@ export type CardState =
       definedAs?: { term: string; isIdiom: boolean };
       /** B1: whether this word is currently starred/saved — drives the save row's fill state. */
       saved?: boolean;
+      /** B5: current status of a saved word ('learning' default | 'known' manual) — only
+       * meaningful when `saved === true`; absent/undefined hides the status toggle (matches B1's
+       * own no-round-trip precedent: a fresh render never knows a persisted status until the star
+       * is (re-)tapped and the saved.save reply's entry.status seeds it — see content.ts/side-panel.ts). */
+      status?: SavedWordStatus;
       /** B7: whether to show the repeat-offender nudge banner — stamped once, ever, per word by
        * the router the moment its within-30-day history count first crosses the threshold. */
       nudge?: boolean;
@@ -160,6 +165,11 @@ lookup-card .save-btn:focus-visible{outline:2px solid var(--ad-accent);outline-o
 lookup-card .save-btn[aria-pressed="true"]{border-color:var(--ad-accent);color:var(--ad-accent-ink)}
 lookup-card .save-btn[aria-pressed="true"] svg{fill:var(--ad-accent);stroke:var(--ad-accent)}
 @media (prefers-reduced-motion:reduce){lookup-card .save-btn{transition:none}}
+lookup-card .status-btn{display:inline-flex;align-items:center;margin-left:8px;border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:5px 12px;font:inherit;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);cursor:pointer;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease),border-color var(--adp-dur-fast) var(--adp-ease)}
+lookup-card .status-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
+lookup-card .status-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .status-btn[aria-pressed="true"]{border-color:var(--ad-accent);color:var(--ad-accent-ink)}
+@media (prefers-reduced-motion:reduce){lookup-card .status-btn{transition:none}}
 lookup-card .nudge-row__text{flex:1 1 auto;min-width:0;font-size:var(--adp-text-2xs);color:var(--ad-ink)}
 lookup-card .nudge-row__save-btn{flex:none;border:1px solid var(--ad-accent);background:var(--ad-accent);color:var(--ad-on-accent);border-radius:var(--adp-radius-control);padding:3px 11px;font:inherit;font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-semi);cursor:pointer}
 lookup-card .nudge-row__save-btn:hover{filter:brightness(1.06)}
@@ -309,7 +319,11 @@ function renderDefinedAsRow(definedAs: { term: string; isIdiom: boolean }): HTML
  * closure from `ResultRenderContext` (see ports.ts) and performs the actual persistence — this
  * function is pure UI, no chrome.* awareness, same separation every other card action already has.
  */
-function renderSaveRow(state: { word: string; saved?: boolean }): HTMLElement {
+function renderSaveRow(state: {
+  word: string;
+  saved?: boolean;
+  status?: SavedWordStatus;
+}): HTMLElement {
   const row = document.createElement('div');
   row.className = 'save-row';
   const btn = document.createElement('button');
@@ -336,7 +350,33 @@ function renderSaveRow(state: { word: string; saved?: boolean }): HTMLElement {
     ),
   );
   row.append(btn);
+  if (isSaved && state.status !== undefined) {
+    row.append(renderStatusBtn(state.word, state.status));
+  }
   return row;
+}
+
+/**
+ * B5: the manual learning/known status toggle — rendered only once a word is saved AND its
+ * current status is known (see renderSaveRow's guard). Exactly 2 states, manual only (roadmap B5
+ * scope fence): clicking dispatches a composed `toggle-status` event carrying only the word (the
+ * composition root computes the flip direction from its own tracked last-known status, mirroring
+ * `toggle-save`'s own design) — this function is pure UI, no persistence.
+ */
+function renderStatusBtn(word: string, status: SavedWordStatus): HTMLButtonElement {
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'status-btn';
+  const isKnown = status === 'known';
+  btn.setAttribute('aria-pressed', String(isKnown));
+  btn.setAttribute('aria-label', isKnown ? `Mark ${word} as learning` : `Mark ${word} as known`);
+  btn.textContent = isKnown ? 'Known' : 'Learning';
+  btn.addEventListener('click', () =>
+    btn.dispatchEvent(
+      new CustomEvent('toggle-status', { detail: { word }, bubbles: true, composed: true }),
+    ),
+  );
+  return btn;
 }
 
 /**
