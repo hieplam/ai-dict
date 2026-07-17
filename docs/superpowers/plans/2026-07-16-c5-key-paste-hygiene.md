@@ -677,7 +677,7 @@ git commit -m "feat: key paste hygiene — hint + normalize the settings key fie
 
 - Create: `packages/extension-chrome/e2e/c5-key-hygiene.spec.ts`
 
-- [ ] **Step 1: Write the test.** Model it on `packages/extension-chrome/e2e/onboarding.spec.ts`'s
+- [x] **Step 1: Write the test.** Model it on `packages/extension-chrome/e2e/onboarding.spec.ts`'s
       existing first test (`onboarding.spec.ts:7-31`), reusing `storageDump` from `helpers.ts`
       rather than an inline `page.evaluate`:
 
@@ -729,7 +729,7 @@ test.describe('C5 key paste hygiene', () => {
 });
 ```
 
-- [ ] **Step 2: Build and run.** With `GEMINI_API_KEY` unset in the shell (see the Global
+- [x] **Step 2: Build and run.** With `GEMINI_API_KEY` unset in the shell (see the Global
       Constraints e2e build note — a baked key skips onboarding entirely):
 
 ```
@@ -740,7 +740,7 @@ cd packages/extension-chrome && bunx playwright test c5-key-hygiene
 
 Expected: 2 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 bun run lint && bun run format:check
