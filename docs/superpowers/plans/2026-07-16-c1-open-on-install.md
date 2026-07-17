@@ -240,7 +240,7 @@ git commit -m "feat: open onboarding on install — wire the onInstalled listene
 
 - Create: `packages/extension-chrome/e2e/c1-open-on-install.spec.ts`
 
-- [ ] **Step 1: Write the test.** The shared fixture (`fixtures.ts`) launches a fresh temporary
+- [x] **Step 1: Write the test.** The shared fixture (`fixtures.ts`) launches a fresh temporary
       Chromium profile per test (`chromium.launchPersistentContext('', {...})`), which is itself a
       simulated first install — so no click or navigation is needed to trigger the behavior; it has
       already happened by the time the test body runs. Create
@@ -267,7 +267,7 @@ test.describe('C1 open onboarding on install', () => {
 });
 ```
 
-- [ ] **Step 2: Build and run.** Clear `GEMINI_API_KEY` for the build (plan-level constant
+- [x] **Step 2: Build and run.** Clear `GEMINI_API_KEY` for the build (plan-level constant
       constraint — see Global Constraints):
 
 ```
@@ -277,7 +277,7 @@ cd packages/extension-chrome && bunx playwright test c1-open-on-install
 
 Expected: 1 passed.
 
-- [ ] **Step 3: Regression-check the pre-existing onboarding suite** still passes under the same
+- [x] **Step 3: Regression-check the pre-existing onboarding suite** still passes under the same
       cleared-env-key build (proves this change didn't alter the manual "Open Settings" path or the
       activation flow — same build the previous step already produced):
 
@@ -287,7 +287,7 @@ cd packages/extension-chrome && bunx playwright test onboarding
 
 Expected: all pre-existing `onboarding.spec.ts` tests still pass.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 bun run lint && bun run format:check

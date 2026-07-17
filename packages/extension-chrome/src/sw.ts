@@ -204,7 +204,14 @@ chrome.commands.onCommand.addListener((command, tab) => {
 // extra storage flag needed.
 chrome.runtime.onInstalled.addListener((details) => {
   if (shouldOpenOnboardingOnInstall(details.reason, Boolean(ENV_API_KEY))) {
-    void Promise.resolve(chrome.runtime.openOptionsPage()).catch(() => undefined);
+    // R1: chrome.runtime.openOptionsPage() resolves with no lastError but creates no tab when
+    // called synchronously from onInstalled at cold --load-extension launch (proven RED via e2e).
+    // chrome.tabs.create needs no new manifest permission (the `tabs` permission only gates
+    // reading tab URLs/titles, which this doesn't do), and openOptionsPage()'s only advantage —
+    // reusing an already-open options tab — is moot on a fresh install.
+    void Promise.resolve(chrome.tabs.create({ url: chrome.runtime.getURL('options.html') })).catch(
+      () => undefined,
+    );
   }
 });
 
