@@ -482,6 +482,93 @@ describe('<settings-form> provider selection', () => {
   });
 });
 
+describe('<settings-form> key paste hygiene (C5)', () => {
+  function keyInput(el: SettingsForm): HTMLInputElement {
+    return el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
+  }
+  function hint(el: SettingsForm): HTMLElement {
+    return el.shadowRoot!.querySelector<HTMLElement>('#key-hint')!;
+  }
+  function fire(el: SettingsForm, value: string): void {
+    const k = keyInput(el);
+    k.value = value;
+    k.dispatchEvent(new Event('input'));
+  }
+
+  it('shows no hint for a realistic, correctly-prefixed Gemini key', () => {
+    const el = mountForm();
+    fire(el, 'AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ01234');
+    expect(hint(el).hidden).toBe(true);
+  });
+
+  it('shows a mismatch hint when an Anthropic-shaped key is typed while Gemini is selected', () => {
+    const el = mountForm();
+    fire(el, 'sk-ant-api03-abcdefghijklmnopqrstuvwxyz0123456789');
+    expect(hint(el).hidden).toBe(false);
+    expect(hint(el).textContent).toContain('Anthropic');
+    expect(hint(el).textContent).toContain('Gemini');
+  });
+
+  it('re-evaluates the hint against the now-visible provider on switch', () => {
+    const el = mountForm();
+    // Gemini field gets an OpenAI-shaped key — mismatch hint shows.
+    fire(el, 'sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop');
+    expect(hint(el).hidden).toBe(false);
+    // Switch to OpenAI: the (empty) OpenAI slot has no key yet — hint clears.
+    const provider = el.shadowRoot!.querySelector<HTMLSelectElement>('#provider')!;
+    provider.value = 'openai';
+    provider.dispatchEvent(new Event('change'));
+    expect(hint(el).hidden).toBe(true);
+    // Switch back to Gemini: the stashed mismatched key re-shows its hint.
+    provider.value = 'gemini';
+    provider.dispatchEvent(new Event('change'));
+    expect(hint(el).hidden).toBe(false);
+  });
+
+  it('never shows a hint while the Gemini field is env-locked, even for a bad stashed key', () => {
+    const el = mountForm();
+    el.keyFromEnv = true;
+    fire(el, 'sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop'); // no-op: field is locked/read-only
+    expect(hint(el).hidden).toBe(true);
+  });
+
+  it('emits a normalized apiKey when the pasted value has padding/quotes', () => {
+    const el = mountForm();
+    el.value = {
+      provider: 'gemini',
+      apiKey: '',
+      openaiApiKey: '',
+      anthropicApiKey: '',
+      promptEnvelope: '',
+      targetLang: 'vi',
+      outputFormat: 'T',
+      cacheEnabled: true,
+      saveHistory: true,
+      theme: 'sepia',
+    };
+    let captured: SettingsFormValue | undefined;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
+    keyInput(el).value = '  "AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ01234"  ';
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(captured!.apiKey).toBe('AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ01234');
+  });
+
+  it('normalizes a stashed key across a provider switch, not just on same-provider save', () => {
+    const el = mountForm();
+    fire(el, '  AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ01234  ');
+    const provider = el.shadowRoot!.querySelector<HTMLSelectElement>('#provider')!;
+    provider.value = 'openai'; // triggers commitKeyField() on the Gemini slot before switching
+    provider.dispatchEvent(new Event('change'));
+    provider.value = 'gemini';
+    provider.dispatchEvent(new Event('change'));
+    expect(keyInput(el).value).toBe('AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ01234');
+  });
+});
+
 describe('<settings-form> error-reporting toggle', () => {
   it('reflects errorReporting consent and emits error-reporting-change on toggle', () => {
     const form = mountForm();

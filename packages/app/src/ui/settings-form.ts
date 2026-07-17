@@ -2,6 +2,7 @@ import { adoptStyles } from './styles/adopt';
 import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG, ICON_SHIELD } from './styles/tokens';
 import { DEFAULT_OUTPUT_FORMAT, PROMPT_ENVELOPE } from '../domain/default-template';
 import { buildPrompt } from '../domain/prompt-template';
+import { normalize, hintFor } from '../domain/key-hygiene';
 import type { Provider, Theme } from '../domain/types';
 
 // The Konami code (↑↑↓↓←→←→BA), matched on `KeyboardEvent.code` so it is layout-independent.
@@ -98,6 +99,7 @@ textarea{resize:vertical;font-family:var(--adp-font-mono);font-size:var(--adp-te
 .keyrow input{flex:1}
 input.locked{background:var(--ad-surface-sunken);color:var(--ad-ink-faint);cursor:help}
 #key-help,#tpl-help{margin:7px 0 0;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
+#key-hint{margin:7px 0 0;padding:8px 12px;border-radius:6px;border-left:3px solid var(--ad-accent);background:var(--ad-accent-soft);color:var(--ad-ink);font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi)}
 #tpl-help{margin:0 0 8px}
 .env-notice{display:flex;gap:9px;margin:12px 0 0;padding:10px 13px;background:var(--ad-accent-soft);border-left:3px solid var(--ad-accent);border-radius:6px;font-size:var(--adp-text-sm);line-height:1.5;color:var(--ad-ink)}
 .seg{display:inline-flex;flex-wrap:wrap;background:var(--ad-surface-sunken);border:1px solid var(--ad-line);border-radius:10px;padding:3px;gap:2px}
@@ -155,6 +157,7 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
         <button type="button" id="reveal" aria-label="Reveal API key">Show</button>
       </div>
       <p id="key-help">Stored locally on this device only.</p>
+      <p id="key-hint" aria-live="polite" hidden></p>
       <p id="env-notice" class="env-notice" hidden></p>
       <div class="inline-actions">
         <button type="button" id="test">Test connection</button>
@@ -270,6 +273,7 @@ export class SettingsForm extends HTMLElement {
     key.addEventListener('blur', () => {
       if (this.isKeyLocked()) help.textContent = ENV_KEY_HINT;
     });
+    key.addEventListener('input', () => this.refreshKeyHint());
     this.q<HTMLSelectElement>('#provider').addEventListener('change', () => {
       this.commitKeyField();
       this._provider = this.q<HTMLSelectElement>('#provider').value as Provider;
@@ -434,7 +438,8 @@ export class SettingsForm extends HTMLElement {
 
   /** Stash the visible key into the selected provider's slot (locked field never overwrites). */
   private commitKeyField(): void {
-    if (!this.isKeyLocked()) this._keys[this._provider] = this.q<HTMLInputElement>('#key').value;
+    if (!this.isKeyLocked())
+      this._keys[this._provider] = normalize(this.q<HTMLInputElement>('#key').value);
   }
 
   /** The Theme currently pressed in the segmented control (defaults to sepia if none is). */
@@ -483,6 +488,21 @@ export class SettingsForm extends HTMLElement {
       help.textContent = DEFAULT_KEY_HELP;
       envNotice.hidden = true;
     }
+    this.refreshKeyHint();
+  }
+
+  /** C5: live, non-blocking hint when the visible provider's key looks like a different
+   * provider's or is implausibly short/malformed — never blocks Save (roadmap C5 scope fence).
+   * Suppressed entirely while the field is env-locked (nothing the user typed to hint about). */
+  private refreshKeyHint(): void {
+    const el = this.q<HTMLElement>('#key-hint');
+    if (this.isKeyLocked()) {
+      el.hidden = true;
+      return;
+    }
+    const hint = hintFor(this._provider, normalize(this.q<HTMLInputElement>('#key').value));
+    el.textContent = hint?.message ?? '';
+    el.hidden = hint === null;
   }
 
   /**

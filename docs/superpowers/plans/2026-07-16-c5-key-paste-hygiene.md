@@ -493,7 +493,7 @@ git commit -m "feat: key paste hygiene — hint + normalize the onboarding key f
 - Modify: `packages/app/src/ui/settings-form.ts`
 - Modify: `packages/app/test/ui/settings-form.test.ts`
 
-- [ ] **Step 1: Write the failing tests.** Append a new `describe` block to
+- [x] **Step 1: Write the failing tests.** Append a new `describe` block to
       `packages/app/test/ui/settings-form.test.ts`, right after the existing
       `describe('<settings-form> provider selection', ...)` block's closing `});`:
 
@@ -590,7 +590,7 @@ Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: the 6 new tests fail — `#key-hint` doesn't exist, and the padded/quoted key round-trips
 unnormalized.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
   1. Add the import: `import { normalize, hintFor } from '../domain/key-hygiene';`
   2. Insert the hint paragraph into `MARKUP`, right after the existing `#key-help` line and before
      `#env-notice`:
@@ -655,7 +655,7 @@ private commitKeyField(): void {
 Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: all tests pass (existing + 6 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
