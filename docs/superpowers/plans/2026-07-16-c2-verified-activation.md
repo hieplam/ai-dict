@@ -318,7 +318,7 @@ proven by Task 3's e2e; still run the typecheck/lint gate below at the end so a 
 existing behavior (settings save, cache/history clear, etc. — all in the same file) is caught
 immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, replace the entire
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, replace the entire
       `mountOnboarding` function body's `save` listener (currently `options.ts:189-206`) with:
 
 ```ts
@@ -420,7 +420,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
