@@ -72,7 +72,7 @@ export function classifyPrefix(key: string): KeyPrefixClass;
 export function hintFor(targetProvider: Provider, normalizedKey: string): KeyHint | null;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/key-hygiene.test.ts`, modeled
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/key-hygiene.test.ts`, modeled
       on `packages/app/test/pii.test.ts`'s exhaustive-table style:
 
 ```ts
@@ -207,7 +207,7 @@ describe('hintFor', () => {
 Run: `cd packages/app && bunx vitest run test/key-hygiene.test.ts`
 Expected: every test fails — `Cannot find module '../src/domain/key-hygiene'`.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/key-hygiene.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/key-hygiene.ts`:
 
 ```ts
 import type { Provider } from './types';
@@ -309,7 +309,7 @@ export * from './domain/key-hygiene';
 Run: `cd packages/app && bunx vitest run test/key-hygiene.test.ts`
 Expected: all tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
