@@ -1,5 +1,5 @@
 import { test, expect } from './fixtures';
-import { seedSettings, gotoFixture, selectWord, openTrigger } from './helpers';
+import { seedSettings, gotoFixture, selectWord, openTrigger, mockGemini } from './helpers';
 
 // First-run setup: when there is no usable key the extension can't do its one job, so the
 // options page shows an onboarding screen and every keyless surface offers a way into it.
@@ -8,19 +8,18 @@ test('onboarding: activating with a key swaps to the settings screen and persist
   context,
   extensionId,
 }) => {
+  const calls = await mockGemini(context); // 200 OK by default — the connection.test passes
   const page = await context.newPage();
   await page.goto(`chrome-extension://${extensionId}/options.html`);
   await page.waitForSelector('onboarding-view');
 
-  // The blocking step is the API key (Playwright pierces the open shadow root).
   await page.locator('onboarding-view #key').fill('AIza-activated');
   await page.locator('onboarding-view #activate').click();
 
-  // Setup done → the full settings screen takes over with a confirming status.
-  await page.waitForSelector('settings-form');
+  await page.waitForSelector('settings-form', { timeout: 10_000 });
   await expect(page.locator('settings-form #status')).toContainText("You're all set");
+  expect(calls.count).toBe(1); // C2: exactly one connection.test call for the one click
 
-  // …and the key is stored with hasKey derived.
   const stored = await page.evaluate(async () => {
     const { settings } = (await chrome.storage.local.get('settings')) as {
       settings: { apiKey: string; hasKey: boolean };

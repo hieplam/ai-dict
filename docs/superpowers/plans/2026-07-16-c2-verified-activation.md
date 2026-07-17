@@ -443,7 +443,7 @@ git commit -m "feat: verified activation — persist/test/rollback orchestration
 - Modify: `packages/extension-chrome/e2e/onboarding.spec.ts`
 - Create: `packages/extension-chrome/e2e/c2-verified-activation.spec.ts`
 
-- [ ] **Step 1: Update the existing test that now needs a provider mock.** In
+- [x] **Step 1: Update the existing test that now needs a provider mock.** In
       `packages/extension-chrome/e2e/onboarding.spec.ts`, the first test ("activating with a key
       swaps to the settings screen and persists it", currently lines 7-31) sends a real activation
       with no route mocked — after Task 2 this now performs a real (mocked) `connection.test`, so
@@ -492,7 +492,7 @@ cd packages/extension-chrome && bunx playwright test onboarding
 
 Expected: all 3 tests in `onboarding.spec.ts` pass.
 
-- [ ] **Step 2: Write the new functional spec.** Create
+- [x] **Step 2: Write the new functional spec.** Create
       `packages/extension-chrome/e2e/c2-verified-activation.spec.ts`:
 
 ```ts
@@ -603,7 +603,7 @@ cd packages/extension-chrome && bunx playwright test c2-verified-activation
 
 Expected: 3 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
