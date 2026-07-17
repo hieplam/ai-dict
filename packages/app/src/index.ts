@@ -7,6 +7,7 @@ export * from './domain/pii';
 export * from './domain/cache-policy';
 export * from './domain/history-policy';
 export * from './domain/saved-words-policy';
+export * from './domain/badge-policy';
 export * from './domain/nudge-policy';
 export * from './domain/error-mapper';
 export {
