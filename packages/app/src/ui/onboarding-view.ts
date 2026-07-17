@@ -1,5 +1,6 @@
 import { adoptStyles } from './styles/adopt';
 import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG, ICON_SHIELD } from './styles/tokens';
+import { normalize, hintFor } from '../domain/key-hygiene';
 
 // Where a reader creates a free Gemini key. Surfaced as the first onboarding step so a
 // first-time user is never left wondering where the key comes from.
@@ -61,6 +62,7 @@ input:focus,select:focus{outline:2px solid var(--ad-accent);outline-offset:1px;b
 #reveal:hover{background:var(--ad-surface-raised)}
 #reveal:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 #key-help{margin:8px 0 0;font-size:var(--adp-text-xs);color:var(--ad-ink-soft)}
+#key-hint{margin:8px 0 0;padding:8px 11px;border-radius:8px;border-left:3px solid var(--ad-accent);background:var(--ad-accent-soft);color:var(--ad-ink);font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi)}
 .actions{margin-top:18px}
 button.primary{font:inherit;font-weight:var(--adp-weight-semi);font-size:14px;width:100%;padding:12px 18px;border-radius:11px;cursor:pointer;border:1px solid transparent;background:var(--ad-accent);color:var(--ad-on-accent)}
 button.primary:hover{filter:brightness(1.06)}
@@ -106,6 +108,7 @@ const MARKUP = `<div class="accent" aria-hidden="true"></div>
               <button type="button" id="reveal" aria-label="Reveal API key">Show</button>
             </div>
             <p id="key-help">Stored locally on this device only.</p>
+            <p id="key-hint" aria-live="polite" hidden></p>
           </div>
         </li>
       </ol>
@@ -135,7 +138,10 @@ export class OnboardingView extends HTMLElement {
       reveal.setAttribute('aria-label', key.type === 'text' ? 'Hide API key' : 'Reveal API key');
     });
     // Live progress: the moment a key is present, step 2 flips to done and the count moves.
-    key.addEventListener('input', () => this.refreshProgress());
+    key.addEventListener('input', () => {
+      this.refreshProgress();
+      this.refreshKeyHint();
+    });
 
     this.q<HTMLFormElement>('form').addEventListener('submit', (e) => {
       e.preventDefault();
@@ -147,13 +153,14 @@ export class OnboardingView extends HTMLElement {
       this._pendingValue = null;
     }
     this.refreshProgress();
+    this.refreshKeyHint();
     // Arrivals from the no-key card should land directly on the one thing they must do.
     key.focus();
   }
 
   /** Validate then emit `save` so the host (options page) can persist + advance to settings. */
   private submit(): void {
-    const apiKey = this.q<HTMLInputElement>('#key').value.trim();
+    const apiKey = normalize(this.q<HTMLInputElement>('#key').value);
     if (apiKey.length === 0) {
       this.setStatus('Paste your Gemini API key to activate the extension.', 'error');
       this.q<HTMLInputElement>('#key').focus();
@@ -180,6 +187,15 @@ export class OnboardingView extends HTMLElement {
       : `${done} of 2 ready`;
   }
 
+  /** C5: live, non-blocking hint when a pasted key looks like a different provider's or is
+   * implausibly short/malformed — never blocks activation (roadmap C5 scope fence). */
+  private refreshKeyHint(): void {
+    const hint = hintFor('gemini', normalize(this.q<HTMLInputElement>('#key').value));
+    const el = this.q<HTMLElement>('#key-hint');
+    el.textContent = hint?.message ?? '';
+    el.hidden = hint === null;
+  }
+
   /** Surface save/persist outcomes inline (mirrors settings-form). Empty text hides the line. */
   setStatus(text: string, tone: 'ok' | 'error' = 'ok'): void {
     const status = this.q<HTMLElement>('#status');
@@ -196,6 +212,7 @@ export class OnboardingView extends HTMLElement {
     this.q<HTMLSelectElement>('#target').value = v.targetLang;
     this.q<HTMLInputElement>('#key').value = v.apiKey;
     this.refreshProgress();
+    this.refreshKeyHint();
   }
 
   private q<T extends Element>(sel: string): T {
