@@ -72,7 +72,7 @@ showSaveAnyway(show: boolean): void;
 // dispatchEvent(new CustomEvent<OnboardingValue>('save-anyway', { detail, bubbles: true, composed: true }))
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/onboarding-view.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/onboarding-view.test.ts`,
       inside the existing `describe('<onboarding-view>', ...)` block, just before its closing
       `});` (after the existing `'setStatus shows, errors, and hides the status line'` test):
 
@@ -152,7 +152,7 @@ it('"Save anyway" blocks on an empty key with the same inline error as Save & ac
 Run: `cd packages/app && bunx vitest run test/ui/onboarding-view.test.ts`
 Expected: failures — `#save-anyway` doesn't exist, `setBusy`/`showSaveAnyway` are not functions.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
   1. Add a `#save-anyway` button to `MARKUP`'s `.actions` div, right after `#activate`
      (`onboarding-view.ts:112-114`):
 
@@ -290,7 +290,7 @@ this.q<HTMLButtonElement>('#save-anyway').addEventListener('click', () => this.s
 Run: `cd packages/app && bunx vitest run test/ui/onboarding-view.test.ts`
 Expected: all tests pass (existing + 6 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

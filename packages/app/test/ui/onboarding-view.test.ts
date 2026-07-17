@@ -144,4 +144,79 @@ describe('<onboarding-view>', () => {
   it('has no axe violations', async () => {
     expect(await axeViolations(mount())).toEqual([]);
   });
+
+  it('setBusy(true) disables both buttons, relabels activate, and hides any prior save-anyway (C2)', () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    el.showSaveAnyway(true);
+    el.setBusy(true);
+    const activate = r.querySelector<HTMLButtonElement>('#activate')!;
+    const saveAnyway = r.querySelector<HTMLButtonElement>('#save-anyway')!;
+    expect(activate.disabled).toBe(true);
+    expect(activate.textContent).toBe('Activating…');
+    expect(saveAnyway.disabled).toBe(true);
+    expect(saveAnyway.hidden).toBe(true);
+  });
+
+  it('setBusy(false) restores the activate button label and enabled state (C2)', () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    el.setBusy(true);
+    el.setBusy(false);
+    const activate = r.querySelector<HTMLButtonElement>('#activate')!;
+    expect(activate.disabled).toBe(false);
+    expect(activate.textContent).toBe('Save & activate');
+  });
+
+  it("showSaveAnyway toggles the escape-hatch button's hidden state (C2)", () => {
+    const el = mount();
+    const btn = el.shadowRoot!.querySelector<HTMLButtonElement>('#save-anyway')!;
+    expect(btn.hidden).toBe(true);
+    el.showSaveAnyway(true);
+    expect(btn.hidden).toBe(false);
+    el.showSaveAnyway(false);
+    expect(btn.hidden).toBe(true);
+  });
+
+  it('submit() is a no-op while busy — no second "save" event fires (C2)', () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    r.querySelector<HTMLInputElement>('#key')!.value = 'AIza-x';
+    let count = 0;
+    el.addEventListener('save', () => count++);
+    r.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(count).toBe(1);
+    r.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(count).toBe(1); // setBusy(true) fired on the first submit; the second is swallowed
+  });
+
+  it('clicking "Save anyway" emits a composed save-anyway event with the trimmed key/language (C2)', () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    r.querySelector<HTMLInputElement>('#key')!.value = '  AIza-real  ';
+    r.querySelector<HTMLSelectElement>('#target')!.value = 'en';
+    let captured: OnboardingValue | undefined;
+    document.body.addEventListener('save-anyway', (e) => {
+      captured = (e as CustomEvent<OnboardingValue>).detail;
+    });
+    r.querySelector<HTMLButtonElement>('#save-anyway')!.click();
+    expect(captured).toEqual({ apiKey: 'AIza-real', targetLang: 'en' });
+  });
+
+  it('"Save anyway" blocks on an empty key with the same inline error as Save & activate (C2)', () => {
+    const el = mount();
+    let fired = false;
+    el.addEventListener('save-anyway', () => {
+      fired = true;
+    });
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#save-anyway')!.click();
+    expect(fired).toBe(false);
+    const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
+    expect(status.hidden).toBe(false);
+    expect(status.classList.contains('error')).toBe(true);
+  });
 });

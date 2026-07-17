@@ -65,6 +65,9 @@ input:focus,select:focus{outline:2px solid var(--ad-accent);outline-offset:1px;b
 button.primary{font:inherit;font-weight:var(--adp-weight-semi);font-size:14px;width:100%;padding:12px 18px;border-radius:11px;cursor:pointer;border:1px solid transparent;background:var(--ad-accent);color:var(--ad-on-accent)}
 button.primary:hover{filter:brightness(1.06)}
 button.primary:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+button.secondary{font:inherit;font-weight:var(--adp-weight-semi);font-size:14px;width:100%;margin-top:8px;padding:11px 18px;border-radius:11px;cursor:pointer;border:1px solid var(--ad-line-strong);background:var(--ad-surface);color:var(--ad-ink)}
+button.secondary:hover{background:var(--ad-surface-raised)}
+button.secondary:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 #status{margin:13px 0 0;padding:9px 12px;border-radius:8px;border-left:3px solid var(--ad-accent);background:var(--ad-surface-sunken);color:var(--ad-ink);font-size:var(--adp-text-sm);font-weight:var(--adp-weight-semi)}
 #status.error{border-left-color:var(--ad-error);color:var(--ad-error)}
 footer{display:flex;align-items:center;gap:6px;max-width:560px;margin:0 auto;padding:6px clamp(16px,5vw,22px) 20px;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
@@ -111,6 +114,7 @@ const MARKUP = `<div class="accent" aria-hidden="true"></div>
       </ol>
       <div class="actions">
         <button type="submit" id="activate" class="primary">Save &amp; activate</button>
+        <button type="button" id="save-anyway" class="secondary" hidden aria-label="Save your key without testing the connection">Save anyway</button>
       </div>
       <p id="status" role="status" aria-live="polite" hidden></p>
     </section>
@@ -121,6 +125,10 @@ const MARKUP = `<div class="accent" aria-hidden="true"></div>
 export class OnboardingView extends HTMLElement {
   private root!: ShadowRoot;
   private _pendingValue: OnboardingValue | null = null;
+  // C2: guards "exactly one connection.test call per explicit click" — true from the moment
+  // either button is pressed until the composition root calls setBusy(false) on a failure (a
+  // pass never calls it back; the view is torn down when settings-form replaces it).
+  private _busy = false;
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -141,6 +149,7 @@ export class OnboardingView extends HTMLElement {
       e.preventDefault();
       this.submit();
     });
+    this.q<HTMLButtonElement>('#save-anyway').addEventListener('click', () => this.submitAnyway());
 
     if (this._pendingValue !== null) {
       this.value = this._pendingValue;
@@ -151,14 +160,16 @@ export class OnboardingView extends HTMLElement {
     key.focus();
   }
 
-  /** Validate then emit `save` so the host (options page) can persist + advance to settings. */
+  /** Validate then emit `save` so the host (options page) can persist + test + advance. */
   private submit(): void {
+    if (this._busy) return;
     const apiKey = this.q<HTMLInputElement>('#key').value.trim();
     if (apiKey.length === 0) {
       this.setStatus('Paste your Gemini API key to activate the extension.', 'error');
       this.q<HTMLInputElement>('#key').focus();
       return;
     }
+    this.setBusy(true);
     this.dispatchEvent(
       new CustomEvent<OnboardingValue>('save', {
         detail: { apiKey, targetLang: this.q<HTMLSelectElement>('#target').value },
@@ -166,6 +177,49 @@ export class OnboardingView extends HTMLElement {
         composed: true,
       }),
     );
+  }
+
+  /**
+   * C2: the "Save anyway" escape hatch — validated identically to submit(), but emits a
+   * distinct event so the host knows to skip connection.test entirely (a deliberate bypass,
+   * not a retry) and persist with a "not verified" status instead. Only ever visible after a
+   * NETWORK-class connection.test failure (host-controlled via showSaveAnyway).
+   */
+  private submitAnyway(): void {
+    if (this._busy) return;
+    const apiKey = this.q<HTMLInputElement>('#key').value.trim();
+    if (apiKey.length === 0) {
+      this.setStatus('Paste your Gemini API key to activate the extension.', 'error');
+      this.q<HTMLInputElement>('#key').focus();
+      return;
+    }
+    this.setBusy(true);
+    this.dispatchEvent(
+      new CustomEvent<OnboardingValue>('save-anyway', {
+        detail: { apiKey, targetLang: this.q<HTMLSelectElement>('#target').value },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  /**
+   * C2: reflect an in-flight connection.test (or the save-anyway persist) in the UI — disables
+   * both buttons (defense-in-depth alongside the _busy guard) and relabels Save & activate.
+   * Turning busy ON also hides any stale "Save anyway" from a previous failed attempt.
+   */
+  setBusy(busy: boolean): void {
+    this._busy = busy;
+    const activate = this.q<HTMLButtonElement>('#activate');
+    activate.disabled = busy;
+    activate.textContent = busy ? 'Activating…' : 'Save & activate';
+    this.q<HTMLButtonElement>('#save-anyway').disabled = busy;
+    if (busy) this.showSaveAnyway(false);
+  }
+
+  /** C2: show/hide the escape hatch. The host decides when (NETWORK-class failures only). */
+  showSaveAnyway(show: boolean): void {
+    this.q<HTMLButtonElement>('#save-anyway').hidden = !show;
   }
 
   /** Reflect what is done vs. still missing: language is always ready, the key is the gate. */
