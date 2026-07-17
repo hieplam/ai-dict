@@ -132,9 +132,9 @@ shipped; when it ships, its site list will gate the whole content script, includ
    `performance.getEntriesByName('ad-highlight-scan')[0].duration < 50`; second test with
    `highlightSavedWords: false` seeded → no highlight registered; third: naive variants ('banks'
    highlighted for saved 'bank').
-6. **Evidence video** (`b3-evidence.spec.ts`, `PLAYWRIGHT_RUN_EVIDENCE=1` gate) — BEFORE (master
-   build: no underlines) / AFTER (branch: underlines visible; toggle the setting off in options →
-   reload → gone).
+6. ~~Evidence video~~ **Retired (owner ruling 2026-07-16 — media evidence policy).** No
+   `b3-evidence.spec.ts`; the PR body carries a written "Testing performed" section instead
+   (suites, counts, e2e scenarios, gates). The B3 plan already reflects this.
 
 ## 5. Files touched
 
