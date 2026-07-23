@@ -834,6 +834,19 @@ explicitly below so the orchestrator can serialize correctly):
   A3 (`LookupRequest.refine`), B12, B14, and any future B6 delete-message work in that class.
   Two cards adding _different_ new message types to the same `switch` in parallel will conflict on
   the same few lines even though their payloads are unrelated — serialize.
+- **Identical-message race on `saved.list` itself** — B6, B8, B9, B10, B11, and B15 are not just
+  sharing the hot-file class above; five of them (B6, B8, B9, B11, B15) each independently propose
+  adding the exact same `'saved.list'` request/reply arm (bare `{ type: 'saved.list' }` →
+  `{ ok: true, type: 'saved.list', entries: SavedWordEntry[] }`), and B10 is a pure consumer of it.
+  Each creator card's plan carries a grep-first guard (`grep -n "'saved.list'"
+packages/app/src/wire.ts`) that skips re-adding the arm if a sibling already shipped it and
+  verifies the shape matches byte-for-byte before proceeding — but that guard only protects
+  against a stale read, not a concurrent write: if two of these cards' wire/router tasks run at
+  the same time, both can observe "no match" and then both attempt to add the arm, producing a
+  merge conflict (or, worse, two structurally-different arms if the guard is skipped). The
+  orchestrator must serialize these cards' wire/router tasks against each other — never run two of
+  {B6, B8, B9, B11, B15}'s `saved.list`-adding tasks concurrently, and let whichever lands first
+  make the others' guards take the skip branch.
 - **`packages/app/src/domain/types.ts`** — touched by this card (`HistoryEntry.url?`) and by every
   E1-schema-adjacent card (B13, B14) touching `SavedWordEntry`/`SavedWordSense` instead — different
   interfaces in the same file, low collision risk, but still worth a diff-before-rebase check if
