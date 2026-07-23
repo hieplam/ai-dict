@@ -457,6 +457,12 @@ in the new wire test fails before Step 2.
 
 - [ ] **Step 2: Implement.**
 
+If `HistoryEntry.url` already exists (landed via B15 or another card), verify it is `url?: string`
+(identical name and optionality) and skip re-adding it — B15 only adds `url`, not `title`, so
+`title` is B10-specific and still needs adding here unless a different card has already landed
+`title` too, in which case verify that field's name/optionality independently and skip it. A
+name/optionality mismatch on either field is a STOP-and-report, not a local edit.
+
 In `packages/app/src/domain/types.ts`, extend `HistoryEntry` (currently lines 136-142):
 
 ```ts
@@ -663,6 +669,10 @@ does not type-check by default; `bun run typecheck` in Step 3 is what will catch
 if the implementation is wrong).
 
 - [ ] **Step 2: Implement.**
+
+If `saved.list` already exists in `wire.ts`/`router.ts` (landed via another card — B6, B8, and B15
+pin the identical shape), verify it matches this exact request/reply shape byte-for-byte and SKIP
+creation; a shape mismatch is a STOP-and-report, not a local edit.
 
 In `packages/app/src/wire.ts`, add a new request arm to `WireMessageSchema` (currently lines 95-141)
 — insert right after the `saved.setStatus` arm (currently lines 123-127) and before `cache.clear`:

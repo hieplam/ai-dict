@@ -169,6 +169,10 @@ TypeScript compile error surfaces first, matching the "exhaustive switch, no def
 
 - [ ] **Step 2: Implement.**
 
+If `saved.list` already exists in `wire.ts`/`router.ts` (landed via another card — B6, B10, and
+B15 pin the identical shape), verify it matches this exact request/reply shape byte-for-byte and
+SKIP creation; a shape mismatch is a STOP-and-report, not a local edit.
+
 In `packages/app/src/wire.ts`, insert the new message arm into `WireMessageSchema`'s array
 immediately after the existing `saved.setStatus` arm and before `z.object({ type:
 z.literal('cache.clear') })`:
