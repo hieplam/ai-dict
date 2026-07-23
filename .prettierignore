@@ -17,3 +17,9 @@ design-system/tokens.css
 
 # Persisted Claude Code Workflow scripts; keep their generated formatting verbatim.
 .claude/workflows/
+
+# Campaign-runner machine-written state (state.json, reports, escalations, worker reports).
+# The runner rewrites these mid-run, so formatting them is a moving target that reds CI.
+# Same precedent as CHANGELOG.md above: the generator's formatting is authoritative.
+.claude/state/
+docs/tribe/campaigns/
