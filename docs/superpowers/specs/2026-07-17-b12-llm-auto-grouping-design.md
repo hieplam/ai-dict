@@ -1,9 +1,9 @@
 # B12 — LLM auto-grouping
 
 Roadmap card: `docs/ROADMAP.md` §4 B12 (Impact 3 · Effort M · Score 1.5). Depends on: B1 (shipped —
-`saved:*` keyspace, `SavedWordEntry`). Does not depend on B6 (words page) — B6's spec/plan do not
-exist yet in this batch and B12's card lists only B1 as a dependency, so this design is
-self-contained and does not assume B6's future UI.
+`saved:*` keyspace, `SavedWordEntry`). Does not depend on B6 (words page) — B6's pair was authored
+in this same batch (`docs/superpowers/specs/2026-07-17-b6-words-page-design.md`), but B12's card
+lists only B1 as a dependency, so this design is self-contained and does not assume B6's UI.
 
 ## 1. Problem (grounded in code)
 
@@ -158,7 +158,7 @@ new escalation." Adding an optional array is additive; no escalation needed.
 
 ## 5. Design question 4 — where does the button/results UI live?
 
-There is no saved-words list page yet (that's B6, unauthored in this batch, not a B12 dependency).
+There is no saved-words list page yet (that's B6 — authored in this same batch but unimplemented, and not a B12 dependency).
 The side panel (`packages/app/src/ui/side-panel-view.ts`) is the one persistent, trusted extension
 surface that already owns saved-word-adjacent interactions today (the star/status toggles bubble
 through `side-panel.ts`, `:176-211`) and already has a precedent for a titled list section
