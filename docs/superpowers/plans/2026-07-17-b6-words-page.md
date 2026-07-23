@@ -489,6 +489,10 @@ input type requires a valid `WireMessage`).
 
 - [ ] **Step 2: Implement.**
 
+If `saved.list` already exists in `wire.ts`/`router.ts` (landed via another card — B8, B10, and
+B15 pin the identical shape), verify it matches this exact request/reply shape byte-for-byte and
+SKIP creation; a shape mismatch is a STOP-and-report, not a local edit.
+
 In `packages/app/src/wire.ts`, add the new message arm to `WireMessageSchema`'s array, right after
 the `'saved.setStatus'` arm (`wire.ts:121-127`) and before `'cache.clear'` (`wire.ts:128`):
 
@@ -1109,51 +1113,28 @@ export class WordsPageView extends HTMLElement {
 ```
 
 - [ ] **Step 4: Register and export.** In `packages/app/src/ui/register.ts`, import `WordsPageView`
-      and register it inside `registerSidePanel()`:
+      and register it inside `registerSidePanel()`, as two anchored edits (current file is 27
+      lines):
+  - Insert the import after `register.ts:5` (`import { SidePanelView } from './side-panel-view';`):
 
-```ts
-import { LookupTrigger } from './lookup-trigger';
-import { LookupCard } from './lookup-card';
-import { BottomSheet } from './bottom-sheet';
-import { SettingsForm } from './settings-form';
-import { SidePanelView } from './side-panel-view';
-import { WordsPageView } from './words-page-view';
-import { OnboardingView } from './onboarding-view';
+  ```ts
+  import { WordsPageView } from './words-page-view';
+  ```
 
-export function registerContentElements(): void {
-  if (!customElements.get('lookup-trigger')) customElements.define('lookup-trigger', LookupTrigger);
-  if (!customElements.get('lookup-card')) customElements.define('lookup-card', LookupCard);
-  if (!customElements.get('bottom-sheet')) customElements.define('bottom-sheet', BottomSheet);
-}
+  - Insert the registration call after `register.ts:16` (the existing
+    `customElements.define('side-panel-view', SidePanelView);` line, i.e. right before
+    `registerSidePanel()`'s closing `}` on line 17):
 
-export function registerSidePanel(): void {
-  if (!customElements.get('side-panel-view'))
-    customElements.define('side-panel-view', SidePanelView);
+  ```ts
   if (!customElements.get('words-page-view'))
     customElements.define('words-page-view', WordsPageView);
-}
+  ```
 
-export function registerSettingsForm(): void {
-  if (!customElements.get('settings-form')) customElements.define('settings-form', SettingsForm);
-}
-
-export function registerOnboarding(): void {
-  if (!customElements.get('onboarding-view'))
-    customElements.define('onboarding-view', OnboardingView);
-}
-```
-
-In `packages/app/src/ui/index.ts`, add the new barrel export alongside `side-panel-view`:
+In `packages/app/src/ui/index.ts`, append the new barrel export after `index.ts:5`
+(`export * from './side-panel-view';`, current file is 8 lines):
 
 ```ts
-export * from './lookup-trigger';
-export * from './lookup-card';
-export * from './bottom-sheet';
-export * from './settings-form';
-export * from './side-panel-view';
 export * from './words-page-view';
-export * from './onboarding-view';
-export * from './register';
 ```
 
 Run:
@@ -1163,7 +1144,7 @@ cd packages/app && bun run typecheck
 bunx vitest run test/ui/words-page-view.test.ts
 ```
 
-Expected: typecheck clean; all 11 tests pass.
+Expected: typecheck clean; all 12 tests pass.
 
 - [ ] **Step 5: Commit** — gate, then commit:
 
