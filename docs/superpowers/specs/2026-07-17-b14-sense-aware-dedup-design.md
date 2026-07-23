@@ -114,7 +114,9 @@ did zero writes when it replied `saved.conflict`).
 type, so this is NOT a case where the "wire arm + router case in one task" rule
 (CONTRACTS §2) applies to a _brand-new_ discriminated-union member on the request side — but the
 reply-side addition and the `saved.save` handler change are still landed in one task together
-because they're two ends of the same round-trip (see the plan's Task 2).**
+because they're two ends of the same round-trip — together with the domain change, since
+`savedWordUpsert`'s return-type change and its router caller cannot typecheck apart (see the
+plan's Task 1).**
 
 Grounding — `saved.save`'s current payload (`wire.ts:111-119`):
 
@@ -732,7 +734,7 @@ Full-file rewrite (every `savedWordUpsert` call site's return shape changes from
   optional, back-compat with every existing message in flight).
 - A `{ok:true, type:'saved.conflict', word, senseCount}` reply parses; rejects a `saved.conflict`
   reply missing `senseCount` or with a non-numeric one.
-- The JSON-schema snapshot test (`wire-schema.test.ts:405-409`) is regenerated (Task 2's Step 3).
+- The JSON-schema snapshot test (`wire-schema.test.ts:405-409`) is regenerated (Task 1's Step 5).
 
 ### 6.4 Unit — `packages/app/test/ui/merge-prompt.test.ts` (new)
 
