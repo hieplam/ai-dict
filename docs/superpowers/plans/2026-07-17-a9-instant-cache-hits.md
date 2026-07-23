@@ -680,9 +680,9 @@ read/write path), and `side-panel.spec.ts` (regression guard — this task's edi
 `resultToFocus`) all pass.
 
 - [ ] **Step 2: Open the PR.** Title: `[A9InstantCacheHits] Instant cache hits`. Regular merge
-      (no squash). Include the Jira link per the repo convention and a **"Testing performed"**
-      section per this worktree's evidence policy (design spec §6) instead of screenshots/video —
-      list the suites above with pass counts:
+      (no squash). `## JIRA ticket` section reads `n/a — this repo is not Jira-tracked`. Include a
+      **"Testing performed"** section per this worktree's evidence policy (design spec §6) instead
+      of screenshots/video — list the suites above with pass counts:
 
       - Unit: `lookup-card.test.ts` (+4), `inline-bottom-sheet-renderer.test.ts` (+2),
         `cache-policy.test.ts` (unchanged pass count, regression-proves the comment-only edit).

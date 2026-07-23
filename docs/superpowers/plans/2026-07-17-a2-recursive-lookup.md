@@ -105,7 +105,7 @@ export interface SelectionEvent {
       `packages/app/test/app/dom-selection-source.test.ts`, inside the existing
       `describe('defaultReader (DOM selection glue via window.getSelection)', ...)` block, just
       before its closing `});` (after the existing `'returns null when selected text is
-  whitespace-only'` test):
+whitespace-only'` test):
 
 ```ts
 it('stamps insideResult: true when the selection starts inside a .lookup-answer element (A2)', () => {
@@ -1513,8 +1513,9 @@ all pass.
 
 ## PR
 
-Title: `[A2RecursiveLookup] A2 — Recursive lookup`. Regular merge (no squash). Jira link per the
-repo convention. Include a **"Testing performed"** section per this worktree's evidence policy
+Title: `[A2RecursiveLookup] A2 — Recursive lookup`. Regular merge (no squash). `## JIRA ticket`
+section reads `n/a — this repo is not Jira-tracked`. Include a **"Testing performed"** section per
+this worktree's evidence policy
 (§10 of the design spec) instead of screenshots/video — list the suites above with pass counts,
 and explicitly call out: unit test counts per file (Tasks 1-5), the 3 e2e scenarios in
 `a2-recursive-lookup.spec.ts` with a one-line description of what each proves (chain+Back+depth

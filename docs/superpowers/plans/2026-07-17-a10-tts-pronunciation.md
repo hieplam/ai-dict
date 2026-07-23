@@ -636,6 +636,6 @@ touches — the save row and the defined-as row) all pass.
 
 ## PR
 
-Regular merge (no squash). Jira link per the repo convention. Include a **"Testing performed"**
-section per this worktree's evidence policy (design spec §7) instead of screenshots/video — list
-the suites above with pass counts.
+Regular merge (no squash). `## JIRA ticket` section reads `n/a — this repo is not Jira-tracked`.
+Include a **"Testing performed"** section per this worktree's evidence policy (design spec §7)
+instead of screenshots/video — list the suites above with pass counts.

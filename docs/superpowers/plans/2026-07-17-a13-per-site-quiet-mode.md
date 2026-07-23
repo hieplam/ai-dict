@@ -1483,8 +1483,8 @@ cleared; the new `a13-per-site-quiet-mode.spec.ts` passes, and the regression gu
 - [ ] Open the PR:
   - Title: `[A13QuietMode] Per-site quiet mode`
   - Regular merge commit — **squash prohibited** (owner ruling 2026-07-16).
-  - Jira ticket link per the repo convention: n/a (repo is not Jira-tracked)
-    (branch-suffix-derived; correct if an actual Jira ticket ID exists for this card instead).
+  - `## JIRA ticket` section reads `n/a` — this repo carries no Jira tracker at all, so there is
+    no ticket ID to substitute.
   - Body includes a **"Testing performed"** section (owner ruling 2026-07-16 — no
     screenshots/video for this PR; no `pr-assets/*` branch) listing:
     - Unit: `bun run test` — full suite green, including the new `quiet-site-policy.test.ts`

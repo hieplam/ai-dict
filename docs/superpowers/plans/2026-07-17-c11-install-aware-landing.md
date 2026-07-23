@@ -672,8 +672,9 @@ file with) all pass.
 
 ## PR
 
-Regular merge (no squash). Jira link per the repo convention. Include a **"Testing performed"**
-section per this worktree's evidence policy (§7 of the design spec) instead of screenshots/video —
-list the suites above with pass counts. Note in the PR description that `docs/index.html`'s edit
+Regular merge (no squash). `## JIRA ticket` section reads `n/a — this repo is not Jira-tracked`.
+Include a **"Testing performed"** section per this worktree's evidence policy (§7 of the design
+spec) instead of screenshots/video — list the suites above with pass counts. Note in the PR
+description that `docs/index.html`'s edit
 ships live the moment the merge commit lands on `master` (GitHub Pages serves `/docs` directly), and
 flag the C3 concurrency note (design spec §8) if C3's PR is open at the same time.

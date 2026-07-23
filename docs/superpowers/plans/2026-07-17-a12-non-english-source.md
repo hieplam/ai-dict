@@ -1846,8 +1846,9 @@ new A12 e2e spec plus the regression guards for the shared prompt-builder/provid
 - [ ] **Step 2: Open the PR.**
 
 Branch: `feature/A12NonEnglishSource`. Title: `[A12NonEnglishSource] Non-English source pages`.
-Regular merge (no squash — owner ruling 2026-07-16). Jira link per the repo convention. Include a
-**"Testing performed"** section per the design spec's §7 policy (no screenshots/video) — list every
+Regular merge (no squash — owner ruling 2026-07-16). `## JIRA ticket` section reads `n/a — this
+repo is not Jira-tracked`. Include a **"Testing performed"** section per the design spec's §7
+policy (no screenshots/video) — list every
 suite from Step 1 with its pass count. Mention explicitly in the PR body: _no landing-page, store-
 listing, or marketing copy changes_ (per the E3 "build, don't advertise" ruling), so a reviewer does
 not go looking for one.
