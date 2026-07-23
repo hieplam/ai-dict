@@ -92,3 +92,104 @@ These are inherited rulings, restated because every executor brief must carry th
 7. Standing constraints from ROADMAP §3 bind unchanged: S1 key isolation · S4 sanitize model
    output (including streamed/partial) · no background LLM calls · design tokens only · ports
    architecture with a dependency-free domain.
+
+---
+
+## R3 · 2026-07-17 · C1 · The `onboarding.spec.ts` regression that R1's fix exposed
+
+**The escalation (auto-answer round 1 of a maximum 2).** R1's `chrome.tabs.create` swap works and
+C1's own new e2e is green — but it now leaves a genuine `options.html` tab open from install. The
+no-key card's "Open Settings" CTA calls `chrome.runtime.openOptionsPage()`, whose real Chrome
+behavior is to **focus/reuse an already-open same-URL tab** rather than create a new one. So
+`onboarding.spec.ts`'s third test waits for a `'page'` event that never fires and times out
+deterministically. Two options were put to me: (a) update the test's assertion, or (b) give the
+CTA its own tab-creation mechanism.
+
+**Ruling: (a) — update the test. Focusing an existing options tab IS the correct outcome. Do NOT
+build a separate tab-creation mechanism for the CTA.**
+
+Why:
+
+- Focus-and-reuse is `openOptionsPage()`'s documented Chrome semantics, and it is the better
+  product behavior: one settings tab, not two.
+- **Duplicate settings tabs are actively harmful in _this_ product.** A16 shipped the sticky save
+  bar and its "Unsaved changes" cue specifically because silent settings data loss is a real,
+  already-shipped-against failure mode here (ROADMAP A16: "the user edits a field, navigates away,
+  and never realizes it was never saved"). Two settings tabs means edit in one, save the other,
+  lose the work. Option (b) would manufacture that exact hazard deliberately.
+- Option (b) also mutates the **shared** router `openOptions` callback, changing behavior for
+  every caller — a far wider blast radius than C1's own fence, incurred purely to keep one test's
+  assertion literal. The assertion encodes the _old broken mechanism's_ incidental side effect
+  (a new tab appeared only because `openOptionsPage()` had silently failed at install), not a
+  product promise.
+- **No product promise changes**, so this is not an owner escalation: the CTA still takes the user
+  to the options page. Nothing promises "in a _new_ tab".
+
+**MANDATORY GUARD — the replacement assertion MUST stay falsifiable.** The old
+`waitForEvent('page')` had real power: it failed if the CTA did nothing. Do **NOT** replace it
+with "an `options.html` tab exists" — that is now **tautological** (install already opened one),
+so it would pass even if the button were completely broken. Silently gutting a live regression
+test while appearing to fix it is the one outcome this ruling forbids.
+
+Satisfy it in this preference order:
+
+1. **Assert the transition the click causes:** immediately before the click the `options.html` tab
+   is NOT the active tab; after the click it IS the active/focused tab. Additionally assert
+   **exactly one** `options.html` tab exists afterwards (proves reuse, not duplication).
+2. **If tab activation cannot be observed reliably** in this `--headless=new` harness: in the
+   test's arrange step explicitly close the install-created options tab, then keep the original
+   `waitForEvent('page')` assertion unchanged (proving the create path still works).
+3. **Whichever you use, PROVE falsifiability:** temporarily break the CTA, show the test RED,
+   restore it, show it GREEN. Record both runs in the report. A test that cannot be demonstrated
+   to fail is not evidence.
+
+**Scope under this ruling:** `packages/extension-chrome/e2e/onboarding.spec.ts` is **IN** scope for
+C1. The router's `openOptions` callback and R1's `sw.ts` swap are **NOT** to be changed.
+
+**The plan's §5 claim "no existing test's assertions change" is SUPERSEDED** — it rested on a
+mechanism (`openOptionsPage()` at install) that never actually worked, per R1. Say so plainly in
+the PR's "Testing performed" section rather than quietly editing the test.
+
+---
+
+## R4 · 2026-07-17 · campaign-wide · The 2026-07-17 rate-limit stall (context, not a ruling)
+
+The first runner pass stalled for a reason unrelated to any card's merits: the account's
+**five-hour session usage limit** (HTTP 429, overage disabled at org level). C5, C7 and C8 each
+died after a single turn having done nothing; C2 stalled mid-implementation after 3 real commits.
+This is recorded so no executor mistakes those cards for failed work and starts over: **C2's
+commits on `feature/C2VerifiedActivation` are valid and must be continued, not rebuilt.** The
+limit reset at 09:10 local.
+
+---
+
+## R5 · 2026-07-17 · campaign-wide · NEVER background the e2e/gate run (livelock — binding on every card)
+
+**Observed twice, cost ~2 usage windows.** An executor session that launches the e2e suite as a
+**background** task and then ends its turn to "wait for the notification" **kills itself**: ending
+the turn ends the session, the runner scores it `session_incomplete` (exit 3), and the backgrounded
+e2e process dies with its parent. The next pass resumes into the identical trap. This is a
+livelock, not a slow test — no amount of waiting resolves it.
+
+**Ruling — binding on every card in this campaign:**
+
+1. **Run every gate in the FOREGROUND**, with an explicit generous timeout. Never `&`, never a
+   background task, never "I'll wait for the notification", never `ScheduleWakeup` (that tool is
+   for `/loop` pacing and does nothing here).
+2. **Budget the timeout generously — but the Bash tool's MAXIMUM is `600000` ms (10 min).**
+   Pass `timeout: 600000` explicitly on every gate/e2e Bash call. The default is only 120000 ms
+   (2 min), which the ~5m30s e2e suite blows through — **that default is WHY sessions reach for
+   the background in the first place.** 600000 ms comfortably covers the suite. A foreground
+   command that takes 6 minutes is completely normal and correct here — do not "optimize" it into
+   the background.
+   (Correction 2026-07-17: an earlier revision of this ruling said 900000 ms. That EXCEEDS the
+   tool's 600000 ms cap and would be rejected/clamped — use 600000.)
+3. **If a single command genuinely cannot fit the timeout**, split the run **by spec file**
+   (exact spec names — learnings #5, never bare substrings) and run each in the foreground.
+   Splitting is always preferred over backgrounding.
+4. **Never poll a background job** you started; if you have already backgrounded one by mistake,
+   kill it and re-run in the foreground rather than ending your turn to wait.
+
+Rationale: the runner's only signal of progress is the session completing its turn. A session that
+ends its turn to wait is indistinguishable from a dead one, and the runner is correct to treat it
+as incomplete. Foreground-with-a-long-timeout is the only shape that survives.

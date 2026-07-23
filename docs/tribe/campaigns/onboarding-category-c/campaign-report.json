@@ -1,0 +1,37 @@
+{
+  "v": 1,
+  "campaign": "onboarding-category-c",
+  "run": {
+    "startedAt": "2026-07-17T02:17:03.800Z",
+    "endedAt": "2026-07-17T02:46:42.978Z",
+    "exitCode": 3,
+    "reason": "session_incomplete"
+  },
+  "cards": {
+    "C1": {
+      "outcome": "not_reached"
+    },
+    "C2": {
+      "outcome": "not_reached"
+    },
+    "C5": {
+      "outcome": "not_reached"
+    },
+    "C6": {
+      "outcome": "not_reached"
+    },
+    "C7": {
+      "outcome": "not_reached"
+    },
+    "C8": {
+      "outcome": "not_reached"
+    }
+  },
+  "pending": [],
+  "stats": {
+    "shipped": 0,
+    "escalated": 0,
+    "blocked": 0,
+    "notReached": 6
+  }
+}
