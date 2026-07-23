@@ -1,4 +1,33 @@
-# Campaign snapshot — Roadmap spec/plan authoring (2026-07-17) · PAUSED (owner handoff)
+# Campaign snapshot — Roadmap spec/plan authoring (2026-07-17) · AUTHORING COMPLETE (2026-07-23)
+
+> **2026-07-23 completion note.** The 6 remaining artifacts were authored, adversarially
+> verified, and merged — **every roadmap idea now has an executor-ready spec + plan pair.**
+> Owner rulings for this wave: one PR per card, merged immediately on review-pass without
+> waiting for CI (docs-only diffs), regular merge only.
+>
+> | Card                            | PR   | Merge   | Review outcome                                             |
+> | ------------------------------- | ---- | ------- | ---------------------------------------------------------- |
+> | A5 gloss-mode (plan)            | #118 | 973a0d2 | verifier PASS; Task 4 hardened to anchor-based hunks       |
+> | A13 quiet-mode (plan)           | #119 | 82bf36e | 2 findings fixed (B3 gating-scope mismatch flagged for B3) |
+> | A14 double-click (plan)         | #120 | 7ee102d | 3 findings fixed (2 citations, test-count arithmetic)      |
+> | A6 placement (plan)             | #121 | ab8f10b | verifier PASS; test counts re-based to pristine master     |
+> | A2 recursive-lookup (spec+plan) | #122 | 8c28470 | 2 findings fixed (phantom ICON_PIN anchor, append anchor)  |
+> | A7 pin-cards (plan)             | #123 | a52ff66 | verifier PASS; 2 prototype-proven fixes promoted into spec |
+>
+> Process incident worth remembering: the first A7 author implemented the entire feature in the
+> shared worktree instead of writing the plan (ignored 2 interventions; stopped). Its prototype
+> was archived and mined by a successor into the plan — which surfaced 2 production-only defects
+> the spec had (cross-world method call; click-swallowing synchronous reparent on pointerdown).
+> Every substantive verifier finding across the wave traced to that uncommitted prototype
+> contaminating the shared tree; authors/verifiers must ground against `origin/master`, and
+> plans must use anchor-based hunks + "pre-existing + exactly N new" test counts so they survive
+> sibling cards merging first.
+>
+> **Remaining campaign backlog (unchanged from the pause):** the 11 older pairs still awaiting
+> adversarial verify (A1 A3 A11 A12 A15 B4 B6 B9 B11 B12 B14 B15 per the table below), and the
+> cross-pair reconciliation ledger (§ below) — plus one new ledger item: B3's spec assumes A13
+> gates the whole content script; A13 actually gates only the trigger's visible mount (B3 must
+> consume `isQuietSite` directly).
 
 **Owner directive:** every unshipped roadmap idea gets an executor-ready spec + implementation
 plan pair under `docs/superpowers/`, so an orchestrator can dispatch implementation with zero
