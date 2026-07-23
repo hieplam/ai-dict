@@ -243,7 +243,7 @@ internal `ensureCard()` listeners.
 (`InlineBottomSheetRenderer`), never in the side panel (`side-panel-view.ts`/`side-panel.ts`).
 This is grounded in two facts already true of the codebase:
 
-1. `content.ts`'s own `dismissAll`/mirror comment (`content.ts:272-274`) already documents that
+1. `side-panel.ts`'s own persistent-panel comment (`side-panel.ts:272-273`) already documents that
    the side panel is deliberately **not** kept in sync with every local, non-lookup change to the
    in-page card ("`state === 'close'`… is intentionally ignored: the panel is persistent and keeps
    showing the last lookup"). A local-only "Back to original" (2.4(b), no wire call) is the same
