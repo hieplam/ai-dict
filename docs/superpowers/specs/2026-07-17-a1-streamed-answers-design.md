@@ -442,9 +442,20 @@ call (line 133) becomes:
 ```ts
 const result = await deps.client.lookup(req, {
   signal: controller.signal,
-  onChunk: (md, definedAs) => {
-    if (!cancelled.has(requestId)) deps.onLookupChunk?.(requestId, md, definedAs);
-  },
+  // A1: the `onChunk` KEY ITSELF is only attached when the composition root wants push-forwarding
+  // (deps.onLookupChunk supplied) — never an unconditional key with a no-op body. GeminiLookupClient
+  // dispatches to the streaming SSE endpoint purely on `opts?.onChunk` truthiness (§4.3); an
+  // unconditionally-present key (even one whose body is a guarded no-op) would force EVERY Gemini
+  // lookup onto the streaming endpoint regardless of whether anything downstream consumes the
+  // chunks — breaking the card's "no behavior change for the non-streaming path" fence (§5) for
+  // both Chrome (before sw.ts opts in, §4.5) and Safari (which never opts in, §6).
+  ...(deps.onLookupChunk
+    ? {
+        onChunk: (md: string, definedAs?: { term: string; isIdiom: boolean }) => {
+          if (!cancelled.has(requestId)) deps.onLookupChunk?.(requestId, md, definedAs);
+        },
+      }
+    : {}),
 });
 ```
 
@@ -455,6 +466,13 @@ renderer. **`buildRouter`'s exported function signature — `(msg: WireMessage) 
 — does not change.** No new `RouterReply`/`WireReply` variant is added; `onLookupChunk` is a
 side-channel callback the composition root supplies, symmetric with the already-optional
 `openOptions`/`errlog` deps (`router.ts:57,63`).
+
+**The streaming path activates ONLY when the composition root supplies `deps.onLookupChunk`** — this
+is the single gate, checked once per `handleLookup` call via the conditional spread above, not a
+per-chunk guard. A composition root that never sets `RouterDeps.onLookupChunk` (Safari's unmodified
+shell, §6, or Chrome before Task 8 wires `sw.ts`) causes `client.lookup(req, {...})` to be called
+with no `onChunk` key at all, so `GeminiLookupClient` takes its existing, unmodified `runHttpLookup`
+branch (§4.3) — identical to today's behavior, not merely "the callback fires but nothing listens."
 
 ### 4.5 `packages/extension-chrome/src/sw.ts` — SW → content-script push
 
@@ -764,10 +782,13 @@ E2-style escalation), `packages/app/src/domain/defined-as.ts`, `translation-line
 `prompt-template.ts`, `default-template.ts` (reused exactly as written, zero edits),
 `packages/app/src/ui/side-panel-view.ts` (§4.11), `packages/extension-chrome/src/manifest.json`
 (§4.5 — no new permission), `packages/extension-safari/**` (Chrome-only card; Safari's shell
-already degrades correctly with zero changes because `GeminiLookupClient.lookup()` called with no
-`opts.onChunk` — which is exactly what Safari's presumed unmodified composition root would do —
-takes the pre-existing non-streaming branch, §4.3; wiring Safari's `sw.ts`/`content.ts` to actually
-_use_ streaming is explicit future work, not silently broken today).
+already degrades correctly with zero changes because Safari's presumed unmodified composition root
+never sets `RouterDeps.onLookupChunk` — so §4.4's conditional spread never attaches an `onChunk` key
+to `client.lookup(...)` at all for a Safari-routed request, not merely that Safari's Gemini client
+chooses not to act on one. `GeminiLookupClient.lookup()` therefore sees an `opts` with no
+`onChunk` — exactly what it would see with zero changes — and takes the pre-existing non-streaming
+branch, §4.3; wiring Safari's `sw.ts`/`content.ts` to actually _use_ streaming is explicit future
+work, not silently broken today).
 
 ## 7. Testing strategy
 
@@ -923,5 +944,19 @@ Category A/B cards — the orchestrator must serialize against these, not run th
 - **`packages/app/src/ports.ts`** — not separately listed in CONTRACTS §5's registry, but every
   card touching `ResultRenderer`/`LookupClient` shares it; flagged here because this card is the
   first to add an optional method to `ResultRenderer` since the registry was written.
+- **`packages/app/src/domain/workflow.ts`** — also touched by the already-merged A5 (gloss mode)
+  and A6 (smart card placement) plans: A5 adds an `anchor` parameter to the `renderLoading` call
+  site and an `anchor: e.anchor` field to the `ctx` object literal (A5 design spec §9's
+  Concurrency section flags this same file for orchestrator awareness); A6 design spec §7
+  explicitly recommends serializing A1 against A6 on this exact file, since A1 "is the card most
+  likely to also touch `runLookupWorkflow`'s render-call sequence." This card's own change here
+  is the single-line `onChunk` addition to the `deps.client.lookup(...)` call (§4.10) — additive,
+  but on the same call site A5 and A6 also touch, so serialize against whichever of A1/A5/A6 is
+  in flight first; the others rebase past it.
+- **`packages/app/test/fakes/index.ts`** — also touched by A5 (adds a `loadingAnchor` field +
+  widened `renderLoading` signature to `FakeResultRenderer`, per A5's design spec §9 and plan
+  Task 2) and, by the same reasoning as `workflow.ts` above, a likely touch point for A6. This
+  card adds a `partials` field + `renderPartial` method to the same class (§7.5) — a small,
+  additive extension, but the same shared test fixture, so serialize against A5/A6 here too.
 - **Side panel (`side-panel.ts`)** — hot for A2/B6/B10/B11; this card's addition is one `else if`
   branch, low conflict risk but still worth sequencing awareness.
