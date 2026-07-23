@@ -263,7 +263,7 @@ function isGuardedTarget(target: EventTarget | null): boolean;
 
 - [ ] **Step 1: Write the failing tests.** In `packages/app/test/app/dom-selection-source.test.ts`,
       append a new `describe` block after the existing `describe('DomSelectionSource (event
-    wiring)', ...)` block (i.e. right before `describe('defaultReader ...', ...)`):
+  wiring)', ...)` block (i.e. right before `describe('defaultReader ...', ...)`):
 
 ```ts
 describe('DomSelectionSource — A14 double-click detection (viaDoubleClick)', () => {
