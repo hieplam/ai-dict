@@ -1316,8 +1316,6 @@ cleared; the new `b10-weekly-digest.spec.ts` (2 tests) and the existing `side-pa
 ## PR
 
 Regular merge (no squash). Branch `feature/B10WeeklyDigest`, title
-`[B10WeeklyDigest] Weekly digest — side panel "This week" summary`. Jira link per the repo
-convention (`https://prospa.atlassian.net/browse/B10WeeklyDigest` if a ticket exists under that
-suffix — otherwise the PR body notes no ticket was created for this docs/roadmap-driven card).
+`[B10WeeklyDigest] Weekly digest — side panel "This week" summary`. JIRA ticket: n/a — this repo is not Jira-tracked.
 Include a **"Testing performed"** section per this worktree's evidence policy (§7 of the design
 spec) instead of screenshots/video — list the suites above with pass counts.

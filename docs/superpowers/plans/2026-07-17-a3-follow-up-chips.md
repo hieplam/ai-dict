@@ -1634,8 +1634,7 @@ Use it`, body follows the repo's de facto PR-body convention (no
 - **Description** (1-3 sentences): what changed + why, per this plan's Goal.
 - **Design choices** (≤3 bullets): link to the design spec for the full rationale; call out the
   zero-token "Back to original" restore as the one fact a reviewer must not miss.
-- **JIRA ticket**: `https://prospa.atlassian.net/browse/A3FollowUpChips` (branch-suffix pattern,
-  per the repo's git-conventions).
+- **JIRA ticket**: n/a — this repo is not Jira-tracked.
 - **Testing performed**: the suite counts and e2e scenario list from Step 2 above — no
   screenshots/video (owner ruling 2026-07-16).
 

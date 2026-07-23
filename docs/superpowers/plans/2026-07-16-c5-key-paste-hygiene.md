@@ -783,5 +783,4 @@ the new `c5-key-hygiene.spec.ts` suite pass.
   screenshots/video for this PR; see the design spec §6) naming: the `key-hygiene.test.ts` table
   test count, the extended onboarding/settings UI test counts, the `c5-key-hygiene.spec.ts` e2e
   scenario names, and confirmation that lint/format/typecheck/full-suite/build all passed.
-- Jira link: `https://prospa.atlassian.net/browse/{{JIRA_TICKET}}` (ticket id = branch name
-  suffix, per `.claude/rules/git-conventions.md`).
+- Jira link: n/a — this repo is not Jira-tracked.

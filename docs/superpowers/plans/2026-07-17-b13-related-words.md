@@ -1494,8 +1494,7 @@ including:
 - **Design choices** (≤3 bullets): link to the design spec for the full rationale; call out the
   **server-side no-op persistence guarantee** (savedWordSetRelated never creates a new saved
   entry) as the one fact a reviewer must not miss.
-- **JIRA ticket**: `https://prospa.atlassian.net/browse/B13RelatedWords` (branch-suffix pattern,
-  per the repo's git-conventions).
+- **JIRA ticket**: n/a — this repo is not Jira-tracked.
 - **Testing performed**: the suite counts and e2e scenario list from Step 3 above — no
   screenshots/video (owner ruling 2026-07-16).
 
