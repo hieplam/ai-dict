@@ -159,7 +159,7 @@ min(var(--adp-card-width), calc(100% - 28px))` (`bottom-sheet.ts`'s existing `--
 each edge, `bottom-sheet.ts:25`). On narrow (mobile) viewports this reproduces the identical
 `100% - 28px` content width the old `left:0;right:0` + `padding:0 14px` combination already
 produced. On wide (desktop) viewports it caps at `420px` — the SAME value `lookup-card.ts`'s own
-`:host{...max-width:var(--adp-card-width)...}` (`lookup-card.ts:83`) already self-imposed, so the
+`:host{...max-width:var(--adp-card-width)...}` (`lookup-card.ts:88`) already self-imposed, so the
 old full-width panel's slotted card was **already** visually capped and centered at 420px via
 `::slotted(*){margin:0 auto}` (`bottom-sheet.ts:27`). The desktop visual result is therefore
 **pixel-identical** before/after this card; the only change is that `.panel`'s own box now matches
@@ -500,7 +500,7 @@ The card's own internal rendering, sanitization (S4), save/status/nudge rows, an
 are untouched — this card only changes where the `<bottom-sheet>` **wrapper** sits on screen, not
 anything about what the `<lookup-card>` renders inside it.
 
-### 3.11 No change to `packages/app/src/adapters/chrome-side-panel-mirror.ts` (Chrome) file itself
+### 3.11 No change to `packages/extension-chrome/src/adapters/chrome-side-panel-mirror.ts` (Chrome) file itself
 
 `ChromeSidePanelMirror.renderLoading(word?: string): void` keeps its existing one-parameter
 signature — TypeScript's structural typing permits a method that declares **fewer** parameters
@@ -612,17 +612,29 @@ deliberate testing-strategy choice, not a gap.
 
 ### 5.6 e2e — `packages/extension-chrome/e2e/bottom-sheet-overflow.spec.ts` (existing, updated)
 
-This spec's current assertion `expect(m.panelBottom).toBe(m.viewportH)` (line ~66) hard-codes the
-pre-A6 "always flush to the viewport bottom" behavior, which §3.5/§2.5 change (the panel now sits
-`margin` px above the viewport bottom whenever it renders in the "below" or clamped-fallback
-branch). The scenario's actual invariant — long content stays fully on-screen and scrolls inside
-the sheet, per issue #52 — is unaffected (`max-height:88dvh` is untouched). Update:
+This spec's current assertion `expect(m.panelBottom).toBe(m.viewportH)` (line 59) hard-codes the
+pre-A6 "always flush to the viewport bottom" behavior, which §3.5/§2.5 change (the panel is now
+positioned near the selection, not always flush to the bottom). The scenario's actual invariant —
+long content stays fully on-screen and scrolls inside the sheet, per issue #52 — is unaffected
+(`max-height:88dvh` is untouched). Update:
 
-- `panelBottom <= viewportH - CARD_PLACEMENT_MARGIN` and `panelBottom >= viewportH -
-CARD_PLACEMENT_MARGIN * 2` replaces the exact `toBe(m.viewportH)` (the panel is now pinned near,
-  not flush to, the bottom in this scenario's clamped-fallback case — a short 480px viewport with
-  long content, matching §2.5 point 3).
-- `panelTop >= 0` stays (still true, now with a documented margin instead of being incidental).
+- Replace the exact `toBe(m.viewportH)` with `panelBottom <= viewportH - CARD_PLACEMENT_MARGIN + 1`
+  and `panelTop >= CARD_PLACEMENT_MARGIN - 1` (±1 tolerance for `Math.round`'s existing rounding in
+  this test's own measurement code). Unlike a guess at which branch of §2.5's heuristic fires for
+  this fixture's exact anchor position (below/above/clamped — font-metric-dependent, the same flake
+  class this spec's OWN sibling scenarios in §5.5 deliberately avoid), this bound is an
+  **algorithmic invariant of `computeCardPlacement` itself**, true regardless of which branch fires:
+  the panel's own `max-height:88dvh` cap (untouched) keeps its rendered height at or under `0.88 *
+viewportH`; for this test's 480px viewport that is ≤ 422px, comfortably under `viewportH - 2 *
+margin` (464px) — so the "card taller than the viewport can ever accommodate" edge case (§2.5
+  point 3's problematic sub-branch) never triggers. That leaves only the "fits below" and "fits
+  above" branches, and BOTH of `computeCardPlacement`'s own defining conditions (`fitsBelow`/
+  `fitsAbove`) guarantee `top >= margin` and `top + card.height <= viewport.height - margin` — i.e.
+  exactly the bound above — by construction, not by guessing this fixture's rendered pixel
+  positions. A prior draft of this section asserted a guessed range instead
+  (`>= viewportH - CARD_PLACEMENT_MARGIN * 2`); corrected during spec self-review because that bound
+  is not actually implied by the algorithm and could fail depending on where the selected word's
+  line wraps at this viewport width.
 - `m.scrolls === true` stays unchanged.
 - Import `CARD_PLACEMENT_MARGIN` from `@ai-dict/app` for the bound instead of a bare magic number.
 
