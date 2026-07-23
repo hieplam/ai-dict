@@ -52,6 +52,16 @@ alternatives (a `chrome.runtime.connect` Port transport; streaming all three pro
 - Commit subject convention for every task in this plan:
   `feat: streamed answers — <task summary> (A1)`.
 - Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/A1StreamedAnswers`.
+- **Concurrency — serialize against A5/A6 on `workflow.ts` and `test/fakes/index.ts`.** The
+  already-merged A5 (gloss mode) and A6 (smart card placement) plans also modify
+  `packages/app/src/domain/workflow.ts`'s `renderLoading`/`ctx` call sites and
+  `packages/app/test/fakes/index.ts`'s `FakeResultRenderer` (A5 design spec §9's Concurrency
+  section flags both files; A6 design spec §7 explicitly recommends serializing A1 against A6 on
+  `workflow.ts`, "the card most likely to also touch `runLookupWorkflow`'s render-call sequence").
+  Before Task 4 touches either file, confirm neither A5 nor A6 landed here first — if either did,
+  the anchors/full-body snippets in Task 4 below are stale; re-locate the equivalent hunk by
+  method/field name and apply the same net change, do not paste a stale copy over their work
+  (see Task 4 Step 1's own warning).
 
 ---
 
@@ -863,10 +873,43 @@ it('never forwards a chunk for a requestId that lookup.cancel already marked can
   capturedOnChunk?.('should not be forwarded');
   expect(onLookupChunk).not.toHaveBeenCalled();
 });
+
+it('A1 regression guard: when deps.onLookupChunk is undefined, client.lookup receives NO onChunk key at all', async () => {
+  let capturedOpts: Record<string, unknown> | undefined;
+  const d = deps({
+    client: {
+      lookup: makeLookupMock((_req, opts) => {
+        capturedOpts = opts as unknown as Record<string, unknown>;
+        return Promise.resolve(result);
+      }),
+    },
+  });
+  // No onLookupChunk in deps — this is the Safari-shell / pre-Task-8-Chrome shape.
+  const router = buildRouter(d);
+  await router(lookupMsg('r3'));
+  expect('onChunk' in (capturedOpts ?? {})).toBe(false);
+});
+
+it('when deps.onLookupChunk IS provided, client.lookup receives a function onChunk', async () => {
+  let capturedOpts: Record<string, unknown> | undefined;
+  const d = deps({
+    client: {
+      lookup: makeLookupMock((_req, opts) => {
+        capturedOpts = opts as unknown as Record<string, unknown>;
+        return Promise.resolve(result);
+      }),
+    },
+  });
+  const router = buildRouter({ ...d, onLookupChunk: vi.fn() });
+  await router(lookupMsg('r4'));
+  expect(typeof capturedOpts?.['onChunk']).toBe('function');
+});
 ```
 
 Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
-Expected: failures — `onLookupChunk` is never called (not wired yet).
+Expected: failures — `onLookupChunk` is never called (not wired yet), and the "no onLookupChunk →
+no onChunk key" regression guard fails because the current unconditional wiring always attaches an
+`onChunk` key.
 
 - [ ] **Step 2: Implement.** In `packages/app/src/app/router.ts`, add to `RouterDeps` (currently
       lines 41-71), right after the existing `now?` field:
@@ -891,12 +934,20 @@ controller.signal });` line (currently line 133) with:
 ```ts
 const result = await deps.client.lookup(req, {
   signal: controller.signal,
-  // A1: forward to the composition root's push mechanism, but never for a requestId
-  // lookup.cancel has already marked — mirrors the `cancelled.has(requestId)` check just
-  // below this call, so a cancelled lookup's stray late chunks are dropped at the source.
-  onChunk: (md, definedAs) => {
-    if (!cancelled.has(requestId)) deps.onLookupChunk?.(requestId, md, definedAs);
-  },
+  // A1: the `onChunk` KEY ITSELF is only attached when the composition root wants push-forwarding
+  // (deps.onLookupChunk supplied) — NEVER an unconditional key with a guarded-no-op body.
+  // GeminiLookupClient dispatches to the streaming SSE endpoint purely on `opts?.onChunk`
+  // truthiness (gemini-lookup-client.ts) — an unconditionally-present key would force EVERY
+  // Gemini lookup onto the streaming endpoint regardless of whether anything downstream ever
+  // consumes the chunks, breaking the card's "no behavior change for the non-streaming path"
+  // fence for both Chrome (before sw.ts opts in, Task 8) and Safari (which never opts in).
+  ...(deps.onLookupChunk
+    ? {
+        onChunk: (md: string, definedAs?: { term: string; isIdiom: boolean }) => {
+          if (!cancelled.has(requestId)) deps.onLookupChunk?.(requestId, md, definedAs);
+        },
+      }
+    : {}),
 });
 ```
 
@@ -927,31 +978,36 @@ git commit -m "feat: streamed answers — router onLookupChunk wiring (A1)" \
 - Modify: `packages/app/test/fakes/index.ts`
 - Modify: `packages/app/test/workflow.test.ts`
 
-- [ ] **Step 1: Extend the shared fake first (needed by the failing test).** In
-      `packages/app/test/fakes/index.ts`, replace the `FakeResultRenderer` class body with:
+- [ ] **Step 1: Extend the shared fake first (needed by the failing test) — TARGETED, ADDITIVE
+      hunks only. Never paste a full class-body copy.**
+
+  > **⚠ Shared-file warning:** `test/fakes/index.ts`'s `FakeResultRenderer` is also modified by
+  > the already-merged A5 (gloss mode — adds a `loadingAnchor` field + a widened `renderLoading`
+  > signature) and, per A6 design spec §7, likely by A6 (smart card placement) too — see this
+  > plan's Global Constraints "Concurrency" note. The hunks below are anchored against the class
+  > as it reads on `origin/master` at authoring time (verified via `git show HEAD:packages/app/
+test/fakes/index.ts`). **Before editing, open the file and confirm each anchor snippet below
+  > still matches.** If A5 or A6 has already landed here, STOP — do not paste a stale full-class
+  > version over their work. Re-locate each hunk by its nearby field/method name (`calls`,
+  > `loadingWord`, `renderLoading`, `renderResult`, `renderError`, `close`), apply the same net
+  > change described below, and re-run this task's tests before moving on.
+
+  In `packages/app/test/fakes/index.ts`, apply these two additive hunks to the
+  `FakeResultRenderer` class:
+
+  **Hunk 1 — new field.** Locate the existing `loadingWord: string | undefined;` field
+  declaration and add, immediately after it:
 
 ```ts
-export class FakeResultRenderer implements ResultRenderer {
-  calls: string[] = [];
-  lastResult: LookupResult | null = null;
-  lastCtx: ResultRenderContext | undefined;
-  lastError: LookupError | null = null;
-  loadingWord: string | undefined;
   // A1: every renderPartial call, in order — [word, markdownSoFar, definedAs].
   partials: [string, string, { term: string; isIdiom: boolean } | undefined][] = [];
-  renderLoading(word?: string) {
-    this.calls.push('loading');
-    this.loadingWord = word;
-  }
-  renderResult(r: LookupResult, ctx?: ResultRenderContext) {
-    this.calls.push('result');
-    this.lastResult = r;
-    this.lastCtx = ctx;
-  }
-  renderError(e: LookupError) {
-    this.calls.push('error');
-    this.lastError = e;
-  }
+```
+
+**Hunk 2 — new method.** Locate the existing `close() { this.calls.push('close'); }` method and
+add the new method immediately before it (i.e. right after whatever the file's last method is
+at the time — `renderError` today):
+
+```ts
   renderPartial(
     word: string,
     markdownSoFar: string,
@@ -960,11 +1016,11 @@ export class FakeResultRenderer implements ResultRenderer {
     this.calls.push('partial');
     this.partials.push([word, markdownSoFar, definedAs]);
   }
-  close() {
-    this.calls.push('close');
-  }
-}
 ```
+
+Neither hunk touches `renderLoading`, `renderResult`, `renderError`, or `close`'s existing
+bodies — if A5 already widened `renderLoading`'s signature or added `loadingAnchor` here, this
+step leaves that untouched.
 
 - [ ] **Step 2: Write the failing test.** Add, inside `workflow.test.ts`'s existing `describe('runLookupWorkflow', ...)`
       block:
