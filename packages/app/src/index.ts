@@ -8,6 +8,7 @@ export * from './domain/cache-policy';
 export * from './domain/history-policy';
 export * from './domain/saved-words-policy';
 export * from './domain/nudge-policy';
+export * from './domain/onboarding-policy'; // C1
 export * from './domain/error-mapper';
 export {
   toErrorRecord,
