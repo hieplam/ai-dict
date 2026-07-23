@@ -1410,7 +1410,7 @@ non-breaking primitives no earlier card added.
   payoff language; see design spec §2.4.
 
 ## JIRA ticket
-* https://prospa.atlassian.net/browse/B15SiteLookupStats
+* n/a (repo is not Jira-tracked)
 
 ## Testing performed
 - Unit: `bun run test` — full suite green, including new suites in

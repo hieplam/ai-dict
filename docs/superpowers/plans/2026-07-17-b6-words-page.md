@@ -1618,7 +1618,7 @@ regression-guard specs that share files with this card (`side-panel.spec.ts`,
 ## PR
 
 Regular merge (no squash — owner ruling 2026-07-16). Title: `[B6WordsPage] Words page`. Jira link
-per the repo convention: `https://prospa.atlassian.net/browse/B6WordsPage`. Include a **"Testing
+per the repo convention: n/a (repo is not Jira-tracked). Include a **"Testing
 performed"** section per this worktree's evidence policy (design spec §6) instead of
 screenshots/video — list every suite above with pass counts (unit test file count, e2e scenario
 count, gates run). No `pr-assets/*` branch for this card.

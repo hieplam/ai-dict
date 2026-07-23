@@ -1483,7 +1483,7 @@ cleared; the new `a13-per-site-quiet-mode.spec.ts` passes, and the regression gu
 - [ ] Open the PR:
   - Title: `[A13QuietMode] Per-site quiet mode`
   - Regular merge commit — **squash prohibited** (owner ruling 2026-07-16).
-  - Jira ticket link per the repo convention: `https://prospa.atlassian.net/browse/A13QuietMode`
+  - Jira ticket link per the repo convention: n/a (repo is not Jira-tracked)
     (branch-suffix-derived; correct if an actual Jira ticket ID exists for this card instead).
   - Body includes a **"Testing performed"** section (owner ruling 2026-07-16 — no
     screenshots/video for this PR; no `pr-assets/*` branch) listing:

@@ -900,7 +900,7 @@ Playwright regression + new suites).
 
 ## JIRA ticket
 
-- https://prospa.atlassian.net/browse/C9
+- n/a (repo is not Jira-tracked)
 
 ## Merge
 

@@ -2053,7 +2053,7 @@ is never exported and never touched by import).
   build:chrome (env-cleared), build:safari — all green.
 
 ## JIRA ticket
-* https://prospa.atlassian.net/browse/B9BackupRestore
+* n/a (repo is not Jira-tracked)
 ```
 
       (Jira ticket ID follows the branch-suffix convention — `feature/B9BackupRestore` →

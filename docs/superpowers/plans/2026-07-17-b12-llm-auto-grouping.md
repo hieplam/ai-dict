@@ -1837,9 +1837,7 @@ key cleared; the new `b12-llm-auto-grouping.spec.ts` (5 tests), plus `saved-word
 ## PR
 
 Regular merge (no squash — owner ruling 2026-07-16). Title: `[B12LlmAutoGrouping] LLM
-auto-grouping for saved words`. Jira link per the repo convention
-(`https://prospa.atlassian.net/browse/B12LlmAutoGrouping` — adjust to the actual ticket ID if one
-exists). Include a **"Testing performed"** section per this worktree's evidence policy (design
+auto-grouping for saved words`. JIRA ticket: n/a — this repo is not Jira-tracked. Include a **"Testing performed"** section per this worktree's evidence policy (design
 spec §8) instead of screenshots/video — list the suites above with pass counts. Note in the PR
 body that `CONTRACTS.md` §5's hot-file prediction omitted `side-panel-view.ts`/`side-panel.ts` for
 B12 (design spec §11) — flag for the orchestrator serializing against A2/B6/B10/B11.
