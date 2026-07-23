@@ -39,7 +39,7 @@ including the two rejected merge-prompt/wire designs:
   field, keyed by the _original request's_ type, which stays `'saved.save'` for this whole flow).
 - `bun run lint` and `bun run format:check` green before every commit; `cd packages/app && bun run
 typecheck` green after every task that touches `packages/app`; `cd packages/extension-chrome && bun
-run typecheck` green from Task 5 on.
+run typecheck` green from Task 4 on.
 - E2e builds clear the ambient key: `GEMINI_API_KEY= bun run build:chrome` (or
   `build:chrome:e2e`); never rely on shell state.
 - UI reads only `--ad-*`/`--adp-*` tokens; no hard-coded colors; honor reduced-motion (no new
@@ -58,12 +58,24 @@ run typecheck` green from Task 5 on.
 
 ---
 
-### Task 1: `saved-words-policy.ts` — sense-aware `savedWordUpsert`
+### Task 1: `saved-words-policy.ts` + wire + router — sense-aware `savedWordUpsert` end-to-end
+
+> **Merged task.** `savedWordUpsert`'s return type changes from `Promise<SavedWordEntry>` to
+> `Promise<SavedWordUpsertResult>`; its sole production caller is the router's `saved.save` case.
+> Landing the domain change without the router change in the same commit fails `bun run
+typecheck` — the same "they cannot typecheck apart → ONE task" law this repo already applies to
+> wire+router pairs (CONTRACTS §2 / ROADMAP §8). Domain, wire, and router therefore land together
+> in one task with one commit.
 
 **Files:**
 
 - Modify: `packages/app/src/domain/saved-words-policy.ts`
 - Modify: `packages/app/test/saved-words-policy.test.ts`
+- Modify: `packages/app/src/wire.ts`
+- Modify: `packages/app/src/app/router.ts`
+- Modify: `packages/app/test/wire-schema.test.ts`
+- Modify: `packages/app/test/app/router.test.ts`
+- Regenerate: `packages/app/wire-schema.snapshot.json`
 
 **Interfaces:**
 
@@ -77,6 +89,14 @@ export function savedWordUpsert(
   input: SavedWordInput,
   opts?: { confirmNewSense?: boolean },
 ): Promise<SavedWordUpsertResult>;
+```
+
+```ts
+// New optional field on the existing saved.save message:
+{ type: 'saved.save', word: string, definition: string, translation: string, sentence: string,
+  url: string, title: string, confirmNewSense?: boolean }
+// New reply variant:
+{ ok: true, type: 'saved.conflict', word: string, senseCount: number }
 ```
 
 - [ ] **Step 1: Write the failing tests.** Replace the entire contents of
@@ -471,44 +491,9 @@ export async function savedWordsClear(deps: SavedWordsDeps): Promise<void> {
 ```
 
 Run: `cd packages/app && bunx vitest run test/saved-words-policy.test.ts`
-Expected: all tests pass (14 total).
+Expected: all tests pass (15 total).
 
-- [ ] **Step 3: Commit** — gate, then commit:
-
-```
-cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
-```
-
-Commit:
-
-```
-git add packages/app/src/domain/saved-words-policy.ts packages/app/test/saved-words-policy.test.ts
-git commit -m "[B14SenseAwareDedup] feat: sense-aware savedWordUpsert — conflict/duplicate/confirm branches (B14)"
-```
-
----
-
-### Task 2: Wire + router — `confirmNewSense` field and `saved.conflict` reply
-
-**Files:**
-
-- Modify: `packages/app/src/wire.ts`
-- Modify: `packages/app/src/app/router.ts`
-- Modify: `packages/app/test/wire-schema.test.ts`
-- Modify: `packages/app/test/app/router.test.ts`
-- Regenerate: `packages/app/wire-schema.snapshot.json`
-
-**Interfaces:**
-
-```ts
-// New optional field on the existing saved.save message:
-{ type: 'saved.save', word: string, definition: string, translation: string, sentence: string,
-  url: string, title: string, confirmNewSense?: boolean }
-// New reply variant:
-{ ok: true, type: 'saved.conflict', word: string, senseCount: number }
-```
-
-- [ ] **Step 1: Write the failing tests.** In `packages/app/test/wire-schema.test.ts`, inside the
+- [ ] **Step 3: Write the failing wire tests.** In `packages/app/test/wire-schema.test.ts`, inside the
       existing `describe('saved.save / saved.delete wire messages (B1)', ...)` block
       (`wire-schema.test.ts:412-497`), add these tests right after the existing
       `'accepts a valid saved.save message'` test (after line 425, before
@@ -568,9 +553,9 @@ Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts`
 Expected: 4 new failures (the schema doesn't know `confirmNewSense` or `saved.conflict` yet — note
 `z.strictObject`/plain `z.object` with an unrecognized literal `type` fails `WireMessageSchema`'s
 discriminated union match entirely, and `saved.conflict` has no matching arm in `WireReplySchema`
-yet); the JSON-schema snapshot test also now needs regeneration once the schema changes (Step 3).
+yet); the JSON-schema snapshot test also now needs regeneration once the schema changes (Step 5).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/wire.ts`:
+- [ ] **Step 4: Implement.** In `packages/app/src/wire.ts`:
   1. Add `confirmNewSense` to the `saved.save` arm (`wire.ts:111-119`):
 
 ```ts
@@ -614,9 +599,9 @@ literal, never a request `type`, per the plan's Global Constraints.)
 
 Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts -t "B14"`
 Expected: the 4 new B14 tests pass. The snapshot test (`'JSON-schema snapshot is stable'`) now
-fails — expected, fixed in Step 3.
+fails — expected, fixed in Step 5.
 
-- [ ] **Step 3: Regenerate the JSON-schema snapshot.**
+- [ ] **Step 5: Regenerate the JSON-schema snapshot.**
 
 ```
 cd packages/app && bunx vitest run test/wire-schema.test.ts -u
@@ -631,7 +616,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts
 
 Expected: all tests pass, including the snapshot test (no `-u` needed this second run).
 
-- [ ] **Step 4: Update the router.** In `packages/app/src/app/router.ts`, replace the `saved.save`
+- [ ] **Step 6: Update the router.** In `packages/app/src/app/router.ts`, replace the `saved.save`
       case (`router.ts:242-257`):
 
 ```ts
@@ -656,7 +641,7 @@ Expected: all tests pass, including the snapshot test (no `-u` needed this secon
       }
 ```
 
-- [ ] **Step 5: Write the failing router tests.** In `packages/app/test/app/router.test.ts`,
+- [ ] **Step 7: Write the failing router tests.** In `packages/app/test/app/router.test.ts`,
       replace the existing test
       `'a second saved.save for the same word (different casing) preserves savedAt, replaces senses'`
       (`router.test.ts:474-500`) with:
@@ -748,17 +733,17 @@ it('B14: a saved.save with the EXACT same sentence+url as an existing sense is a
 
 Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: the 3 new B14 tests fail against the OLD router (still replies `type:'saved'` with
-replaced senses for the different-sentence case) until Step 4's router change lands; since Step 4
-is already applied above, run this AFTER Step 4 and expect all pass. (If following strict red-green
-ordering, run this file's tests once before Step 4 to confirm the 3 new tests fail against the old
-router — `git stash` the Step 4 router.ts edit temporarily, run, then `git stash pop` — a
-convenience note, not a hard requirement given Step 4 is small and already reviewed above.)
+replaced senses for the different-sentence case) until Step 6's router change lands; since Step 6
+is already applied above, run this AFTER Step 6 and expect all pass. (If following strict red-green
+ordering, run this file's tests once before Step 6 to confirm the 3 new tests fail against the old
+router — `git stash` the Step 6 router.ts edit temporarily, run, then `git stash pop` — a
+convenience note, not a hard requirement given Step 6 is small and already reviewed above.)
 
-Expected (after Step 4): all tests in `router.test.ts` pass, including the 3 new B14 tests and the
+Expected (after Step 6): all tests in `router.test.ts` pass, including the 3 new B14 tests and the
 `'saved.save persists a new entry'`, `'saved.delete removes the entry'`, and
 `'history.clear and cache.clear never touch saved:*'` tests unchanged from before.
 
-- [ ] **Step 6: Commit** — gate, then commit:
+- [ ] **Step 8: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -767,13 +752,13 @@ cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun ru
 Commit:
 
 ```
-git add packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[B14SenseAwareDedup] feat: saved.save confirmNewSense field + saved.conflict reply (B14)"
+git add packages/app/src/domain/saved-words-policy.ts packages/app/test/saved-words-policy.test.ts packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts packages/app/wire-schema.snapshot.json
+git commit -m "[B14SenseAwareDedup] feat: sense-aware dedup — upsert conflict result + wire/router (B14)"
 ```
 
 ---
 
-### Task 3: `merge-prompt.ts` — the "Add as new sense?" UI helper
+### Task 2: `merge-prompt.ts` — the "Add as new sense?" UI helper
 
 **Files:**
 
@@ -905,7 +890,7 @@ git commit -m "[B14SenseAwareDedup] feat: buildMergePrompt UI helper (B14)"
 
 ---
 
-### Task 4: `side-panel-view.ts` — `appendToFocus` + merge-prompt CSS
+### Task 3: `side-panel-view.ts` — `appendToFocus` + merge-prompt CSS
 
 **Files:**
 
@@ -1044,7 +1029,7 @@ git commit -m "[B14SenseAwareDedup] feat: SidePanelView.appendToFocus + merge-pr
 
 ---
 
-### Task 5: `lookup-card.ts` CSS + `content.ts` — card-side merge-prompt wiring
+### Task 4: `lookup-card.ts` CSS + `content.ts` — card-side merge-prompt wiring
 
 **Files:**
 
@@ -1054,7 +1039,7 @@ git commit -m "[B14SenseAwareDedup] feat: SidePanelView.appendToFocus + merge-pr
 No dedicated unit test exists for `content.ts` in this repo — it is a composition root, covered by
 e2e only (same precedent as C2's `options.ts` and B5's own `content.ts` edits). `lookup-card.ts`'s
 change here is CSS-only (no new exported function, no new `CardState` field), so it needs no new
-unit test either — Task 7's e2e visually/structurally exercises both files together. Run the
+unit test either — Task 6's e2e visually/structurally exercises both files together. Run the
 typecheck/lint gate below so a regression elsewhere in either file is still caught immediately.
 
 - [ ] **Step 1: Implement the CSS.** In `packages/app/src/ui/lookup-card.ts`:
@@ -1066,7 +1051,12 @@ typecheck/lint gate below so a regression elsewhere in either file is still caug
 const CSS = `:host{${BASE_VARS};display:block;box-sizing:border-box;width:100%;max-width:var(--adp-card-width);margin:0 auto;font:var(--adp-text-body)/var(--adp-leading-body) var(--adp-font-sans);color:var(--ad-ink);background:var(--ad-glow),var(--ad-surface);border-radius:var(--adp-radius-card);box-shadow:var(--ad-shadow-card);overflow:hidden;color-scheme:light}
 ${THEME_CSS}
 ::selection{background:var(--ad-selection)}
+/* The 3px spruce→clay accent strip replaces the old festive rainbow ribbon: one quiet sweep,
+   clipped by the card's 18px radius. Decorative — aria-hidden on the element. */
 .accent{height:3px;background:linear-gradient(90deg,var(--ad-accent),var(--ad-warm) 92%)}
+/* One consistent 22px horizontal gutter on bar, body region and footer (§5.11) so the brand
+   mark, headword, body text and footer line all share the same left edge and an equal right
+   margin — mirrors the reference .ad-card__bar/.ad-body-region/.ad-footer padding. */
 .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px 22px 6px}
 .brand{display:inline-flex;align-items:center;gap:7px;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-bold);letter-spacing:var(--adp-tracking-label);color:var(--ad-accent-ink)}
 .mark{width:21px;height:21px;flex:none}
@@ -1075,8 +1065,11 @@ button[data-act]{display:inline-grid;place-items:center;height:var(--adp-action-
 button[data-act]:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
 button[data-act]:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 button[data-act] svg{pointer-events:none;flex:none}
+/* Close stays a bare icon — its X is universally understood and keeps the right-most spot. */
 button[data-act="close"] svg{width:14px;height:14px}
 button[data-act="side-panel"] svg{width:15px;height:15px}
+/* Settings is the labeled .text variant: gear + the word "Settings", widened, hover-fill like
+   the other icon buttons. The visible word removes the icon ambiguity with Close. */
 button[data-act="settings"]{display:inline-flex;align-items:center;gap:5px;width:auto;padding:0 11px 0 9px;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);letter-spacing:.01em}
 button[data-act="settings"] svg{width:15px;height:15px}
 button[data-act="settings"] .lbl{line-height:1}
@@ -1084,6 +1077,8 @@ button[data-act="settings"] .lbl{line-height:1}
 .region{padding:2px 22px 2px}
 .footer{display:flex;align-items:center;gap:6px;margin:8px 22px 0;padding:10px 0 13px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 .footer svg{width:13px;height:13px;flex:none}
+/* The signature headword: one serif (Georgia), with a 44×3px spruce→clay underline swatch —
+   reads like a dictionary entry's rule. Georgia is the ONLY serif on the surface. */
 ::slotted(h2){font-family:var(--adp-font-serif);font-size:var(--adp-text-headword);line-height:var(--adp-leading-tight);letter-spacing:var(--adp-tracking-head);margin:.1em 0 .4em;color:var(--ad-ink);display:inline-block;max-width:100%;overflow-wrap:anywhere;padding-bottom:5px;background:linear-gradient(90deg,var(--ad-accent),var(--ad-warm)) left bottom/44px 3px no-repeat}
 ::slotted(.err){color:var(--ad-error);font-weight:500}
 ::slotted(.mark){display:block !important;width:34px !important;height:34px !important;margin:16px auto 2px !important}
@@ -1097,6 +1092,10 @@ button[data-act="settings"] .lbl{line-height:1}
 ::slotted(.loadrow)::before{content:"";display:block;width:15px;height:15px;flex:none;border:2px solid var(--ad-line);border-top-color:var(--ad-accent);border-radius:50%;animation:spin .77s linear infinite}
 @media (prefers-reduced-motion:reduce){::slotted(.loadrow)::before{animation:none}}
 ::slotted(.errlog-consent){margin:10px 16px 0;padding-top:10px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
+/* The result metadata row (provider badge + fallback note + one-shot picker). Only the row is a
+   direct slotted child, so ::slotted sets its layout + the color/font its children inherit; the
+   children's own box decorations live in CARD_DOC_CSS (::slotted cannot reach a slotted node's
+   descendants). */
 ::slotted(.meta-row){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 ::slotted(.defined-as){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 8px;font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
 ::slotted(.save-row){display:flex;margin:6px 0 10px}
@@ -1252,13 +1251,13 @@ git commit -m "[B14SenseAwareDedup] feat: card-side merge-prompt CSS + toggle-sa
 
 ---
 
-### Task 6: `side-panel.ts` — panel-side merge-prompt wiring
+### Task 5: `side-panel.ts` — panel-side merge-prompt wiring
 
 **Files:**
 
 - Modify: `packages/extension-chrome/src/side-panel.ts`
 
-Same "composition root, e2e-only" note as Task 5 applies here — no dedicated unit test file exists
+Same "composition root, e2e-only" note as Task 4 applies here — no dedicated unit test file exists
 for `side-panel.ts`.
 
 - [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
@@ -1355,7 +1354,7 @@ git commit -m "[B14SenseAwareDedup] feat: panel-side merge-prompt wiring (B14)"
 
 ---
 
-### Task 7: e2e coverage — `b14-sense-aware-dedup.spec.ts`
+### Task 6: e2e coverage — `b14-sense-aware-dedup.spec.ts`
 
 **Files:**
 
@@ -1501,7 +1500,7 @@ git commit -m "[B14SenseAwareDedup] feat: e2e coverage for the sense-aware dedup
 
 ---
 
-## Final gate (run once, after Task 7, before opening the PR)
+## Final gate (run once, after Task 6, before opening the PR)
 
 ```
 cd packages/app && bun run typecheck
