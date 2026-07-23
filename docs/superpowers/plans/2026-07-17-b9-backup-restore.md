@@ -470,7 +470,7 @@ export async function importBackup(
 ```
 
 Run: `cd packages/app && bunx vitest run test/backup-policy.test.ts`
-Expected: all 6 tests pass.
+Expected: all 5 tests pass.
 
 - [ ] **Step 3: Commit** — gate, then commit:
 
@@ -832,7 +832,7 @@ git commit -m "[B9BackupRestore] feat: add buildBackupExport + parseBackupFile (
 { type: 'saved.list' }
 { type: 'backup.import'; mode: 'merge' | 'replace'; savedWords: SavedWordEntry[]; history: HistoryEntry[] }
 // New WireReplySchema variants:
-{ ok: true; type: 'saved-list'; entries: SavedWordEntry[] }
+{ ok: true; type: 'saved.list'; entries: SavedWordEntry[] }
 { ok: true; type: 'backup-imported'; savedWordsImported: number; historyImported: number }
 ```
 
@@ -934,10 +934,10 @@ it('[B9] backup.import rejects a saved-word entry missing a required field', () 
   expect(result.success).toBe(false);
 });
 
-it('[B9] accepts a saved-list reply with an array of entries', () => {
+it('[B9] accepts a saved.list reply with an array of entries', () => {
   const result = WireReplySchema.safeParse({
     ok: true,
-    type: 'saved-list',
+    type: 'saved.list',
     entries: [
       {
         word: 'bank',
@@ -1032,7 +1032,7 @@ z.object({
 ```ts
 z.object({
   ok: z.literal(true),
-  type: z.literal('saved-list'),
+  type: z.literal('saved.list'),
   entries: z.array(SavedWordEntrySchema),
 }),
 z.object({
@@ -1074,8 +1074,8 @@ it('saved.list returns every saved word', async () => {
     title: 't',
   });
   const reply = await route({ type: 'saved.list' });
-  expect(reply).toMatchObject({ ok: true, type: 'saved-list' });
-  if (reply === SUPPRESS || !reply.ok || reply.type !== 'saved-list') throw new Error('unexpected');
+  expect(reply).toMatchObject({ ok: true, type: 'saved.list' });
+  if (reply === SUPPRESS || !reply.ok || reply.type !== 'saved.list') throw new Error('unexpected');
   expect(reply.entries.map((e) => e.word)).toEqual(['bank']);
 });
 
@@ -1132,7 +1132,7 @@ it('backup.import replace clears a pre-existing saved word not present in the im
   });
   await route({ type: 'backup.import', mode: 'replace', savedWords: [], history: [] });
   const reply = await route({ type: 'saved.list' });
-  if (reply === SUPPRESS || !reply.ok || reply.type !== 'saved-list') throw new Error('unexpected');
+  if (reply === SUPPRESS || !reply.ok || reply.type !== 'saved.list') throw new Error('unexpected');
   expect(reply.entries).toEqual([]);
 });
 ```
@@ -1141,24 +1141,55 @@ Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: failures — `saved.list`/`backup.import` cases don't exist in the router's switch yet.
 
 - [ ] **Step 4: Implement the router cases.** In `packages/app/src/app/router.ts`:
-  1. Add `importBackup` to the import block at the top of the file (alongside
-     `savedWordUpsert, savedWordDelete, savedWordSetStatus,`):
+  1. Add `savedWordsList,` and `importBackup,` to the import block at the top of the file
+     (`router.ts:1-24`). Verified by reading the file: `savedWordsList` is **not** already
+     imported — `router.ts:13` is `savedWordUpsert,`, not `savedWordsList,`. Insert both names
+     after `evaluateNudge,`, before the `type WireMessage,` group, so the block reads:
 
 ```ts
+import {
+  mapError,
+  isLookupError,
+  cacheGet,
+  cachePut,
+  cacheClear,
+  cacheDelete,
+  historyAppend,
+  historyList,
+  historyClear,
+  historyGet,
+  historyDelete,
+  savedWordUpsert,
+  savedWordDelete,
+  savedWordSetStatus,
+  evaluateNudge,
+  savedWordsList,
   importBackup,
+  type WireMessage,
+  type WireReply,
+  type LookupError,
+  type LookupClient,
+  type SettingsStore,
+  type Storage,
+  type HistoryEntry,
+} from '../index';
 ```
 
-     (imported from `'../index'`, same as every other domain function this file already imports —
-     the barrel re-exports `domain/backup-policy` after Task 2's barrel line is added; see step 6
-     below).
+     (both imported from `'../index'`, same as every other domain function this file already
+     imports — the barrel re-exports `domain/backup-policy` after Task 2's barrel line is added;
+     see step 6 below).
 
 2. Add two cases to the exhaustive `switch (msg.type)` (right after the existing
-   `'saved.setStatus'` case, currently ending at line 266):
+   `'saved.setStatus'` case, currently ending at line 266). **Ledger guard:** if `saved.list`
+   already exists in `wire.ts`/`router.ts` (landed via another card — B6, B8, B10, and B15 pin
+   the identical zero-payload / `{entries: SavedWordEntry[]}` shape), verify it matches
+   byte-for-byte and SKIP creation (still add the `savedWordsList` import above if missing); a
+   shape mismatch is a STOP-and-report, not a local edit.
 
 ```ts
       case 'saved.list': {
         const entries = await savedWordsList({ storage: deps.kv });
-        return { ok: true, type: 'saved-list', entries };
+        return { ok: true, type: 'saved.list', entries };
       }
       case 'backup.import': {
         const result = await deps.queue.run(() =>
@@ -1173,8 +1204,8 @@ Expected: failures — `saved.list`/`backup.import` cases don't exist in the rou
       }
 ```
 
-     `savedWordsList` is already imported at the top of this file (`router.ts:13`) but never
-     called until now.
+     `savedWordsList` is imported at the top of this file per step 1 above; this is its first
+     caller.
 
 3. In `packages/app/src/index.ts`, add (anywhere among the existing `export *` lines — placing
    it next to the other `domain/*` lines keeps the barrel organized):
@@ -1476,7 +1507,7 @@ Task 8's e2e; still run the typecheck/lint gate below at the end.
 form.addEventListener('backup-export', () => {
   void Promise.all([send({ type: 'saved.list' }), send({ type: 'history.list' }), load()]).then(
     ([savedReply, historyReply, settings]) => {
-      if (!savedReply.ok || savedReply.type !== 'saved-list') {
+      if (!savedReply.ok || savedReply.type !== 'saved.list') {
         form.setStatus(savedReply.ok ? 'Unexpected reply' : savedReply.error.message, 'error');
         return;
       }
@@ -1555,8 +1586,10 @@ form.addEventListener('backup-import', (e) => {
      `theme` in `chrome.storage.local`'s stored settings object is typed as `Theme`
      (`'sepia'|'dark'|'contrast'|'system'`) while `BackupSettings.theme` is a plain `string`
      (§3.1/§4.4 of the design spec — kept loose so `app/backup.ts` has no dependency on
-     `domain/types.ts`'s `Theme` union); cast `s.theme as Theme` in the spread if `tsc` flags it
-     (import `type { Theme }` alongside the other new types above).
+     `domain/types.ts`'s `Theme` union). **Pinned:** no cast is needed here —
+     `chrome.storage.local.set`'s parameter typing accepts the plain object, so the `theme` spread
+     above stays `{ theme: s.theme }` as shown. (Safari's `browser.storage.local.set` path, Task 7
+     below, does need — and keeps — the `s.theme as Theme` cast.)
 
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean (no type errors).
@@ -1606,7 +1639,7 @@ untested beyond typecheck on the Safari side).
 form.addEventListener('backup-export', () => {
   void Promise.all([send({ type: 'saved.list' }), send({ type: 'history.list' }), load()]).then(
     ([savedReply, historyReply, settings]) => {
-      if (!savedReply.ok || savedReply.type !== 'saved-list') {
+      if (!savedReply.ok || savedReply.type !== 'saved.list') {
         form.setStatus(savedReply.ok ? 'Unexpected reply' : savedReply.error.message, 'error');
         return;
       }

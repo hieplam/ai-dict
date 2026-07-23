@@ -237,7 +237,7 @@ next to the schemas so a future reader does not "fix" it back to strict.
 ### 3.6 `saved.list` — a new wire message, needed today (not deferred to B6)
 
 Export needs every saved word; no wire path exists (`§2`). **Pinned:** add `saved.list` (no
-payload) → `{ ok: true, type: 'saved-list', entries: SavedWordEntry[] }`, routed to the existing
+payload) → `{ ok: true, type: 'saved.list', entries: SavedWordEntry[] }`, routed to the existing
 `savedWordsList` domain function unchanged. Per the Decision Log's routine wire-evolution
 reasoning (2026-07-10, A8/B2/B7 entries — "ordinary wire-protocol evolution … not an E1-style
 escalation," reaffirmed at CONTRACTS §3 "wire evolution precedent"), this is not an escalation:
@@ -541,7 +541,7 @@ Chrome's full `mountOnboarding`-adjacent code (illustrative, exact code lives in
 form.addEventListener('backup-export', () => {
   void Promise.all([send({ type: 'saved.list' }), send({ type: 'history.list' }), load()]).then(
     ([savedReply, historyReply, settings]) => {
-      if (!savedReply.ok || savedReply.type !== 'saved-list') {
+      if (!savedReply.ok || savedReply.type !== 'saved.list') {
         form.setStatus(savedReply.ok ? 'Unexpected reply' : savedReply.error.message, 'error');
         return;
       }
@@ -617,11 +617,16 @@ form.addEventListener('backup-import', (e) => {
 });
 ```
 
-Safari's mirror is byte-identical except `chrome.*` → `browser.*` and no `mountSettings` remount
-step is needed there (Safari's options.ts never introduced a two-screen onboarding/settings split
-— confirmed by reading `packages/extension-safari/src/options.ts` in full: it is a single always-
-settings screen); its version instead re-hydrates the existing form in place via
-`(form as unknown as { value: Settings }).value = fresh;` after the settings write.
+Safari's mirror is otherwise identical except for three deltas: `chrome.*` → `browser.*`; no
+`mountSettings` remount step (Safari's options.ts never introduced a two-screen onboarding/
+settings split — confirmed by reading `packages/extension-safari/src/options.ts` in full: it is a
+single always-settings screen), so its version instead re-hydrates the existing form in place via
+`(form as unknown as { value: Settings }).value = fresh;` after the settings write; and the
+`theme` field in the settings spread. **Pinned:** Chrome's `chrome.storage.local.set` parameter
+typing accepts the plain `string`-typed `BackupSettings.theme` value, so Chrome's spread needs no
+cast — `...(s.theme !== undefined ? { theme: s.theme } : {})`. Safari's `browser.storage.local.set`
+typing does not, so Safari's spread keeps the cast — `...(s.theme !== undefined ? { theme: s.theme
+as Theme } : {})` (importing `type { Theme }` alongside its other new types).
 
 ### 4.6 `packages/app/src/wire.ts` — new schemas (ONE task, per CONTRACTS §2)
 
@@ -692,7 +697,7 @@ generic `{ ok: false, type: MessageTypeEnum, ... }` reply arm, `wire.ts:183-188`
 ```ts
 z.object({
   ok: z.literal(true),
-  type: z.literal('saved-list'),
+  type: z.literal('saved.list'),
   entries: z.array(SavedWordEntrySchema),
 }),
 z.object({
@@ -715,10 +720,15 @@ AssertEqual<z.infer<typeof ImportHistoryEntrySchema>, HistoryEntry>,
 
 ### 4.7 `packages/app/src/app/router.ts` — two new cases (same task as 4.6, per CONTRACTS §2)
 
+**Ledger guard:** if `saved.list` already exists in `wire.ts`/`router.ts` (landed via another
+card — B6, B8, B10, and B15 pin the identical zero-payload / `{entries: SavedWordEntry[]}`
+shape), verify it matches byte-for-byte and SKIP creation (still add the `savedWordsList` import
+if missing); a shape mismatch is a STOP-and-report, not a local edit.
+
 ```ts
 case 'saved.list': {
   const entries = await savedWordsList({ storage: deps.kv });
-  return { ok: true, type: 'saved-list', entries };
+  return { ok: true, type: 'saved.list', entries };
 }
 case 'backup.import': {
   const result = await deps.queue.run(() =>
@@ -736,11 +746,13 @@ case 'backup.import': {
 Both added to the exhaustive `switch (msg.type)` (`router.ts:213-287`, no `default` — TypeScript's
 exhaustiveness check is what keeps this compiling only once every arm has a case, per the B5/B3
 plan-authoring rule in `docs/ROADMAP.md` §8 Decision Log, 2026-07-16). `importBackup` is imported
-from the new `domain/backup-policy.ts` (§4.3); `savedWordsList` is already imported
-(`router.ts:13`, used nowhere yet — this is its first caller). The whole `importBackup` call is
-wrapped in `deps.queue.run(...)` (the existing `WriteQueue`, `router.ts:29-39`) so a backup import
-can never interleave its writes with a concurrent `saved.save`/`saved.setStatus`/lookup-history-
-write — identical reasoning to every other KV-mutating handler in this file.
+from the new `domain/backup-policy.ts` (§4.3); `savedWordsList` is **not** already imported —
+verified by reading `router.ts`: line 13 is `savedWordUpsert,`, not `savedWordsList,` — so it
+must be added to the import block alongside `importBackup` (this is its first caller). The whole
+`importBackup` call is wrapped in `deps.queue.run(...)` (the existing `WriteQueue`,
+`router.ts:29-39`) so a backup import can never interleave its writes with a concurrent
+`saved.save`/`saved.setStatus`/lookup-history-write — identical reasoning to every other
+KV-mutating handler in this file.
 
 ### 4.8 `packages/app/src/index.ts` — barrel additions
 
