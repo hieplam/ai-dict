@@ -52,6 +52,13 @@ test('card header Settings gear opens the options page', async ({ context, exten
   const card = page.locator('bottom-sheet lookup-card');
   await expect(card).toContainText('bank', { timeout: 10_000 });
 
+  // C1 (ruling R3): the fresh-install options tab (onInstalled → chrome.tabs.create) is still open;
+  // openOptionsPage() would focus/reuse it instead of firing a 'page' event. Close any open options
+  // tab first so this test still proves the CTA/gear *creates* the options page (keeps the
+  // waitForEvent('page') assertion falsifiable).
+  for (const p of context.pages()) {
+    if (p.url().includes('options.html')) await p.close();
+  }
   const optionsPagePromise = context.waitForEvent('page');
   await card.locator('[data-act="settings"]').click();
   const optionsPage = await optionsPagePromise;
@@ -66,6 +73,13 @@ test('side panel header Settings gear opens the options page', async ({ context,
   await panel.goto(`chrome-extension://${extensionId}/side-panel.html`);
   await panel.waitForSelector('side-panel-view');
 
+  // C1 (ruling R3): the fresh-install options tab (onInstalled → chrome.tabs.create) is still open;
+  // openOptionsPage() would focus/reuse it instead of firing a 'page' event. Close any open options
+  // tab first so this test still proves the CTA/gear *creates* the options page (keeps the
+  // waitForEvent('page') assertion falsifiable).
+  for (const p of context.pages()) {
+    if (p.url().includes('options.html')) await p.close();
+  }
   const optionsPagePromise = context.waitForEvent('page');
   await panel.locator('side-panel-view .settings').click();
   const optionsPage = await optionsPagePromise;

@@ -61,6 +61,13 @@ test('no-key card shows the setup invite and "Open Settings" opens the options p
 
   // Clicking it routes content script → service worker → openOptionsPage, opening a new tab
   // that lands on the onboarding screen.
+  // C1 (ruling R3): the fresh-install options tab (onInstalled → chrome.tabs.create) is still open;
+  // openOptionsPage() would focus/reuse it instead of firing a 'page' event. Close any open options
+  // tab first so this test still proves the CTA/gear *creates* the options page (keeps the
+  // waitForEvent('page') assertion falsifiable).
+  for (const p of context.pages()) {
+    if (p.url().includes('options.html')) await p.close();
+  }
   const optionsPagePromise = context.waitForEvent('page');
   await card.locator('.setup-cta').click();
   const optionsPage = await optionsPagePromise;
