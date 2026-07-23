@@ -207,7 +207,7 @@ hover-recall-popup.ts`), registered through the SAME function that already regis
   reader clicks through.
 - Positioning: `position:fixed`, anchored below the hovered range's `getBoundingClientRect()`
   converted to `AnchorRect` — the exact `{x: r.x, y: r.y, w: r.width, h: r.height}` shape
-  `dom-selection-source.ts:27-28` already uses for the SAME kind of Range→viewport-rect
+  `dom-selection-source.ts:23` already uses for the SAME kind of Range→viewport-rect
   conversion — flipped above the word when it would overflow the viewport bottom, and clamped
   horizontally so it never overflows the right edge. (A6's future placement heuristic is a
   separate, unshipped card; this is a minimal, self-contained clamp, not a dependency on A6.)
@@ -293,7 +293,7 @@ structurally never matches anything — no separate gate to add, test, or keep i
   from the word to the popup's "View full entry" button never flickers the popup shut mid-transit.
 - **Immediate (no-grace) dismiss** on: `Escape` keydown; any `mousedown`/`touchstart` outside the
   popup element (`event.composedPath()`-aware, the exact pattern
-  `chrome-floating-trigger.ts:19-21`'s `onOutsidePress` already uses); a page `scroll` event
+  `chrome-floating-trigger.ts:14-16`'s `onOutsidePress` already uses); a page `scroll` event
   (capture phase) — the popup does not attempt to reposition on scroll (documented v1 limitation,
   same spirit as B3's "cross-tab live refresh: out of scope v1"); re-hover after a scroll simply
   re-triggers the normal show flow.
