@@ -1,9 +1,43 @@
-# Campaign snapshot — Roadmap spec/plan authoring (2026-07-17) · AUTHORING COMPLETE (2026-07-23)
+# Campaign snapshot — Roadmap spec/plan authoring (2026-07-17) · CAMPAIGN COMPLETE (2026-07-23)
 
-> **2026-07-23 completion note.** The 6 remaining artifacts were authored, adversarially
-> verified, and merged — **every roadmap idea now has an executor-ready spec + plan pair.**
-> Owner rulings for this wave: one PR per card, merged immediately on review-pass without
-> waiting for CI (docs-only diffs), regular merge only.
+> **2026-07-23 wave-3 completion note — the campaign wall is fully closed.** Owner directive:
+> "run the next wave, verify the 11 remaining pairs." All 12 outstanding verifications ran
+> (the 11 never-verified pairs + A11's formal re-verify): every pair got an adversarial
+> verifier, every finding got an orchestrator disposition (fixed or refuted with evidence),
+> and every fix shipped as its own immediately-merged regular-merge PR. **All 41 roadmap
+> cards now have executor-ready, adversarially-verified spec+plan pairs.**
+>
+> | Pair     | Verdict             | Fix PR | Merge   | Highlight                                                                       |
+> | -------- | ------------------- | ------ | ------- | ------------------------------------------------------------------------------- |
+> | B4       | FAIL(2)             | #125   | de61234 | B3 interface byte-match confirmed                                               |
+> | A15      | FAIL(5)             | #126   | 012c8bf | fabricated e2e precedent removed; Jira link fixed                               |
+> | A12      | FAIL(2)             | #127   | 20e7861 | silent A8-override-semantics change reverted to shipped behavior + strict tests |
+> | A1       | FAIL(2, 1 Critical) | #128   | 89475d7 | unconditional SSE streaming → conditional onChunk spread                        |
+> | B6       | FAIL(4)             | #129   | 8e6b50f | false "no saved.list dependents" rollback claim corrected                       |
+> | (ledger) | —                   | #130   | 3392357 | saved.list skip-guards into B8+B10; HistoryEntry.url guard                      |
+> | B9       | FAIL(3, 1 Critical) | #131   | af84dff | missing router import; 'saved-list'→'saved.list' normalized (14 sites)          |
+> | B11      | FAIL(3 Minor)       | #132   | e4a3330 | 5-card saved.list race documented                                               |
+> | B12      | FAIL(1 Minor)       | #133   | 8c2cde0 | prompt/response contract confirmed fully pinned                                 |
+> | (sweep)  | owner-flagged       | #134   | 52abe5e | Prospa Jira links removed from 12 plans (global-rule bleed)                     |
+> | (format) | —                   | #135   | 78e9c32 | prettier idempotency convergence (merged by owner)                              |
+> | A11      | FAIL(5) re-verify   | #136   | b98a759 | probes got real time boxes (≤1h/≤2h/≤1h) + STOP-and-record                      |
+> | B15      | FAIL(5)             | #137   | 2b981ef | closes BOTH reconciliation ledger items (1 & 2)                                 |
+> | B14      | FAIL(3, 1 Critical) | #138   | 85d609a | return-type change merged atomically with its router caller                     |
+> | A3       | FAIL(1 Minor)       | #139   | 74142e7 | A3↔B13 contract byte-verified; tsc-proven task ordering                         |
+>
+> **Wave-3 systemic lessons:** (1) hardcoded suite totals and full-file replacement blocks are
+> serialization hazards — every plan now uses grep-first guards, anchored hunks, and
+> "pre-existing + exactly N new" counts on shared surfaces; (2) the five-card `saved.list`
+> race (B6/B8/B9/B10/B11/B15) is now mechanically safe in any execution order; (3) a global
+> Prospa git-convention leaked into 12 plans' PR templates — verifier briefs must include
+> repo-context checks, not just code checks; (4) three Criticals (A1 forced-streaming, B9
+> missing import, B14 unbuildable task split) were all invisible to prose review and caught
+> only by adversarial verification — the wall earned its cost.
+>
+> **Prior wave (2026-07-23 morning) — authoring completion.** The 6 remaining artifacts were
+> authored, adversarially verified, and merged — every roadmap idea gained an executor-ready
+> spec + plan pair. Owner rulings for this wave: one PR per card, merged immediately on
+> review-pass without waiting for CI (docs-only diffs), regular merge only.
 >
 > | Card                            | PR   | Merge   | Review outcome                                             |
 > | ------------------------------- | ---- | ------- | ---------------------------------------------------------- |
