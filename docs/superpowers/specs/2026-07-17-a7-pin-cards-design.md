@@ -12,7 +12,8 @@ panel:
 
 - `InlineBottomSheetRenderer` (`packages/app/src/app/inline-bottom-sheet-renderer.ts`) holds the
   live card as two singleton fields, `private sheet: HTMLElement | null` and
-  `private card: LookupCard | null` (13-14). `ensureCard()` (47-72) returns the existing pair if
+  `private card: LookupCard | null` (14-15 — re-verified in this worktree; the original draft
+  cited 13-14, one line stale). `ensureCard()` (47-72) returns the existing pair if
   one exists — `if (this.card && this.sheet) return this.card;` (48) — otherwise creates a new
   `<bottom-sheet>` + `<lookup-card>` pair and appends it to `this.host` (68, `document.body` in
   Chrome — `content.ts:20`). There is no mechanism anywhere in this class, or in `content.ts`, for
@@ -156,10 +157,22 @@ side-panel/close never starts a drag). Verified empirically in this exact shape 
 produces a `composedPath()` that includes both the button and its `.bar` ancestor when read from a
 listener on an OUTER ancestor across an **open** shadow root (`lookup-card.ts:511`,
 `attachShadow({mode:'open'})`) — exactly the same `composedPath()`-across-open-shadow-root technique
-`chrome-floating-trigger.ts:15` already uses for its own outside-press dismissal. `setPointerCapture`/
-`releasePointerCapture` are both present and callable on happy-dom 15.11.7 elements (verified); only
-`hasPointerCapture` is absent there, so the implementation never calls it (release is wrapped in a
-`try/catch` instead — safe in both environments; see §3.2).
+`chrome-floating-trigger.ts:14` already uses for its own outside-press dismissal.
+
+**Corrected during plan authoring (2026-07-17):** an earlier draft of this section claimed
+"`setPointerCapture`/`releasePointerCapture` are both present and callable on happy-dom 15.11.7
+elements (verified); only `hasPointerCapture` is absent there." **That claim was wrong** —
+re-verified empirically in this exact worktree by running a probe test under
+`bunx vitest run` (`packages/app`, happy-dom 15.11.7): `'setPointerCapture' in
+document.createElement('div')` → `false`; same `false` for `releasePointerCapture` and
+`hasPointerCapture`. **None of the three pointer-capture methods exist at all** on happy-dom
+15.11.7's `HTMLElement` (`PointerEvent` itself IS constructible with readable
+`clientX`/`clientY`/`pointerId`, confirmed separately — only the capture methods are missing).
+`floating-pin.ts` (§3.4) therefore wraps **both** the `setPointerCapture` call in `onPointerDown`
+and the `releasePointerCapture` call in `onPointerUp` in `try/catch` — a `TypeError` from a
+missing method is caught by `try/catch` exactly like a "capture was never established" error
+would be, so one guard pattern covers both real-browser and happy-dom cases. Real Chromium (the
+e2e target) implements all three methods normally; the guards are a no-op cost there.
 
 Rejected: HTML5 native drag-and-drop (`draggable="true"`/`dragstart` et al.). It is built for
 data-transfer between drop targets, fights custom positioning (browsers render a drag ghost image
@@ -187,6 +200,21 @@ ceiling _conceptually_ clashing with `--adp-z-overlay`'s already-maximum-int val
 (`styles/tokens.ts:71`, `2147483647`) — DOM reordering needs no new state and cannot ever approach
 that ceiling.
 
+**Corrected during plan authoring (2026-07-23):** the bring-to-front reorder in `onPointerDown`
+must be **deferred to a macrotask** (`setTimeout(fn, 0)`), never run synchronously on
+`pointerdown`. Re-verified empirically against real Chromium (a probe build with the synchronous
+`this.parentElement?.append(this)` call, run through the e2e harness): reparenting a node between
+`pointerdown` and its matching `pointerup`/`click` silently suppresses Chromium's synthetic
+`click` event for every button inside the moved subtree — including the pinned card's own Close
+button, since `onPointerDown` fires on **every** interaction with the host (bring-to-front is
+unconditional), not just drag starts. `queueMicrotask` does not fix this either: the browser's own
+`click` dispatch is a separate task, not a microtask, so only a macrotask deferral reliably runs
+the reorder after the click has already fired. `floating-pin.ts` (§3.4) therefore wraps the
+bring-to-front call in `setTimeout(() => this.parentElement?.append(this), 0)`; the unit test in
+§6 item 2 awaits one macrotask tick (`await new Promise((r) => setTimeout(r, 0))`) before asserting
+the new DOM order, and the e2e Close-button test (§6 item 4) is what would have caught this in
+production had it shipped synchronous — a same-tick reparent would have silently eaten that click.
+
 The **live/ambient modal** (`<bottom-sheet>`, still `--adp-z-overlay` = `2147483647`) must always
 paint above every pinned card even if both are visible at once — a fresh Define click is the
 reader's most immediate focus. `--adp-z-pinned` is therefore pinned at `2147483646` (§3.2), one
@@ -195,10 +223,28 @@ less than the ceiling, guaranteeing that ordering regardless of DOM position.
 ### 2.7 Initial position at the moment of pinning
 
 **Pinned: a snapshot of the card's own `getBoundingClientRect()`**, taken by the renderer the
-instant before detaching it (`pinCurrent()`, §3.3), and forwarded to the new `<floating-pin>`'s
-`place({left, top})`. Because `position:fixed` coordinates are viewport-relative — exactly what
-`getBoundingClientRect()` already reports — no conversion is needed, and the card never visually
-jumps at the moment of pinning: it starts exactly where the reader was already looking at it.
+instant before detaching it (`pinCurrent()`, §3.3), and forwarded to the new `<floating-pin>` via
+`placeFloatingPin(pin, {left, top})`. Because `position:fixed` coordinates are viewport-relative —
+exactly what `getBoundingClientRect()` already reports — no conversion is needed, and the card
+never visually jumps at the moment of pinning: it starts exactly where the reader was already
+looking at it.
+
+**Corrected during plan authoring (2026-07-23):** an earlier draft exposed this as an instance
+method, `pin.place({left, top})`, on the `FloatingPin` class. **That fails in production.**
+`InlineBottomSheetRenderer` runs in the Chrome MV3 content-script **isolated world**;
+`FloatingPin`'s class (like `LookupCard`'s) is registered in the page's **MAIN world** by
+`content-elements.ts`. Per the same Chromium bug 390807 already documented elsewhere in this
+codebase (`lookup-card.ts`'s own `connectedCallback` comment; `inline-bottom-sheet-renderer.ts`'s
+`setState` comment) — an author-defined instance method call on a MAIN-world custom element
+instance never resolves from isolated-world code — an author-defined `place()` method throws
+"place is not a function" the moment `pinCurrent()` calls it, even though the identical code
+passes under this repo's single-world happy-dom unit tests (which cannot reproduce the two-world
+split; only a real-Chromium e2e run surfaces this). The fix, verified empirically against real
+Chromium: `place` becomes a **plain exported function**, `placeFloatingPin(el, rect)` (§3.4), that
+only ever touches the element through the native, platform-level `style` property — a shared-DOM
+mutation (like `element.setAttribute(...)`), which DOES cross the world boundary, unlike an
+author-defined method. `pinCurrent()` (§3.3) calls `placeFloatingPin(pin, {...})`, never
+`pin.place(...)`.
 
 ### 2.8 What happens on page navigation
 
@@ -310,7 +356,8 @@ boolean`:
   ```
 
 - CSS additions. In the main `:host` template string, right after the existing
-  `::slotted(.save-row){display:flex;margin:6px 0 10px}` (139):
+  `::slotted(.save-row){display:flex;margin:6px 0 10px}` (138 — re-verified in this worktree; the
+  original draft cited 139, one line stale):
 
   ```css
   ::slotted(.pin-row) {
@@ -447,7 +494,9 @@ boolean`:
     const pin = document.createElement('floating-pin') as FloatingPin;
     pin.setAttribute('data-ad-theme', this._theme);
     pin.append(card); // moves the existing (already re-rendered) element — no re-creation
-    pin.place({ left: rect.left, top: rect.top });
+    // placeFloatingPin (NOT a `pin.place(...)` method call) — see §2.7 for why: an
+    // author-defined method never resolves across the MV3 MAIN/isolated-world boundary.
+    placeFloatingPin(pin, { left: rect.left, top: rect.top });
     card.addEventListener('close', () => {
       pin.remove();
       this.pinned.delete(pin);
@@ -478,8 +527,23 @@ boolean`:
   }
   ```
 
-- Import `type { FloatingPin }` alongside the existing `type { CardState, LookupCard, SafeHtml }`
-  import from `'../ui/index'`.
+- Import `placeFloatingPin` (value) and `type { FloatingPin }` alongside the existing
+  `type { CardState, LookupCard, SafeHtml }` import from `'../ui/index'` — i.e. replace
+  `inline-bottom-sheet-renderer.ts:10`'s
+  `import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '../ui/index';`
+  with:
+
+  ```ts
+  import {
+    renderCardState,
+    placeFloatingPin,
+    type CardState,
+    type LookupCard,
+    type SafeHtml,
+    type FloatingPin,
+  } from '../ui/index';
+  ```
+
 - `close()` (167-172) is **unchanged** — it only ever affects the live/unpinned card; pinned cards
   are deliberately independent of it (design spec §2.8's "pins die only on page nav").
 
@@ -501,6 +565,27 @@ const CSS = `:host{${BASE_VARS};position:fixed;display:block;z-index:var(--adp-z
 ${THEME_CSS}
 ::slotted(*){display:block}`;
 
+/**
+ * A7: place a `<floating-pin>` (or any element) at a fixed viewport position — a snapshot of the
+ * on-page card's own `getBoundingClientRect()` at the moment of pinning, captured by the renderer
+ * BEFORE the card moves here, so pinning never visually jumps the card to a new spot.
+ *
+ * Deliberately a PLAIN FUNCTION, not a `FloatingPin` instance method (see design spec §2.7).
+ * `InlineBottomSheetRenderer` runs in a Chrome MV3 content-script ISOLATED world; `FloatingPin`'s
+ * class (like `LookupCard`'s) is registered in the page's MAIN world by `content-elements.ts`. A
+ * JS method call on a MAIN-world custom element instance never resolves from isolated-world code
+ * (Chromium bug 390807 — the same reason `LookupCard`'s `.state` setter can't be used cross-world
+ * either; see lookup-card.ts's own connectedCallback comment and
+ * inline-bottom-sheet-renderer.ts's setState). This function only ever touches the element
+ * through the native, platform-level `style` property (a shared-DOM mutation, exactly like
+ * `element.setAttribute(...)`), which DOES cross the boundary — so it is safe to call on a
+ * cross-world element reference, unlike an author-defined method would be.
+ */
+export function placeFloatingPin(el: HTMLElement, rect: { left: number; top: number }): void {
+  el.style.left = `${rect.left}px`;
+  el.style.top = `${rect.top}px`;
+}
+
 export class FloatingPin extends HTMLElement {
   private dragging = false;
   private startPointer = { x: 0, y: 0 };
@@ -520,26 +605,31 @@ export class FloatingPin extends HTMLElement {
     this.endDrag();
   }
 
-  /** A7: place the card at a fixed viewport position — a snapshot of the on-page card's own
-   * `getBoundingClientRect()` at the moment of pinning, captured by the renderer BEFORE the card
-   * moves here, so pinning never visually jumps the card to a new spot. */
-  place(rect: { left: number; top: number }): void {
-    this.style.left = `${rect.left}px`;
-    this.style.top = `${rect.top}px`;
-  }
-
   private readonly onPointerDown = (e: PointerEvent): void => {
     // Bring-to-front on ANY interaction, not just a drag: same-z-index fixed siblings paint in
     // DOM order, so re-appending as the host's last child is enough (design spec §2.6) — no
-    // per-instance z-index bookkeeping needed.
-    this.parentElement?.append(this);
+    // per-instance z-index bookkeeping needed. DEFERRED to a macrotask (setTimeout, not
+    // queueMicrotask — a microtask still runs before the browser's own pointerup/mouseup/click
+    // dispatch, which are separate tasks): moving a node synchronously between pointerdown and
+    // the matching pointerup suppresses Chromium's synthetic `click` event entirely (confirmed
+    // empirically against real Chromium — a same-tick reparent silently ate every button click
+    // inside a pinned card, including Close/Pin, even though the identical listener fired fine
+    // when the button's own `.click()` was called directly via script). The reorder must happen
+    // strictly after the click has had a chance to fire (design spec §2.6).
+    setTimeout(() => this.parentElement?.append(this), 0);
     const path = e.composedPath();
     const onBar = path.some((n) => n instanceof Element && n.classList.contains('bar'));
     const onButton = path.some((n) => n instanceof Element && n.tagName === 'BUTTON');
     if (!onBar || onButton) return; // only the card's title bar drags it, never a button inside it
     e.preventDefault(); // suppress text-selection/native-drag ghosting while dragging
     this.dragging = true;
-    this.setPointerCapture(e.pointerId);
+    try {
+      this.setPointerCapture(e.pointerId);
+    } catch {
+      // no-op — happy-dom 15.11.7 (this repo's unit-test DOM) does not implement pointer
+      // capture at all; dragging still works via the plain pointermove/pointerup listeners
+      // added below. Real Chromium (the e2e target) implements this normally.
+    }
     const r = this.getBoundingClientRect();
     this.startPointer = { x: e.clientX, y: e.clientY };
     this.startRect = { left: r.left, top: r.top };
@@ -612,7 +702,7 @@ Update to "four" — a one-line factual correction, no behavior change.
   `InlineBottomSheetRenderer` from its own `pinned` registry (§3.3); it never needs to ride the
   wire or cross a port boundary, so no new port field is added.
 - **`packages/app/src/ui/side-panel-view.ts`** — it builds its own `CardState`/`PanelFocusState`
-  independently (confirmed by reading `side-panel-view.ts:4,13,191` — it calls the same
+  independently (confirmed by reading `side-panel-view.ts:4,13,190` — it calls the same
   `renderCardState`, but from its own state object, never populating `canPin`). Since
   `renderPinRow` returns `null` whenever `canPin` is `undefined`, the side panel silently never
   shows a pin control — no side-panel code changes at all.
@@ -671,16 +761,19 @@ true` renders an enabled button with the "Pin this card so it stays open" label;
    event; a `pinned: true` state omits `.save-btn`, `.nudge-row`, and `.defined-as` entirely even
    when `nudge`/`definedAs` are present on the state object.
 2. **Unit — `packages/app/test/ui/floating-pin.test.ts`** (new file): the element attaches a shadow
-   root containing exactly one `<slot>` and no `[role="dialog"]` (proving it is non-modal); `place()`
-   sets `style.left`/`style.top` in pixels; a pointerdown-then-pointermove starting from a `.bar`-
-   classed child moves the host by the exact pointer delta; a pointerdown starting from a `<button>`
-   inside `.bar` does **not** start a drag (the host's position is unchanged after a subsequent
-   move); a pointerdown on any pinned host re-parents it to the end of its parent's children
-   (bring-to-front via DOM order); an extreme pointermove is clamped so the host never fully leaves
-   the viewport in either axis. (Positions are asserted via `element.style.left/top`, not
-   `getBoundingClientRect()` — happy-dom 15.11.7, this repo's vitest environment, does not compute
-   real layout and always returns a zero rect regardless of applied styles, confirmed empirically;
-   pixel-accurate, real-layout dragging is proven by the e2e spec below instead.)
+   root containing exactly one `<slot>` and no `[role="dialog"]` (proving it is non-modal);
+   `placeFloatingPin()` sets `style.left`/`style.top` in pixels; a pointerdown-then-pointermove
+   starting from a `.bar`-classed child moves the host by the exact pointer delta; a pointerdown
+   starting from a `<button>` inside `.bar` does **not** start a drag (the host's position is
+   unchanged after a subsequent move); pointerup ends the drag (a pointermove dispatched afterward
+   no longer moves the host); a pointerdown on any pinned host re-parents it to the end of its
+   parent's children (bring-to-front via DOM order — asserted **after awaiting one macrotask tick**,
+   `await new Promise((r) => setTimeout(r, 0))`, since the reorder is deliberately deferred, §2.6);
+   an extreme pointermove is clamped so the host never fully leaves the viewport in either axis.
+   (Positions are asserted via `element.style.left/top`, not `getBoundingClientRect()` — happy-dom
+   15.11.7, this repo's vitest environment, does not compute real layout and always returns a zero
+   rect regardless of applied styles, confirmed empirically; pixel-accurate, real-layout dragging is
+   proven by the e2e spec below instead.)
 3. **Unit — `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`** (new `describe(
 'InlineBottomSheetRenderer — pin cards (A7)', ...)`): `renderResult` sets an enabled pin button
    when fewer than 3 are pinned; clicking Pin removes the `<bottom-sheet>` wrapper, creates a
@@ -697,10 +790,15 @@ true` renders an enabled button with the "Pin this card so it stays open" label;
      `<floating-pin>` is visible; pressing `Escape`, clicking elsewhere on the page, and scrolling
      (`page.mouse.wheel`) all leave the pinned card visible (today's modal would have closed on
      any of the three).
-   - Dragging the card's title bar (real `page.mouse` down/move/up over the shadow `.bar`'s
-     bounding box, read via `page.evaluate`) moves the `<floating-pin>` host by a comparable delta
-     (asserted via real `getBoundingClientRect()` before/after — real Chromium, so this is where
-     pixel-accurate drag math is actually proven, unlike the happy-dom unit test in item 2).
+   - Dragging the card's title bar moves the `<floating-pin>` host by a comparable delta (asserted
+     via real `getBoundingClientRect()` before/after — real Chromium, so this is where
+     pixel-accurate drag math is actually proven, unlike the happy-dom unit test in item 2). The
+     drag start point is the shadow `.bar`'s `.brand` child (read via `page.evaluate`), not `.bar`'s
+     own geometric center: `.bar` lays out brand + action buttons via
+     `justify-content:space-between` (`lookup-card.ts:97`), so the bar's center can land inside the
+     button cluster depending on the brand text's rendered width — and a pointerdown on a `<button>`
+     never starts a drag by design (§2.5's `onBar`/`onButton` guard). `.brand` is definitively
+     empty-of-buttons bar surface, confirmed empirically against real Chromium.
    - Clicking the pinned copy's Close button (`button[aria-label="Close"]`, unchanged from the
      existing header) removes the `<floating-pin>`.
    - Pinning 3 distinct lookups, then starting a 4th, leaves the 4th's `.pin-btn` disabled with an
