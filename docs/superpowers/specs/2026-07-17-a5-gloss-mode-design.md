@@ -486,7 +486,7 @@ mirroring `<lookup-trigger>`'s own "aria-label stays stable across states" prece
 
 ### 4.3 `packages/app/src/wire.ts` + every `SettingsStore` implementation — ONE task
 
-`PublicSettingsSchema` (`wire.ts:61-67`) gains one optional field:
+`PublicSettingsSchema` (`wire.ts:61-68`) gains one optional field:
 
 ```ts
 const PublicSettingsSchema = z.strictObject({
@@ -506,12 +506,12 @@ tuple check couples the zod schema and the domain type — they cannot drift apa
 "cannot typecheck apart" reasoning CONTRACTS §2 already applies to wire+router pairs, extended here
 to schema+adapters:
 
-- `packages/extension-chrome/src/adapters/chrome-storage-store.ts` — `get()` (`:44-59`) gains
+- `packages/extension-chrome/src/adapters/chrome-storage-store.ts` — `get()` (`:44-60`) gains
   `glossMode: s?.glossMode ?? false` (a concrete default, mirroring `hasKey`/`theme`'s own
   normalization style even though the TYPE is optional); `defaults()` (`:14-29`) gains
   `glossMode: false`.
 - `packages/extension-safari/src/adapters/safari-storage-store.ts` — identical two additions
-  (`:39-54` and `:14-29`) — **compile/consistency only, no new Safari behavior** (§3).
+  (`:39-55` and `:14-29`) — **compile/consistency only, no new Safari behavior** (§3).
 - `packages/extension-safari/src/adapters/message-relay-settings-store.ts` — the field-by-field
   `stripped` object (`:22-29`) gains `glossMode: reply.settings.glossMode`.
 - `packages/extension-chrome/src/adapters/message-relay-settings-store.ts` — **no change**: it
