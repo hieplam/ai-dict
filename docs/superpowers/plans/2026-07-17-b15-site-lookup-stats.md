@@ -162,9 +162,18 @@ Expected: the two new `history-policy.test.ts` tests pass already (TypeScript wi
 reject `url` on the entry literal — a compile error, not a runtime failure, since `HistoryEntry`
 has no `url` field yet); the new `wire-schema.test.ts` test fails on the `withUrl` case
 (`HistoryEntrySchema` is `z.strictObject` and rejects the unknown `url` key); the new
-`router.test.ts` test fails (`entries[0]!.url` is `undefined`, not the expected string).
+`router.test.ts` test fails (`entries[0]!.url` is `undefined`, not the expected string). (If
+`HistoryEntry.url` already exists — landed via B10 or another card first — these three still serve
+as regression tests; they should pass immediately once Step 2's guard confirms the shape and skips
+re-adding it.)
 
 - [ ] **Step 2: Implement.**
+
+If `HistoryEntry.url` already exists (landed via B10 or another card), verify it is exactly
+`url?: string` (identical name and optionality) and skip re-adding it in both `types.ts` and
+`wire.ts` below — B15 must not assume `title?` also exists (that field is B10-specific; B15 never
+adds `title`, and today it correctly doesn't exist on `HistoryEntry`). A name/optionality mismatch
+on `url` is a STOP-and-report, not a local edit.
 
 In `packages/app/src/domain/types.ts`, change `HistoryEntry` (currently lines 136-142):
 
@@ -220,7 +229,7 @@ cd packages/app && bunx vitest run test/history-policy.test.ts test/wire-schema.
 cd packages/app && bun run typecheck
 ```
 
-Expected: all tests pass (existing + 5 new across the three files); typecheck clean.
+Expected: all tests pass (existing + 4 new across the three files); typecheck clean.
 
 - [ ] **Step 3: Regenerate the wire-schema snapshot.**
 
@@ -269,6 +278,27 @@ git commit -m "[B15SiteLookupStats] feat: add optional url to HistoryEntry (B15)
 { ok: true, type: 'saved.list', entries: SavedWordEntry[] }
 ```
 
+- [ ] **Step 0: Check current repo state.**
+
+```
+grep -n "'saved.list'" packages/app/src/wire.ts
+```
+
+- **If this prints NO match** — `saved.list` does not exist yet. Follow Step 1 (tests) and Step 2
+  (implement) below in full.
+- **If this prints a match** — one of B15's sibling cards (B6 `b6-words-page.md:492-494`, B8
+  `b8-anki-csv-export.md:172-174`, B9 `b9-backup-restore.md:1184-1186`, or B11
+  `b11-casual-review-flip.md:249-259` — all four name B15 as a possible predecessor for this exact
+  message) already landed `saved.list` first. Confirm its shape matches exactly (request is a bare
+  `{ type: 'saved.list' }`; reply is `{ ok: true, type: 'saved.list', entries: SavedWordEntry[] }`)
+  by reading the matched lines. If it matches: **skip Step 2 entirely** (do not touch
+  `wire.ts`/`router.ts`) and **skip Step 3** (the wire-schema snapshot already reflects the shipped
+  arm) — still run Step 1 to add this card's own regression tests against the already-shipped arm,
+  then go straight to Step 4's regression-only commit. If the shape does NOT match what's quoted
+  above: **stop and report back** — do not adapt or reshape either file; this plan's shared-message
+  assumption (design spec §2.1/§9) has broken and needs re-grounding by the plan's author, not a
+  silent workaround here.
+
 - [ ] **Step 1: Write the failing tests.**
 
 In `packages/app/test/wire-schema.test.ts`, inside the existing
@@ -305,8 +335,8 @@ it('rejects a saved.list reply with a malformed entry inside the array (B15)', (
 ```
 
 In `packages/app/test/app/router.test.ts`, insert new tests right after the existing
-`'saved.setStatus is case-insensitive on the word key (B5)'` test (after its closing `});`,
-before `describe('errlog routing', ...)`, around line 651):
+`'error reply preserves vendor diagnostic fields through the flatten (adr-20260618)'` test (after
+its closing `});`, before `describe('errlog routing', ...)`, around line 649):
 
 ```ts
 it('saved.list on an empty store replies with an empty array (B15)', async () => {
@@ -344,9 +374,11 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts test/app/router.test
 
 Expected: all 5 new tests fail — `WireMessageSchema`/`WireReplySchema` reject `'saved.list'`
 (unknown discriminant), and `route({ type: 'saved.list' })` is a TypeScript error (not a member of
-the `WireMessage` union) until Step 2 lands.
+the `WireMessage` union) until Step 2 lands. (If Step 0 found a match, these are regression tests
+instead — they pass immediately against the already-shipped arm; run them to confirm, then skip to
+Step 4.)
 
-- [ ] **Step 2: Implement.**
+- [ ] **Step 2: Implement (only if Step 0 found no match — otherwise skip to Step 4).**
 
 In `packages/app/src/wire.ts`, add a new arm to `WireMessageSchema` (currently lines 95-141),
 placed right after the existing `saved.setStatus` arm and before `cache.clear`:
@@ -465,16 +497,17 @@ cd packages/app && bun run typecheck
 Expected: all tests pass (existing + 5 new); typecheck clean (the exhaustive `switch` in
 `router.ts` still covers every `WireMessage['type']`).
 
-- [ ] **Step 3: Regenerate the wire-schema snapshot.**
+- [ ] **Step 3: Regenerate the wire-schema snapshot (only if Step 2 ran).**
 
 ```
 cd packages/app && bunx vitest run test/wire-schema.test.ts -u
 ```
 
 Expected: `packages/app/wire-schema.snapshot.json` changes again (now including the `saved.list`
-message/reply shapes).
+message/reply shapes). If Step 0 found a match, the snapshot already reflects the shipped arm —
+nothing to regenerate; skip this step.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [ ] **Step 4: Commit** — gate, then commit. If Step 2 ran (this card added the arm):
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -486,6 +519,20 @@ Commit:
 git add packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/test/wire-schema.test.ts \
   packages/app/test/app/router.test.ts packages/app/wire-schema.snapshot.json
 git commit -m "[B15SiteLookupStats] feat: add saved.list wire message + router case (B15)" \
+  -m $'Tribe-Card: b15-site-lookup-stats\nTribe-Task: 2/7'
+```
+
+If Step 0 found a match (Steps 2-3 skipped, only Step 1's regression tests were added):
+
+```
+cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
+```
+
+Commit:
+
+```
+git add packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts
+git commit -m "[B15SiteLookupStats] test: regression-cover the already-shipped saved.list message (B15)" \
   -m $'Tribe-Card: b15-site-lookup-stats\nTribe-Task: 2/7'
 ```
 
@@ -737,7 +784,7 @@ cd packages/app && bunx vitest run test/site-stats-policy.test.ts
 cd packages/app && bun run typecheck
 ```
 
-Expected: all 13 tests pass; typecheck clean.
+Expected: all 10 tests pass; typecheck clean.
 
 - [ ] **Step 3: Commit** — gate, then commit:
 
