@@ -18,10 +18,10 @@ to opt a site out:
   unconditionally on every `SelectionSource.onSelection` firing
   (`packages/app/src/domain/workflow.ts:123-138`) — there is no site check anywhere in the
   pipeline between "text got selected" and "bubble appears."
-- `ChromeFloatingTrigger.show()` (`packages/extension-chrome/src/adapters/chrome-floating-trigger.ts:31-45`)
+- `ChromeFloatingTrigger.show()` (`packages/extension-chrome/src/adapters/chrome-floating-trigger.ts:29-42`)
   unconditionally creates the `<lookup-trigger>` element, appends it to `this.host` (`document.body`
-  by default, `chrome-floating-trigger.ts:37`), and wires the capture-phase outside-press dismiss
-  listeners (`chrome-floating-trigger.ts:38-39`) — every call is a real, visible mount.
+  by default, `chrome-floating-trigger.ts:35`), and wires the capture-phase outside-press dismiss
+  listeners (`chrome-floating-trigger.ts:36-37`) — every call is a real, visible mount.
 - There is no per-site concept anywhere in the domain layer. `packages/app/src/domain/types.ts`'s
   `Settings`/`PublicSettings` (164-217) hold only global preferences (`targetLang`, `theme`,
   `cacheEnabled`, …) — nothing scoped to a hostname. `packages/app/src/ports.ts:71-76`'s `Storage`
@@ -38,7 +38,7 @@ shortcut still works there, so lookup stays possible — just never uninvited"**
 
 1. The trigger bubble must never visibly appear on a muted site.
 2. The A4 `define-selection` keyboard shortcut — which today re-clicks whatever trigger bubble is
-   currently showing (`ChromeFloatingTrigger.activate()`, `chrome-floating-trigger.ts:52-59`, calling
+   currently showing (`ChromeFloatingTrigger.activate()`, `chrome-floating-trigger.ts:49-56`, calling
    `this.el?.shadowRoot?.querySelector('button')`) — must still be able to fire a lookup on a muted
    site, with **no visible bubble ever having appeared**.
 
@@ -161,7 +161,7 @@ ever renders on the in-page inline card (`InlineBottomSheetRenderer`, constructe
 
 **The naive fix is wrong.** If quiet mode simply skipped calling `deps.trigger.show(...)` on muted
 sites, `ChromeFloatingTrigger`'s `this.el` would stay `null` forever on that site, and
-`activate()`'s `this.el?.shadowRoot?.querySelector('button')` (`chrome-floating-trigger.ts:53`)
+`activate()`'s `this.el?.shadowRoot?.querySelector('button')` (`chrome-floating-trigger.ts:50`)
 would always be `null` — A4's `define-selection` would silently no-op on every muted site,
 directly breaking the card's own explicit requirement ("A4 shortcut still works there,"
 `docs/ROADMAP.md:284`).
@@ -175,33 +175,52 @@ is called, **whether or not the element is ever inserted into the document** —
 `this.host.append(this.el)` ever running.
 
 **Pinned:** `ChromeFloatingTrigger` gains a settable `quiet: boolean` property (mirroring the
-existing `theme` property's shape, `chrome-floating-trigger.ts:22-29`). `show()` still always
+existing `theme` property's shape, `chrome-floating-trigger.ts:20-27`). `show()` still always
 creates `this.el`, sets its `data-ad-theme` attribute, and wires the `lookup-click` listener
 (`this.el.addEventListener('lookup-click', this.handler)`) exactly as today — that is what makes
 `activate()` keep working. The only change is that **when `quiet` is true, `show()` skips**:
 `this.host.append(this.el)` (nothing is ever mounted to the page — no DOM node, no paint, no
 layout, satisfying "visually silent" literally, not just via CSS `display:none`), the capture-phase
-outside-press dismiss listeners (nothing visible to dismiss), the `position`/`left`/`top` styling,
-and the `TRIGGER_SHOWN_MARK` performance mark (A15's instrumentation of "the bubble became visible"
-— a muted site never makes it visible, so the mark must not fire there; see §9 Concurrency for why
-this line is cited against A15's in-flight edit). A4's `activate()` then clicks a real, fully-wired,
-but never-mounted `<lookup-trigger>` button — the click fires `runLookup` exactly as it would from a
-visible bubble.
+outside-press dismiss listeners (nothing visible to dismiss), and the `position`/`left`/`top`
+styling. A4's `activate()` then clicks a real, fully-wired, but never-mounted `<lookup-trigger>`
+button — the click fires `runLookup` exactly as it would from a visible bubble.
+
+**Forward note for A15 (trigger latency budget):** A15 has not landed in this worktree as of this
+fix-up (2026-07-23) — `grep -rn TRIGGER_SHOWN_MARK` across `packages/` returns zero hits, and
+`git diff origin/master -- .../chrome-floating-trigger.ts` is empty, so there is no in-flight perf
+mark today for this card to coordinate with. If A15 lands first and adds a "the bubble became
+visible" performance mark inside `show()`, its author must place that mark inside the
+`if (!this._quiet)` block added below (§3.5) — a muted site's un-mounted bubble must never be
+marked "shown." This plan itself adds no such mark.
 
 **Known, accepted limitation:** `quiet` is read once per `show()` call; if a site is muted via the
 card's own "Mute this site" action while a bubble from an earlier (pre-mute) selection is still
 visibly mounted, that specific bubble instance is not retroactively hidden — the mute takes effect
 starting with the next selection. This mirrors the existing precedent for `theme` (`chrome-floating-
-trigger.ts:22-26`'s doc comment: "settings arrive after the bubble is already up" is an accepted,
+trigger.ts:20-24`'s doc comment: "settings arrive after the bubble is already up" is an accepted,
 already-tested case) and needs no special handling.
 
-### 2.5 Highlighting (B3) interplay: no code to touch today; the reusable surface is the exported `isQuietSite`/`registrableDomain` pair
+### 2.5 Highlighting (B3) interplay: no code to touch today; a scope mismatch with B3's own stated expectation is flagged, unresolved
 
-`docs/superpowers/specs/2026-07-16-b3-re-encounter-highlighting-design.md:115` already records the
-gap this spec closes: _"A13 quiet-mode interplay N/A (A13 not [authored yet])."_ B3 has a spec but
-**no implementation exists yet** (`grep -rn` across `packages/extension-chrome/src` and
-`packages/app/src` for a highlighting/scanner module returns nothing) — there is no B3 file for this
-spec to modify. Nothing in this plan touches B3.
+`docs/superpowers/specs/2026-07-16-b3-re-encounter-highlighting-design.md:115-116` states B3's own
+scope fence verbatim: _"A13 quiet-mode interplay N/A (A13 not shipped; when it ships, its site list
+will gate the whole content script, including this)."_ **That expectation does not match what this
+spec actually ships.** §3.5 gates only `ChromeFloatingTrigger`'s visible-mount steps inside
+`show()` — never the whole content script. This is deliberate, not an oversight: gating the whole
+content script (e.g. short-circuiting `content.ts` before `runLookupWorkflow` wires up at all) would
+also disable A4's `define-selection` keyboard path on a muted site, directly breaking the card's own
+explicit requirement ("A4 shortcut still works there," `docs/ROADMAP.md:284` — see §2.4 above).
+
+**Open reconciliation item for B3 (unresolved by this spec — flagged, not fixed here):** B3's future
+highlighting scanner must NOT assume "the whole content script is gated on a muted site" the way its
+own scope-fence sentence currently implies; a muted site still runs the full content script
+(selection capture, workflow wiring, the A4 listener) with only the trigger bubble suppressed. B3
+should instead consume `isQuietSite`/`registrableDomain` (below) directly as its own gate, the same
+way `content.ts` does in §3.4, rather than relying on an ambient whole-script gate that does not
+exist. B3 has a spec but **no implementation exists yet** (`grep -rn` across
+`packages/extension-chrome/src` and `packages/app/src` for a highlighting/scanner module returns
+nothing) — there is no B3 file for this spec to modify. Nothing in this plan touches B3; whoever
+authors/revises the B3 plan must reconcile this mismatch before B3 ships.
 
 **What this spec does instead, so B3 does not have to re-derive the quiet-site check when it
 lands:** `registrableDomain` and `isQuietSite` (§3.1) are exported from the package barrel
@@ -383,7 +402,7 @@ both already present.
 
 ### 3.5 `ChromeFloatingTrigger` — `packages/extension-chrome/src/adapters/chrome-floating-trigger.ts`
 
-New `quiet` settable property, mirroring `theme`'s existing shape (`chrome-floating-trigger.ts:22-29`):
+New `quiet` settable property, mirroring `theme`'s existing shape (`chrome-floating-trigger.ts:20-27`):
 
 ```ts
   private _quiet = false;
@@ -398,9 +417,10 @@ New `quiet` settable property, mirroring `theme`'s existing shape (`chrome-float
   }
 ```
 
-`show()` (current file, lines 31-45 — this file already carries an in-flight, uncommitted A15 edit
-at line 44 as of this spec's authoring; see §9 Concurrency) changes to gate the visible-mount steps
-on `this._quiet`, while unconditionally still creating the element and wiring its click listener:
+`show()` (current file, lines 29-42 — re-verified against this worktree 2026-07-23; no in-flight
+A15 edit exists here today, see §2.4's forward note and §9 Concurrency) changes to gate the
+visible-mount steps on `this._quiet`, while unconditionally still creating the element and wiring
+its click listener:
 
 ```ts
   show(anchor: AnchorRect, onClick: () => void): void {
@@ -422,12 +442,11 @@ on `this._quiet`, while unconditionally still creating the element and wiring it
       this.el.style.position = 'fixed';
       this.el.style.left = `${anchor.x}px`;
       this.el.style.top = `${anchor.y + anchor.h}px`;
-      requestAnimationFrame(() => performance.mark(TRIGGER_SHOWN_MARK));
     }
   }
 ```
 
-`activate()` (`chrome-floating-trigger.ts:52-59`) and `hide()` (`chrome-floating-trigger.ts:61-67`)
+`activate()` (`chrome-floating-trigger.ts:49-56`) and `hide()` (`chrome-floating-trigger.ts:58-64`)
 are **unchanged**. `hide()`'s unconditional `document.removeEventListener(t, this.onOutsidePress,
 true)` calls remain safe no-ops on a muted site where the listeners were never added (`removeEvent-
 Listener` on an unregistered listener is defined to do nothing).
@@ -633,7 +652,7 @@ New CSS, appended near the other list-adjacent rules (reuses existing token vari
 ```
 
 New class state + a settable `quietSites` property, alongside `_errorReporting`
-(`settings-form.ts:174-186`'s field block) — persists independently of `SettingsFormValue`/
+(`settings-form.ts:230-248`'s field block) — persists independently of `SettingsFormValue`/
 `collect()`, exactly mirroring `errorReporting`'s own documented exclusion (`settings-form.ts:417-
 421`: _"wired to the errlog consent store... NOT the settings save flow"_):
 
@@ -691,7 +710,7 @@ New private render method + wiring, alongside `renderDevPanel`/other private hel
   }
 ```
 
-`connectedCallback` (`settings-form.ts:189-347`): wire the "Add" button, alongside the other
+`connectedCallback` (`settings-form.ts:250-347`): wire the "Add" button, alongside the other
 `relay`/direct listeners (near `#reset-tpl`, `settings-form.ts:322-324`), plus render the initial
 (empty) list once on connect:
 
@@ -917,11 +936,12 @@ any manifest file, `docs/index.html`, or `packages/extension-safari/**`.
 Per CONTRACTS §5, files this card modifies that other unshipped cards in this batch also modify:
 
 - **`packages/extension-chrome/src/adapters/chrome-floating-trigger.ts`** — the pre-listed
-  "content-script/trigger" hot group (`A5 A6 A13 A14 A15 B3 B4`). This file **already carries an
-  uncommitted edit as of this spec's authoring** (A15's `TRIGGER_SHOWN_MARK` perf-mark call inside
-  `show()`, confirmed via `git diff` in this worktree) — §3.5's diff is written against that current
-  state; whoever implements this plan must re-read the file first and re-anchor the exact line
-  numbers if A15 (or A6/A14) has landed first, since all of them touch `show()`.
+  "content-script/trigger" hot group (`A5 A6 A13 A14 A15 B3 B4`). Re-verified against this worktree
+  2026-07-23: the file matches `origin/master` with **no in-flight edit** (`git diff origin/master`
+  is empty; `grep -rn TRIGGER_SHOWN_MARK packages/` returns zero hits) — A15 has not landed yet.
+  §3.5's diff is anchored against current lines 29-42 (`show()`), 49-56 (`activate()`), 58-64
+  (`hide()`). Whoever implements this plan must still re-read the file first and re-anchor the exact
+  line numbers if any of A5/A6/A14/A15/B3/B4 lands here first, since all of them touch `show()`.
 - **`packages/extension-chrome/src/content.ts`** — same hot group; A5/A6/A14/A15/B3/B4 all wire
   something near the selection→trigger→render flow. This plan's edits (§3.6) are additive (new
   top-level consts + one new `document.addEventListener` block) and should merge cleanly, but the
