@@ -599,7 +599,7 @@ renderLoading(word?: string, anchor?: AnchorRect): void;
 ```
 
 - [ ] **Step 1: Write the failing tests.** In `packages/app/test/app/
-    inline-bottom-sheet-renderer.test.ts`, add `AnchorRect` to the existing `'../../src'`
+  inline-bottom-sheet-renderer.test.ts`, add `AnchorRect` to the existing `'../../src'`
       import and add a new import for `computeCardPlacement`:
 
 ```ts

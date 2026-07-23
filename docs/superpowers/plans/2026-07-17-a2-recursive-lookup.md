@@ -105,7 +105,7 @@ export interface SelectionEvent {
       `packages/app/test/app/dom-selection-source.test.ts`, inside the existing
       `describe('defaultReader (DOM selection glue via window.getSelection)', ...)` block, just
       before its closing `});` (after the existing `'returns null when selected text is
-    whitespace-only'` test):
+  whitespace-only'` test):
 
 ```ts
 it('stamps insideResult: true when the selection starts inside a .lookup-answer element (A2)', () => {
