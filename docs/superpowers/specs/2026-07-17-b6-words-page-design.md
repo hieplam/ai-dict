@@ -987,10 +987,17 @@ No `pr-assets/*` branch is created for this card.
   trusting the reasoning.
 - **No data migration.** `SavedWordEntry`/`SavedWordSense` are read, never restructured; nothing
   about stored data changes shape.
-- **Rollback:** revert the single PR. `saved.list` disappearing from the wire is safe — no other
-  card in this batch depends on it (`grep` across every other card's spec for `saved.list`
-  confirms none reference it), and the pre-B6 side panel (single lookup + Recent) returns exactly
-  as it was.
+- **Rollback:** revert the single PR — but this is only unconditionally safe if no sibling card
+  has landed its own `saved.list` copy first. `grep` across every other card's spec for
+  `saved.list` finds it referenced in B8, B9, B10, B11, B12, and B15, not zero: B8, B10, and B15
+  each independently author the identical wire arm (`{ type: 'saved.list' }` → `{ ok: true, type:
+'saved.list', entries: SavedWordEntry[] }`) as their own task; B9 and B11 also depend on that
+  same request/reply shape for their own flows; B12 mentions `saved.list` only inside a
+  rejected-alternative discussion and does not actually consume it. Once any of B8/B9/B10/B11/B15
+  lands its copy, `saved.list` is shared infrastructure, not B6-owned surface — rollback at that
+  point must leave the wire arm and router case in place rather than deleting them, or the landed
+  sibling(s) break. Before B6 or any sibling has landed, the pre-B6 side panel (single lookup +
+  Recent) returns exactly as it was.
 
 ## 8. Files touched (summary)
 
