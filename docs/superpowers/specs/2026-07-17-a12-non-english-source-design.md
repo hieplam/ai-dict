@@ -654,9 +654,11 @@ function defaultReader(): SelectionEvent | null {
 }
 ```
 
-This file currently also carries A15's `SELECTION_FIRED_MARK` instrumentation (a `performance.mark`
-call inside `onSelection`'s handler) — see §9's concurrency note; this card's change is additive and
-does not touch that code path.
+As of this pair's last review (2026-07-23), A15 has **not** landed — `dom-selection-source.ts`
+carries zero occurrences of `SELECTION_FIRED_MARK`/`performance.mark` (verified by grep; only A15's
+plan exists so far). Apply the `readPageLang`/`defaultReader` diff above verbatim against the file
+as it stands — see §9's concurrency note. If A15 has landed by execution time, its additive marks do
+not conflict with this card's change; apply around them.
 
 ### 5.9 `packages/app/src/domain/workflow.ts`
 
@@ -707,18 +709,18 @@ import { detectSourceLangCode, type SourceLangCode } from './source-lang';
         // A12: always offered, regardless of provider count/idiom-ness (unlike the picker/
         // force-literal, which only appear conditionally) — the card always shows the row.
         onOverrideSourceLang: (code: SourceLangCode | 'auto') => {
-          void runLookup(e, providerOverride, forceLiteral, code).catch((err) =>
+          void runLookup(e, undefined, undefined, code).catch((err) =>
             deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
           );
         },
         ...(effectiveSourceLang !== undefined ? { sourceLang: effectiveSourceLang } : {}),
         ...(showPicker ? { providers: settings.configuredProviders, onSwitchProvider: (p: Provider) => {
-          void runLookup(e, p, forceLiteral, sourceLangOverride).catch((err) =>
+          void runLookup(e, p, undefined, sourceLangOverride).catch((err) =>
             deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
           );
         } } : {}),
         ...(isIdiom ? { onForceLiteral: () => {
-          void runLookup(e, providerOverride, true, sourceLangOverride).catch((err) =>
+          void runLookup(e, undefined, true, sourceLangOverride).catch((err) =>
             deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
           );
         } } : {}),
@@ -735,13 +737,18 @@ import { detectSourceLangCode, type SourceLangCode } from './source-lang';
 **Behavior-preserving note on `onSwitchProvider`/`onForceLiteral`:** today these two callbacks call
 `runLookup(e, p)` / `runLookup(e, undefined, true)` respectively — each one implicitly _drops_ the
 other override when it fires (switching provider forgets a prior force-literal choice, and vice
-versa; this is the existing, already-shipped behavior, unchanged by this card). This card's own
-override (`onOverrideSourceLang`) follows that same established convention: it does not thread the
-current `providerOverride`/`forceLiteral` through either — a fresh source-language pick is its own
-independent one-shot, exactly like the other two. The three callbacks above thread `sourceLangOverride`
-through each other only so a provider-switch or a force-literal re-run does not silently discard an
-already-chosen manual source language; they intentionally do **not** thread `providerOverride`/
-`forceLiteral` back through `onOverrideSourceLang`, matching today's precedent exactly.
+versa; this is the existing, already-shipped behavior, unchanged by this card — verify against
+`packages/app/src/domain/workflow.ts`, current lines 97 and 108). This card's code above preserves
+that exact drop-sibling semantic: `onSwitchProvider` still passes `undefined` for `forceLiteral`,
+and `onForceLiteral` still passes `undefined` for `providerOverride` — neither one starts threading
+the other's override just because a third parameter (`sourceLangOverride`) was added. This card's own
+override, `onOverrideSourceLang`, extends the same precedent one step further: it passes `undefined`
+for **both** `providerOverride` and `forceLiteral` — a fresh source-language pick is its own
+independent one-shot, exactly like the other two drop every override but their own. All three
+callbacks thread `sourceLangOverride` through each other (including `onOverrideSourceLang` threading
+its own new value forward) only so a provider-switch or a force-literal re-run does not silently
+discard an already-chosen manual source language — a user's source-language override reflects the
+page being read, not the specific request, so it is the one override that survives sibling re-runs.
 
 ### 5.10 `packages/app/src/ports.ts`
 
@@ -1124,14 +1131,12 @@ Files this card modifies that other unshipped cards in this batch also modify:
   CONTRACTS §5 even though this card is not "adding a message."
 - `packages/app/src/app/dom-selection-source.ts` — **not** on CONTRACTS §5's "content-script/trigger"
   list (which names A5 A6 A13 A14 A15 B3 B4), but this card also touches it (`defaultReader`'s
-  `pageLang` capture). As of this reading, the file already carries A15's `SELECTION_FIRED_MARK`
-  instrumentation (`performance.mark` in `onSelection`'s handler) — evidence that A15's own work has
-  already landed in this shared worktree ahead of this card. This card's addition is a separate,
-  independent piece of `defaultReader` (a new local `readPageLang` helper + one appended object key)
-  and does not touch the `onSelection`/mark code A15 added — but re-verify line numbers/hunks against
-  the file's actual state at implementation time, not this spec's citations, since the file is being
-  concurrently edited across this batch. Add this file to the orchestrator's serialization list
-  alongside A5/A6/A13/A14/A15/B3/B4.
+  `pageLang` capture). As of this pair's last review (2026-07-23), A15 has **not** landed — the file
+  carries zero occurrences of `SELECTION_FIRED_MARK`/`performance.mark` (verified by grep); only
+  A15's plan exists so far. Apply this card's `readPageLang`/`defaultReader` diff verbatim against
+  the file as it stands, not against any assumed A15 pre-state. If A15 has landed by execution time,
+  its additive marks do not conflict with this card's change; apply around them. Add this file to
+  the orchestrator's serialization list alongside A5/A6/A13/A14/A15/B3/B4.
 - `packages/app/src/ports.ts` — any other unshipped card that also extends `ResultRenderContext`
   (none currently known) should diff-review against this card's two new optional fields.
 - `packages/app/src/ui/lookup-card.ts` — CONTRACTS §5's "lookup-card UI" hot-file group (A1 A2 A3 A5
