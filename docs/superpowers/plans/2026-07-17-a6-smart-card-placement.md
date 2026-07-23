@@ -599,7 +599,7 @@ renderLoading(word?: string, anchor?: AnchorRect): void;
 ```
 
 - [ ] **Step 1: Write the failing tests.** In `packages/app/test/app/
-  inline-bottom-sheet-renderer.test.ts`, add `AnchorRect` to the existing `'../../src'`
+inline-bottom-sheet-renderer.test.ts`, add `AnchorRect` to the existing `'../../src'`
       import and add a new import for `computeCardPlacement`:
 
 ```ts
@@ -1071,7 +1071,7 @@ and report — do not hand-edit `.c3/`.
 ## PR
 
 Regular merge (no squash — owner ruling 2026-07-16). Title: `[A6SmartCardPlacement] Smart card
-placement`. Jira ticket link per the repo convention if one exists for this card; per REPO-FACTS
+placement`. `## JIRA ticket` section reads `n/a — this repo is not Jira-tracked`; per REPO-FACTS
 §13, no `.github/PULL_REQUEST_TEMPLATE` file exists in this repo, so the required body element is
 a written **"Testing performed"** section (no screenshots/video — owner ruling 2026-07-16),
 listing:

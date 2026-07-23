@@ -397,7 +397,8 @@ env-baked Gemini key; the full `onboarding.spec.ts` suite (5 tests: 3 pre-existi
   performed"** section (suites run, counts, the 2 new e2e scenarios by name) instead of any
   screenshot/video — this also satisfies the card's own "no video assets" scope fence, so there
   is nothing to reconcile between the two.
-- **JIRA:** none — this branch/campaign is docs-only roadmap work tracked in
-  `docs/ROADMAP.md`'s own Decision Log, not a Jira ticket; when this plan is actually executed by
-  a Hunter/Warchief pair against a real feature branch, follow that branch's own naming/PR
-  conventions (`git-conventions.md`) as normal.
+- **JIRA:** none — this repo carries no Jira tracker at all (confirmed absent); the `## JIRA
+ticket` section always reads `n/a — this repo is not Jira-tracked`, including when this plan is
+  actually executed by a Hunter/Warchief pair against a real feature branch. This repo's own
+  `git-conventions.md` governs branch naming/PR shape as normal; it does not carry a Jira-link
+  requirement.

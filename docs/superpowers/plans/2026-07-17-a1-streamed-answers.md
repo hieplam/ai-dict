@@ -2108,7 +2108,8 @@ all pass.
 
 ## PR
 
-Regular merge (no squash). Jira link per the repo convention. Include a **"Testing performed"**
-section per this worktree's evidence policy (§8 of the design spec) instead of screenshots/video —
-list the suites above with pass counts, explicitly noting the empty `git diff --stat` proof that
+Regular merge (no squash). `## JIRA ticket` section reads `n/a — this repo is not Jira-tracked`.
+Include a **"Testing performed"** section per this worktree's evidence policy (§8 of the design
+spec) instead of screenshots/video — list the suites above with pass counts, explicitly noting the
+empty `git diff --stat` proof that
 `http-lookup-client.ts`/`openai-lookup-client.ts`/`anthropic-lookup-client.ts` are untouched.

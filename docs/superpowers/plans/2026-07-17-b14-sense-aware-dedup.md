@@ -1522,9 +1522,9 @@ the env key cleared; the new `b14-sense-aware-dedup.spec.ts` (3 tests) and `save
 
 ## PR
 
-Regular merge (no squash). Jira link per the repo convention. Include a **"Testing performed"**
-section per this worktree's evidence policy (design spec §6.7) instead of screenshots/video — list
-the suites above with pass counts:
+Regular merge (no squash). `## JIRA ticket` section reads `n/a — this repo is not Jira-tracked`.
+Include a **"Testing performed"** section per this worktree's evidence policy (design spec §6.7)
+instead of screenshots/video — list the suites above with pass counts:
 
 - `packages/app` unit: full `bun run test` count (existing + new B14 cases across
   `saved-words-policy.test.ts`, `wire-schema.test.ts`, `router.test.ts`, `merge-prompt.test.ts`,

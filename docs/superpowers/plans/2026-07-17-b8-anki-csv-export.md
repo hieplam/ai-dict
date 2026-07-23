@@ -1341,8 +1341,7 @@ Body must include:
 - A 1-3 sentence description (what changed + why — every saved word can now leave the extension as
   an Anki-importable deck, feeding the spaced-repetition ecosystem the roadmap explicitly defers
   to instead of rebuilding).
-- The Jira ticket link, ticket id = branch suffix per repo convention:
-  n/a (repo is not Jira-tracked).
+- A `## JIRA ticket` section reading `n/a (repo is not Jira-tracked)`.
 - A **"Testing performed"** section (this worktree's owner ruling 2026-07-16 — no screenshots or
   video) listing exactly what Step 1 ran and its pass counts: full Vitest suite, the 4 new
   `anki-export.spec.ts` e2e scenarios, plus the two regression e2e files re-run alongside them.

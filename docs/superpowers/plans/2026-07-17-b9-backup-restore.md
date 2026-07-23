@@ -2056,6 +2056,5 @@ is never exported and never touched by import).
 * n/a (repo is not Jira-tracked)
 ```
 
-      (Jira ticket ID follows the branch-suffix convention — `feature/B9BackupRestore` →
-      `B9BackupRestore` — per this worktree's git-conventions rule; substitute the real ticket ID
-      if a different one exists in the roadmap-campaign's tracking system.)
+      (This repo carries no Jira tracker at all — the `## JIRA ticket` section always reads
+      `n/a`; there is no roadmap-campaign tracking system to substitute a real ticket ID from.)

@@ -967,6 +967,6 @@ persist→test→rollback machinery this card extends) all pass.
 
 ## PR
 
-Regular merge (no squash). Jira link per the repo convention. Include a **"Testing performed"**
-section per this worktree's evidence policy (§6 of the design spec) instead of screenshots/video —
-list the suites above with pass counts.
+Regular merge (no squash). `## JIRA ticket` section reads `n/a — this repo is not Jira-tracked`.
+Include a **"Testing performed"** section per this worktree's evidence policy (§6 of the design
+spec) instead of screenshots/video — list the suites above with pass counts.
