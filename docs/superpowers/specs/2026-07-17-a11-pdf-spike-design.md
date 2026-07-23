@@ -26,7 +26,7 @@ anywhere in the repo — confirmed by `grep -rni pdf` across the worktree (exclu
 this batch's planning docs.
 
 The extension's reach today is defined entirely by
-`packages/extension-chrome/src/manifest.json:30-42`:
+`packages/extension-chrome/src/manifest.json:35-55`:
 
 ```json
 "content_scripts": [
@@ -35,13 +35,13 @@ The extension's reach today is defined entirely by
 ]
 ```
 
-`host_permissions` is already `["<all_urls>"]` (`manifest.json:14`) — the broadest legal grant for
+`host_permissions` is already `["<all_urls>"]` (`manifest.json:17-19`) — the broadest legal grant for
 web-origin (`http`/`https`) schemes. `content-elements.ts` (6 lines, MAIN world) calls
 `registerContentElements()` **unconditionally at load** — it does not wait for a selection or any
 other trigger — so its custom elements (`lookup-trigger`, `lookup-card`, `bottom-sheet`) are
 registered in a page's `CustomElementRegistry` the instant the script runs, on every page the
 manifest's `matches` pattern covers. Selection capture itself is
-`DomSelectionSource` (`packages/app/src/app/dom-selection-source.ts:35-52`), which listens for
+`DomSelectionSource` (`packages/app/src/app/dom-selection-source.ts:35-51`), which listens for
 `mouseup`/`touchend` on `document` (`dom-selection-source.ts:46`) and, on firing, calls
 `window.getSelection()` plus a `Range`-based `extractSentence` (`dom-selection-source.ts:5-12`) —
 it needs a real DOM text node with a live `Range` to do anything.
@@ -258,7 +258,8 @@ commit.
 Recorded explicitly because it's the one thing an implementer might reflexively reach for: this
 card's own scope fence forbids "any `file://`/host-permission" decision from being made here — see
 §4 below. `packages/extension-chrome/src/manifest.json`'s `permissions`/`host_permissions`
-(currently `["storage", "sidePanel"]` / `["<all_urls>"]`, `manifest.json:13-14`) are read-only
+(currently `["storage", "sidePanel"]` / `["<all_urls>"]`, `manifest.json:13-16` /
+`manifest.json:17-19`) are read-only
 inputs to this investigation, never edited by it.
 
 ## 4. Scope fence held
@@ -286,16 +287,21 @@ against a spec, each probe has a **definition of done** (an artifact + a recorde
 the plan's tasks spell out exactly (`docs/superpowers/plans/2026-07-17-a11-pdf-spike.md`, per
 task):
 
-1. **Probe 1 (scripted check)** — DoD: the throwaway Playwright spec described in §2 D1 runs to
-   completion (no timeout/hang) against a real built `dist/` (via the existing
-   `packages/extension-chrome/e2e/fixtures.ts` harness) and both assertions resolve to a concrete
-   `true`/`false`, recorded verbatim in the report — not paraphrased, not assumed.
-2. **Probe 2 (build-vs-buy survey)** — DoD: all three table rows (§2 D4) are filled with a
-   concrete permission list and a cost/risk rating, each backed by a cited mechanism (e.g. which
-   MV3 API/permission the "custom pdf.js viewer" row would need, and why).
-3. **Probe 3 (write the report)** — DoD: the report file exists at the exact path from §2 D6,
-   contains all four sections from §3.2, and the "owner decision needed" closing section names E4
-   explicitly rather than implying an answer.
+1. **Probe 1 (scripted check)** — **time box: ≤ 1 hour, including fixture generation.** DoD: the
+   throwaway Playwright spec described in §2 D1 runs to completion (no timeout/hang) against a
+   real built `dist/` (via the existing `packages/extension-chrome/e2e/fixtures.ts` harness) and
+   both assertions resolve to a concrete `true`/`false`, recorded verbatim in the report — not
+   paraphrased, not assumed. If the ceiling is exceeded, STOP the probe and record what is known
+   so far in the report — an overrun is itself a feasibility datum.
+2. **Probe 2 (build-vs-buy survey)** — **time box: ≤ 2 hours.** DoD: all three table rows (§2 D4)
+   are filled with a concrete permission list and a cost/risk rating, each backed by a cited
+   mechanism (e.g. which MV3 API/permission the "custom pdf.js viewer" row would need, and why).
+   If the ceiling is exceeded, STOP the probe and record what is known so far in the report — an
+   overrun is itself a feasibility datum.
+3. **Probe 3 (write the report)** — **time box: ≤ 1 hour.** DoD: the report file exists at the
+   exact path from §2 D6, contains all four sections from §3.2, and the "owner decision needed"
+   closing section names E4 explicitly rather than implying an answer. If the ceiling is exceeded,
+   STOP and record what is known so far — an overrun is itself a feasibility datum.
 
 ## 6. Testing performed policy (PR body)
 
