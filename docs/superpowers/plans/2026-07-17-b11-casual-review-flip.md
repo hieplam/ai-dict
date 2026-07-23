@@ -1395,7 +1395,7 @@ replaceChildren(...)` (mirrors options.ts's onboarding/settings swap) rather tha
   `SidePanelView` — see the design spec §2.7 for the `:host`/`[hidden]` cascade pitfall this avoids.
 
 ## JIRA ticket
-* https://prospa.atlassian.net/browse/B11CasualReviewFlip
+* n/a — this repo is not Jira-tracked (see PR #117's own precedent).
 
 ## Testing performed
 - Unit: `bun run test` — full Vitest suite green, including new suites

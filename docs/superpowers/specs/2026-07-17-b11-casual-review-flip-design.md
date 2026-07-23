@@ -51,13 +51,15 @@ The router handler is a straight call to the already-implemented, already-tested
 domain function — this card (or whichever sibling card lands first, see the concurrency note below)
 is simply its first wire consumer.
 
-**This exact message is also independently pinned by `docs/superpowers/specs/
-2026-07-17-b10-weekly-digest-design.md` §2.4** (authored in the same spec-authoring batch as this
-card, for its own "saved this week" stat). Both specs need the identical primitive — "every saved
-word, over the wire" — and there is exactly one sane shape for it, so this spec pins the **same**
-name, request shape, and reply shape B10 already specified, rather than inventing a second,
-differently-named message that would leave two ways to ask the same question. **Whichever of B10 /
-B11 is implemented first adds the message; the other reuses it verbatim.** Plan Task 2 below makes
+**This exact message is also independently pinned by FOUR sibling pairs authored in this same
+batch — B6 (`2026-07-17-b6-words-page-design.md`), B8 (`2026-07-17-b8-anki-csv-export-design.md`),
+B10 (`2026-07-17-b10-weekly-digest-design.md` §2.4), and B15
+(`2026-07-17-b15-site-lookup-stats-design.md`)** — all needing the identical primitive — "every
+saved word, over the wire" — and there is exactly one sane shape for it, so this spec pins the
+**same** name, request shape, and reply shape those specs already pin, rather than inventing a
+second, differently-named message that would leave two ways to ask the same question. **Whichever
+of B6 / B8 / B10 / B11 / B15 is implemented first adds the message; every later card reuses it
+verbatim** (each pair's wire task carries the same skip-if-exists guard). Plan Task 2 below makes
 this concrete and non-blocking: it starts with a repo-state check and has a fully-specified branch
 for either outcome — this is not a placeholder, it is a resolved fork.
 
@@ -267,8 +269,8 @@ panel's own existing "state === 'close' is intentionally ignored" precedent, `si
   No progress is persisted — reopening review always starts a fresh shuffled deck (§2.5's fence).
 
 Rejected alternative — **fill-in-the-blank (mask the word in the sentence)**. Rejected per the
-front-state reasoning above: the roadmap card's own payoff line is "shows the **original** sentence"
-(`docs/ROADMAP.md:545`), not a redacted one; masking would also require exactly the kind of
+front-state reasoning above: the roadmap card's own Missing line is "shows the **original** sentence"
+(`docs/ROADMAP.md:541`), not a redacted one; masking would also require exactly the kind of
 word-boundary matching logic B3 (re-encounter highlighting) already owns as its dedicated feature,
 and re-implementing a lighter version here risks drifting from B3's matching rules for a mechanic
 the card never asked for.
@@ -700,8 +702,8 @@ above exactly. No `pr-assets/*` branch is created for this card.
 
 ## 8. Risk / rollback
 
-- **Risk: low-moderate.** The riskiest surface is shared with whichever sibling card (B10) also
-  needs `saved.list` — a genuine two-writer race on `wire.ts`/`router.ts`. Task 2's grep-first,
+- **Risk: low-moderate.** The riskiest surface is shared with the sibling cards (B6, B8, B10,
+  B15) that also pin `saved.list` — a genuine five-writer race on `wire.ts`/`router.ts`. Task 2's grep-first,
   fully-specified-both-branches design (§2.1) is the concrete mitigation: it can never produce two
   competing `saved.list` arms, only "add it" or "verify it," decided mechanically from repo state at
   execution time. The DOM swap mechanism (§2.7) reuses a pattern (`options.ts`'s `replaceChildren`)
@@ -756,16 +758,18 @@ This card touches:
   sequence; this card touches `header` and adds new top-level functions) — but both cards still land
   in the same files and must not be merged in parallel without a rebase.
 - **`packages/app/src/wire.ts` + `packages/app/src/app/router.ts`** — CONTRACTS flags wire+router as
-  hot for "any card adding messages." **This is the primary concurrency risk for this card**: B10's
-  own already-authored design spec (`docs/superpowers/specs/2026-07-17-b10-weekly-digest-design.md`
-  §2.4/§3.4-3.5) independently pins the identical `saved.list` message this card needs, with the
-  identical shape. §2.1 above resolves this: whichever of B10/B11 is dispatched first adds the
-  message (Task 2's grep-first check makes this mechanical, not a judgment call); the second card's
-  Task 2 must skip re-adding it and instead only add its own regression test. **The orchestrator
-  must not dispatch B10 and B11's Task 2 concurrently** — even though the outcome is deterministic
-  either way, a true concurrent write to the same `z.discriminatedUnion([...])` array and the same
-  exhaustive `switch` would still produce a git merge conflict; serialize the two cards' wire/router
-  tasks specifically (the rest of each card's tasks touch disjoint files and can run in parallel).
+  hot for "any card adding messages." **This is the primary concurrency risk for this card**: the
+  already-authored sibling specs for B6, B8, B10
+  (`docs/superpowers/specs/2026-07-17-b10-weekly-digest-design.md` §2.4/§3.4-3.5), and B15 each
+  independently pin the identical `saved.list` message this card needs, with the identical shape.
+  §2.1 above resolves this: whichever of B6/B8/B10/B11/B15 is dispatched first adds the message
+  (Task 2's grep-first check makes this mechanical, not a judgment call); every later card's wire
+  task must skip re-adding it and instead only add its own regression test. **The orchestrator
+  must not dispatch any two of these five cards' wire/router tasks concurrently** — even though
+  the outcome is deterministic either way, a true concurrent write to the same
+  `z.discriminatedUnion([...])` array and the same exhaustive `switch` would still produce a git
+  merge conflict; serialize the five cards' wire/router tasks specifically (the rest of each
+  card's tasks touch disjoint files and can run in parallel).
 - **`packages/extension-chrome/src/side-panel.html`** — not on CONTRACTS' pre-declared hot-file
   list; this card is (as of this authoring) the first to touch it, adding the `<div id="app">`
   wrapper. Flagged here so a future card that also needs to mount a third top-level side-panel
