@@ -85,8 +85,10 @@ plus JS-engine noise, adding a third mark for no additional signal. Two marks, o
 work (detect → render), is the minimal instrumentation that answers the budget question.
 
 **Cross-world visibility, verified.** `content.ts` (where both classes run) executes in Chrome
-MV3's isolated content-script world (`manifest.json`'s default-world content script,
-`packages/extension-chrome/src/manifest.json:37-41`), while e2e assertions run via Playwright's
+MV3's isolated content-script world (`manifest.json`'s `content.js` entry — no `world` key, which
+defaults to `ISOLATED` — `packages/extension-chrome/src/manifest.json:46-54`; the sibling entry at
+`:36-45` is the separate `content-elements.js` script, explicitly declared `"world": "MAIN"`),
+while e2e assertions run via Playwright's
 `page.evaluate()`, which executes in the page's **main** world. The `Performance`
 timeline is a per-document, not per-JS-realm, browser object — confirmed empirically against this
 exact repo's build (`bun run build:chrome:e2e`, marks added temporarily to both files, loaded via
@@ -199,8 +201,8 @@ minor, benign browser-version-to-browser-version layout-count drift.
 ## 7. Test placement (pinned)
 
 One new e2e file: `packages/extension-chrome/e2e/a15-trigger-latency-budget.spec.ts` (matches the
-existing per-card dedicated-spec convention — `c2-verified-activation.spec.ts`,
-`b7-repeat-nudge.spec.ts` — rather than appending to the general-purpose `selection.spec.ts`, since
+existing per-card dedicated-spec convention — `b7-repeat-nudge.spec.ts`,
+`a16-evidence.spec.ts` — rather than appending to the general-purpose `selection.spec.ts`, since
 these assertions are CI-timing/CDP-metric specific and benefit from being independently
 skippable/quarantinable without touching the core selection-behavior regression suite).
 

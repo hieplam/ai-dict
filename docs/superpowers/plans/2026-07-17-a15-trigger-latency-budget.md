@@ -105,6 +105,10 @@ Expected: failure — `SELECTION_FIRED_MARK` is not exported from `../../src/app
       constant right after the existing `TERMINATORS` constant, and mark inside `onSelection`'s
       handler immediately before `cb(e)`:
 
+> **Before applying, re-read the current file.** If A14/A6 (or any sibling) already landed here,
+> insert only the marked new lines around their code rather than pasting this block verbatim; if
+> the file no longer matches the block's assumptions, STOP and re-ground.
+
 ```ts
 import type { SelectionSource, SelectionEvent, AnchorRect } from '../index';
 
@@ -168,7 +172,7 @@ export class DomSelectionSource implements SelectionSource {
 ```
 
 Run: `cd packages/app && bunx vitest run test/app/dom-selection-source.test.ts`
-Expected: all tests pass (existing 6 + the new one = 7 in this file's combined describes).
+Expected: all tests pass (existing 7 + the new one = 8 in this file's combined describes).
 
 - [ ] **Step 3: Commit** — gate, then commit:
 
@@ -269,6 +273,10 @@ Expected: failure — `TRIGGER_SHOWN_MARK` is not exported from `./chrome-floati
 
 - [ ] **Step 3: Implement.** In `packages/extension-chrome/src/adapters/chrome-floating-trigger.ts`,
       add the import/re-export at the top and the mark call at the end of `show()`:
+
+> **Before applying, re-read the current file.** If A14/A6 (or any sibling) already landed here,
+> insert only the marked new lines around their code rather than pasting this block verbatim; if
+> the file no longer matches the block's assumptions, STOP and re-ground.
 
 ```ts
 import { registerContentElements, type TriggerUI, type AnchorRect, type Theme } from '@ai-dict/app';
@@ -562,10 +570,9 @@ total in this final invocation.
 
 ## PR
 
-Regular merge (no squash). Title: `[A15TriggerLatencyBudget] Trigger latency budget`. Jira link per
-the repo convention (`https://prospa.atlassian.net/browse/A15TriggerLatencyBudget` — adjust to the
-actual ticket key if one exists). Include a **"Testing performed"** section per this worktree's
-evidence policy (design spec §11) instead of screenshots/video:
+Regular merge (no squash). Title: `[A15TriggerLatencyBudget] Trigger latency budget`. Include a
+**"Testing performed"** section per this worktree's evidence policy (design spec §11) instead of
+screenshots/video:
 
 - Unit: `bun run test` — 692 passed (690 existing + 2 new: `SELECTION_FIRED_MARK` emission,
   `TRIGGER_SHOWN_MARK` emission).
@@ -574,3 +581,7 @@ evidence policy (design spec §11) instead of screenshots/video:
   passed (regression guard).
 - Gates: `bun run lint`, `bun run format:check`, `bun run typecheck` (all 3 packages),
   `GEMINI_API_KEY= bun run build:chrome:e2e` — all green.
+
+## JIRA ticket
+
+- n/a — this repo is not Jira-tracked (see PR #117's own precedent).
