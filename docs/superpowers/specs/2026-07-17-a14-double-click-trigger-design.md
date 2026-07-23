@@ -10,12 +10,17 @@ guard list. **Escalate:** none.
 Today a lookup is always two gestures, wired entirely through `runLookupWorkflow`
 (`packages/app/src/domain/workflow.ts:37-148`):
 
-- `DomSelectionSource` (`packages/app/src/app/dom-selection-source.ts:40-59`) listens for
+- `DomSelectionSource` (`packages/app/src/app/dom-selection-source.ts:35-51`) listens for
   `mouseup`/`touchend` on `document`, reads `window.getSelection()` via `defaultReader()`
-  (`dom-selection-source.ts:20-36`), and — when the reader yields a non-null `SelectionEvent` —
-  invokes the workflow's callback. As of this writing that callback also stamps a permanent
-  perf mark (`dom-selection-source.ts:5-8,49-52`, `SELECTION_FIRED_MARK` — landed for **A15**,
-  concurrently authored in this same batch; see §9 Concurrency).
+  (`dom-selection-source.ts:15-31`), and — when the reader yields a non-null `SelectionEvent` —
+  invokes the workflow's callback (`dom-selection-source.ts:42-45`: `const e = this.read(); if (e)
+cb(e);`). **Corrected on 2026-07-23 re-review:** an earlier draft of this spec assumed A15
+  (trigger-latency-budget)'s `SELECTION_FIRED_MARK` instrumentation had already landed in this
+  file. Verified against this worktree today: it has not — A15 has only a spec/plan pair on disk
+  (`docs/superpowers/specs/2026-07-17-a15-trigger-latency-budget-design.md`), no branch, no
+  `SELECTION_FIRED_MARK` export anywhere in `packages/app/src`. This card's plan therefore
+  implements against the file exactly as it stands today, with no perf-mark line. See §6.3 and §9
+  Concurrency for the (fully symmetric) handling if A15 lands first.
 - The workflow's `onSelection` callback (`workflow.ts:123-139`) calls
   `deps.trigger.show(e.anchor, onClick)` — this is gesture 1, the floating **Define** bubble
   (`ChromeFloatingTrigger`, `packages/extension-chrome/src/adapters/chrome-floating-trigger.ts:29-42`).
@@ -57,8 +62,9 @@ port, so double-click is a distinct signal from `onSelection`.
 Grounding fact that makes this the only 1-line-of-logic option: a real double-click's **first**
 mouseup (a plain click, no drag) leaves the page selection **collapsed**
 (`window.getSelection().isCollapsed === true`), so `defaultReader()` returns `null`
-(`dom-selection-source.ts:22`) and the existing handler's `if (e) {...}` guard
-(`dom-selection-source.ts:47`) already skips it — `cb` is never invoked for that first mouseup.
+(`dom-selection-source.ts:17`, the `if (!sel || sel.isCollapsed || sel.rangeCount === 0) return
+null;` guard) and the existing handler's one-line `if (e) cb(e);` guard
+(`dom-selection-source.ts:44`) already skips it — `cb` is never invoked for that first mouseup.
 Only the **second** mouseup — the one the browser fires at the exact moment it auto-selects the
 double-clicked word — produces a real (non-collapsed) selection, and that is precisely the same
 event object whose `.detail === 2`. So checking `detail` on the mouseup that already reaches `cb`
@@ -263,20 +269,20 @@ disagree — both sides are edited in the same task (§ plan Task 1) for exactly
 ### 6.3 `packages/app/src/app/dom-selection-source.ts`
 
 Per §2/§3, add a module-private guard helper and enrich the `mouseup` handler. **Concurrency
-note:** as of this writing this file already carries A15's `SELECTION_FIRED_MARK` instrumentation
-(`dom-selection-source.ts:5-8,49-52`) — the diff below assumes that lands first (see §9). If A15
-has not yet merged when this task executes, drop the `performance.mark(...)` line and the
-`SELECTION_FIRED_MARK` export/import; nothing else in this diff depends on it.
+note (corrected 2026-07-23):** verified directly against this worktree today — A15
+(trigger-latency-budget) has **not** landed here (no `SELECTION_FIRED_MARK` export anywhere in
+`packages/app/src`, no A15 branch). The diff below is written against the file exactly as it
+stands right now — no perf-mark line, no `SELECTION_FIRED_MARK` import/export. **If A15 lands
+first** (before this plan's Task 2 executes), its own spec adds `export const
+SELECTION_FIRED_MARK = 'ai-dict:selection-fired';` near the top of the file and one
+`performance.mark(SELECTION_FIRED_MARK);` line as the first statement inside the `if (e) {`
+block below — purely additive, no conflict with anything in this diff; the implementer keeps
+that line and adds this card's `viaDoubleClick` logic immediately after it. See §9 Concurrency.
 
 ```ts
 import type { SelectionSource, SelectionEvent, AnchorRect } from '../index';
 
 const TERMINATORS = ['.', '!', '?'];
-
-// A15: cheap, permanent instrumentation mark — the earliest synchronous JS observation of "the
-// browser told us the selection gesture ended." See docs/superpowers/specs/
-// 2026-07-17-a15-trigger-latency-budget-design.md §3.
-export const SELECTION_FIRED_MARK = 'ai-dict:selection-fired';
 
 // A14: elements where a native double-click means "select text to edit/operate", not "define
 // this word" — the opt-in double-click trigger stays silent there. The ordinary select-then-
@@ -332,7 +338,6 @@ export class DomSelectionSource implements SelectionSource {
     const handler = (ev: Event): void => {
       const e = this.read();
       if (e) {
-        performance.mark(SELECTION_FIRED_MARK);
         // A14: a native double-click delivers detail === 2 on its second mouseup (UI Events'
         // click-count semantics; identical across Chromium/Firefox/WebKit) — the exact event
         // that also carries the browser's auto-selected word, because a plain first click alone
@@ -543,6 +548,69 @@ rule does not apply — there is no new arm.
 The feature is pure client-side gating of an existing, already-permitted flow (selection → lookup);
 nothing about it needs a new host permission or content-script registration.
 
+### 6.13 `packages/extension-chrome/e2e/helpers.ts` — two new fixture helpers
+
+**Defect found in the original draft of this spec (fixed 2026-07-23):** §8.5's testing strategy
+said "double-click 'bank' on the fixture paragraph" and "the fixture also has a
+`<div id="edit" contenteditable="true">` region", but neither capability existed in this worktree's
+e2e harness. Verified: `selectWord` (`helpers.ts:198-215`) dispatches its synthetic `mouseup` on
+`document` itself (`document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }))`) with no
+`detail` option — `event.target` is `document`, which is never `instanceof Element`, so
+`isGuardedTarget` would trivially always read "unguarded" regardless of the fixture, and there is
+no `detail: 2` anywhere. `gotoFixture` (`helpers.ts:158-172`) only ever serves a single `<p id="t">`
+paragraph — no contenteditable region exists to guard-test against. Two small additions close
+this, following the exact pattern `gotoResetFixture` already established for fixture variants:
+
+```ts
+/**
+ * A14: like selectWord, but dispatches the synthetic mouseup ON the container element (not
+ * document) with detail: 2 — the UI Events click-count value a real double-click's second
+ * mouseup carries. Dispatching on the container (not document) means `event.target` is that
+ * element, so DomSelectionSource's `isGuardedTarget(ev.target)` check exercises the real guard
+ * list against whatever element actually contains the word (see design spec §2/§3).
+ */
+export async function dblclickWord(page: Page, id: string, word: string): Promise<void> {
+  await page.evaluate(
+    ({ id, word }) => {
+      const container = document.getElementById(id)!;
+      const textNode = container.firstChild!;
+      const text = textNode.textContent ?? '';
+      const start = text.indexOf(word);
+      const range = document.createRange();
+      range.setStart(textNode, start);
+      range.setEnd(textNode, start + word.length);
+      const sel = window.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+      container.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, detail: 2 }));
+    },
+    { id, word },
+  );
+}
+
+/**
+ * A14: like gotoFixture, but the page also ships a `<div id="edit" contenteditable="true">`
+ * region — the guarded-target e2e proves the double-click bypass never fires inside it even
+ * with the feature switched on (design spec §3's guard list).
+ */
+export async function gotoEditableFixture(
+  page: Page,
+  paragraph = 'The bank by the river is steep.',
+  editableText = 'Edit this bank statement.',
+): Promise<void> {
+  await page.route('http://test.fixture/', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: `<html><body><p id="t">${paragraph}</p><div id="edit" contenteditable="true">${editableText}</div></body></html>`,
+    }),
+  );
+  await page.goto('http://test.fixture/');
+}
+```
+
+Both are additive exports; no existing helper's signature changes.
+
 ## 7. Scope fence (from the card, held exactly)
 
 - **Off by default.** `doubleClickLookup` is optional/absent until a reader explicitly checks the
@@ -599,15 +667,16 @@ nothing about it needs a new host permission or content-script registration.
    verified with `'doubleClickLookup' in pub === false` so the existing exact `toEqual` assertions
    keep passing unmodified) and surfaces `doubleClickLookup: true` when the stored settings object
    has it.
-5. **e2e — new `packages/extension-chrome/e2e/a14-double-click-trigger.spec.ts`:**
-   - Off by default: `seedSettings(page)` (no override) + `mockGemini(context)`, double-click
+5. **e2e — new `packages/extension-chrome/e2e/a14-double-click-trigger.spec.ts`**, using the two
+   new helpers from §6.13 (`dblclickWord`, `gotoEditableFixture`):
+   - Off by default: `seedSettings(page)` (no override) + `mockGemini(context)`, `dblclickWord`
      "bank" on the fixture paragraph → the trigger bubble is still shown, no card renders, and
      `calls.count` stays `0` until the bubble is actually clicked.
    - Opted in: `seedSettings(page, { doubleClickLookup: true })` + `mockGemini(context)`,
-     double-click "bank" → `bottom-sheet lookup-card` renders the result **without** ever calling
+     `dblclickWord` "bank" → `bottom-sheet lookup-card` renders the result **without** ever calling
      `openTrigger()`, and `calls.count === 1`.
-   - Opted in but guarded: same settings, but the fixture also has a
-     `<div id="edit" contenteditable="true">` region — double-clicking a word inside it never
+   - Opted in but guarded: same settings, `gotoEditableFixture` (adds the
+     `<div id="edit" contenteditable="true">` region) — `dblclickWord`ing a word inside it never
      renders a card (`calls.count` stays `0`), proving the guard applies even with the feature on.
 
 ## 9. Testing performed (PR evidence — replaces screenshot/video capture)
@@ -654,7 +723,7 @@ exactly what §8 enumerates. No `pr-assets/*` branch.
 | `packages/extension-safari/src/adapters/safari-storage-store.ts`      | same one-line change, platform parity                                                                     |
 | `packages/extension-safari/src/adapters/safari-storage-store.test.ts` | + test (§8.4)                                                                                             |
 | `packages/extension-chrome/src/options.ts`                            | `toFormValue()` + `doubleClickLookup` passthrough                                                         |
-| `packages/extension-chrome/e2e/helpers.ts`                            | `SettingsOverrides` + `doubleClickLookup?: boolean`                                                       |
+| `packages/extension-chrome/e2e/helpers.ts`                            | `SettingsOverrides` + `doubleClickLookup?: boolean`; + `dblclickWord()` + `gotoEditableFixture()` (§6.13) |
 | `packages/extension-chrome/e2e/a14-double-click-trigger.spec.ts`      | new — functional e2e (§8.5)                                                                               |
 
 No change to `packages/app/src/app/router.ts`, `packages/extension-chrome/src/sw.ts`,
@@ -667,10 +736,11 @@ manifest file.
 Files this card modifies that other unshipped cards in this batch also modify (CONTRACTS §5) —
 the orchestrator should serialize:
 
-- **`packages/app/src/app/dom-selection-source.ts`** — **A15** (trigger-latency-budget) is already
-  (as of this writing, verified live in the worktree) adding `SELECTION_FIRED_MARK` instrumentation
-  to this exact file/method. See §6.3's concurrency note for how this plan's diff composes with
-  that.
+- **`packages/app/src/app/dom-selection-source.ts`** — **A15** (trigger-latency-budget) is planned
+  (spec+plan on disk) to add `SELECTION_FIRED_MARK` instrumentation to this exact file/method, but
+  has **not** landed as of this review (2026-07-23, verified: no export, no branch). This card's
+  Task 2 implements against the file as it stands today; see §6.3's concurrency note for the
+  additive, non-conflicting composition if A15 lands first.
 - **`packages/app/src/domain/workflow.ts`** — part of the broader content-script/trigger surface
   CONTRACTS §5 flags as shared across A5, A6, A13, A14, A15, B3, B4, even though this specific file
   isn't separately named.
