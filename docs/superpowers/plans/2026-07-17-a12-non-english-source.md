@@ -821,13 +821,13 @@ export class DomSelectionSource implements SelectionSource {
 }
 ```
 
-**Note for the implementer:** re-read this file before editing — it already carries A15's
-`SELECTION_FIRED_MARK` export and the `performance.mark` call inside `onSelection`'s handler (landed
-via a concurrent card in this same batch). The block above shows the FULL expected file content
-including that pre-existing code; if the actual file differs from this listing when you open it,
-apply only the `readPageLang` function + the `defaultReader` body changes shown here, preserving
-whatever else is already present, and flag the discrepancy rather than silently overwriting unrelated
-work.
+**Note for the implementer:** re-read this file before editing. As of this pair's last review
+(2026-07-23), A15 has **not** landed — `dom-selection-source.ts` carries zero occurrences of
+`SELECTION_FIRED_MARK`/`performance.mark` (verified by grep); only A15's plan exists so far. Apply
+the diff (the `readPageLang` function + the `defaultReader` body changes) verbatim against the file
+as it stands — do not treat the `SELECTION_FIRED_MARK`/`performance.mark` lines shown above as
+pre-existing. If A15 has landed by execution time, its additive marks do not conflict with this
+card's change; apply this card's diff around them instead of overwriting them.
 
 Run: `cd packages/app && bunx vitest run test/app/dom-selection-source.test.ts`
 Expected: all tests pass (existing + 3 new).
@@ -922,10 +922,134 @@ it('[A12] overriding with "auto" clears req.sourceLang but still sets sourceLang
   expect(h.client.lastReq?.sourceLang).toBeUndefined();
   expect(h.client.lastReq?.sourceLangOverride).toBe(true);
 });
+
+it('[A12] onSwitchProvider drops a current forceLiteral (sibling-drop precedent) but threads sourceLangOverride', async () => {
+  let t = 5000;
+  const idiomResult: LookupResult = {
+    ...okResult,
+    definedAs: { term: 'kick the bucket', isIdiom: true },
+  };
+  const h = harness({
+    configuredProviders: ['gemini', 'openai'],
+    now: () => t,
+    impl: () => Promise.resolve(idiomResult),
+  });
+  h.selection.emit(sel);
+  h.trigger.click();
+  await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+
+  // Set a manual source-language override first.
+  t += 1;
+  h.renderer.lastCtx!.onOverrideSourceLang!('fr');
+  await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+
+  // Force literal from that ctx — forceLiteral becomes true, sourceLangOverride stays threaded.
+  t += 1;
+  h.renderer.lastCtx!.onForceLiteral!();
+  await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(3));
+  expect(h.client.lastReq?.forceLiteral).toBe(true);
+
+  // Now switch provider from THIS ctx (forceLiteral currently true) — it must be dropped, not
+  // threaded, while the source-language override survives.
+  t += 1;
+  h.renderer.lastCtx!.onSwitchProvider!('openai');
+  await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(4));
+  expect(h.client.lastReq?.provider).toBe('openai');
+  expect(h.client.lastReq?.forceLiteral).toBeUndefined();
+  expect(h.client.lastReq?.sourceLang).toBe('fr');
+  expect(h.client.lastReq?.sourceLangOverride).toBe(true);
+  expect(h.renderer.lastError).toBeNull();
+});
+
+it('[A12] onForceLiteral drops a current providerOverride (sibling-drop precedent) but threads sourceLangOverride', async () => {
+  let t = 5000;
+  const idiomResult: LookupResult = {
+    ...okResult,
+    definedAs: { term: 'kick the bucket', isIdiom: true },
+  };
+  const h = harness({
+    configuredProviders: ['gemini', 'openai'],
+    now: () => t,
+    impl: () => Promise.resolve(idiomResult),
+  });
+  h.selection.emit(sel);
+  h.trigger.click();
+  await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+
+  // Set a manual source-language override first.
+  t += 1;
+  h.renderer.lastCtx!.onOverrideSourceLang!('fr');
+  await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+
+  // Switch provider from that ctx — provider becomes 'openai', sourceLangOverride stays threaded.
+  t += 1;
+  h.renderer.lastCtx!.onSwitchProvider!('openai');
+  await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(3));
+  expect(h.client.lastReq?.provider).toBe('openai');
+
+  // Now force literal from THIS ctx (provider currently 'openai') — it must be dropped, not
+  // threaded, while the source-language override survives.
+  t += 1;
+  h.renderer.lastCtx!.onForceLiteral!();
+  await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(4));
+  expect(h.client.lastReq?.forceLiteral).toBe(true);
+  expect(h.client.lastReq?.provider).toBeUndefined();
+  expect(h.client.lastReq?.sourceLang).toBe('fr');
+  expect(h.client.lastReq?.sourceLangOverride).toBe(true);
+  expect(h.renderer.lastError).toBeNull();
+});
+
+it('[A12] onOverrideSourceLang always drops BOTH providerOverride and forceLiteral, whichever is currently set', async () => {
+  let t = 5000;
+  const idiomResult: LookupResult = {
+    ...okResult,
+    definedAs: { term: 'kick the bucket', isIdiom: true },
+  };
+  const h = harness({
+    configuredProviders: ['gemini', 'openai'],
+    now: () => t,
+    impl: () => Promise.resolve(idiomResult),
+  });
+  h.selection.emit(sel);
+  h.trigger.click();
+  await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+
+  // Switch provider — provider becomes 'openai'.
+  t += 1;
+  h.renderer.lastCtx!.onSwitchProvider!('openai');
+  await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+  expect(h.client.lastReq?.provider).toBe('openai');
+
+  // Override source lang from THIS ctx — providerOverride must NOT carry through.
+  t += 1;
+  h.renderer.lastCtx!.onOverrideSourceLang!('ja');
+  await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(3));
+  expect(h.client.lastReq?.provider).toBeUndefined();
+  expect(h.client.lastReq?.forceLiteral).toBeUndefined();
+  expect(h.client.lastReq?.sourceLang).toBe('ja');
+  expect(h.client.lastReq?.sourceLangOverride).toBe(true);
+
+  // Force literal from THIS ctx — forceLiteral becomes true (provider stays dropped).
+  t += 1;
+  h.renderer.lastCtx!.onForceLiteral!();
+  await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(4));
+  expect(h.client.lastReq?.forceLiteral).toBe(true);
+  expect(h.client.lastReq?.provider).toBeUndefined();
+
+  // Override source lang again from THIS ctx — forceLiteral must NOT carry through either.
+  t += 1;
+  h.renderer.lastCtx!.onOverrideSourceLang!('auto');
+  await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(5));
+  expect(h.client.lastReq?.forceLiteral).toBeUndefined();
+  expect(h.client.lastReq?.provider).toBeUndefined();
+  expect(h.client.lastReq?.sourceLang).toBeUndefined();
+  expect(h.client.lastReq?.sourceLangOverride).toBe(true);
+  expect(h.renderer.lastError).toBeNull();
+});
 ```
 
 Run: `cd packages/app && bunx vitest run test/workflow.test.ts`
-Expected: the 5 new cases fail (`ResultRenderContext` has no `sourceLang`/`onOverrideSourceLang` yet;
+Expected: the 8 new cases fail (`ResultRenderContext` has no `sourceLang`/`onOverrideSourceLang` yet;
 `req` never carries `sourceLang`).
 
 - [ ] **Step 2: Implement.**
@@ -1046,10 +1170,11 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
         // force-literal below, which only appear conditionally) — the card always shows the row.
         onOverrideSourceLang: (code: SourceLangCode | 'auto') => {
           // Deliberate override bypasses the Define-spam cooldown — same reasoning as
-          // onSwitchProvider/onForceLiteral below. Threads the CURRENT provider/forceLiteral
-          // choices through (unlike those two, which each drop the OTHER override when they
-          // fire — see the design spec §5.9 for why that asymmetry is intentional).
-          void runLookup(e, providerOverride, forceLiteral, code).catch((err) =>
+          // onSwitchProvider/onForceLiteral below. Drops BOTH providerOverride and forceLiteral
+          // (a fresh source-language pick is its own independent one-shot), matching the
+          // existing sibling-drop precedent those two already follow with each other — see the
+          // design spec §5.9's behavior-preserving note.
+          void runLookup(e, undefined, undefined, code).catch((err) =>
             deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
           );
         },
@@ -1058,8 +1183,10 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
           ? {
               providers: settings.configuredProviders,
               onSwitchProvider: (p: Provider) => {
-                // Deliberate switch bypasses the Define-spam cooldown — it's not spam.
-                void runLookup(e, p, forceLiteral, sourceLangOverride).catch((err) =>
+                // Deliberate switch bypasses the Define-spam cooldown — it's not spam. Drops
+                // forceLiteral (existing, already-shipped precedent — unchanged by this card);
+                // threads sourceLangOverride through so a manual source-language pick survives.
+                void runLookup(e, p, undefined, sourceLangOverride).catch((err) =>
                   deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
                 );
               },
@@ -1069,8 +1196,9 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
           ? {
               onForceLiteral: () => {
                 // Deliberate override bypasses the Define-spam cooldown — same reasoning
-                // as onSwitchProvider above.
-                void runLookup(e, providerOverride, true, sourceLangOverride).catch((err) =>
+                // as onSwitchProvider above. Drops providerOverride (existing, already-shipped
+                // precedent — unchanged by this card); threads sourceLangOverride through.
+                void runLookup(e, undefined, true, sourceLangOverride).catch((err) =>
                   deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
                 );
               },
@@ -1111,7 +1239,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
 ```
 
 Run: `cd packages/app && bunx vitest run test/workflow.test.ts`
-Expected: all pass (existing + 5 new).
+Expected: all pass (existing + 8 new).
 
 - [ ] **Step 3: Commit** — gate, then commit:
 
