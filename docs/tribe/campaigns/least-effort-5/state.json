@@ -1,7 +1,7 @@
 {
   "v": 1,
   "campaign": "least-effort-5",
-  "mergePolicy": "regular-merge-only \u2014 squash-merge prohibited (owner ruling 2026-07-16, ROADMAP \u00a78)",
+  "mergePolicy": "regular-merge-only — squash-merge prohibited (owner ruling 2026-07-16, ROADMAP §8)",
   "sequence": [
     "C1",
     "C2",
@@ -37,15 +37,15 @@
       "updatedAt": "2026-07-24T01:10:00.000Z"
     },
     "C2": {
-      "status": "staged",
+      "status": "escalated",
       "spec": "docs/superpowers/specs/2026-07-16-c2-verified-activation-design.md",
       "plan": "docs/superpowers/plans/2026-07-16-c2-verified-activation.md",
       "branch": null,
       "baseSha": null,
-      "pr": null,
+      "pr": 148,
       "mergeSha": null,
-      "sessionId": null,
-      "updatedAt": null
+      "sessionId": "529ff5bc-e083-4019-af02-a730e4ce2636",
+      "updatedAt": "2026-07-24T02:11:49.196Z"
     },
     "C5": {
       "status": "staged",
