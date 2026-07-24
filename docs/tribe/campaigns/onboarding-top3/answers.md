@@ -1,4 +1,4 @@
-# Campaign rulings — "onboarding-top3" (C5 · C8 · C3)
+# Campaign rulings — "onboarding-top3" (all 8 Category C cards)
 
 > **What this file is.** The Shaman's binding rulings for this campaign. Its full content is
 > embedded in every executor brief. Executors have **zero design authority**: where a ruling
@@ -8,20 +8,25 @@
 > Only the Shaman-authority orchestrator or the owner appends here. Append-only; each entry is
 > dated and names the card it binds.
 >
-> **Card selection (2026-07-25, owner directive "3 onboarding ideas, highest score").** Category C
-> unshipped cards ranked by ROADMAP score: C3 `5.0`, C8 `4.0`, then a four-way tie at `3.0`
-> (C5 · C6 · C7 · C11). The 3.0 slot went to **C5** on the roadmap's own stated sequencing
-> (`C10 → C1 → C2 → C5 → C6 → C7 → C8 → C3 → C4 → C9`). Shipped already: C10 (#113), C1 (#144),
-> C2 (#148). **C7 remains `staged` in the `least-effort-5` campaign** — it was not cancelled, it
-> simply lost the tie-break; that campaign's state file still owns it.
+> **SCOPE — read this before the rulings.** This campaign started as 3 cards (C5 · C8 · C3) and was
+> **extended by owner directive on 2026-07-25 to all 8 unshipped Category C cards**. R10 below
+> records that extension and is authoritative; several rulings written during the 3-card phase say
+> "this campaign" meaning the original three, and R10/R11 extend them explicitly where that matters.
 >
-> **Run order is `C5 → C8 → C3`**, matching the roadmap's sequencing. No card here declares a
-> `dependsOn`: C3's only real dependency (C2, verified activation) is already shipped, and C5/C8
-> are mutually independent. Order is sequencing, not blocking.
+> **Run order — `C5 → C6 → C7 → C8 → C3 → C4 → C9 → C11`** (the roadmap's own Category C
+> sequencing). **C3 must precede C4 and C11**: all three edit `docs/index.html`, and merging that to
+> `master` deploys the public landing page. No card declares a `dependsOn` — every real dependency
+> is already shipped (C1 #144, C2 #148, C10 #113) or satisfied by this order.
+>
+> **The category's measured goal is now in scope:** audited funnel dead-ends **7 → 0**, each closure
+> proven by the C10 e2e harness.
+>
+> **C7 is owned by THIS campaign** as of R10. The `least-effort-5` state file still lists it as
+> `staged` — that record is stale bookkeeping; never dispatch C7 from there.
 >
 > **Provenance.** R1–R5 are carried forward verbatim in substance from the `least-effort-5`
 > campaign (`docs/tribe/campaigns/least-effort-5/answers.md` R0, R2, R4, R5, R6/R7). They were
-> paid for in real debugging on C1/C2 and bind unchanged here. R6–R7 are new.
+> paid for in real debugging on C1/C2 and bind unchanged here. R6–R16 are new.
 
 ---
 
