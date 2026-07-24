@@ -44,6 +44,9 @@ test('evidence: settings screen after activating from onboarding', async ({
   context,
   extensionId,
 }) => {
+  // C2: activation now runs a real connection.test before swapping to settings — mock the
+  // provider (200 OK) so the test passes and the screen advances, mirroring onboarding.spec.ts.
+  await mockGemini(context);
   const page = await context.newPage();
   await page.setViewportSize({ width: 1180, height: 900 });
   await page.goto(`chrome-extension://${extensionId}/options.html`);
