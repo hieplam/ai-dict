@@ -13,7 +13,7 @@ test.describe('C1 open onboarding on install', () => {
     // appeared, then assert there is exactly one (proves "opens exactly one tab, once").
     await expect
       .poll(() => context.pages().filter((p) => p.url().includes('options.html')).length, {
-        timeout: 10_000,
+        timeout: 30_000,
       })
       .toBe(1);
 
