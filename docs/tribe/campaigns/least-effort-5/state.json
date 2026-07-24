@@ -1,7 +1,7 @@
 {
   "v": 1,
   "campaign": "least-effort-5",
-  "mergePolicy": "regular-merge-only — squash-merge prohibited (owner ruling 2026-07-16, ROADMAP §8)",
+  "mergePolicy": "regular-merge-only \u2014 squash-merge prohibited (owner ruling 2026-07-16, ROADMAP \u00a78)",
   "sequence": [
     "C1",
     "C2",
@@ -26,15 +26,15 @@
   ],
   "cards": {
     "C1": {
-      "status": "escalated",
+      "status": "shipped",
       "spec": "docs/superpowers/specs/2026-07-16-c1-open-on-install-design.md",
       "plan": "docs/superpowers/plans/2026-07-16-c1-open-on-install.md",
-      "branch": null,
-      "baseSha": null,
+      "branch": "feature/C1OpenOnInstallLE5",
+      "baseSha": "61f81ddbec19a5af46b34f36099a637d534c02e7",
       "pr": 144,
-      "mergeSha": null,
+      "mergeSha": "6ff56c6f18e51f99cc9eca58a84f2ced438ea397",
       "sessionId": "1582a562-7cd7-4915-90db-f6e0a641a53f",
-      "updatedAt": "2026-07-24T00:47:18.872Z"
+      "updatedAt": "2026-07-24T01:10:00.000Z"
     },
     "C2": {
       "status": "staged",
