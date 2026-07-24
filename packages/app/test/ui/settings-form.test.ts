@@ -1011,3 +1011,24 @@ describe('<settings-form> sticky save bar + dirty state (A16)', () => {
     expect(await axeViolations(el)).toEqual([]);
   });
 });
+
+describe('<settings-form> fix-key mode (C6)', () => {
+  it('enterFixKeyMode focuses the key field and shows likely-cause status copy', () => {
+    const el = mountForm();
+    el.enterFixKeyMode();
+    const key = el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
+    expect(el.shadowRoot!.activeElement).toBe(key);
+    const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
+    expect(status.hidden).toBe(false);
+    expect(status.textContent).toContain('rejected');
+    expect(status.classList.contains('error')).toBe(true);
+  });
+
+  it('consumeAutoRetest is false before enterFixKeyMode, true exactly once after', () => {
+    const el = mountForm();
+    expect(el.consumeAutoRetest()).toBe(false);
+    el.enterFixKeyMode();
+    expect(el.consumeAutoRetest()).toBe(true);
+    expect(el.consumeAutoRetest()).toBe(false);
+  });
+});

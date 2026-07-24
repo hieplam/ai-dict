@@ -249,6 +249,8 @@ export class SettingsForm extends HTMLElement {
   private readonly _onKonamiKey = (e: KeyboardEvent): void => this.handleKonamiKey(e);
   // A16: the save bar shows an "Unsaved changes" cue while the form holds unsaved edits.
   private _dirty = false;
+  // C6: armed by enterFixKeyMode(), consumed by exactly the next Save.
+  private _autoRetestArmed = false;
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -515,6 +517,31 @@ export class SettingsForm extends HTMLElement {
     status.textContent = text;
     status.hidden = text.length === 0;
     status.classList.toggle('error', tone === 'error');
+  }
+
+  /**
+   * C6: entered once, right after mount, when options.ts finds the invalid-key deep-link flag
+   * pending. Focuses the key field (revealing the env-lock notice via the existing focus listener
+   * if the field happens to be locked) and shows likely-cause copy on the existing status line.
+   * Arms exactly one auto-retest, consumed by the very next Save.
+   */
+  enterFixKeyMode(): void {
+    this._autoRetestArmed = true;
+    const key = this.q<HTMLInputElement>('#key');
+    key.focus();
+    if (!this.isKeyLocked()) key.select();
+    this.setStatus(
+      'Your key was rejected. Common causes: a typo, an expired or revoked key, or a key copied ' +
+        "for a different provider. Paste the correct key and Save — we'll retest it for you.",
+      'error',
+    );
+  }
+
+  /** One-shot consume: true exactly once, for the Save immediately following enterFixKeyMode(). */
+  consumeAutoRetest(): boolean {
+    const armed = this._autoRetestArmed;
+    this._autoRetestArmed = false;
+    return armed;
   }
 
   /** Flag the form as holding unsaved edits and reflect it in the sticky save bar. */

@@ -139,8 +139,12 @@ async function maybeShowConsent(): Promise<void> {
 // composed `open-settings` event that bubbles out of the bottom sheet to the document. A content
 // script can't open the options page directly, so we ask the service worker to (it calls
 // chrome.runtime.openOptionsPage).
-document.addEventListener('open-settings', () => {
-  void chrome.runtime.sendMessage({ type: 'open-options' });
+document.addEventListener('open-settings', (e) => {
+  // C6: the INVALID_KEY card's CTA carries { fixKey: true }; the NO_KEY CTA and the card's own
+  // header Settings gear (lookup-card.ts's separate act==='settings' dispatch) carry no detail —
+  // both resolve fixKey to false here, an unchanged `open-options` message from their perspective.
+  const fixKey = (e as CustomEvent<{ fixKey?: boolean } | undefined>).detail?.fixKey === true;
+  void chrome.runtime.sendMessage({ type: 'open-options', fixKey });
 });
 
 // B1: the card's star button bubbles a composed `toggle-save` event (no persistence payload —

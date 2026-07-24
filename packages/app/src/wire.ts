@@ -130,7 +130,7 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
   // Open the extension's options page. Sent by a content script (which cannot call
   // chrome.runtime.openOptionsPage itself) when the reader taps "Open Settings" on the
   // no-key card; the service worker performs the actual open. Payload-free.
-  z.object({ type: z.literal('open-options') }),
+  z.object({ type: z.literal('open-options'), fixKey: z.boolean().optional() }),
   // Error-reporting control messages. errlog.status queries the current consent/queue state;
   // errlog.set-consent records the user's choice (granted/declined/disabled).
   z.object({ type: z.literal('errlog.status') }),

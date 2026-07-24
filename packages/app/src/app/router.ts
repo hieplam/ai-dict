@@ -14,6 +14,7 @@ import {
   savedWordDelete,
   savedWordSetStatus,
   evaluateNudge,
+  FIX_KEY_PENDING_STORAGE_KEY,
   type WireMessage,
   type WireReply,
   type LookupError,
@@ -270,6 +271,7 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       case 'connection.test':
         return handleConnectionTest();
       case 'open-options':
+        if (msg.fixKey) await deps.kv.setItem(FIX_KEY_PENDING_STORAGE_KEY, '1');
         await deps.openOptions?.();
         return { ok: true, type: 'ack' };
       case 'errlog.status': {

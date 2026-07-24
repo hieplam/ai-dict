@@ -60,7 +60,7 @@ test that only asserts `FIX_KEY_PENDING_STORAGE_KEY === 'ui:fixKeyPending'` woul
 against itself, not behavior — skip it, per test-first's own "a test you cannot write meaningfully
 is a signal" spirit.
 
-- [ ] **Step 1: Create the file.** `packages/app/src/domain/ui-flags.ts`:
+- [x] **Step 1: Create the file.** `packages/app/src/domain/ui-flags.ts`:
 
 ```ts
 /**
@@ -78,7 +78,7 @@ is a signal" spirit.
 export const FIX_KEY_PENDING_STORAGE_KEY = 'ui:fixKeyPending';
 ```
 
-- [ ] **Step 2: Re-export.** In `packages/app/src/index.ts`, add a line next to the existing
+- [x] **Step 2: Re-export.** In `packages/app/src/index.ts`, add a line next to the existing
       domain re-exports (after `export * from './domain/nudge-policy';`, before
       `export * from './domain/error-mapper';` — i.e. among the other single-concern domain
       files):
@@ -87,7 +87,7 @@ export const FIX_KEY_PENDING_STORAGE_KEY = 'ui:fixKeyPending';
 export * from './domain/ui-flags';
 ```
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
@@ -113,7 +113,7 @@ git commit -m "feat: invalid-key recovery — add FIX_KEY_PENDING_STORAGE_KEY co
 - Modify: `packages/app/test/app/router.test.ts`
 - Modify: `packages/app/wire-schema.snapshot.json` (regenerated, not hand-edited)
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/wire-schema.test.ts`, immediately after the existing
 `'accepts open-options message'` test (around line 135-137):
@@ -180,7 +180,7 @@ Expected: the 2 new wire-schema tests and 3 new router tests fail (`fixKey` not 
 schema; router never calls `setItem`) plus the wire-schema snapshot test now ALSO failing once
 Step 2 adds the new field (expected, resolved in Step 3).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/wire.ts`, change the existing `open-options` arm (line 133):
 
@@ -204,7 +204,7 @@ Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts test/app/route
 Expected: the 5 new tests pass; the snapshot test fails (`toMatchFileSnapshot` mismatch) — expected,
 resolved in Step 3.
 
-- [ ] **Step 3: Commit** — regenerate the snapshot, then gate and commit:
+- [x] **Step 3: Commit** — regenerate the snapshot, then gate and commit:
 
 ```
 cd packages/app && bunx vitest run test/wire-schema.test.ts -u
@@ -236,7 +236,7 @@ git commit -m "feat: invalid-key recovery — add open-options.fixKey wire field
 - Modify: `packages/app/src/ui/lookup-card.ts`
 - Modify: `packages/app/test/ui/lookup-card.test.ts`
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 First, locate and **update** the existing test at
 `packages/app/test/ui/lookup-card.test.ts:144-152`
@@ -293,7 +293,7 @@ Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: the updated test fails (still asserts old label until Step 2), the two new tests fail
 (`settingsCta` doesn't accept a second parameter / never sets `detail`).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
 
 1. Change the `settingsCta` factory (lines 199-209):
 
@@ -327,7 +327,7 @@ if (state.error.code === 'INVALID_KEY')
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all tests pass (existing suite + updated + 2 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
@@ -353,7 +353,7 @@ No dedicated unit test exists for `content.ts` (composition root, e2e-only — s
 B5's Task 6). Still run the typecheck gate at the end so a regression in existing behavior is
 caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/content.ts`, replace the existing
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/content.ts`, replace the existing
       `open-settings` listener (lines 141-143):
 
 ```ts
@@ -374,7 +374,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -398,7 +398,18 @@ git commit -m "feat: invalid-key recovery — forward fixKey from the in-page ca
 
 Same rationale as Task 4 — no dedicated unit test; e2e-covered in Task 8.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
+> **Warchief-ruled DEVIATION from this step's original code (executed 2026-07-25):** the
+> direct-storage-write snippet below trips the non-negotiable S1 ESLint ban
+> (`rule-api-key-isolation`, `eslint.config.mjs:88-107`), which exempts only `sw.ts`/`options.ts`
+> — `side-panel.ts` is not exempt and had never touched `chrome.storage.local` before. Per the
+> Warchief's ruling, `side-panel.ts` instead routes the `fixKey:true` case through the existing
+> `open-options` wire message (Task 2/4's mechanism) so the router — in `sw.ts`, S1-exempt —
+> writes the flag; `side-panel.ts` touches zero storage and does not import
+> `FIX_KEY_PENDING_STORAGE_KEY`. See the implementation's own inline comment and the C6 report
+> for detail. The plain (non-fixKey) path is unchanged (`chrome.runtime.openOptionsPage()`
+> directly).
+
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
 
 1. Add `FIX_KEY_PENDING_STORAGE_KEY` to the file's existing `@ai-dict/app` import.
 2. Replace the existing `open-settings` listener (lines 172-174):
@@ -418,6 +429,19 @@ view.addEventListener('open-settings', (e) => {
 });
 ```
 
+**As actually implemented (deviation above):**
+
+```ts
+view.addEventListener('open-settings', (e) => {
+  const fixKey = (e as CustomEvent<{ fixKey?: boolean } | undefined>).detail?.fixKey === true;
+  if (fixKey) {
+    void chrome.runtime.sendMessage({ type: 'open-options', fixKey: true });
+  } else {
+    void chrome.runtime.openOptionsPage();
+  }
+});
+```
+
 Run:
 
 ```
@@ -426,7 +450,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -449,7 +473,7 @@ git commit -m "feat: invalid-key recovery — set the fix-key flag from the side
 - Modify: `packages/app/src/ui/settings-form.ts`
 - Modify: `packages/app/test/ui/settings-form.test.ts`
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
       as a new `describe` block near the end of the file:
 
 ```ts
@@ -483,7 +507,7 @@ focus-related test rather than introducing a new pattern).
 Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: 2 new failures — `enterFixKeyMode`/`consumeAutoRetest` are not functions.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
 
 1. Add a private field near the other `_`-prefixed fields (around line 248):
 
@@ -524,7 +548,7 @@ consumeAutoRetest(): boolean {
 Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: all tests pass (existing + 2 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
@@ -548,7 +572,7 @@ git commit -m "feat: invalid-key recovery — add SettingsForm.enterFixKeyMode/c
 
 No dedicated unit test (composition root, e2e-covered in Task 8) — same precedent as Tasks 4/5.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
 
 1. Add `FIX_KEY_PENDING_STORAGE_KEY` to the existing `@ai-dict/app` import block (top of file).
 2. Inside `mountSettings`, right after `wireSettings(form)` (currently the line following
@@ -615,7 +639,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -637,7 +661,7 @@ git commit -m "feat: invalid-key recovery — options.ts fix-key mount check + a
 
 - Create: `packages/extension-chrome/e2e/c6-invalid-key-recovery.spec.ts`
 
-- [ ] **Step 1: Write the test.** Model the mock shape on
+- [x] **Step 1: Write the test.** Model the mock shape on
       `packages/extension-chrome/e2e/lookup-errors.spec.ts`'s existing `'HTTP 400
 INVALID_ARGUMENT'` case (lines 22-25) and the lookup/storage helpers on `saved-word.spec.ts`'s
       pattern (duplicate the small `swStorageDump` helper verbatim, matching B5's own precedent of
@@ -719,7 +743,7 @@ strategy to match whatever pattern `onboarding.spec.ts`/`options-actions.spec.ts
 asserting into the options page across a tab boundary — reuse their established idiom rather than
 inventing a new one.
 
-- [ ] **Step 2: Build (with the env key cleared) and run.**
+- [x] **Step 2: Build (with the env key cleared) and run.**
 
 ```
 GEMINI_API_KEY= bun run build:chrome
@@ -731,7 +755,7 @@ inherited env key flips `KEY_FROM_ENV` in `options.ts`, which routes to `mountSe
 unconditionally and makes this suite pass/fail for the wrong reason (this is the live
 2026-07-16 flake referenced by the roadmap's C10 card).
 
-- [ ] **Step 3: Regression run** (confirm nothing existing broke):
+- [x] **Step 3: Regression run** (confirm nothing existing broke):
 
 ```
 cd packages/extension-chrome && bunx playwright test lookup-errors saved-word onboarding
@@ -742,7 +766,7 @@ INVALID_KEY-message case (message wording untouched by this plan), `saved-word.s
 save/star flow, untouched), `onboarding.spec.ts` (the NO_KEY path, untouched — confirmed by this
 task's own second test above).
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 bun run lint && bun run format:check

@@ -167,10 +167,21 @@ view.addEventListener('delete', (e) => {
   })();
 });
 
-// The no-key setup invite's "Open Settings" button bubbles `open-settings` out of the focus
-// region. The panel is an extension page, so it can open the options page directly.
-view.addEventListener('open-settings', () => {
-  void chrome.runtime.openOptionsPage();
+// The no-key/invalid-key CTA's "Open Settings" (or, for INVALID_KEY, "Fix key in Settings")
+// button bubbles `open-settings` out of the focus region. The panel is an extension page, so it
+// opens the options page directly for the plain case (its long-standing asymmetry with
+// content.ts). C6: the INVALID_KEY CTA carries { fixKey: true }; the S1 ESLint rule
+// (rule-api-key-isolation) forbids this file from writing chrome.storage.local, so the fix-key
+// flag is set by routing through the same `open-options` wire message content.ts uses — the
+// router (in sw.ts, S1-exempt) writes the flag before opening options. Spec §3.5's direct-storage
+// write is replaced ONLY here and ONLY because S1 forbids it; the plain-path direct open is kept.
+view.addEventListener('open-settings', (e) => {
+  const fixKey = (e as CustomEvent<{ fixKey?: boolean } | undefined>).detail?.fixKey === true;
+  if (fixKey) {
+    void chrome.runtime.sendMessage({ type: 'open-options', fixKey: true });
+  } else {
+    void chrome.runtime.openOptionsPage();
+  }
 });
 
 // B1: the panel's own save row bubbles the same composed `toggle-save` event the in-page card

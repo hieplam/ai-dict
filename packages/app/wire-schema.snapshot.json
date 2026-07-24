@@ -257,6 +257,9 @@
           "type": {
             "type": "string",
             "const": "open-options"
+          },
+          "fixKey": {
+            "type": "boolean"
           }
         },
         "required": [
