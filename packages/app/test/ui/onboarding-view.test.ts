@@ -62,7 +62,7 @@ describe('<onboarding-view>', () => {
   it('emits "save" with the trimmed key and chosen language on activate', () => {
     const el = mount();
     const r = el.shadowRoot!;
-    r.querySelector<HTMLInputElement>('#key')!.value = '  AIza-real  ';
+    r.querySelector<HTMLInputElement>('#key')!.value = '  "AIza-real"\n';
     r.querySelector<HTMLSelectElement>('#target')!.value = 'en';
     let captured: OnboardingValue | undefined;
     el.addEventListener('save', (e) => {
@@ -87,6 +87,50 @@ describe('<onboarding-view>', () => {
     const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
     expect(status.hidden).toBe(false);
     expect(status.classList.contains('error')).toBe(true);
+  });
+
+  it('shows no hint for a realistic, correctly-prefixed key (C5)', () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    const key = r.querySelector<HTMLInputElement>('#key')!;
+    key.value = 'AIzaSyABCDEFGHIJKLMNOPQRSTUVWXYZ01234';
+    key.dispatchEvent(new Event('input'));
+    const hint = r.querySelector<HTMLElement>('#key-hint')!;
+    expect(hint.hidden).toBe(true);
+  });
+
+  it("shows a mismatch hint when a pasted key looks like a different provider's (C5)", () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    const key = r.querySelector<HTMLInputElement>('#key')!;
+    key.value = 'sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop';
+    key.dispatchEvent(new Event('input'));
+    const hint = r.querySelector<HTMLElement>('#key-hint')!;
+    expect(hint.hidden).toBe(false);
+    expect(hint.textContent).toContain('OpenAI');
+    expect(hint.textContent).toContain('Gemini');
+  });
+
+  it('shows a malformed hint for an implausibly short pasted key (C5)', () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    const key = r.querySelector<HTMLInputElement>('#key')!;
+    key.value = 'abc123';
+    key.dispatchEvent(new Event('input'));
+    const hint = r.querySelector<HTMLElement>('#key-hint')!;
+    expect(hint.hidden).toBe(false);
+    expect(hint.textContent).toMatch(/typical Gemini API key/);
+  });
+
+  it('hides the hint again once the field is cleared (C5)', () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    const key = r.querySelector<HTMLInputElement>('#key')!;
+    key.value = 'sk-ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnop';
+    key.dispatchEvent(new Event('input'));
+    key.value = '';
+    key.dispatchEvent(new Event('input'));
+    expect(r.querySelector<HTMLElement>('#key-hint')!.hidden).toBe(true);
   });
 
   it('"save" crosses the shadow boundary (composed: true)', () => {
