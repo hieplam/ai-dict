@@ -37,15 +37,15 @@
       "updatedAt": "2026-07-24T01:10:00.000Z"
     },
     "C2": {
-      "status": "staged",
+      "status": "shipped",
       "spec": "docs/superpowers/specs/2026-07-16-c2-verified-activation-design.md",
       "plan": "docs/superpowers/plans/2026-07-16-c2-verified-activation.md",
-      "branch": null,
-      "baseSha": null,
-      "pr": null,
-      "mergeSha": null,
+      "branch": "feature/C2VerifiedActivationLE5",
+      "baseSha": "5f306c89a49be4f88e46718d582c6956d2393414",
+      "pr": 148,
+      "mergeSha": "e1ab215921767afb07a22cb7140d556ecb5c2ba8",
       "sessionId": null,
-      "updatedAt": null
+      "updatedAt": "2026-07-24T01:40:00.000Z"
     },
     "C5": {
       "status": "staged",

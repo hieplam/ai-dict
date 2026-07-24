@@ -233,3 +233,18 @@ escalation whose context is only "`card.branch`/`card.baseSha` is not set" as **
 bookkeeping artifact**: re-verify the card independently with the `verify-shipped` skill, and if
 that returns PASS, reconcile the state record and move on. A `verify_failed_twice` naming any
 *other* failing check is a real failure and does not fall under this ruling.
+
+---
+
+## R7 · 2026-07-24 · C2 · Shipped; same bookkeeping escalation as C1 (R6 applied)
+
+C2's `verify_failed_twice` escalation had the identical context as C1's — only
+`card.branch`/`card.baseSha` unset — so R6 governs it. Independent re-verification with the
+`verify-shipped` skill (`--pr 148 --worktree .claude/worktrees/c2-verified-activation`) returned
+**PASS 4/4**: PR #148 MERGED, merge commit `e1ab2159…` has **2 parents** (regular merge), local
+master in sync, worktree removed. C2 is `shipped`; its state record is corrected in this commit
+with the real branch/baseSha/mergeSha. Not re-run (branch merged, worktree gone).
+
+Note: the pass-2 run left the campaign's **main checkout** switched to a stray
+`campaign-state/C2` branch with an uncommitted tree — restored to `master` by hand. Logged as a
+runner defect in the campaign's SHAMAN-STATE.md; not fixed mid-campaign.
