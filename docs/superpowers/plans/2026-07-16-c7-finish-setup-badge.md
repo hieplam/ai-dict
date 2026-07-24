@@ -51,7 +51,7 @@ export interface BadgeState {
 export function badgeStateFor(hasUsableKey: boolean): BadgeState;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/badge-policy.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/badge-policy.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -71,7 +71,7 @@ describe('badgeStateFor (C7)', () => {
 Run: `cd packages/app && bunx vitest run test/badge-policy.test.ts`
 Expected: fails — `badge-policy` module doesn't exist yet.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/badge-policy.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/badge-policy.ts`:
 
 ```ts
 /**
@@ -109,7 +109,7 @@ export * from './domain/badge-policy';
 Run: `cd packages/app && bunx vitest run test/badge-policy.test.ts`
 Expected: both tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
