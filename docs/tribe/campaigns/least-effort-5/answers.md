@@ -188,3 +188,48 @@ runner rewrites those files mid-run and formatting them is a moving target.
 **Consequence for executors:** do not "fix formatting" in those two trees, and do not remove those
 `.prettierignore` entries. If `format:check` fails on a file you did not touch, that is a
 `NEEDS_DIRECTION`, not a licence to reformat the repo.
+
+---
+
+## R6 · 2026-07-24 · C1 · The `verify_failed_twice` escalation is a bookkeeping artifact — C1 IS shipped
+
+**Shaman ruling (not owner-only; this touches none of `ownerOnlyEscalations`).**
+
+C1's escalation reads `verify_failed_twice: card.branch is not set; cannot check worktree/branch
+state` (+ the same for `card.baseSha` in the schema guard). Both are true statements about the
+**state file**, and both are false alarms about the **work**: the runner recorded `pr: 144` but
+never wrote `branch`/`baseSha`, so two of its D3 checks had no input and failed by default —
+after the PR had already merged and the worktree had already been cleaned up.
+
+**Independent re-verification (evidence, not the runner's claim)** — `verify-shipped` skill,
+`--pr 144 --worktree .claude/worktrees/c1-open-on-install`, verdict **PASS** on all four:
+
+- `pr_merged` — PR #144 state is MERGED.
+- `merge_strategy_no_squash` — merge commit `6ff56c6f18e51f99cc9eca58a84f2ced438ea397` has
+  **2 parents** — a regular merge, as R2.1 requires.
+- `master_in_sync` — local `master` == `origin/master`.
+- `worktree_removed` — `.claude/worktrees/c1-open-on-install` gone from disk and from
+  `git worktree list`.
+
+PR #144's "Testing performed" section records 695/695 unit tests, a full Playwright run at
+118 passed / 0 failed / 17 skipped, and — the part R3 made mandatory — the falsifiability proof:
+breaking the CTA turned the `onboarding.spec.ts` reuse test RED, restoring it turned it GREEN.
+The scope fence held (install-only, env-key skip, one tab once, no new manifest permission,
+`packages/app/src/domain/onboarding-policy.ts` chrome-free).
+
+**Ruling:**
+
+1. **C1 is `shipped`.** Its state record is corrected in this same commit with the real
+   `branch` / `baseSha` / `mergeSha` read from `gh`/`git` — this is the escalation file's own
+   option 2 ("fix the underlying issue directly and re-run"), not an override of a real failure.
+2. **Do NOT re-run C1** with `--include-escalated`. There is nothing left to do, and re-running a
+   card whose branch is merged and whose worktree is gone risks a duplicate PR.
+3. **The campaign continues at C2.** Next run is scoped `--cards C2`.
+
+**Learning for the rest of this campaign (binds every remaining card).** The runner writes
+`pr` at PR-creation time but leaves `branch`/`baseSha` null, so its own D3 verify cannot complete
+and *every* card will escalate this way at the finish line. Treat a `verify_failed_twice`
+escalation whose context is only "`card.branch`/`card.baseSha` is not set" as **this same
+bookkeeping artifact**: re-verify the card independently with the `verify-shipped` skill, and if
+that returns PASS, reconcile the state record and move on. A `verify_failed_twice` naming any
+*other* failing check is a real failure and does not fall under this ruling.
