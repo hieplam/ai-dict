@@ -332,7 +332,7 @@ git commit -m "feat: key paste hygiene — add key-hygiene domain module (C5)" \
 - Modify: `packages/app/src/ui/onboarding-view.ts`
 - Modify: `packages/app/test/ui/onboarding-view.test.ts`
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/onboarding-view.test.ts`
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/onboarding-view.test.ts`
       inside the existing `describe('<onboarding-view>', ...)` block, right after the existing
       `'blocks activation with an error when the key is empty (no save emitted)'` test
       (`onboarding-view.test.ts:77-90`):
@@ -397,7 +397,7 @@ Run: `cd packages/app && bunx vitest run test/ui/onboarding-view.test.ts`
 Expected: the 4 new tests fail (`#key-hint` does not exist / stays `null`); the extended existing
 test fails (`captured.apiKey` still carries the raw quoted/padded string).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
   1. Add the import: `import { normalize, hintFor } from '../domain/key-hygiene';`
   2. Insert the hint paragraph into `MARKUP`, right after the existing `#key-help` line:
 
@@ -470,7 +470,7 @@ private submit(): void {
 Run: `cd packages/app && bunx vitest run test/ui/onboarding-view.test.ts`
 Expected: all tests pass (existing + 4 new + the extended save test).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
