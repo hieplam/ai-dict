@@ -37,6 +37,21 @@ main{max-width:560px;margin:0 auto;padding:6px clamp(16px,5vw,22px) 30px}
 .mark.hero-mark{width:46px;height:46px;margin:0 auto 6px;display:block}
 h1.title{font-family:var(--adp-font-serif);font-size:clamp(1.7rem,1.4rem + 1.4vw,2.1rem);line-height:1.12;letter-spacing:var(--adp-tracking-head);margin:.1em 0 .3em;color:var(--ad-ink);text-wrap:balance}
 .lead{margin:0 auto;max-width:46ch;font-size:14.5px;line-height:1.6;color:var(--ad-ink-soft);text-wrap:pretty}
+.demo{margin:20px 0 0;border:1px solid var(--ad-line);border-radius:14px;padding:14px clamp(14px,4vw,20px)}
+.demo-h{margin:0 0 8px;font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-bold);letter-spacing:var(--adp-tracking-label);text-transform:uppercase;color:var(--ad-ink-faint)}
+.demo-anim{position:relative;margin:0;font-size:14.5px;line-height:1.7;color:var(--ad-ink-soft)}
+.demo-word{position:relative;color:var(--ad-ink);font-weight:var(--adp-weight-semi)}
+.demo-word::before{content:"";position:absolute;inset:-1px -3px;border-radius:3px;background:var(--ad-selection);transform:scaleX(0);transform-origin:left center;animation:demo-select 4.4s var(--adp-ease) infinite}
+.demo-pill{position:relative;display:inline-flex;align-items:center;gap:5px;margin-left:6px;padding:4px 10px 4px 7px;border:1px solid var(--ad-line-strong);border-radius:var(--adp-radius-pill);background:var(--ad-surface);box-shadow:var(--ad-shadow-trigger);font:var(--adp-weight-semi) var(--adp-text-2xs)/1 var(--adp-font-sans);color:var(--ad-ink);opacity:0;transform:translateY(2px) scale(.92);animation:demo-pill 4.4s var(--adp-ease) infinite}
+.demo-pill .demo-mark{width:12px;height:12px;flex:none}
+@keyframes demo-select{0%,8%{transform:scaleX(0)}26%,72%{transform:scaleX(1)}90%,100%{transform:scaleX(0)}}
+@keyframes demo-pill{0%,26%{opacity:0;transform:translateY(2px) scale(.92)}38%,64%{opacity:1;transform:translateY(0) scale(1)}84%,100%{opacity:0;transform:translateY(2px) scale(.92)}}
+@media (prefers-reduced-motion:reduce){
+.demo-anim{display:none}
+.demo-steps.sr-only{position:static;width:auto;height:auto;padding:0;margin:0;overflow:visible;clip:auto;white-space:normal;list-style:decimal;padding-left:20px;color:var(--ad-ink-soft);font-size:14.5px;line-height:1.7}
+.demo-steps.sr-only li{padding:2px 0}
+.demo-word::before,.demo-pill{animation:none}
+}
 .panel{margin:20px 0 0;border:1px solid var(--ad-line);border-radius:14px;padding:6px clamp(14px,4vw,20px) 18px;background:var(--ad-surface-raised)}
 .panel-head{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap;padding:14px 0 4px;border-bottom:1px solid var(--ad-line)}
 .panel-h{margin:0;font-size:var(--adp-text-body);font-weight:var(--adp-weight-bold);color:var(--ad-ink)}
@@ -85,6 +100,23 @@ const MARKUP = `<div class="accent" aria-hidden="true"></div>
       <h1 class="title">Welcome to AI Dictionary</h1>
       <p class="lead">Look up any English word right where you're reading, translated into your language, powered by your own free Google Gemini key. Nothing leaves your device but the word you choose.</p>
     </div>
+    <section class="demo" aria-labelledby="demo-h">
+      <h2 class="demo-h" id="demo-h">See it in action</h2>
+      <p class="demo-anim" aria-hidden="true">
+        Select a word — like <span class="demo-word">wanderlust</span
+        ><span class="demo-pill"
+          >${BRAND_MARK_SVG.replace('class="mark"', 'class="mark demo-mark"')}<span class="label"
+            >Define</span
+          ></span
+        >
+        — and a definition appears.
+      </p>
+      <ol class="demo-steps sr-only">
+        <li>Select a word while reading.</li>
+        <li>Tap the &quot;Define&quot; button that appears.</li>
+        <li>See the definition instantly.</li>
+      </ol>
+    </section>
     <section class="panel" aria-labelledby="setup-h">
       <div class="panel-head">
         <h2 class="panel-h" id="setup-h">Finish setup</h2>

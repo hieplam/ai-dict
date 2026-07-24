@@ -59,7 +59,7 @@ Full design rationale: `docs/superpowers/specs/2026-07-16-c8-gesture-demo-design
 - Modify: `packages/app/src/ui/onboarding-view.ts`
 - Modify: `packages/app/test/ui/onboarding-view.test.ts`
 
-- [ ] **Step 1: Write the failing tests.** Append to
+- [x] **Step 1: Write the failing tests.** Append to
       `packages/app/test/ui/onboarding-view.test.ts`, inside the existing
       `describe('<onboarding-view>', ...)` block, just before its closing `});` (after the
       existing `'uses a single adopted stylesheet'` test and before the `'does not re-initialize
@@ -127,7 +127,7 @@ Run: `cd packages/app && bunx vitest run test/ui/onboarding-view.test.ts`
 Expected: 5 new failures — `.demo`/`.demo-anim`/`.demo-steps`/`.demo-pill` don't exist yet, and
 no `CSSMediaRule` with a `prefers-reduced-motion` condition exists in the stylesheet.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
   1. In `MARKUP`, insert this new section between the existing `</div>` that closes `.hero` and
      the existing `<section class="panel" aria-labelledby="setup-h">`
      (`onboarding-view.ts:82-83` in the pre-change file):
@@ -281,7 +281,7 @@ Run: `cd packages/app && bunx vitest run test/ui/onboarding-view.test.ts`
 Expected: all tests pass (existing + 5 new), including the existing `'uses a single adopted
 stylesheet'` and `'has no axe violations'` tests, unmodified, still green.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
