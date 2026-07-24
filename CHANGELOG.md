@@ -1,5 +1,19 @@
 # Changelog
 
+## [1.10.0](https://github.com/hieplam/ai-dict/compare/v1.9.0...v1.10.0) (2026-07-24)
+
+
+### Features
+
+* open onboarding on install — add e2e coverage for the onInstalled flow (C1) ([913f322](https://github.com/hieplam/ai-dict/commit/913f32281075e50d19c0d2b66958bcc296e44337))
+* open onboarding on install — add shouldOpenOnboardingOnInstall domain predicate (C1) ([2dbf77d](https://github.com/hieplam/ai-dict/commit/2dbf77d74390e595222931cb1528ef7f8f1be32f))
+* open onboarding on install — wire the onInstalled listener in sw.ts (C1) ([8f09fef](https://github.com/hieplam/ai-dict/commit/8f09fef854af1ec81a44de2d7cc43ac05d2ebc01))
+* open onboarding on install (C1) ([6ff56c6](https://github.com/hieplam/ai-dict/commit/6ff56c6f18e51f99cc9eca58a84f2ced438ea397))
+* verified activation — busy state + save-anyway escape hatch on onboarding-view (C2) ([47c7bda](https://github.com/hieplam/ai-dict/commit/47c7bdab5e39eb09acd87ac27dfd29ac230a81e6))
+* verified activation — e2e coverage for the connection-test/rollback/save-anyway flow (C2) ([73f8af6](https://github.com/hieplam/ai-dict/commit/73f8af61289c4764a4dc4a81b91180bf1b2a35c6))
+* verified activation — persist/test/rollback orchestration in options.ts (C2) ([356781a](https://github.com/hieplam/ai-dict/commit/356781a198fa5276a3f18671b9a6c43cd8d6c060))
+* verified activation — test the key before claiming setup succeeded (C2) ([e1ab215](https://github.com/hieplam/ai-dict/commit/e1ab215921767afb07a22cb7140d556ecb5c2ba8))
+
 ## [1.9.0](https://github.com/hieplam/ai-dict/compare/v1.8.0...v1.9.0) (2026-07-16)
 
 
