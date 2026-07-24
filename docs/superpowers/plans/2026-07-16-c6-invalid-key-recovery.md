@@ -398,7 +398,18 @@ git commit -m "feat: invalid-key recovery — forward fixKey from the in-page ca
 
 Same rationale as Task 4 — no dedicated unit test; e2e-covered in Task 8.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
+> **Warchief-ruled DEVIATION from this step's original code (executed 2026-07-25):** the
+> direct-storage-write snippet below trips the non-negotiable S1 ESLint ban
+> (`rule-api-key-isolation`, `eslint.config.mjs:88-107`), which exempts only `sw.ts`/`options.ts`
+> — `side-panel.ts` is not exempt and had never touched `chrome.storage.local` before. Per the
+> Warchief's ruling, `side-panel.ts` instead routes the `fixKey:true` case through the existing
+> `open-options` wire message (Task 2/4's mechanism) so the router — in `sw.ts`, S1-exempt —
+> writes the flag; `side-panel.ts` touches zero storage and does not import
+> `FIX_KEY_PENDING_STORAGE_KEY`. See the implementation's own inline comment and the C6 report
+> for detail. The plain (non-fixKey) path is unchanged (`chrome.runtime.openOptionsPage()`
+> directly).
+
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
 
 1. Add `FIX_KEY_PENDING_STORAGE_KEY` to the file's existing `@ai-dict/app` import.
 2. Replace the existing `open-settings` listener (lines 172-174):
@@ -418,6 +429,19 @@ view.addEventListener('open-settings', (e) => {
 });
 ```
 
+**As actually implemented (deviation above):**
+
+```ts
+view.addEventListener('open-settings', (e) => {
+  const fixKey = (e as CustomEvent<{ fixKey?: boolean } | undefined>).detail?.fixKey === true;
+  if (fixKey) {
+    void chrome.runtime.sendMessage({ type: 'open-options', fixKey: true });
+  } else {
+    void chrome.runtime.openOptionsPage();
+  }
+});
+```
+
 Run:
 
 ```
@@ -426,7 +450,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
