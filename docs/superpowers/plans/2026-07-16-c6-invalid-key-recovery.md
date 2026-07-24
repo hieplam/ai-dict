@@ -473,7 +473,7 @@ git commit -m "feat: invalid-key recovery — set the fix-key flag from the side
 - Modify: `packages/app/src/ui/settings-form.ts`
 - Modify: `packages/app/test/ui/settings-form.test.ts`
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
       as a new `describe` block near the end of the file:
 
 ```ts
@@ -507,7 +507,7 @@ focus-related test rather than introducing a new pattern).
 Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: 2 new failures — `enterFixKeyMode`/`consumeAutoRetest` are not functions.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
 
 1. Add a private field near the other `_`-prefixed fields (around line 248):
 
@@ -548,7 +548,7 @@ consumeAutoRetest(): boolean {
 Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: all tests pass (existing + 2 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
