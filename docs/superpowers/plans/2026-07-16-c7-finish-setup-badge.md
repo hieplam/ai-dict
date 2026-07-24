@@ -51,7 +51,7 @@ export interface BadgeState {
 export function badgeStateFor(hasUsableKey: boolean): BadgeState;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/badge-policy.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/badge-policy.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -71,7 +71,7 @@ describe('badgeStateFor (C7)', () => {
 Run: `cd packages/app && bunx vitest run test/badge-policy.test.ts`
 Expected: fails — `badge-policy` module doesn't exist yet.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/badge-policy.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/badge-policy.ts`:
 
 ```ts
 /**
@@ -109,7 +109,7 @@ export * from './domain/badge-policy';
 Run: `cd packages/app && bunx vitest run test/badge-policy.test.ts`
 Expected: both tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -136,7 +136,7 @@ by Task 3's e2e (same precedent as B5/B7's own `content.ts`/`side-panel.ts` edit
 typecheck gate at the end of this task so a regression in existing SW behavior is caught
 immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/sw.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/sw.ts`:
 
 1. Add `badgeStateFor` to the existing `@ai-dict/app` import block (top of file, alongside
    `mapError`, `buildRouter`, etc.):
@@ -226,7 +226,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -248,7 +248,7 @@ git commit -m "feat: finish-setup badge — wire chrome.action badge/title in th
 
 - Create: `packages/extension-chrome/e2e/c7-badge.spec.ts`
 
-- [ ] **Step 1: Write the test.** Model the SW-context evaluation on
+- [x] **Step 1: Write the test.** Model the SW-context evaluation on
       `saved-word.spec.ts`'s existing `swStorageDump` pattern (evaluate inside
       `context.serviceWorkers()[0]`, not the page):
 
@@ -299,7 +299,7 @@ test.describe('C7 finish-setup toolbar badge', () => {
 });
 ```
 
-- [ ] **Step 2: Build with the env key cleared, then run.**
+- [x] **Step 2: Build with the env key cleared, then run.**
 
 ```
 GEMINI_API_KEY= bun run build:chrome
@@ -310,7 +310,7 @@ Expected: 3 passed. If the first test fails with the badge already clear, check 
 $GEMINI_API_KEY` in the shell that ran the build — an exported key bakes `hasUsableKey = true`
 unconditionally (design spec §4 point 4); rebuild with it unset.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 bun run lint && bun run format:check
