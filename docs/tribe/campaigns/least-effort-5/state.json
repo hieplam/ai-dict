@@ -1,11 +1,22 @@
 {
   "v": 1,
   "campaign": "least-effort-5",
-  "planning": { "mode": "shaman" },
   "mergePolicy": "regular-merge-only — squash-merge prohibited (owner ruling 2026-07-16, ROADMAP §8)",
-  "sequence": ["C1", "C2", "C5", "C7", "C8"],
-  "schemaLockPaths": ["packages/app/src/domain/types.ts"],
-  "docsOnlyPaths": ["docs/superpowers/", "docs/tribe/", "docs/ROADMAP.md"],
+  "sequence": [
+    "C1",
+    "C2",
+    "C5",
+    "C7",
+    "C8"
+  ],
+  "schemaLockPaths": [
+    "packages/app/src/domain/types.ts"
+  ],
+  "docsOnlyPaths": [
+    "docs/superpowers/",
+    "docs/tribe/",
+    "docs/ROADMAP.md"
+  ],
   "ownerOnlyEscalations": [
     "irreversible-data-shape",
     "product-promise-change",
@@ -15,15 +26,15 @@
   ],
   "cards": {
     "C1": {
-      "status": "staged",
+      "status": "escalated",
       "spec": "docs/superpowers/specs/2026-07-16-c1-open-on-install-design.md",
       "plan": "docs/superpowers/plans/2026-07-16-c1-open-on-install.md",
       "branch": null,
       "baseSha": null,
-      "pr": null,
+      "pr": 144,
       "mergeSha": null,
-      "sessionId": null,
-      "updatedAt": null
+      "sessionId": "1582a562-7cd7-4915-90db-f6e0a641a53f",
+      "updatedAt": "2026-07-24T00:47:18.872Z"
     },
     "C2": {
       "status": "staged",
@@ -69,5 +80,8 @@
       "sessionId": null,
       "updatedAt": null
     }
+  },
+  "planning": {
+    "mode": "shaman"
   }
 }
