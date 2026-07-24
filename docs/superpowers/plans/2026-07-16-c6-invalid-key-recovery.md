@@ -661,7 +661,7 @@ git commit -m "feat: invalid-key recovery — options.ts fix-key mount check + a
 
 - Create: `packages/extension-chrome/e2e/c6-invalid-key-recovery.spec.ts`
 
-- [ ] **Step 1: Write the test.** Model the mock shape on
+- [x] **Step 1: Write the test.** Model the mock shape on
       `packages/extension-chrome/e2e/lookup-errors.spec.ts`'s existing `'HTTP 400
 INVALID_ARGUMENT'` case (lines 22-25) and the lookup/storage helpers on `saved-word.spec.ts`'s
       pattern (duplicate the small `swStorageDump` helper verbatim, matching B5's own precedent of
@@ -743,7 +743,7 @@ strategy to match whatever pattern `onboarding.spec.ts`/`options-actions.spec.ts
 asserting into the options page across a tab boundary — reuse their established idiom rather than
 inventing a new one.
 
-- [ ] **Step 2: Build (with the env key cleared) and run.**
+- [x] **Step 2: Build (with the env key cleared) and run.**
 
 ```
 GEMINI_API_KEY= bun run build:chrome
@@ -755,7 +755,7 @@ inherited env key flips `KEY_FROM_ENV` in `options.ts`, which routes to `mountSe
 unconditionally and makes this suite pass/fail for the wrong reason (this is the live
 2026-07-16 flake referenced by the roadmap's C10 card).
 
-- [ ] **Step 3: Regression run** (confirm nothing existing broke):
+- [x] **Step 3: Regression run** (confirm nothing existing broke):
 
 ```
 cd packages/extension-chrome && bunx playwright test lookup-errors saved-word onboarding
@@ -766,7 +766,7 @@ INVALID_KEY-message case (message wording untouched by this plan), `saved-word.s
 save/star flow, untouched), `onboarding.spec.ts` (the NO_KEY path, untouched — confirmed by this
 task's own second test above).
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 bun run lint && bun run format:check
