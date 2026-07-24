@@ -342,3 +342,35 @@ ROADMAP §4 C9 delegates "check list v1". Pre-ruled:
    one line — this is a diagnostic panel, not a documentation page.
 5. C9 is the **lowest-scored card in the campaign (1.5)**. Hold its scope tight: if it starts
    growing beyond the three rows above, that is scope creep, not thoroughness.
+
+---
+
+## R16 · 2026-07-25 · campaign-wide · Known-flaky e2e specs — diagnose against master before "fixing"
+
+**Observed on this campaign's own docs-only PR #153** (markdown + JSON only, zero product code):
+`e2e-chrome` failed, then **passed on a plain re-run of the same commit**. Two specs flaked:
+
+| Spec | Symptom |
+| --- | --- |
+| `e2e/c2-verified-activation.spec.ts:80` — "double-click … fires exactly one connection.test call" | `locator.click: Target page, context or browser has been closed` / `Element is not visible` |
+| `e2e/cooldown.spec.ts:17` — "rapid second Define within 2s is blocked" | expected the slow-down copy, got `"Looking up the meaning…"` — the first lookup had not settled |
+
+Both are **timing/infrastructure races**, not assertions about your change.
+
+**Ruling — the diagnosis order, before you touch a single test:**
+
+1. **Check whether `master` is green at your base sha** (`gh run list --branch master`). If master
+   is green and your branch only adds files master doesn't have, an e2e failure is almost
+   certainly a flake — that is exactly how PR #153 was diagnosed.
+2. **Re-run the failed job once** (`gh run rerun <id> --failed`). If it passes, it was a flake.
+   Record that in the PR body's "Testing performed" — do not hide it.
+3. **Never "stabilise" a flaky spec by weakening it** — no removed assertion, no `test.skip`, no
+   loosened matcher, no bumped timeout to paper over a race. That converts a flaky test into a
+   blind one, and these two specs guard real C2 behaviour (exactly-one `connection.test` call) and
+   real cooldown behaviour (no extra Gemini call).
+4. **If the SAME spec fails twice on the same commit, it is real** — especially if it touches the
+   surface your card changed. C5/C6/C7/C4/C9 all touch the key/activation path that
+   `c2-verified-activation.spec.ts` guards, so a genuine regression there is plausible and must
+   not be waved off as flake. Fix the cause, or return `NEEDS_DIRECTION` with the evidence.
+5. A flake in a spec **unrelated** to your card is never a reason to hold the card. A repeated
+   failure in a spec **related** to your card always is.
