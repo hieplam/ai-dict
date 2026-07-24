@@ -136,7 +136,7 @@ by Task 3's e2e (same precedent as B5/B7's own `content.ts`/`side-panel.ts` edit
 typecheck gate at the end of this task so a regression in existing SW behavior is caught
 immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/sw.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/sw.ts`:
 
 1. Add `badgeStateFor` to the existing `@ai-dict/app` import block (top of file, alongside
    `mapError`, `buildRouter`, etc.):
@@ -226,7 +226,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check

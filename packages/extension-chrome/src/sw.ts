@@ -13,6 +13,7 @@ import {
   SUPPRESS,
   classifyInbound,
   ErrorReporter,
+  badgeStateFor,
 } from '@ai-dict/app';
 import { ChromeKvStore } from './adapters/chrome-kv-store';
 import { ChromeStorageStore } from './adapters/chrome-storage-store';
@@ -79,6 +80,10 @@ const reporter = new ErrorReporter({
   }),
 });
 
+// C7: named so the badge refresh below can share the exact same settings-derived "usable key"
+// boolean the router uses — see design spec D1 (no separate predicate is introduced).
+const settingsStore = new ChromeStorageStore(chrome.storage.local, Boolean(ENV_API_KEY));
+
 const router = buildRouter({
   client: createLookupClientSelector({
     clients: {
@@ -101,7 +106,7 @@ const router = buildRouter({
     getConfiguredProviders: async () =>
       configuredProvidersFor(await readFullSettings(), { envGeminiKey: Boolean(ENV_API_KEY) }),
   }),
-  settings: new ChromeStorageStore(chrome.storage.local, Boolean(ENV_API_KEY)),
+  settings: settingsStore,
   kv: new ChromeKvStore(chrome.storage.local),
   readToggles: async () => {
     const s = await readFullSettings();
@@ -214,3 +219,33 @@ chrome.runtime.onInstalled.addListener((details) => {
 
 // Side panel: open only via toolbar click (§6.5); never the primary surface.
 chrome.sidePanel?.setPanelBehavior?.({ openPanelOnActionClick: true }).catch(() => undefined);
+
+// C7: finish-setup toolbar badge. MV3 service workers are ephemeral — nothing here is cached in
+// memory; every refresh re-reads storage via settingsStore.get() (see design spec D3).
+// @types/chrome's `Manifest` union (ManifestV2 | ManifestV3) only carries `action` explicitly on
+// ManifestV3 — on the bare union it falls through ManifestBase's `[key: string]: any` index
+// signature and infers `any`. Asserting ManifestV3 (this codebase only ships MV3, per manifest.json)
+// keeps the read soundly typed as `string | undefined`.
+const DEFAULT_ACTION_TITLE =
+  (chrome.runtime.getManifest() as chrome.runtime.ManifestV3).action?.default_title ??
+  'AI Dictionary';
+// Sourced from design-system/tokens.css's SEPIA --ad-error: oklch(0.520 0.160 28) (tokens.css:122)
+// — chrome.action paints outside any DOM/CSSOM this extension controls, so the token can't be
+// read live (design spec D5; flagged for tracker review as an intentional shell-level exception
+// to the no-hard-coded-hex rule, which binds ui/ shadow-DOM components, not this composition root).
+const BADGE_SETUP_COLOR = '#b33830';
+
+async function refreshSetupBadge(): Promise<void> {
+  const { hasKey } = await settingsStore.get();
+  const state = badgeStateFor(hasKey);
+  await chrome.action.setBadgeText({ text: state.text });
+  await chrome.action.setTitle({ title: state.title || DEFAULT_ACTION_TITLE });
+  if (state.text) await chrome.action.setBadgeBackgroundColor({ color: BADGE_SETUP_COLOR });
+}
+
+void refreshSetupBadge(); // SW-start evaluation — MV3 ephemerality (design spec D3, point 1)
+chrome.storage.onChanged.addListener((changes, areaName) => {
+  // Re-derive on every settings write (activation, or a key later cleared) — design spec D3,
+  // point 2. No cache to invalidate: refreshSetupBadge always re-reads storage fresh.
+  if (areaName === 'local' && 'settings' in changes) void refreshSetupBadge();
+});
