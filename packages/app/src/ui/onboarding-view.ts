@@ -170,21 +170,7 @@ export class OnboardingView extends HTMLElement {
 
   /** Validate then emit `save` so the host (options page) can persist + test + advance. */
   private submit(): void {
-    if (this._busy) return;
-    const apiKey = this.q<HTMLInputElement>('#key').value.trim();
-    if (apiKey.length === 0) {
-      this.setStatus('Paste your Gemini API key to activate the extension.', 'error');
-      this.q<HTMLInputElement>('#key').focus();
-      return;
-    }
-    this.setBusy(true);
-    this.dispatchEvent(
-      new CustomEvent<OnboardingValue>('save', {
-        detail: { apiKey, targetLang: this.q<HTMLSelectElement>('#target').value },
-        bubbles: true,
-        composed: true,
-      }),
-    );
+    this.activate('save');
   }
 
   /**
@@ -194,6 +180,15 @@ export class OnboardingView extends HTMLElement {
    * NETWORK-class connection.test failure (host-controlled via showSaveAnyway).
    */
   private submitAnyway(): void {
+    this.activate('save-anyway');
+  }
+
+  /**
+   * Shared by both activate paths: honour the busy guard, trim + validate the key (surfacing the
+   * same inline error on empty), flip to busy, and emit the given event. The only difference
+   * between "Save & activate" and "Save anyway" is which event name the host listens for.
+   */
+  private activate(type: 'save' | 'save-anyway'): void {
     if (this._busy) return;
     const apiKey = this.q<HTMLInputElement>('#key').value.trim();
     if (apiKey.length === 0) {
@@ -203,7 +198,7 @@ export class OnboardingView extends HTMLElement {
     }
     this.setBusy(true);
     this.dispatchEvent(
-      new CustomEvent<OnboardingValue>('save-anyway', {
+      new CustomEvent<OnboardingValue>(type, {
         detail: { apiKey, targetLang: this.q<HTMLSelectElement>('#target').value },
         bubbles: true,
         composed: true,
