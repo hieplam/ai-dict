@@ -248,7 +248,7 @@ git commit -m "feat: finish-setup badge — wire chrome.action badge/title in th
 
 - Create: `packages/extension-chrome/e2e/c7-badge.spec.ts`
 
-- [ ] **Step 1: Write the test.** Model the SW-context evaluation on
+- [x] **Step 1: Write the test.** Model the SW-context evaluation on
       `saved-word.spec.ts`'s existing `swStorageDump` pattern (evaluate inside
       `context.serviceWorkers()[0]`, not the page):
 
@@ -299,7 +299,7 @@ test.describe('C7 finish-setup toolbar badge', () => {
 });
 ```
 
-- [ ] **Step 2: Build with the env key cleared, then run.**
+- [x] **Step 2: Build with the env key cleared, then run.**
 
 ```
 GEMINI_API_KEY= bun run build:chrome
@@ -310,7 +310,7 @@ Expected: 3 passed. If the first test fails with the badge already clear, check 
 $GEMINI_API_KEY` in the shell that ran the build — an exported key bakes `hasUsableKey = true`
 unconditionally (design spec §4 point 4); rebuild with it unset.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 bun run lint && bun run format:check
