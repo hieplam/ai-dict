@@ -87,6 +87,7 @@ test.describe('A4 keyboard-only flow — evidence', () => {
       await page.locator('lookup-trigger').waitFor({ state: 'attached', timeout: 5_000 });
       await caption(page, '⌨ define-selection');
       await page.waitForTimeout(500);
+      await page.bringToFront(); // C1: make the page under test the active tab so the command relay targets it, not the install-opened options tab (ruling R3)
       await relayCommand(sw, 'define-selection');
       await page.waitForTimeout(1_800); // hold on the outcome (card on `after`, nothing on `before`)
 

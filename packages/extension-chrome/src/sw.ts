@@ -2,6 +2,7 @@ import {
   mapError,
   DEFAULT_OUTPUT_FORMAT,
   configuredProvidersFor,
+  shouldOpenOnboardingOnInstall,
   type Settings,
   GeminiLookupClient,
   OpenAILookupClient,
@@ -193,6 +194,22 @@ chrome.commands.onCommand.addListener((command, tab) => {
     command: command as CommandMessage['command'],
   };
   void chrome.tabs.sendMessage(tab.id, message).catch(() => undefined); // no listener/tab gone
+});
+
+// C1: the very first thing a fresh install sees is the welcome screen, instead of the lucky few
+// who stumble into it via the no-key card's "Open Settings" button or the side panel. Fires only
+// on a genuine 'install' (never 'update') and is skipped when the build baked a Gemini key
+// (shouldOpenOnboardingOnInstall's own doc comment). Chrome fires onInstalled exactly once per
+// real install, so the reason check alone is the whole "no re-prompting loop" guarantee — no
+// extra storage flag needed. Uses chrome.tabs.create (not openOptionsPage) because
+// openOptionsPage() at cold install launch resolves without creating a tab (campaign ruling R1);
+// chrome.tabs.create needs no manifest permission.
+chrome.runtime.onInstalled.addListener((details) => {
+  if (shouldOpenOnboardingOnInstall(details.reason, Boolean(ENV_API_KEY))) {
+    void Promise.resolve(chrome.tabs.create({ url: chrome.runtime.getURL('options.html') })).catch(
+      () => undefined,
+    );
+  }
 });
 
 // Side panel: open only via toolbar click (§6.5); never the primary surface.
