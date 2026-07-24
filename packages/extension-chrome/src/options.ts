@@ -188,6 +188,59 @@ function mountOnboarding(initial: Settings): void {
   };
   view.addEventListener('save', (e) => {
     const { apiKey, targetLang } = (e as CustomEvent<OnboardingValue>).detail;
+    view.setStatus('Testing your key…');
+    let cur: Settings;
+    void load()
+      .then((c) => {
+        cur = c;
+        // C2: persist optimistically. connection.test always tests whatever key is CURRENTLY
+        // in storage (sw.ts's getApiKey reads chrome.storage.local live, on every call) — this
+        // is the only way to make the just-pasted, not-yet-stored key reachable to the
+        // existing, unmodified connection.test path. See the design spec §2.
+        return chrome.storage.local.set({
+          settings: { ...cur, apiKey, targetLang, hasKey: Boolean(apiKey) },
+        });
+      })
+      .then(() => send({ type: 'connection.test' }))
+      .then(
+        (r) => {
+          if (r.ok) {
+            void load().then((s) =>
+              mountSettings(
+                s,
+                "You're all set. Highlight any word while reading and choose Define to look it up.",
+              ),
+            );
+            return;
+          }
+          // C2: persist only on pass — roll back to the exact pre-onboarding snapshot on any
+          // connection.test failure so a bad/unverified key never lingers silently.
+          void chrome.storage.local.set({ settings: cur }).then(() => {
+            view.setBusy(false);
+            if (r.error.code === 'NETWORK') {
+              view.setStatus(
+                `${r.error.message} You can save without testing and verify later in Settings.`,
+                'error',
+              );
+              view.showSaveAnyway(true);
+            } else {
+              view.setStatus(r.error.message, 'error');
+            }
+          });
+        },
+        () =>
+          void chrome.storage.local.set({ settings: cur }).then(() => {
+            view.setBusy(false);
+            view.setStatus('Could not reach the extension. Try again.', 'error');
+          }),
+      );
+  });
+
+  // C2: the "Save anyway" escape hatch — a deliberate bypass of verification (NETWORK-class
+  // failures only; the view only shows this button after such a failure). Persists directly,
+  // no connection.test call, with a status that makes clear the key was NOT verified.
+  view.addEventListener('save-anyway', (e) => {
+    const { apiKey, targetLang } = (e as CustomEvent<OnboardingValue>).detail;
     void load()
       .then((cur) =>
         chrome.storage.local.set({
@@ -199,9 +252,13 @@ function mountOnboarding(initial: Settings): void {
         (s) =>
           mountSettings(
             s,
-            "You're all set. Highlight any word while reading and choose Define to look it up.",
+            'Saved without testing — the connection could not be reached. Run Test connection ' +
+              'in Settings once you’re back online.',
           ),
-        () => view.setStatus('Could not save your key. Try again.', 'error'),
+        () => {
+          view.setBusy(false);
+          view.setStatus('Could not save your key. Try again.', 'error');
+        },
       );
   });
 }
