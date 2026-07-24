@@ -32,6 +32,7 @@ test('dismiss during a pending lookup leaves no orphaned card when the result la
   await expect(page.locator('bottom-sheet')).toHaveCount(1, { timeout: 5_000 });
 
   const sw = await getServiceWorker(context);
+  await page.bringToFront(); // C1: make the page under test the active tab so the command relay targets it, not the install-opened options tab (ruling R3)
   await relayCommand(sw, 'dismiss-lookup');
   await expect(page.locator('bottom-sheet')).toHaveCount(0);
 

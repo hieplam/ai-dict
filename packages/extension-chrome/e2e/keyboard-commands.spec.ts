@@ -24,6 +24,7 @@ test.describe('A4 keyboard-only flow', () => {
     await page.locator('lookup-trigger').waitFor({ state: 'attached', timeout: 5_000 });
 
     const sw = await getServiceWorker(context);
+    await page.bringToFront(); // C1: make the page under test the active tab so the command relay targets it, not the install-opened options tab (ruling R3)
     await relayCommand(sw, 'define-selection');
 
     await expect(page.locator('bottom-sheet lookup-card')).toContainText('financial institution', {
@@ -42,6 +43,7 @@ test.describe('A4 keyboard-only flow', () => {
     await page.waitForTimeout(1_000);
 
     const sw = await getServiceWorker(context);
+    await page.bringToFront(); // C1: make the page under test the active tab so the command relay targets it, not the install-opened options tab (ruling R3)
     await relayCommand(sw, 'define-selection');
     await page.waitForTimeout(300);
 
@@ -62,6 +64,7 @@ test.describe('A4 keyboard-only flow', () => {
     await page.locator('lookup-trigger').waitFor({ state: 'attached', timeout: 5_000 });
 
     const sw = await getServiceWorker(context);
+    await page.bringToFront(); // C1: make the page under test the active tab so the command relay targets it, not the install-opened options tab (ruling R3)
     await relayCommand(sw, 'dismiss-lookup');
 
     await expect(page.locator('lookup-trigger')).toHaveCount(0);
@@ -81,6 +84,7 @@ test.describe('A4 keyboard-only flow', () => {
     });
 
     const sw = await getServiceWorker(context);
+    await page.bringToFront(); // C1: make the page under test the active tab so the command relay targets it, not the install-opened options tab (ruling R3)
     await relayCommand(sw, 'dismiss-lookup');
 
     await expect(page.locator('bottom-sheet')).toHaveCount(0);
@@ -100,6 +104,7 @@ test.describe('A4 keyboard-only flow', () => {
     });
 
     const sw = await getServiceWorker(context);
+    await page.bringToFront(); // C1: make the page under test the active tab so the command relay targets it, not the install-opened options tab (ruling R3)
     await relayCommand(sw, 'send-to-panel');
 
     await expect(page.locator('bottom-sheet')).toHaveCount(0);
@@ -131,6 +136,7 @@ test.describe('A4 keyboard-only flow', () => {
 
     await gotoFixture(page);
     await page.waitForTimeout(1_000);
+    await page.bringToFront(); // C1: make the page under test the active tab so the command relay targets it, not the install-opened options tab (ruling R3)
     await relayCommand(sw, 'send-to-panel');
     await page.waitForTimeout(300);
 
