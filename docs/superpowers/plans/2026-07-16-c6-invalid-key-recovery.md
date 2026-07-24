@@ -572,7 +572,7 @@ git commit -m "feat: invalid-key recovery — add SettingsForm.enterFixKeyMode/c
 
 No dedicated unit test (composition root, e2e-covered in Task 8) — same precedent as Tasks 4/5.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
 
 1. Add `FIX_KEY_PENDING_STORAGE_KEY` to the existing `@ai-dict/app` import block (top of file).
 2. Inside `mountSettings`, right after `wireSettings(form)` (currently the line following
@@ -639,7 +639,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check

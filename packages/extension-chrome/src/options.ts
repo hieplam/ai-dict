@@ -4,6 +4,7 @@ import {
   DEFAULT_OUTPUT_FORMAT,
   buildHistoryExport,
   hasKeyFor,
+  FIX_KEY_PENDING_STORAGE_KEY,
   type Provider,
   type Settings,
   type SettingsForm,
@@ -88,6 +89,14 @@ function mountSettings(initial: Settings, status?: string): void {
   app.replaceChildren(form);
   (form as unknown as { value: SettingsFormValue }).value = toFormValue(initial);
   wireSettings(form);
+  // C6: consume the one-shot invalid-key deep-link flag, if the reader arrived via the
+  // INVALID_KEY card's "Fix key in Settings" button (see router.ts's open-options handler) or the
+  // side panel's equivalent direct-storage path.
+  void chrome.storage.local.get(FIX_KEY_PENDING_STORAGE_KEY).then((stored) => {
+    if (!stored[FIX_KEY_PENDING_STORAGE_KEY]) return;
+    void chrome.storage.local.remove(FIX_KEY_PENDING_STORAGE_KEY);
+    form.enterFixKeyMode();
+  });
   // Error-reporting consent lives in errlog KV (separate from settings). Reflect + control it here.
   void send({ type: 'errlog.status' }).then((r) => {
     if (r.ok && r.type === 'errlog') form.errorReporting = r.consent === 'granted';
@@ -113,6 +122,7 @@ function mountSettings(initial: Settings, status?: string): void {
 function wireSettings(form: SettingsForm): void {
   form.addEventListener('save', (e) => {
     const next = (e as CustomEvent<SettingsFormValue>).detail;
+    const shouldRetest = form.consumeAutoRetest();
     const configured: Provider[] = [];
     if (next.apiKey) configured.push('gemini');
     if (next.openaiApiKey) configured.push('openai');
@@ -127,7 +137,21 @@ function wireSettings(form: SettingsForm): void {
         () => {
           // Re-stamp so the page itself reflects a theme change immediately on save.
           (form as unknown as HTMLElement).setAttribute('data-ad-theme', next.theme);
-          form.setStatus('Settings saved');
+          if (shouldRetest) {
+            // C6: the reader just corrected a rejected key — auto-run the same connection.test
+            // round trip the manual "Test connection" button below already uses. See the design
+            // spec §4 for why this one, save-triggered call satisfies constraint 4.
+            form.setStatus('Testing your updated key…');
+            void send({ type: 'connection.test' }).then(
+              (r) =>
+                r.ok
+                  ? form.setStatus('Connection OK — your key is working')
+                  : form.setStatus(r.error.message, 'error'),
+              () => form.setStatus('Could not reach the service worker', 'error'),
+            );
+          } else {
+            form.setStatus('Settings saved');
+          }
         },
         () => form.setStatus('Could not save settings', 'error'),
       );
