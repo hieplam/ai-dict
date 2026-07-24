@@ -178,6 +178,59 @@ describe('<onboarding-view>', () => {
     expect(mount().shadowRoot!.adoptedStyleSheets.length).toBe(1);
   });
 
+  it('renders the gesture demo between the hero and the Finish-setup panel (C8)', () => {
+    const r = mount().shadowRoot!;
+    const main = r.querySelector('main')!;
+    const classNames = [...main.children].map((el) => el.className);
+    const heroIdx = classNames.findIndex((c) => c === 'hero');
+    const demoIdx = classNames.findIndex((c) => c === 'demo');
+    const panelIdx = classNames.findIndex((c) => c === 'panel');
+    expect(heroIdx).toBeGreaterThanOrEqual(0);
+    expect(demoIdx).toBeGreaterThan(heroIdx);
+    expect(panelIdx).toBeGreaterThan(demoIdx);
+  });
+
+  it('the animated sentence is aria-hidden and contains no focusable element (C8)', () => {
+    const r = mount().shadowRoot!;
+    const anim = r.querySelector('.demo-anim')!;
+    expect(anim.getAttribute('aria-hidden')).toBe('true');
+    expect(anim.querySelector('button')).toBeNull();
+  });
+
+  it('the step list states the gesture in plain text and is screen-reader-only by default (C8)', () => {
+    const r = mount().shadowRoot!;
+    const steps = r.querySelector('.demo-steps')!;
+    expect(steps.classList.contains('sr-only')).toBe(true);
+    const text = steps.textContent ?? '';
+    expect(text).toMatch(/select a word/i);
+    expect(text).toMatch(/define/i);
+    expect(text).toMatch(/definition/i);
+  });
+
+  it('the demo pill mirrors the real Define trigger: brand mark + "Define" label (C8)', () => {
+    const r = mount().shadowRoot!;
+    const pill = r.querySelector('.demo-pill')!;
+    expect(pill.querySelector('svg')).not.toBeNull();
+    expect(pill.querySelector('.label')!.textContent).toBe('Define');
+  });
+
+  it('declares a reduced-motion fallback: the animation hides, the step list becomes static (C8)', () => {
+    const sheet = mount().shadowRoot!.adoptedStyleSheets[0]!;
+    const rules = [...sheet.cssRules];
+    const media = rules.find(
+      (r): r is CSSMediaRule =>
+        r instanceof CSSMediaRule && r.conditionText.includes('prefers-reduced-motion'),
+    );
+    expect(media).toBeTruthy();
+    const styleRules = [...media!.cssRules].filter(
+      (r): r is CSSStyleRule => r instanceof CSSStyleRule,
+    );
+    const animRule = styleRules.find((r) => r.selectorText === '.demo-anim');
+    expect(animRule!.style.display).toBe('none');
+    const stepsRule = styleRules.find((r) => r.selectorText === '.demo-steps.sr-only');
+    expect(stepsRule!.style.position).toBe('static');
+  });
+
   it('does not re-initialize the shadow on reconnect', () => {
     const el = mount();
     document.body.removeChild(el);
