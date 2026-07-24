@@ -135,6 +135,15 @@ describe('wire-schema', () => {
   it('accepts open-options message', () => {
     expect(WireMessageSchema.safeParse({ type: 'open-options' }).success).toBe(true);
   });
+  it('accepts an open-options message with fixKey (C6)', () => {
+    expect(WireMessageSchema.safeParse({ type: 'open-options', fixKey: true }).success).toBe(true);
+    expect(WireMessageSchema.safeParse({ type: 'open-options', fixKey: false }).success).toBe(true);
+  });
+  it('rejects an open-options message with a non-boolean fixKey (C6)', () => {
+    expect(WireMessageSchema.safeParse({ type: 'open-options', fixKey: 'yes' }).success).toBe(
+      false,
+    );
+  });
   it('accepts history.delete message with an id', () => {
     expect(WireMessageSchema.safeParse({ type: 'history.delete', id: 'h1' }).success).toBe(true);
   });

@@ -113,7 +113,7 @@ git commit -m "feat: invalid-key recovery — add FIX_KEY_PENDING_STORAGE_KEY co
 - Modify: `packages/app/test/app/router.test.ts`
 - Modify: `packages/app/wire-schema.snapshot.json` (regenerated, not hand-edited)
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/wire-schema.test.ts`, immediately after the existing
 `'accepts open-options message'` test (around line 135-137):
@@ -180,7 +180,7 @@ Expected: the 2 new wire-schema tests and 3 new router tests fail (`fixKey` not 
 schema; router never calls `setItem`) plus the wire-schema snapshot test now ALSO failing once
 Step 2 adds the new field (expected, resolved in Step 3).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/wire.ts`, change the existing `open-options` arm (line 133):
 
@@ -204,7 +204,7 @@ Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts test/app/route
 Expected: the 5 new tests pass; the snapshot test fails (`toMatchFileSnapshot` mismatch) — expected,
 resolved in Step 3.
 
-- [ ] **Step 3: Commit** — regenerate the snapshot, then gate and commit:
+- [x] **Step 3: Commit** — regenerate the snapshot, then gate and commit:
 
 ```
 cd packages/app && bunx vitest run test/wire-schema.test.ts -u

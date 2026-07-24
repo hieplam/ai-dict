@@ -598,6 +598,39 @@ describe('buildRouter', () => {
     expect(reply).toMatchObject({ ok: true, type: 'ack' });
   });
 
+  it('open-options with fixKey:true writes the pending flag before opening (C6)', async () => {
+    const calls: string[] = [];
+    const openOptions = vi.fn(() => {
+      calls.push('openOptions');
+    });
+    const d = { ...deps(), openOptions };
+    const setItemSpy = vi.spyOn(d.kv, 'setItem');
+    const route = buildRouter(d);
+    const reply = await route({ type: 'open-options', fixKey: true });
+    expect(setItemSpy).toHaveBeenCalledWith('ui:fixKeyPending', '1');
+    // The flag write must happen before openOptions() is invoked (§2.2 of the design spec).
+    expect(calls).toEqual(['openOptions']);
+    expect(setItemSpy.mock.invocationCallOrder[0]).toBeLessThan(
+      openOptions.mock.invocationCallOrder[0]!,
+    );
+    expect(reply).toMatchObject({ ok: true, type: 'ack' });
+  });
+
+  it('open-options with fixKey:false never writes the pending flag (C6)', async () => {
+    const d = deps();
+    const setItemSpy = vi.spyOn(d.kv, 'setItem');
+    const route = buildRouter(d);
+    await route({ type: 'open-options', fixKey: false });
+    expect(setItemSpy).not.toHaveBeenCalled();
+  });
+
+  it('open-options with fixKey omitted never writes the pending flag (C6)', async () => {
+    const d = deps();
+    const setItemSpy = vi.spyOn(d.kv, 'setItem');
+    await buildRouter(d)({ type: 'open-options' });
+    expect(setItemSpy).not.toHaveBeenCalled();
+  });
+
   it('non-LookupError rejection is wrapped via mapError (toLookupError fallback)', async () => {
     // Throw a plain Error (not LookupError-shaped) to hit the mapError branch
     const d = deps({
