@@ -853,6 +853,22 @@
         max-width: 62ch;
       }
 
+      /* Try it --------------------------------------------------------------------- */
+      #try .try-sentence {
+        font-family: var(--adp-font-serif, serif);
+        font-size: 1.15rem;
+        line-height: 1.6;
+        margin: 22px 0 14px;
+        color: var(--ad-ink);
+      }
+      #try .try-sentence mark {
+        background: var(--ad-accent-soft);
+        color: var(--ad-ink);
+        padding: 1px 6px;
+        border-radius: 5px;
+        box-decoration-break: clone;
+      }
+
       /* FAQ ---------------------------------------------------------------------- */
       .faq {
         max-width: 46rem;
@@ -961,6 +977,7 @@
           <a href="#compare" data-i18n="nav-compare">Compare</a>
           <a href="#guide" data-i18n="nav-guide">Guide</a>
           <a href="#start" data-i18n="nav-start">Get started</a>
+          <a href="#try" data-i18n="nav-try">Try it</a>
           <a href="#faq" data-i18n="nav-faq">FAQ</a>
           <a href="https://github.com/hieplam/ai-dict">GitHub</a>
         </nav>
@@ -1530,6 +1547,29 @@
 
         <hr class="rule" />
 
+        <!-- ============================ TRY IT ============================ -->
+        <section id="try" class="reveal">
+          <p class="eyebrow" data-i18n="try-eyebrow">Not a demo</p>
+          <h2 data-i18n="try-h2">Try it right here</h2>
+          <p class="lede prose" data-i18n="try-lede">
+            This is real page text, not a mockup. If you've already installed AI Dictionary and
+            activated a key, select any word below — or anywhere else on this page — and choose
+            <strong>Define</strong>. The card that appears is the real thing, running on your own
+            key.
+          </p>
+          <p class="try-sentence" id="try-sentence">
+            Finding that café was pure <mark>serendipity</mark>.
+          </p>
+          <p class="caption" data-i18n="try-caption">
+            Nothing runs until you select text and click Define — one lookup, using your own saved
+            key. Button not showing? See
+            <a href="#faq" data-i18n="try-faq-link">“Why doesn’t the Define button appear?”</a>
+            below.
+          </p>
+        </section>
+
+        <hr class="rule" />
+
         <!-- ============================ FAQ ============================ -->
         <section id="faq" class="reveal">
           <p class="eyebrow" data-i18n="faq-eyebrow">Straight answers</p>
@@ -1794,6 +1834,14 @@
         'start-step3-h': 'Dán khoá, lưu lại, đọc tiếp',
         'start-step3-p': 'Màn hình chào mừng sẽ tự mở ra: chọn ngôn ngữ đích, dán khoá, rồi bấm Lưu & kích hoạt. Khoá chỉ được lưu trong trình duyệt của bạn và chỉ được dùng để kết nối với nhà cung cấp bạn đã chọn.',
         'start-onboarding-img-alt': 'Màn hình chào mừng lần đầu: trình đơn chọn ngôn ngữ đọc, ô nhập khoá API Gemini có liên kết lấy khoá miễn phí, và nút Lưu & kích hoạt',
+        'nav-try': 'Dùng thử',
+        'try-eyebrow': 'Không phải bản demo',
+        'try-h2': 'Dùng thử ngay tại đây',
+        'try-lede':
+          'Đây là văn bản thật trên trang, không phải bản dựng sẵn. Nếu bạn đã cài AI Dictionary và kích hoạt khoá, hãy chọn một từ bất kỳ bên dưới — hoặc bất cứ đâu trên trang này — rồi chọn Define. Thẻ hiện ra là thẻ thật, chạy bằng khoá của chính bạn.',
+        'try-caption':
+          'Không có gì chạy cho đến khi bạn chọn văn bản và bấm Define — một lượt tra cứu duy nhất, dùng khoá đã lưu của bạn. Nút không hiện? Xem mục “Tại sao nút Define không xuất hiện?” bên dưới.',
+        'try-faq-link': '“Tại sao nút Define không xuất hiện?”',
         'faq-eyebrow': 'Câu trả lời thẳng thắn',
         'faq-h2': 'Những câu hỏi thường gặp',
         'faq-q1': 'Có thực sự miễn phí không?',

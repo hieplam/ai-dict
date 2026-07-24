@@ -417,7 +417,7 @@ does not add one; Task 2's e2e already proves the real gesture works against a l
 this exact markup. Verification here is: (a) the diff matches the design spec §3.1 markup/CSS/i18n
 keys, (b) `bun run format:check` passes, and (c) a manual local render (see Step 2).
 
-- [ ] **Step 1: Implement.** In `docs/index.html`:
+- [x] **Step 1: Implement.** In `docs/index.html`:
   1. Add the nav link, between the existing `#start` and `#faq` entries (`docs/index.html:963-964`):
 
 ```html
@@ -492,7 +492,7 @@ fixed English in both languages (design spec §3.1's explicit reasoning: source-
 is out of this card's scope, and A12 — the card that would generalize this — is "build, don't
 advertise" per its own 2026-07-16 owner ruling).
 
-- [ ] **Step 2: Manual verification.** From the repo root:
+- [x] **Step 2: Manual verification.** From the repo root:
 
 ```
 cd docs && python3 -m http.server 8080
@@ -509,7 +509,7 @@ Open `http://localhost:8080/` and confirm:
 - The Sepia/Dark/Contrast theme toggle re-themes the new section identically to its neighbors (no
   hard-coded colors visible as a mismatch).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 bun run format:check
