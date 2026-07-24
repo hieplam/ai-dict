@@ -141,14 +141,45 @@ describe('<lookup-card>', () => {
     );
   });
 
-  it('a rejected (invalid) key keeps the error but still offers Open Settings', () => {
+  it('a rejected (invalid) key keeps the error but offers a fix-key CTA', () => {
     const el = mountCard();
     el.state = {
       kind: 'error',
       error: { code: 'INVALID_KEY', message: 'Google rejected the API key.', retryable: false },
     };
     expect(el.querySelector('.err')!.textContent).toBe('Google rejected the API key.');
-    expect(el.querySelector<HTMLButtonElement>('.setup-cta')!.textContent).toBe('Open Settings');
+    expect(el.querySelector<HTMLButtonElement>('.setup-cta')!.textContent).toBe(
+      'Fix key in Settings',
+    );
+  });
+
+  it('the INVALID_KEY CTA fires open-settings with fixKey:true in its detail (C6)', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'error',
+      error: { code: 'INVALID_KEY', message: 'Google rejected the API key.', retryable: false },
+    };
+    const handler = vi.fn();
+    document.body.addEventListener('open-settings', handler);
+    el.querySelector<HTMLButtonElement>('.setup-cta')!.click();
+    document.body.removeEventListener('open-settings', handler);
+    expect(handler).toHaveBeenCalledTimes(1);
+    const event = handler.mock.calls[0]![0] as CustomEvent<{ fixKey?: boolean } | undefined>;
+    expect(event.detail?.fixKey).toBe(true);
+  });
+
+  it('the NO_KEY setup-invite CTA still fires open-settings with no fixKey (C6 regression guard)', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'error',
+      error: { code: 'NO_KEY', message: 'Add your key.', retryable: false },
+    };
+    const handler = vi.fn();
+    document.body.addEventListener('open-settings', handler);
+    el.querySelector<HTMLButtonElement>('.setup-cta')!.click();
+    document.body.removeEventListener('open-settings', handler);
+    const event = handler.mock.calls[0]![0] as CustomEvent<{ fixKey?: boolean } | undefined>;
+    expect(event.detail?.fixKey).not.toBe(true);
   });
 
   it('renders content written straight to light DOM, with no .state setter (cross-world path)', () => {

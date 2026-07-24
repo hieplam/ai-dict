@@ -196,13 +196,19 @@ function ensureCardDocStyles(): void {
  * platform shell catches (content script → service worker `openOptionsPage`; side panel calls
  * it directly). The UI layer stays platform-agnostic — it never touches chrome.* itself.
  */
-function settingsCta(label: string): HTMLButtonElement {
+function settingsCta(label: string, opts?: { fixKey?: boolean }): HTMLButtonElement {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'setup-cta';
   b.textContent = label;
   b.addEventListener('click', () =>
-    b.dispatchEvent(new CustomEvent('open-settings', { bubbles: true, composed: true })),
+    b.dispatchEvent(
+      new CustomEvent('open-settings', {
+        detail: opts?.fixKey ? { fixKey: true } : undefined,
+        bubbles: true,
+        composed: true,
+      }),
+    ),
   );
   return b;
 }
@@ -270,7 +276,8 @@ export function renderCardState(state: CardState): Node[] {
     p.className = 'err';
     p.textContent = state.error.message;
     // A rejected key is the same dead-end as no key: hand the reader a way to fix it.
-    if (state.error.code === 'INVALID_KEY') return [h, p, settingsCta('Open Settings')];
+    if (state.error.code === 'INVALID_KEY')
+      return [h, p, settingsCta('Fix key in Settings', { fixKey: true })];
     return [h, p];
   }
   const h = document.createElement('h2');

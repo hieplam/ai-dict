@@ -236,7 +236,7 @@ git commit -m "feat: invalid-key recovery — add open-options.fixKey wire field
 - Modify: `packages/app/src/ui/lookup-card.ts`
 - Modify: `packages/app/test/ui/lookup-card.test.ts`
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 First, locate and **update** the existing test at
 `packages/app/test/ui/lookup-card.test.ts:144-152`
@@ -293,7 +293,7 @@ Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: the updated test fails (still asserts old label until Step 2), the two new tests fail
 (`settingsCta` doesn't accept a second parameter / never sets `detail`).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
 
 1. Change the `settingsCta` factory (lines 199-209):
 
@@ -327,7 +327,7 @@ if (state.error.code === 'INVALID_KEY')
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all tests pass (existing suite + updated + 2 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
