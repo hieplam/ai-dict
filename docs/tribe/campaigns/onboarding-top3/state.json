@@ -1,0 +1,54 @@
+{
+  "v": 1,
+  "campaign": "onboarding-top3",
+  "planning": { "mode": "shaman" },
+  "mergePolicy": "regular-merge-only — squash-merge prohibited (owner ruling 2026-07-16, ROADMAP §8)",
+  "sequence": ["C5", "C8", "C3"],
+  "schemaLockPaths": ["packages/app/src/domain/types.ts"],
+  "docsOnlyPaths": ["docs/superpowers/", "docs/tribe/", "docs/ROADMAP.md"],
+  "ownerOnlyEscalations": [
+    "irreversible-data-shape",
+    "product-promise-change",
+    "new-manifest-permission",
+    "privacy-surface-change",
+    "cutting-a-scope-fence"
+  ],
+  "cards": {
+    "C5": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c5-key-paste-hygiene-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c5-key-paste-hygiene.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null,
+      "autoAnswerRounds": 0
+    },
+    "C8": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c8-gesture-demo-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c8-gesture-demo.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null,
+      "autoAnswerRounds": 0
+    },
+    "C3": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c3-guided-first-lookup-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c3-guided-first-lookup.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null,
+      "autoAnswerRounds": 0
+    }
+  }
+}
