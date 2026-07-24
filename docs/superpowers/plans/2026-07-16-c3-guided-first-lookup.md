@@ -91,7 +91,7 @@ set tryIt(show: boolean): void;
 // dispatches a composed 'tryit-open' event (no detail) when #tryit-open is clicked
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`
       as a new top-level `describe` block, after the closing `});` of the existing A16
       sticky-save-bar `describe` block (the file's last block). Reuse the file's existing
       `mountForm()` helper (`settings-form.test.ts:15-19`) verbatim — do not introduce a second
@@ -132,7 +132,7 @@ Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: 3 new failures (`#tryit-cta` not found / `tryIt` not a setter, or TS errors to that
 effect); all pre-existing tests in this file still pass.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
   1. Insert this markup into `MARKUP` (`settings-form.ts:140-221`), right after
      `<h1 class="title">Settings</h1>` and before the Connection `<section>`:
 
@@ -202,7 +202,7 @@ set tryIt(show: boolean) {
 Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: all tests pass (existing + 3 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

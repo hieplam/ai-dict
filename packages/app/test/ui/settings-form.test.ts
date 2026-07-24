@@ -1032,3 +1032,28 @@ describe('<settings-form> fix-key mode (C6)', () => {
     expect(el.consumeAutoRetest()).toBe(false);
   });
 });
+
+describe('<settings-form> try it now CTA (C3)', () => {
+  it('the try-it CTA starts hidden', () => {
+    const form = mountForm();
+    expect(form.shadowRoot!.getElementById('tryit-cta')!.hidden).toBe(true);
+  });
+
+  it('tryIt = true reveals the CTA; tryIt = false hides it again', () => {
+    const form = mountForm();
+    form.tryIt = true;
+    expect(form.shadowRoot!.getElementById('tryit-cta')!.hidden).toBe(false);
+    form.tryIt = false;
+    expect(form.shadowRoot!.getElementById('tryit-cta')!.hidden).toBe(true);
+  });
+
+  it('clicking "Try it on a real page" dispatches a composed tryit-open event', () => {
+    const form = mountForm();
+    form.tryIt = true;
+    const handler = vi.fn();
+    document.body.addEventListener('tryit-open', handler);
+    (form.shadowRoot!.getElementById('tryit-open') as HTMLButtonElement).click();
+    document.body.removeEventListener('tryit-open', handler);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+});
