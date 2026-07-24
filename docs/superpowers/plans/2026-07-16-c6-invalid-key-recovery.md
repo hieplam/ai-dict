@@ -353,7 +353,7 @@ No dedicated unit test exists for `content.ts` (composition root, e2e-only — s
 B5's Task 6). Still run the typecheck gate at the end so a regression in existing behavior is
 caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/content.ts`, replace the existing
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/content.ts`, replace the existing
       `open-settings` listener (lines 141-143):
 
 ```ts
@@ -374,7 +374,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
