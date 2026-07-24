@@ -77,3 +77,34 @@ test('no-key card shows the setup invite and "Open Settings" opens the options p
   expect(optionsPage.url()).toContain('options.html');
   await optionsPage.waitForSelector('onboarding-view');
 });
+
+test('welcome screen shows the gesture demo animated by default (C8)', async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await page.waitForSelector('onboarding-view');
+
+  // Assert the actual toggled CSS property, not toBeVisible()/toBeHidden(): the sr-only clip
+  // technique gives .demo-steps a non-empty 1x1px box, which Playwright's visibility heuristic
+  // can read as "visible" even though it is clipped to nothing on screen.
+  await expect(page.locator('onboarding-view .demo-anim')).not.toHaveCSS('display', 'none');
+  await expect(page.locator('onboarding-view .demo-steps')).toHaveCSS('position', 'absolute');
+});
+
+test('reduced motion swaps the animated demo for the static step list (C8)', async ({
+  context,
+  extensionId,
+}) => {
+  const page = await context.newPage();
+  // Must emulate BEFORE navigating: onboarding-view's shadow DOM is static markup assigned
+  // once in connectedCallback, so the media state has to already be in effect when the
+  // element connects (mirrors theme.spec.ts:28-29's emulateMedia -> gotoFixture ordering).
+  await page.emulateMedia({ reducedMotion: 'reduce' });
+  await page.goto(`chrome-extension://${extensionId}/options.html`);
+  await page.waitForSelector('onboarding-view');
+
+  await expect(page.locator('onboarding-view .demo-anim')).toHaveCSS('display', 'none');
+  await expect(page.locator('onboarding-view .demo-steps')).toHaveCSS('position', 'static');
+});

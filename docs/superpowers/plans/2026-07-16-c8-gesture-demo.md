@@ -307,7 +307,7 @@ No new spec file — this extends the existing onboarding e2e file, which alread
 same pre-key `onboarding-view` screen with the same shadow-piercing locator pattern
 (`onboarding.spec.ts:7-31`).
 
-- [ ] **Step 1: Write the tests.** Append to
+- [x] **Step 1: Write the tests.** Append to
       `packages/extension-chrome/e2e/onboarding.spec.ts`, after the existing third test (`'no-key
 card shows the setup invite and "Open Settings" opens the options page'`):
 
@@ -345,7 +345,7 @@ test('reduced motion swaps the animated demo for the static step list (C8)', asy
 });
 ```
 
-- [ ] **Step 2: Build and run.** Clear any baked-in Gemini key first (Global Constraints —
+- [x] **Step 2: Build and run.** Clear any baked-in Gemini key first (Global Constraints —
       e2e build determinism):
 
 ```
@@ -356,7 +356,7 @@ cd packages/extension-chrome && bunx playwright test onboarding
 
 Expected: 5 passed (the existing 3 onboarding tests, unaffected, plus the 2 new tests).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
