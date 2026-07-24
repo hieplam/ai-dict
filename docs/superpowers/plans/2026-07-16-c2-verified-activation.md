@@ -72,7 +72,7 @@ showSaveAnyway(show: boolean): void;
 // dispatchEvent(new CustomEvent<OnboardingValue>('save-anyway', { detail, bubbles: true, composed: true }))
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/onboarding-view.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/onboarding-view.test.ts`,
       inside the existing `describe('<onboarding-view>', ...)` block, just before its closing
       `});` (after the existing `'setStatus shows, errors, and hides the status line'` test):
 
@@ -152,7 +152,7 @@ it('"Save anyway" blocks on an empty key with the same inline error as Save & ac
 Run: `cd packages/app && bunx vitest run test/ui/onboarding-view.test.ts`
 Expected: failures — `#save-anyway` doesn't exist, `setBusy`/`showSaveAnyway` are not functions.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
   1. Add a `#save-anyway` button to `MARKUP`'s `.actions` div, right after `#activate`
      (`onboarding-view.ts:112-114`):
 
@@ -290,7 +290,7 @@ this.q<HTMLButtonElement>('#save-anyway').addEventListener('click', () => this.s
 Run: `cd packages/app && bunx vitest run test/ui/onboarding-view.test.ts`
 Expected: all tests pass (existing + 6 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -318,7 +318,7 @@ proven by Task 3's e2e; still run the typecheck/lint gate below at the end so a 
 existing behavior (settings save, cache/history clear, etc. — all in the same file) is caught
 immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, replace the entire
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, replace the entire
       `mountOnboarding` function body's `save` listener (currently `options.ts:189-206`) with:
 
 ```ts
@@ -420,7 +420,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -443,7 +443,7 @@ git commit -m "feat: verified activation — persist/test/rollback orchestration
 - Modify: `packages/extension-chrome/e2e/onboarding.spec.ts`
 - Create: `packages/extension-chrome/e2e/c2-verified-activation.spec.ts`
 
-- [ ] **Step 1: Update the existing test that now needs a provider mock.** In
+- [x] **Step 1: Update the existing test that now needs a provider mock.** In
       `packages/extension-chrome/e2e/onboarding.spec.ts`, the first test ("activating with a key
       swaps to the settings screen and persists it", currently lines 7-31) sends a real activation
       with no route mocked — after Task 2 this now performs a real (mocked) `connection.test`, so
@@ -492,7 +492,7 @@ cd packages/extension-chrome && bunx playwright test onboarding
 
 Expected: all 3 tests in `onboarding.spec.ts` pass.
 
-- [ ] **Step 2: Write the new functional spec.** Create
+- [x] **Step 2: Write the new functional spec.** Create
       `packages/extension-chrome/e2e/c2-verified-activation.spec.ts`:
 
 ```ts
@@ -603,7 +603,7 @@ cd packages/extension-chrome && bunx playwright test c2-verified-activation
 
 Expected: 3 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
