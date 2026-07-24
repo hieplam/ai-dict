@@ -60,7 +60,7 @@ test that only asserts `FIX_KEY_PENDING_STORAGE_KEY === 'ui:fixKeyPending'` woul
 against itself, not behavior — skip it, per test-first's own "a test you cannot write meaningfully
 is a signal" spirit.
 
-- [ ] **Step 1: Create the file.** `packages/app/src/domain/ui-flags.ts`:
+- [x] **Step 1: Create the file.** `packages/app/src/domain/ui-flags.ts`:
 
 ```ts
 /**
@@ -78,7 +78,7 @@ is a signal" spirit.
 export const FIX_KEY_PENDING_STORAGE_KEY = 'ui:fixKeyPending';
 ```
 
-- [ ] **Step 2: Re-export.** In `packages/app/src/index.ts`, add a line next to the existing
+- [x] **Step 2: Re-export.** In `packages/app/src/index.ts`, add a line next to the existing
       domain re-exports (after `export * from './domain/nudge-policy';`, before
       `export * from './domain/error-mapper';` — i.e. among the other single-concern domain
       files):
@@ -87,7 +87,7 @@ export const FIX_KEY_PENDING_STORAGE_KEY = 'ui:fixKeyPending';
 export * from './domain/ui-flags';
 ```
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
