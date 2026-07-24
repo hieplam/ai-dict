@@ -1,11 +1,25 @@
 {
   "v": 1,
   "campaign": "onboarding-top3",
-  "planning": { "mode": "shaman" },
-  "mergePolicy": "regular-merge-only — squash-merge prohibited (owner ruling 2026-07-16, ROADMAP §8)",
-  "sequence": ["C5", "C8", "C3"],
-  "schemaLockPaths": ["packages/app/src/domain/types.ts"],
-  "docsOnlyPaths": ["docs/superpowers/", "docs/tribe/", "docs/ROADMAP.md"],
+  "mergePolicy": "regular-merge-only \u2014 squash-merge prohibited (owner ruling 2026-07-16, ROADMAP \u00a78)",
+  "sequence": [
+    "C5",
+    "C6",
+    "C7",
+    "C8",
+    "C3",
+    "C4",
+    "C9",
+    "C11"
+  ],
+  "schemaLockPaths": [
+    "packages/app/src/domain/types.ts"
+  ],
+  "docsOnlyPaths": [
+    "docs/superpowers/",
+    "docs/tribe/",
+    "docs/ROADMAP.md"
+  ],
   "ownerOnlyEscalations": [
     "irreversible-data-shape",
     "product-promise-change",
@@ -15,15 +29,15 @@
   ],
   "cards": {
     "C5": {
-      "status": "staged",
+      "status": "shipped",
       "spec": "docs/superpowers/specs/2026-07-16-c5-key-paste-hygiene-design.md",
       "plan": "docs/superpowers/plans/2026-07-16-c5-key-paste-hygiene.md",
-      "branch": null,
-      "baseSha": null,
-      "pr": null,
-      "mergeSha": null,
-      "sessionId": null,
-      "updatedAt": null,
+      "branch": "campaign/c5-key-paste-hygiene",
+      "baseSha": "42aeeee399fc2493ba5a7cd8faeebcd87afbfbc6",
+      "pr": 152,
+      "mergeSha": "c7f57506bc22718c8d44674c5f1957b22fdbb72d",
+      "sessionId": "7e294d8d-31e1-4f2b-899f-26c3db1b40ac",
+      "updatedAt": "2026-07-24T20:06:01.005Z",
       "autoAnswerRounds": 0
     },
     "C8": {
@@ -49,6 +63,69 @@
       "sessionId": null,
       "updatedAt": null,
       "autoAnswerRounds": 0
+    },
+    "C6": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c6-invalid-key-recovery-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c6-invalid-key-recovery.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null,
+      "autoAnswerRounds": 0
+    },
+    "C7": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c7-finish-setup-badge-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c7-finish-setup-badge.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null,
+      "autoAnswerRounds": 0
+    },
+    "C4": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c4-any-provider-onboarding-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c4-any-provider-onboarding.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null,
+      "autoAnswerRounds": 0
+    },
+    "C9": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-16-c9-setup-health-check-design.md",
+      "plan": "docs/superpowers/plans/2026-07-16-c9-setup-health-check.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null,
+      "autoAnswerRounds": 0
+    },
+    "C11": {
+      "status": "staged",
+      "spec": "docs/superpowers/specs/2026-07-17-c11-install-aware-landing-design.md",
+      "plan": "docs/superpowers/plans/2026-07-17-c11-install-aware-landing.md",
+      "branch": null,
+      "baseSha": null,
+      "pr": null,
+      "mergeSha": null,
+      "sessionId": null,
+      "updatedAt": null,
+      "autoAnswerRounds": 0
     }
+  },
+  "planning": {
+    "mode": "shaman"
   }
 }

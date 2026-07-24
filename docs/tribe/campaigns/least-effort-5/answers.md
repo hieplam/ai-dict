@@ -248,3 +248,18 @@ with the real branch/baseSha/mergeSha. Not re-run (branch merged, worktree gone)
 Note: the pass-2 run left the campaign's **main checkout** switched to a stray
 `campaign-state/C2` branch with an uncommitted tree — restored to `master` by hand. Logged as a
 runner defect in the campaign's SHAMAN-STATE.md; not fixed mid-campaign.
+
+---
+
+## R8 · 2026-07-25 · C7 · Ownership transferred to the `onboarding-top3` campaign — do NOT run C7 here
+
+**Owner directive (2026-07-25)** extended the `onboarding-top3` campaign to all 8 remaining
+Category C cards, which include **C7**. C7 is therefore now owned by
+`docs/tribe/campaigns/onboarding-top3/` and appears in that campaign's `sequence`.
+
+This campaign's `state.json` still lists C7 as `staged`. That record is **stale bookkeeping, not a
+work item.** Do not dispatch C7 from this campaign — doing so would race two executors onto the
+same card and open two PRs for one piece of work.
+
+`least-effort-5` is effectively complete: C1 (#144) and C2 (#148) shipped from it; C5 and C8 moved
+to `onboarding-top3` (C5 shipped there as #152), and C7 moves with this ruling.

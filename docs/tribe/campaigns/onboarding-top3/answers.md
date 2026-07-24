@@ -188,27 +188,157 @@ ROADMAP §4 C8 delegates "demo copy/animation" to the lead. Pre-ruled:
 
 ---
 
-## R9 · 2026-07-25 · campaign-wide · A mass `eslint` type-resolution failure is a FLAKE — re-run it
+## R9 · 2026-07-25 · campaign-wide · `bun install` in EVERY worktree before running any gate
 
-**Observed while authoring this campaign (2026-07-25, clean `master`, no local changes):** one
-`bun run lint` run reported **`✖ 1610 problems (1610 errors, 0 warnings)`** and exited 1. Two
-consecutive re-runs on the identical tree exited **0** with no output. Nothing in the repo changed
-between them.
+**Read this before your first `bun run lint`. It will otherwise cost you a wasted escalation.**
 
-**How to recognise it.** The errors arrive *en masse* and are all type-awareness rules —
+**What you will see.** In a freshly created worktree, `bun run lint` reports
+**`✖ 1610 problems (1610 errors, 0 warnings)`** and exits 1 — in a tree where you have changed
+nothing, or changed only markdown. The errors are all type-awareness rules:
 `@typescript-eslint/no-unsafe-assignment` ("Unsafe assignment of an **error typed** value"),
-`@typescript-eslint/no-unsafe-call` ("Unsafe call of a type that **could not be resolved**"). That
-signature means the **TypeScript project service failed to load**, so every type degraded to
-`error`/`any` and every type-aware rule fired at once. It is a toolchain failure, not a code defect.
+`no-unsafe-call` / `no-unsafe-member-access` ("...of a type that **could not be resolved**").
+
+**The cause — not a flake, and not your code.** `git worktree add` checks out tracked files only.
+`node_modules` is gitignored, so **a new worktree has none.** Without it, typed-eslint cannot
+resolve a single type, every type degrades to `error`, and every type-aware rule fires at once.
+The count is large and constant precisely because it is whole-repo, not localised.
+
+**Measured proof (2026-07-25, worktree `campaign-8cards`, markdown-only changes):**
+
+| Where | `node_modules` | `bun run lint` |
+| --- | --- | --- |
+| worktree, before install | ABSENT | **exit 1** — 1610 problems, reproduced 3× consecutively |
+| main checkout, same moment | PRESENT | **exit 0** |
+| worktree, after `bun install` | PRESENT | **exit 0** |
 
 **Ruling.**
 
-1. **Never "fix" a mass type-resolution failure.** Re-run `bun run lint` first. If it passes, the
-   first run was the flake and there is nothing to fix.
-2. If it reproduces **three times consecutively** on an unmodified tree, that is a real toolchain
-   break — return `NEEDS_DIRECTION` with the output. Do not start editing source to satisfy it.
-3. A **small, localised** set of lint errors in files you actually touched is real. This ruling
-   covers only the all-at-once, whole-repo, type-resolution signature above.
-4. **Measure the exit code correctly.** `bun run lint | tail -6; echo $?` reports **`tail`'s** exit
-   status, not the lint's — it will print `0` for a failing run. Run the gate bare
-   (`bun run lint; echo $?`), or use `${PIPESTATUS[0]}`.
+1. **Run `bun install` as the first command in every new worktree**, before any gate, build, or
+   e2e run. R1 makes every card work in a worktree, so this applies to **every card**.
+2. **Never "fix" these errors.** Do not touch source, do not relax an eslint rule, do not edit
+   tsconfig. Install the dependencies and re-run.
+3. **Re-running without installing will NOT clear it** — it reproduces indefinitely. Repeat-until-
+   green is the wrong response here; installing is the only one.
+4. Only if `bun run lint` still fails **after a successful `bun install`** is the failure real.
+   A small, localised set of errors in files you actually touched is real and yours to fix.
+5. **Measure the exit code correctly.** `bun run lint | tail -6; echo $?` reports **`tail`'s** exit
+   status, not the lint's — it prints `0` for a failing run. Run the gate bare
+   (`bun run lint; echo $?`), or use `${PIPESTATUS[0]}`. This trap is how the root cause was
+   initially misdiagnosed as a flake.
+---
+
+## R10 · 2026-07-25 · campaign-wide · Campaign extended to all 8 Category C cards
+
+**Owner directive (2026-07-25):** add the 5 highest-value remaining ideas to the running campaign,
+making 8. The owner chose **"finish Category C"** over a strict cross-roadmap score ranking, so the
+campaign now carries **every unshipped Category C card** and the category's own measured goal comes
+into scope: **audited funnel dead-ends 7 → 0**, each closure proven by the C10 e2e harness
+(shipped, PR #113).
+
+**Full sequence — `C5 → C6 → C7 → C8 → C3 → C4 → C9 → C11`.** This is the roadmap's own stated
+Category C sequencing (ROADMAP §4 C-preamble), not a new ordering. Two orderings inside it are
+load-bearing and must not be rearranged:
+
+1. **C3 before C4 and C11.** All three touch `docs/index.html`. C3 creates the try-it section;
+   C4 adds per-provider key instructions to `#start`; C11 makes the checklist install-aware. Each
+   later card builds on the earlier one's page state. Running them out of order means conflicting
+   edits to a **deployed production page**.
+2. **C2 (shipped) before C4.** C4's provider picker requires C2's verified-activation round-trip to
+   test the *chosen* provider, not a hard-wired Gemini one.
+
+No card declares `dependsOn`: every real dependency is either already shipped (C1, C2, C10) or
+satisfied by sequence order. **C7 is now owned by THIS campaign** — remove it from any mental model
+of `least-effort-5`, whose state file still lists it as `staged`. Do not run it from there.
+
+---
+
+## R11 · 2026-07-25 · C4 + C11 · R6's `docs/index.html` fence extends to these two cards
+
+R6 lifted R2.6's "never touch `docs/index.html`" for C3. **C4 and C11 edit that same deployed page**
+and are governed by the **identical fence** — re-read R6 in full and apply every clause. Restated
+because merging to `master` **is** deploying:
+
+- **C4** adds per-provider key instructions to the `#start` section. ROADMAP §4 C4's landing-page
+  note is binding: *"the page and the welcome screen must never disagree about how to get a key."*
+  The `#start` update ships **in the same PR** as the welcome-screen picker, never as a follow-up.
+- **C11** adapts the `#start` checklist to install state. The page **must render perfectly with no
+  extension installed** — with no marker present it is exactly today's static page. This is not a
+  nice-to-have: most visitors arrive without the extension.
+
+All of R6 still binds for both: additive only · **S1 absolute** (the page never collects, receives,
+renders, or references the API key) · EN/VI parity · `--ad-*`/`--adp-*` tokens only · e2e never
+fetches the live site (local fixture via `gotoFixture`).
+
+---
+
+## R12 · 2026-07-25 · C11 · The install marker's contents are a PRIVACY fence — the list is closed
+
+ROADMAP §4 C11 delegates "marker shape, checklist UX" to the lead, but fences the *contents*
+explicitly, and adds: *"if anyone proposes exposing more state to the page, THAT is a privacy
+escalation per §1."* That makes this the highest-risk card in the campaign. Pre-ruled:
+
+1. **The marker carries exactly two things: install state, and extension version.** Optionally one
+   boolean `setup finished`. **That list is closed.** Never settings, never the key or any
+   derivative of it (not a prefix, not a length, not a hash, not "which provider"), never saved
+   words, never usage or lookup history, never anything user-specific.
+2. **Anything beyond that list is `privacy-surface-change` — an owner-only escalation.** Do not
+   rule on it, do not add "just one more useful field". Return `NEEDS_DIRECTION`.
+3. **Stamped ONLY on the landing origin.** The content script runs under `<all_urls>`; the marker
+   must be gated to the landing page's own origin and must never appear on any other site. A marker
+   leaking onto third-party pages is a privacy incident, not a bug.
+4. **The marker is write-only from extension to page.** The page never sends anything back, and the
+   extension never reads page state through it. One direction, non-sensitive, non-identifying.
+5. No new manifest permission — `<all_urls>` already covers this. A new permission is owner-only.
+
+---
+
+## R13 · 2026-07-25 · C6 · Deep-link via a stored flag; no new error taxonomy
+
+ROADMAP §4 C6 delegates "deep-link mechanism (hash param vs. stored flag)". Pre-ruled to avoid an
+escalation on a mechanism choice:
+
+1. **Prefer a stored flag** (`chrome.storage` / the existing KV prefixes) over a URL hash param.
+   A hash on the options page URL is user-visible, survives bookmarking, and can re-trigger fix-key
+   mode on an unrelated later visit. A flag is read once and cleared. If the plan already specifies
+   a hash param, **follow the plan** — it is committed How and R2.3 binds.
+2. **Reuse the existing `connection.test` path and the existing error mapper.** C6 adds no new wire
+   message and no new error taxonomy — its scope fence says so explicitly.
+3. **The auto-retest after edit is user-triggered** in the sense that constraint 4 requires: it runs
+   because the user edited and submitted a key, never on page load, never on a timer.
+4. The card's copy may link the landing FAQ (`#faq`) for long-form "why was my key rejected"
+   explanations; the card itself stays terse.
+
+---
+
+## R14 · 2026-07-25 · C7 · The badge is a no-key indicator only
+
+ROADMAP §4 C7 delegates "badge glyph/color (tokens)". Pre-ruled:
+
+1. **v1 is a no-key indicator and nothing else.** Not a general notification channel, not an error
+   surface, not a count. It appears while no usable key exists and clears the moment activation
+   succeeds.
+2. **Env-key builds never show it** — those builds have a working key by construction (C10's
+   `build:chrome:e2e` clears it, so e2e still exercises the badge).
+3. `chrome.action.setBadgeText` / `setBadgeBackgroundColor` need **no new permission**. If an
+   implementation seems to need one, that is `NEEDS_DIRECTION`, not a manifest edit.
+4. Colour comes from the design tokens; badge text stays a single short glyph. Do not introduce a
+   hard-coded hex — R2.7 and the token law bind here as everywhere.
+
+---
+
+## R15 · 2026-07-25 · C9 · Read-only checks, one explicit test, no background work
+
+ROADMAP §4 C9 delegates "check list v1". Pre-ruled:
+
+1. **Check list v1 is exactly three rows:** (a) key present, per provider; (b) active provider
+   responds — the one explicit, user-clicked `connection.test`, with its token cost disclosed;
+   (c) keyboard shortcuts assigned, via `chrome.commands.getAll`.
+2. **Every check is read-only except the connection test**, and the whole panel **runs only on an
+   explicit click** — nothing on page load, nothing on a timer, nothing in the background. This is
+   standing constraint "every LLM call user-triggered", and it is not negotiable for a
+   "health check" framing.
+3. **No new permissions.** The `commands` API is already granted by the `commands` manifest key.
+4. Each row carries one concrete fix or deep link; failing rows may link the landing FAQ. Rows stay
+   one line — this is a diagnostic panel, not a documentation page.
+5. C9 is the **lowest-scored card in the campaign (1.5)**. Hold its scope tight: if it starts
+   growing beyond the three rows above, that is scope creep, not thoroughness.
