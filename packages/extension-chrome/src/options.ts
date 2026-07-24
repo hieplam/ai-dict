@@ -43,6 +43,11 @@ const DEFAULTS: Settings = {
   anthropicApiKey: '',
 };
 
+// Where C3's post-activation "Try it on a real page" button sends the user — the public landing
+// page's practice section (docs/index.html's #try). Chrome-shell-only constant: the landing page
+// URL is a store/build detail, not a portable-core concern, so it is not exported from @ai-dict/app.
+const TRY_IT_URL = 'https://hieplam.github.io/ai-dict/#try';
+
 async function load(): Promise<Settings> {
   const { settings } = (await chrome.storage.local.get('settings')) as { settings?: Settings };
   // Settings stored before the theme setting existed have no `theme` — DEFAULTS fills it.
@@ -82,7 +87,7 @@ function toFormValue(s: Settings): SettingsFormValue {
 
 // ─── Settings screen (shown once a key exists) ──────────────────────────────────────────────
 
-function mountSettings(initial: Settings, status?: string): void {
+function mountSettings(initial: Settings, status?: string, opts?: { showTryIt?: boolean }): void {
   const form = document.createElement('settings-form') as unknown as SettingsForm;
   if (KEY_FROM_ENV) form.keyFromEnv = true;
   (form as unknown as HTMLElement).setAttribute('data-ad-theme', initial.theme);
@@ -117,6 +122,12 @@ function mountSettings(initial: Settings, status?: string): void {
     );
   });
   if (status) form.setStatus(status);
+  if (opts?.showTryIt) {
+    form.tryIt = true;
+    form.addEventListener('tryit-open', () => {
+      void chrome.tabs.create({ url: TRY_IT_URL });
+    });
+  }
 }
 
 function wireSettings(form: SettingsForm): void {
@@ -233,6 +244,7 @@ function mountOnboarding(initial: Settings): void {
               mountSettings(
                 s,
                 "You're all set. Highlight any word while reading and choose Define to look it up.",
+                { showTryIt: true },
               ),
             );
             return;

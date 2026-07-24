@@ -237,7 +237,7 @@ there is no separate "e2e task" in this smaller v2 plan). Still run the gate com
 end of this task so a regression in existing behavior (onboarding, settings save, etc.) is caught
 immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
   1. Add a new top-level constant, near the other top-level constants (`KEY_FROM_ENV`,
      `DEFAULTS`, `options.ts:28-43`):
 
@@ -298,7 +298,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Write and run the e2e.** Create
+- [x] **Step 2: Write and run the e2e.** Create
       `packages/extension-chrome/e2e/c3-guided-first-lookup.spec.ts`, modeled on
       `onboarding.spec.ts`'s pattern for capturing an opened tab
       (`context.waitForEvent('page')`, already used there for the no-key card's "Open Settings"
@@ -390,7 +390,7 @@ cd packages/extension-chrome && bunx playwright test c3-guided-first-lookup
 
 Expected: 2 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
