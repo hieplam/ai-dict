@@ -1,5 +1,53 @@
 # Changelog
 
+## [1.10.0](https://github.com/hieplam/ai-dict/compare/v1.9.0...v1.10.0) (2026-07-25)
+
+
+### Features
+
+* any-provider onboarding — #start names all three providers to match the welcome screen (C4) ([e2f91e1](https://github.com/hieplam/ai-dict/commit/e2f91e1601a7bc9c32f50d5da13758dc5b00837d))
+* any-provider onboarding — e2e coverage for the 3-provider activation flow (C4) ([666e013](https://github.com/hieplam/ai-dict/commit/666e01340a944120560f6b17cc15831a9b8e4690))
+* any-provider onboarding — provider-aware persist in mountOnboarding (C4) ([28693f4](https://github.com/hieplam/ai-dict/commit/28693f45ce2223fe7bb8a13ca930af602906e81f))
+* any-provider onboarding — segmented provider picker + provider-aware submit/value (C4) ([557d6b5](https://github.com/hieplam/ai-dict/commit/557d6b5ef19396be7cc2ebbaffc88b60f10d4e9b))
+* finish-setup badge — add badgeStateFor pure predicate (C7) ([32fbeb9](https://github.com/hieplam/ai-dict/commit/32fbeb91291c7b88f4743213c24f5fcd75f920a2))
+* finish-setup badge — add e2e coverage for the badge lifecycle (C7) ([2514813](https://github.com/hieplam/ai-dict/commit/251481316f74678fd5e3a9bc5770b1d51399baaa))
+* finish-setup badge — wire chrome.action badge/title in the SW (C7) ([e8c7cea](https://github.com/hieplam/ai-dict/commit/e8c7cea12e6ed7b877b0eaad54194a0a6987cf58))
+* gesture demo — add animated demo + reduced-motion fallback to onboarding-view (C8) ([1b9aa4e](https://github.com/hieplam/ai-dict/commit/1b9aa4ef72cd1c5c6a67e52e5072e789dde2f301))
+* gesture demo — add e2e coverage for demo presence and reduced motion (C8) ([cc4c092](https://github.com/hieplam/ai-dict/commit/cc4c092e253764b4f85a2ff05154b098de197e89))
+* gesture demo on the welcome screen (C8) ([2934ffa](https://github.com/hieplam/ai-dict/commit/2934ffadabf398d511aedf01ae9fc1fd628967fe))
+* guided first lookup — add landing page try-it section (C3) ([ce4a3c9](https://github.com/hieplam/ai-dict/commit/ce4a3c9e2848cda6b839ae8e0101f558861a4ee8))
+* guided first lookup — add try-it-now CTA to settings-form (C3) ([c9ac696](https://github.com/hieplam/ai-dict/commit/c9ac696059f49c5c0b9cd0467bfa5e255b95c927))
+* guided first lookup — post-activation try-it CTA + landing-page #try section (C3) ([fe89127](https://github.com/hieplam/ai-dict/commit/fe89127e2dc33b7ded0c222233672d1e37409936))
+* guided first lookup — wire try-it CTA to the landing page + e2e (C3) ([8b48891](https://github.com/hieplam/ai-dict/commit/8b48891ede5001288f4b9065283e3a8e6ae34a4d))
+* invalid-key recovery — add e2e coverage for the full recovery loop (C6) ([71fd890](https://github.com/hieplam/ai-dict/commit/71fd8905e444897360dc184410ccaf9fc749a3d9))
+* invalid-key recovery — add FIX_KEY_PENDING_STORAGE_KEY constant (C6) ([ff32943](https://github.com/hieplam/ai-dict/commit/ff3294395b30b68150a17930d582a423325ac153))
+* invalid-key recovery — add open-options.fixKey wire field + router arm (C6) ([94f67bc](https://github.com/hieplam/ai-dict/commit/94f67bc7197d8fe9a1dcaee81412682420c8c9b8))
+* invalid-key recovery — add SettingsForm.enterFixKeyMode/consumeAutoRetest (C6) ([acdff31](https://github.com/hieplam/ai-dict/commit/acdff310c8fb2442ef4b37d6f552cc8f84b269fb))
+* invalid-key recovery — forward fixKey from the in-page card's open-settings (C6) ([14481d2](https://github.com/hieplam/ai-dict/commit/14481d2976a71651c96dccf632f53241937a8c1f))
+* invalid-key recovery — options.ts fix-key mount check + auto-retest on save (C6) ([da4287b](https://github.com/hieplam/ai-dict/commit/da4287bd842bd8f8b8d4d4ac769d008cbb80eb07))
+* invalid-key recovery — set the fix-key flag from the side panel's open-settings (C6) ([87d58d9](https://github.com/hieplam/ai-dict/commit/87d58d94df6d4c090087b09a478dbe94f76db264))
+* invalid-key recovery — settingsCta fixKey detail + relabel INVALID_KEY CTA (C6) ([0c22277](https://github.com/hieplam/ai-dict/commit/0c22277ecb874b1044c00d2a606fe9ce879a6ce4))
+* invalid-key recovery flow (C6) ([734b596](https://github.com/hieplam/ai-dict/commit/734b5967beb588181dcb16d99a7088a706b3f0f3))
+* key paste hygiene — add e2e coverage for paste cleanup + live hint (C5) ([a7e082f](https://github.com/hieplam/ai-dict/commit/a7e082f00ff5623b94d06b880e73369db7320066))
+* key paste hygiene — add key-hygiene domain module (C5) ([da165cf](https://github.com/hieplam/ai-dict/commit/da165cf3a92b9fbb1d9afe515e51b8d1e9c89c7d))
+* key paste hygiene — hint + normalize the onboarding key field (C5) ([1d515a2](https://github.com/hieplam/ai-dict/commit/1d515a286f7fe80c5b84b9e51806be3d61d16015))
+* key paste hygiene — hint + normalize the settings key field (C5) ([aafbc19](https://github.com/hieplam/ai-dict/commit/aafbc193a5c92d812a82bf3e5c4cba52d7af5674))
+* key paste hygiene & format hints (C5) ([c7f5750](https://github.com/hieplam/ai-dict/commit/c7f57506bc22718c8d44674c5f1957b22fdbb72d))
+* open onboarding on install — add e2e coverage for the onInstalled flow (C1) ([913f322](https://github.com/hieplam/ai-dict/commit/913f32281075e50d19c0d2b66958bcc296e44337))
+* open onboarding on install — add shouldOpenOnboardingOnInstall domain predicate (C1) ([2dbf77d](https://github.com/hieplam/ai-dict/commit/2dbf77d74390e595222931cb1528ef7f8f1be32f))
+* open onboarding on install — wire the onInstalled listener in sw.ts (C1) ([8f09fef](https://github.com/hieplam/ai-dict/commit/8f09fef854af1ec81a44de2d7cc43ac05d2ebc01))
+* open onboarding on install (C1) ([6ff56c6](https://github.com/hieplam/ai-dict/commit/6ff56c6f18e51f99cc9eca58a84f2ced438ea397))
+* setup health check — add API-key rows, relocate connection test (C9) ([36ce82e](https://github.com/hieplam/ai-dict/commit/36ce82e2ed936fc1f1d6fbc94563f6b39a9d94b8))
+* setup health check — add e2e coverage for the diagnostics section (C9) ([0b5e279](https://github.com/hieplam/ai-dict/commit/0b5e2794c82fbb96e6649af36968037aa35f6507))
+* setup health check — add keyboard-shortcut rows (C9) ([35bc92b](https://github.com/hieplam/ai-dict/commit/35bc92be591000e68b58646a150365e6f163a3c1))
+* setup health check — add pure row-derivation functions (C9) ([a76703e](https://github.com/hieplam/ai-dict/commit/a76703e0970986b8bc6d3b473eb0276337ce3637))
+* setup health check — diagnose key/connection/shortcut gaps in one screen (C9) ([036cee8](https://github.com/hieplam/ai-dict/commit/036cee81a02764ef44fc56e40e2108d2e49b7162))
+* setup health check — wire chrome.commands.getAll into the options page (C9) ([435dd0a](https://github.com/hieplam/ai-dict/commit/435dd0aa8e01714b42145165d055978a6747840b))
+* verified activation — busy state + save-anyway escape hatch on onboarding-view (C2) ([47c7bda](https://github.com/hieplam/ai-dict/commit/47c7bdab5e39eb09acd87ac27dfd29ac230a81e6))
+* verified activation — e2e coverage for the connection-test/rollback/save-anyway flow (C2) ([73f8af6](https://github.com/hieplam/ai-dict/commit/73f8af61289c4764a4dc4a81b91180bf1b2a35c6))
+* verified activation — persist/test/rollback orchestration in options.ts (C2) ([356781a](https://github.com/hieplam/ai-dict/commit/356781a198fa5276a3f18671b9a6c43cd8d6c060))
+* verified activation — test the key before claiming setup succeeded (C2) ([e1ab215](https://github.com/hieplam/ai-dict/commit/e1ab215921767afb07a22cb7140d556ecb5c2ba8))
+
 ## [1.9.0](https://github.com/hieplam/ai-dict/compare/v1.8.0...v1.9.0) (2026-07-16)
 
 
