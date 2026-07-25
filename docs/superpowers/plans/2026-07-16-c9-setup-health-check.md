@@ -758,7 +758,7 @@ env-locked, which changes what this spec's key-row assertions would see. Every b
 this task explicitly unsets it — do not skip this even if C10 has already landed, since this
 plan must be correct standalone.
 
-- [ ] **Step 1: Write the test.** Model the fixture/mocking pattern directly on
+- [x] **Step 1: Write the test.** Model the fixture/mocking pattern directly on
       `saved-word.spec.ts`/`options-actions.spec.ts`:
 
 ```ts
@@ -836,7 +836,7 @@ test.describe('C9 setup health check', () => {
 });
 ```
 
-- [ ] **Step 2: Build and run** (env cleared, per the note above):
+- [x] **Step 2: Build and run** (env cleared, per the note above):
 
 ```
 env -u GEMINI_API_KEY bun run build:chrome
@@ -845,7 +845,7 @@ cd packages/extension-chrome && bunx playwright test c9-setup-health-check
 
 Expected: 3 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 bun run lint && bun run format:check
