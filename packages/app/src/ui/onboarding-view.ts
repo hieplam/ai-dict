@@ -1,13 +1,66 @@
 import { adoptStyles } from './styles/adopt';
 import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG, ICON_SHIELD } from './styles/tokens';
 import { normalize, hintFor } from '../domain/key-hygiene';
+import type { Provider } from '../domain/types';
 
-// Where a reader creates a free Gemini key. Surfaced as the first onboarding step so a
-// first-time user is never left wondering where the key comes from.
-export const GET_KEY_URL = 'https://aistudio.google.com/apikey';
+// Shared verbatim with C5's key-hygiene.ts PROVIDER_LABEL table (design spec §2.3/§3.6) — defined
+// locally so this card has zero dependency on C5 landing first. If C5 lands later and imports this
+// same table from key-hygiene.ts instead, keep the two textually identical.
+const PROVIDER_LABEL: Record<Provider, string> = {
+  gemini: 'Gemini',
+  openai: 'OpenAI',
+  anthropic: 'Anthropic (Claude)',
+};
+
+interface ProviderInfo {
+  /** Short label for the segmented-control button (kept to one word so 3 fit one row). */
+  segLabel: string;
+  /** Only Gemini shows the "Free" badge — it remains the product's free-tier default (scope fence). */
+  free: boolean;
+  getKeyUrl: string;
+  getKeyLabel: string;
+  placeholder: string;
+  /** The step's descriptive sub-line, provider-specific. */
+  stepSub: string;
+}
+
+const PROVIDER_INFO: Record<Provider, ProviderInfo> = {
+  gemini: {
+    segLabel: 'Gemini',
+    free: true,
+    getKeyUrl: 'https://aistudio.google.com/apikey',
+    getKeyLabel: 'Get a free API key',
+    placeholder: 'Paste your key (AIza…)',
+    stepSub:
+      'Free from Google AI Studio, about a minute to create. Paste it below to activate the extension.',
+  },
+  openai: {
+    segLabel: 'OpenAI',
+    free: false,
+    getKeyUrl: 'https://platform.openai.com/api-keys',
+    getKeyLabel: 'Get an API key',
+    placeholder: 'Paste your key (sk-…)',
+    stepSub:
+      'From your OpenAI account (requires billing set up). Paste it below to activate the extension.',
+  },
+  anthropic: {
+    segLabel: 'Claude',
+    free: false,
+    getKeyUrl: 'https://console.anthropic.com/settings/keys',
+    getKeyLabel: 'Get an API key',
+    placeholder: 'Paste your key (sk-ant-…)',
+    stepSub:
+      'From your Anthropic console (requires billing set up). Paste it below to activate the extension.',
+  },
+};
+
+// Back-compat named export — same value as before (Gemini's URL); existing consumer:
+// onboarding-view.test.ts's "points the reader at a free key" test.
+export const GET_KEY_URL = PROVIDER_INFO.gemini.getKeyUrl;
 
 /** What the onboarding screen collects: just enough to make the extension usable. */
 export interface OnboardingValue {
+  provider: Provider;
   apiKey: string;
   targetLang: string;
 }
@@ -70,6 +123,14 @@ select{font:inherit;margin-top:10px;width:100%;max-width:240px;padding:9px 11px;
 .getkey:hover{text-decoration:none}
 .getkey:focus-visible{outline:2px solid var(--ad-accent);outline-offset:3px;border-radius:4px}
 .getkey .ext{width:14px;height:14px;flex:none}
+.seg{display:inline-flex;flex-wrap:wrap;background:var(--ad-surface-sunken);border:1px solid var(--ad-line);border-radius:10px;padding:3px;gap:2px;margin-top:10px}
+.seg button{appearance:none;border:0;cursor:pointer;font:inherit;font-size:var(--adp-text-sm);font-weight:var(--adp-weight-semi);color:var(--ad-ink-soft);background:transparent;padding:7px 14px;border-radius:8px;white-space:nowrap;display:inline-flex;align-items:center;gap:6px;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease)}
+.seg button[aria-pressed='true']{background:var(--ad-accent);color:var(--ad-on-accent)}
+.seg button:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+.seg button:disabled{cursor:not-allowed;opacity:.6}
+.seg .free-badge{padding:1px 7px;border-radius:999px;font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-bold);background:var(--ad-accent-soft);color:var(--ad-accent-ink)}
+.seg button[aria-pressed='true'] .free-badge{background:var(--ad-on-accent);color:var(--ad-accent-ink)}
+@media (prefers-reduced-motion:reduce){.seg button{transition:none}}
 .keyrow{display:flex;flex-wrap:wrap;gap:8px;align-items:stretch;margin-top:11px}
 .keyrow input{flex:1 1 200px;min-width:0;font:inherit;padding:10px 12px;border:1px solid var(--ad-line-strong);border-radius:10px;background:var(--ad-surface);color:var(--ad-ink)}
 input:focus,select:focus{outline:2px solid var(--ad-accent);outline-offset:1px;border-color:transparent}
@@ -98,7 +159,7 @@ const MARKUP = `<div class="accent" aria-hidden="true"></div>
     <div class="hero">
       ${BRAND_MARK_SVG.replace('class="mark"', 'class="mark hero-mark"')}
       <h1 class="title">Welcome to AI Dictionary</h1>
-      <p class="lead">Look up any English word right where you're reading, translated into your language, powered by your own free Google Gemini key. Nothing leaves your device but the word you choose.</p>
+      <p class="lead">Look up any English word right where you're reading, translated into your language, powered by your own AI key — free with Google Gemini by default, or bring your OpenAI or Anthropic key. Nothing leaves your device but the word you choose.</p>
     </div>
     <section class="demo" aria-labelledby="demo-h">
       <h2 class="demo-h" id="demo-h">See it in action</h2>
@@ -135,9 +196,14 @@ const MARKUP = `<div class="accent" aria-hidden="true"></div>
         <li class="step todo" id="step-key">
           <span class="dot"></span>
           <div class="step-body">
-            <p class="step-title">Add your Gemini API key</p>
-            <p class="step-sub">Free from Google AI Studio, about a minute to create. Paste it below to activate the extension.</p>
-            <a class="getkey" id="getkey" href="${GET_KEY_URL}" target="_blank" rel="noopener noreferrer">Get a free API key${ICON_EXTERNAL}</a>
+            <p class="step-title">Add your API key</p>
+            <p class="step-sub" id="step-sub">Free from Google AI Studio, about a minute to create. Paste it below to activate the extension.</p>
+            <div class="seg" id="provider" role="group" aria-label="Choose your AI provider">
+              <button type="button" data-provider="gemini" aria-pressed="true" aria-label="Gemini (Google)">Gemini<span class="free-badge">Free</span></button>
+              <button type="button" data-provider="openai" aria-pressed="false" aria-label="OpenAI">OpenAI</button>
+              <button type="button" data-provider="anthropic" aria-pressed="false" aria-label="Anthropic (Claude)">Claude</button>
+            </div>
+            <a class="getkey" id="getkey" href="${GET_KEY_URL}" target="_blank" rel="noopener noreferrer"><span id="getkey-label">Get a free API key</span>${ICON_EXTERNAL}</a>
             <div class="keyrow">
               <input id="key" type="password" autocomplete="off" placeholder="Paste your key (AIza…)" aria-label="Gemini API key" aria-describedby="key-help" />
               <button type="button" id="reveal" aria-label="Reveal API key">Show</button>
@@ -172,6 +238,10 @@ export class OnboardingView extends HTMLElement {
   // either button is pressed until the composition root calls setBusy(false) on a failure (a
   // pass never calls it back; the view is torn down when settings-form replaces it).
   private _busy = false;
+  private _provider: Provider = 'gemini';
+  // Mirrors settings-form's per-provider stash (settings-form.ts:235) so switching the segmented
+  // control back and forth never silently discards a key typed for a provider not currently shown.
+  private _keys: Record<Provider, string> = { gemini: '', openai: '', anthropic: '' };
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -197,14 +267,52 @@ export class OnboardingView extends HTMLElement {
     });
     this.q<HTMLButtonElement>('#save-anyway').addEventListener('click', () => this.submitAnyway());
 
+    this.q<HTMLElement>('#provider').addEventListener('click', (e) => {
+      const btn = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-provider]');
+      if (!btn || this._busy) return;
+      this.commitKeyField();
+      this._provider = btn.dataset['provider'] as Provider;
+      this.syncProviderRow();
+      this.refreshProgress();
+      this.refreshKeyHint();
+    });
+
     if (this._pendingValue !== null) {
       this.value = this._pendingValue;
       this._pendingValue = null;
     }
+    this.syncProviderRow();
     this.refreshProgress();
     this.refreshKeyHint();
     // Arrivals from the no-key card should land directly on the one thing they must do.
     key.focus();
+  }
+
+  /** Stash the visible key into the currently-selected provider's slot, mirroring settings-form's
+   * commitKeyField() (settings-form.ts:436-438) — called before switching providers or submitting. */
+  private commitKeyField(): void {
+    this._keys[this._provider] = this.q<HTMLInputElement>('#key').value;
+  }
+
+  /** Re-render the picker row for `_provider`: pressed segment, get-key link, key placeholder/
+   * aria-label/step copy, and restore whatever was previously typed for this provider (if
+   * anything). Mirrors settings-form's syncKeyField() (settings-form.ts:456-486) for the
+   * analogous onboarding surface. */
+  private syncProviderRow(): void {
+    const info = PROVIDER_INFO[this._provider];
+    for (const btn of this.root.querySelectorAll<HTMLButtonElement>(
+      '#provider button[data-provider]',
+    )) {
+      btn.setAttribute('aria-pressed', String(btn.dataset['provider'] === this._provider));
+    }
+    this.q<HTMLElement>('#step-sub').textContent = info.stepSub;
+    const link = this.q<HTMLAnchorElement>('#getkey');
+    link.href = info.getKeyUrl;
+    this.q<HTMLElement>('#getkey-label').textContent = info.getKeyLabel;
+    const key = this.q<HTMLInputElement>('#key');
+    key.placeholder = info.placeholder;
+    key.setAttribute('aria-label', `${PROVIDER_LABEL[this._provider]} API key`);
+    key.value = this._keys[this._provider];
   }
 
   /** Validate then emit `save` so the host (options page) can persist + test + advance. */
@@ -229,16 +337,24 @@ export class OnboardingView extends HTMLElement {
    */
   private activate(type: 'save' | 'save-anyway'): void {
     if (this._busy) return;
-    const apiKey = normalize(this.q<HTMLInputElement>('#key').value);
+    this.commitKeyField();
+    const apiKey = normalize(this._keys[this._provider]);
     if (apiKey.length === 0) {
-      this.setStatus('Paste your Gemini API key to activate the extension.', 'error');
+      this.setStatus(
+        `Paste your ${PROVIDER_LABEL[this._provider]} API key to activate the extension.`,
+        'error',
+      );
       this.q<HTMLInputElement>('#key').focus();
       return;
     }
     this.setBusy(true);
     this.dispatchEvent(
       new CustomEvent<OnboardingValue>(type, {
-        detail: { apiKey, targetLang: this.q<HTMLSelectElement>('#target').value },
+        detail: {
+          provider: this._provider,
+          apiKey,
+          targetLang: this.q<HTMLSelectElement>('#target').value,
+        },
         bubbles: true,
         composed: true,
       }),
@@ -257,6 +373,11 @@ export class OnboardingView extends HTMLElement {
     activate.textContent = busy ? 'Activating…' : 'Save & activate';
     this.q<HTMLButtonElement>('#save-anyway').disabled = busy;
     if (busy) this.showSaveAnyway(false);
+    for (const btn of this.root.querySelectorAll<HTMLButtonElement>(
+      '#provider button[data-provider]',
+    )) {
+      btn.disabled = busy;
+    }
   }
 
   /** C2: show/hide the escape hatch. The host decides when (NETWORK-class failures only). */
@@ -279,7 +400,7 @@ export class OnboardingView extends HTMLElement {
   /** C5: live, non-blocking hint when a pasted key looks like a different provider's or is
    * implausibly short/malformed — never blocks activation (roadmap C5 scope fence). */
   private refreshKeyHint(): void {
-    const hint = hintFor('gemini', normalize(this.q<HTMLInputElement>('#key').value));
+    const hint = hintFor(this._provider, normalize(this.q<HTMLInputElement>('#key').value));
     const el = this.q<HTMLElement>('#key-hint');
     el.textContent = hint?.message ?? '';
     el.hidden = hint === null;
@@ -299,7 +420,11 @@ export class OnboardingView extends HTMLElement {
       return;
     }
     this.q<HTMLSelectElement>('#target').value = v.targetLang;
-    this.q<HTMLInputElement>('#key').value = v.apiKey;
+    // back-compat: a caller that never set provider (pre-C4 shape) defaults to Gemini.
+    this._provider = v.provider ?? 'gemini';
+    this._keys = { gemini: '', openai: '', anthropic: '' };
+    this._keys[this._provider] = v.apiKey;
+    this.syncProviderRow();
     this.refreshProgress();
     this.refreshKeyHint();
   }

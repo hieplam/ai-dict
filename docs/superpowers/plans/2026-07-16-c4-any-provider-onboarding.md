@@ -76,7 +76,7 @@ export interface OnboardingValue {
 }
 ```
 
-- [ ] **Step 1a: Fix three pre-existing tests for the widened `OnboardingValue` shape.** Widening
+- [x] **Step 1a: Fix three pre-existing tests for the widened `OnboardingValue` shape.** Widening
       `OnboardingValue` to require `provider` breaks three tests already in
       `packages/app/test/ui/onboarding-view.test.ts` that construct/compare the shape without it —
       not new C4 behavior, just a mechanical shape fix so the suite still compiles and the
@@ -96,7 +96,7 @@ interface to match. If your toolchain runs Vitest without a separate type-check 
 will fail at runtime instead (`captured`/`el.value` still lacks a `provider` field until Step 2), which
 is the same signal.
 
-- [ ] **Step 1b: Write the new failing tests.** Append to
+- [x] **Step 1b: Write the new failing tests.** Append to
       `packages/app/test/ui/onboarding-view.test.ts`, inside the existing top-level
       onboarding-view `describe` block, just before its closing `});` (after whatever C2's own tests left as the
       last test in the file):
@@ -226,7 +226,7 @@ Expected: failures — `#provider` doesn't exist, `.free-badge`/`#getkey-label`/
 exist, `OnboardingValue`'s `provider` field doesn't type-check, `setBusy` doesn't yet disable
 provider buttons.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
   1. Add the `Provider` import and the two new metadata tables, right after the existing
      `GET_KEY_URL` line (`onboarding-view.ts:6`) — replacing it:
 
@@ -565,7 +565,7 @@ set value(v: OnboardingValue) {
 Run: `cd packages/app && bunx vitest run test/ui/onboarding-view.test.ts`
 Expected: all tests pass (existing + 9 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
