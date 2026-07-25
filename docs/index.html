@@ -422,6 +422,11 @@
         border: 1px solid var(--ad-line-strong);
         background: var(--ad-surface-sunken);
       }
+      .btn[aria-disabled='true'] {
+        opacity: 0.72;
+        cursor: default;
+        pointer-events: none;
+      }
       .privacy-line {
         margin: 16px 0 0;
         font-size: var(--adp-text-xs);
@@ -852,6 +857,16 @@
         color: var(--ad-ink-soft);
         max-width: 62ch;
       }
+      .start-status:not([hidden]) {
+        display: inline-block;
+        margin: 4px 0 20px;
+        padding: 8px 14px;
+        border-radius: 999px;
+        font: 600 var(--adp-text-sm) / 1.3 var(--adp-font-sans);
+        background: var(--ad-accent-soft);
+        color: var(--ad-ink);
+        border: 1px solid var(--ad-accent);
+      }
 
       /* Try it --------------------------------------------------------------------- */
       #try .try-sentence {
@@ -1011,6 +1026,7 @@
             </p>
             <div class="cta-row">
               <a
+                id="hero-cta"
                 class="btn btn-primary"
                 href="https://chromewebstore.google.com/detail/ai-dictionary/ipnmjhndmlkbhnifhmbknjjomdocgkeg"
                 data-i18n="hero-cta-primary"
@@ -1494,6 +1510,7 @@
         <section id="start" class="reveal">
           <p class="eyebrow" data-i18n="start-eyebrow">Two minutes, once</p>
           <h2 data-i18n="start-h2">Get started</h2>
+          <p class="start-status" id="start-status" hidden></p>
           <ol class="steps">
             <li>
               <div>
@@ -1907,6 +1924,69 @@
           });
         });
         if (document.documentElement.lang === 'vi') apply('vi');
+      })();
+    </script>
+    <!-- ====================== C11: INSTALL-AWARE LANDING ====================== -->
+    <script>
+      // The extension's content script (packages/extension-chrome/src/content.ts, landing-origin
+      // gated — see design spec §2.2) stamps three attributes on <html> once it runs here:
+      // data-ad-dict-installed="true", data-ad-dict-version="<semver>", and
+      // data-ad-dict-ready="true"|"false" (PublicSettings.hasKey only — never the key itself, S1).
+      // This script adapts the hero CTA + the #start checklist when those attributes appear. Without
+      // the extension (or before it stamps them), nothing here runs and the page is exactly as
+      // authored — see design spec §2.5's "must render perfectly without it".
+      (function () {
+        var COPY = {
+          en: {
+            ctaInstalled: 'Open setup',
+            ctaReady: 'You’re all set ✓',
+            statusInstalled: 'Install ✓ — next: add your key.',
+            statusReady: 'All set ✓ — you’re ready to read.',
+          },
+          vi: {
+            ctaInstalled: 'Mở phần thiết lập',
+            ctaReady: 'Đã kích hoạt ✓',
+            statusInstalled: 'Đã cài ✓ — tiếp theo: thêm khoá của bạn.',
+            statusReady: 'Đã xong ✓ — bạn đã sẵn sàng đọc.',
+          },
+        };
+
+        function applyInstallState() {
+          var root = document.documentElement;
+          var installed = root.getAttribute('data-ad-dict-installed') === 'true';
+          if (!installed) return; // not installed (or not yet stamped): page stays exactly as authored
+          var ready = root.getAttribute('data-ad-dict-ready') === 'true';
+          var lang = root.lang === 'vi' ? 'vi' : 'en';
+          var t = COPY[lang];
+
+          var cta = document.getElementById('hero-cta');
+          if (cta) {
+            cta.removeAttribute('data-i18n'); // this script now owns this element's text/lang sync
+            if (ready) {
+              cta.textContent = t.ctaReady;
+              cta.removeAttribute('href');
+              cta.setAttribute('aria-disabled', 'true');
+              cta.setAttribute('tabindex', '-1');
+            } else {
+              cta.textContent = t.ctaInstalled;
+              cta.setAttribute('href', '#start');
+              cta.removeAttribute('aria-disabled');
+              cta.removeAttribute('tabindex');
+            }
+          }
+
+          var status = document.getElementById('start-status');
+          if (status) {
+            status.textContent = ready ? t.statusReady : t.statusInstalled;
+            status.hidden = false;
+          }
+        }
+
+        applyInstallState();
+        new MutationObserver(applyInstallState).observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['data-ad-dict-installed', 'data-ad-dict-ready', 'lang'],
+        });
       })();
     </script>
   </body>
