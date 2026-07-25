@@ -592,7 +592,7 @@ e2e only (same precedent as C2's own Task 2). This task's correctness is proven 
 still run the typecheck/lint gate below at the end so a regression in existing behavior (settings
 save, cache/history clear, etc. — all in the same file) is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
   1. Add `configuredProvidersFor` to the existing `@ai-dict/app` import (`options.ts:1-14`),
      alongside `hasKeyFor`:
 
@@ -747,7 +747,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
