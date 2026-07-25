@@ -25,11 +25,11 @@ test('onboarding: activating with a key swaps to the settings screen and persist
   // …and the key is stored with hasKey derived.
   const stored = await page.evaluate(async () => {
     const { settings } = (await chrome.storage.local.get('settings')) as {
-      settings: { apiKey: string; hasKey: boolean };
+      settings: { apiKey: string; hasKey: boolean; provider: string };
     };
-    return `${settings.apiKey}|${settings.hasKey}`;
+    return `${settings.apiKey}|${settings.hasKey}|${settings.provider}`;
   });
-  expect(stored).toBe('AIza-activated|true');
+  expect(stored).toBe('AIza-activated|true|gemini');
 });
 
 test('onboarding: empty key shows an error and never leaves the onboarding screen', async ({

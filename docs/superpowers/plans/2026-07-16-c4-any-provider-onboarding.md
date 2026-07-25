@@ -76,7 +76,7 @@ export interface OnboardingValue {
 }
 ```
 
-- [ ] **Step 1a: Fix three pre-existing tests for the widened `OnboardingValue` shape.** Widening
+- [x] **Step 1a: Fix three pre-existing tests for the widened `OnboardingValue` shape.** Widening
       `OnboardingValue` to require `provider` breaks three tests already in
       `packages/app/test/ui/onboarding-view.test.ts` that construct/compare the shape without it —
       not new C4 behavior, just a mechanical shape fix so the suite still compiles and the
@@ -96,7 +96,7 @@ interface to match. If your toolchain runs Vitest without a separate type-check 
 will fail at runtime instead (`captured`/`el.value` still lacks a `provider` field until Step 2), which
 is the same signal.
 
-- [ ] **Step 1b: Write the new failing tests.** Append to
+- [x] **Step 1b: Write the new failing tests.** Append to
       `packages/app/test/ui/onboarding-view.test.ts`, inside the existing top-level
       onboarding-view `describe` block, just before its closing `});` (after whatever C2's own tests left as the
       last test in the file):
@@ -226,7 +226,7 @@ Expected: failures — `#provider` doesn't exist, `.free-badge`/`#getkey-label`/
 exist, `OnboardingValue`'s `provider` field doesn't type-check, `setBusy` doesn't yet disable
 provider buttons.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/onboarding-view.ts`:
   1. Add the `Provider` import and the two new metadata tables, right after the existing
      `GET_KEY_URL` line (`onboarding-view.ts:6`) — replacing it:
 
@@ -565,7 +565,7 @@ set value(v: OnboardingValue) {
 Run: `cd packages/app && bunx vitest run test/ui/onboarding-view.test.ts`
 Expected: all tests pass (existing + 9 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -592,7 +592,7 @@ e2e only (same precedent as C2's own Task 2). This task's correctness is proven 
 still run the typecheck/lint gate below at the end so a regression in existing behavior (settings
 save, cache/history clear, etc. — all in the same file) is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
   1. Add `configuredProvidersFor` to the existing `@ai-dict/app` import (`options.ts:1-14`),
      alongside `hasKeyFor`:
 
@@ -747,7 +747,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -770,7 +770,7 @@ git commit -m "feat: any-provider onboarding — provider-aware persist in mount
 - Modify: `packages/extension-chrome/e2e/onboarding.spec.ts`
 - Create: `packages/extension-chrome/e2e/c4-any-provider-onboarding.spec.ts`
 
-- [ ] **Step 1: Pin the default in the existing suite.** In
+- [x] **Step 1: Pin the default in the existing suite.** In
       `packages/extension-chrome/e2e/onboarding.spec.ts`, extend the first test's final assertion
       (the one C2's own plan already updated to mock Gemini and assert `apiKey`/`hasKey`) to also
       read `settings.provider`:
@@ -794,7 +794,7 @@ cd packages/extension-chrome && bunx playwright test onboarding
 
 Expected: all tests in `onboarding.spec.ts` still pass, now also asserting the default provider.
 
-- [ ] **Step 2: Write the new functional spec.** Create
+- [x] **Step 2: Write the new functional spec.** Create
       `packages/extension-chrome/e2e/c4-any-provider-onboarding.spec.ts`:
 
 ```ts
@@ -929,7 +929,7 @@ cd packages/extension-chrome && bunx playwright test c4-any-provider-onboarding
 
 Expected: 5 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome

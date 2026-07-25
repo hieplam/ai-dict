@@ -71,7 +71,7 @@ describe('<onboarding-view>', () => {
     r.querySelector('form')!.dispatchEvent(
       new Event('submit', { bubbles: true, cancelable: true }),
     );
-    expect(captured).toEqual({ apiKey: 'AIza-real', targetLang: 'en' });
+    expect(captured).toEqual({ provider: 'gemini', apiKey: 'AIza-real', targetLang: 'en' });
   });
 
   it('blocks activation with an error when the key is empty (no save emitted)', () => {
@@ -151,14 +151,14 @@ describe('<onboarding-view>', () => {
 
   it('value setter hydrates the language select and key field', () => {
     const el = mount();
-    el.value = { apiKey: 'AIza-seed', targetLang: 'en' };
+    el.value = { provider: 'gemini', apiKey: 'AIza-seed', targetLang: 'en' };
     expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('en');
     expect(el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.value).toBe('AIza-seed');
   });
 
   it('value set before connect defers hydration until connectedCallback', () => {
     const el = document.createElement('onboarding-view') as OnboardingView;
-    el.value = { apiKey: '', targetLang: 'en' };
+    el.value = { provider: 'gemini', apiKey: '', targetLang: 'en' };
     document.body.append(el);
     expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('en');
   });
@@ -301,7 +301,7 @@ describe('<onboarding-view>', () => {
       captured = (e as CustomEvent<OnboardingValue>).detail;
     });
     r.querySelector<HTMLButtonElement>('#save-anyway')!.click();
-    expect(captured).toEqual({ apiKey: 'AIza-real', targetLang: 'en' });
+    expect(captured).toEqual({ provider: 'gemini', apiKey: 'AIza-real', targetLang: 'en' });
   });
 
   it('"Save anyway" blocks on an empty key with the same inline error as Save & activate (C2)', () => {
@@ -315,5 +315,131 @@ describe('<onboarding-view>', () => {
     const status = el.shadowRoot!.querySelector<HTMLElement>('#status')!;
     expect(status.hidden).toBe(false);
     expect(status.classList.contains('error')).toBe(true);
+  });
+
+  it('defaults to Gemini pressed with a Free badge; OpenAI/Claude unpressed with no badge (C4)', () => {
+    const r = mount().shadowRoot!;
+    const gemini = r.querySelector<HTMLButtonElement>('#provider button[data-provider="gemini"]')!;
+    const openai = r.querySelector<HTMLButtonElement>('#provider button[data-provider="openai"]')!;
+    const claude = r.querySelector<HTMLButtonElement>(
+      '#provider button[data-provider="anthropic"]',
+    )!;
+    expect(gemini.getAttribute('aria-pressed')).toBe('true');
+    expect(gemini.querySelector('.free-badge')!.textContent).toBe('Free');
+    expect(openai.getAttribute('aria-pressed')).toBe('false');
+    expect(openai.querySelector('.free-badge')).toBeNull();
+    expect(claude.getAttribute('aria-pressed')).toBe('false');
+    expect(claude.querySelector('.free-badge')).toBeNull();
+  });
+
+  it('clicking the OpenAI segment retargets the get-key link, placeholder, aria-label, and step copy (C4)', () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    r.querySelector<HTMLButtonElement>('#provider button[data-provider="openai"]')!.click();
+    expect(
+      r.querySelector('#provider button[data-provider="openai"]')!.getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(
+      r.querySelector('#provider button[data-provider="gemini"]')!.getAttribute('aria-pressed'),
+    ).toBe('false');
+    const link = r.querySelector<HTMLAnchorElement>('#getkey')!;
+    expect(link.href).toBe('https://platform.openai.com/api-keys');
+    expect(r.querySelector('#getkey-label')!.textContent).toBe('Get an API key');
+    const key = r.querySelector<HTMLInputElement>('#key')!;
+    expect(key.placeholder).toBe('Paste your key (sk-…)');
+    expect(key.getAttribute('aria-label')).toBe('OpenAI API key');
+    expect(r.querySelector('#step-sub')!.textContent).toMatch(/OpenAI account/);
+  });
+
+  it("switching providers preserves each provider's own typed key (per-provider stash) (C4)", () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    const key = r.querySelector<HTMLInputElement>('#key')!;
+    key.value = 'AIza-gemini-key';
+    key.dispatchEvent(new Event('input'));
+    r.querySelector<HTMLButtonElement>('#provider button[data-provider="openai"]')!.click();
+    expect(key.value).toBe('');
+    key.value = 'sk-openai-key';
+    key.dispatchEvent(new Event('input'));
+    r.querySelector<HTMLButtonElement>('#provider button[data-provider="gemini"]')!.click();
+    expect(key.value).toBe('AIza-gemini-key');
+    r.querySelector<HTMLButtonElement>('#provider button[data-provider="openai"]')!.click();
+    expect(key.value).toBe('sk-openai-key');
+  });
+
+  it('submit() with OpenAI selected dispatches "save" carrying provider: openai (C4)', () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    r.querySelector<HTMLButtonElement>('#provider button[data-provider="openai"]')!.click();
+    r.querySelector<HTMLInputElement>('#key')!.value = 'sk-real-key-123456789';
+    let captured: OnboardingValue | undefined;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<OnboardingValue>).detail;
+    });
+    r.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(captured).toEqual({
+      provider: 'openai',
+      apiKey: 'sk-real-key-123456789',
+      targetLang: 'vi',
+    });
+  });
+
+  it('submit() with an empty key under Claude shows the Claude-flavoured error copy (C4)', () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    r.querySelector<HTMLButtonElement>('#provider button[data-provider="anthropic"]')!.click();
+    r.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(r.querySelector('#status')!.textContent).toBe(
+      'Paste your Anthropic (Claude) API key to activate the extension.',
+    );
+  });
+
+  it('setBusy(true) disables all three provider segments; setBusy(false) re-enables them (C4)', () => {
+    const el = mount();
+    const r = el.shadowRoot!;
+    el.setBusy(true);
+    for (const p of ['gemini', 'openai', 'anthropic']) {
+      expect(
+        r.querySelector<HTMLButtonElement>(`#provider button[data-provider="${p}"]`)!.disabled,
+      ).toBe(true);
+    }
+    el.setBusy(false);
+    for (const p of ['gemini', 'openai', 'anthropic']) {
+      expect(
+        r.querySelector<HTMLButtonElement>(`#provider button[data-provider="${p}"]`)!.disabled,
+      ).toBe(false);
+    }
+  });
+
+  it('value setter hydrates the picker, key, and language for a non-Gemini provider (C4)', () => {
+    const el = mount();
+    el.value = { provider: 'anthropic', apiKey: 'sk-ant-seed', targetLang: 'en' };
+    const r = el.shadowRoot!;
+    expect(
+      r.querySelector('#provider button[data-provider="anthropic"]')!.getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(r.querySelector<HTMLInputElement>('#key')!.value).toBe('sk-ant-seed');
+    expect(r.querySelector<HTMLInputElement>('#key')!.placeholder).toBe(
+      'Paste your key (sk-ant-…)',
+    );
+  });
+
+  it('value setter defaults to Gemini when provider is absent (back-compat) (C4)', () => {
+    const el = mount();
+    // Cast: simulates a caller built against the pre-C4 OnboardingValue shape.
+    el.value = { apiKey: '', targetLang: 'en' } as OnboardingValue;
+    expect(
+      el
+        .shadowRoot!.querySelector('#provider button[data-provider="gemini"]')!
+        .getAttribute('aria-pressed'),
+    ).toBe('true');
+  });
+
+  it('has no axe violations with the provider picker rendered (C4)', async () => {
+    expect(await axeViolations(mount())).toEqual([]);
   });
 });

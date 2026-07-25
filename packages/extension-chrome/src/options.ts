@@ -4,6 +4,7 @@ import {
   DEFAULT_OUTPUT_FORMAT,
   buildHistoryExport,
   hasKeyFor,
+  configuredProvidersFor,
   FIX_KEY_PENDING_STORAGE_KEY,
   deriveShortcutRows,
   type ShortcutStatusRow,
@@ -93,6 +94,26 @@ function toFormValue(s: Settings): SettingsFormValue {
     saveHistory: s.saveHistory,
     theme: s.theme,
   };
+}
+
+/** Apply a provider + its pasted key onto `cur`, writing into the ONE field that provider owns
+ * (apiKey/openaiApiKey/anthropicApiKey) and leaving the other two untouched — the card's "one key
+ * activates" scope fence. `Provider`'s exhaustive 3-arm switch is why no `default` is needed. */
+function applyProviderKey(
+  cur: Settings,
+  provider: Provider,
+  apiKey: string,
+  targetLang: string,
+): Settings {
+  const base = { ...cur, provider, targetLang };
+  switch (provider) {
+    case 'gemini':
+      return { ...base, apiKey };
+    case 'openai':
+      return { ...base, openaiApiKey: apiKey };
+    case 'anthropic':
+      return { ...base, anthropicApiKey: apiKey };
+  }
 }
 
 // ─── Settings screen (shown once a key exists) ──────────────────────────────────────────────
@@ -235,11 +256,12 @@ function mountOnboarding(initial: Settings): void {
   (view as unknown as HTMLElement).setAttribute('data-ad-theme', initial.theme);
   app.replaceChildren(view);
   (view as unknown as { value: OnboardingValue }).value = {
+    provider: initial.provider ?? 'gemini',
     apiKey: '',
     targetLang: initial.targetLang,
   };
   view.addEventListener('save', (e) => {
-    const { apiKey, targetLang } = (e as CustomEvent<OnboardingValue>).detail;
+    const { provider, apiKey, targetLang } = (e as CustomEvent<OnboardingValue>).detail;
     view.setStatus('Testing your key…');
     let cur: Settings;
     void load()
@@ -249,8 +271,13 @@ function mountOnboarding(initial: Settings): void {
         // in storage (sw.ts's getApiKey reads chrome.storage.local live, on every call) — this
         // is the only way to make the just-pasted, not-yet-stored key reachable to the
         // existing, unmodified connection.test path. See the design spec §2.
+        const next = applyProviderKey(c, provider, apiKey, targetLang);
         return chrome.storage.local.set({
-          settings: { ...cur, apiKey, targetLang, hasKey: Boolean(apiKey) },
+          settings: {
+            ...next,
+            hasKey: hasKeyFor(next),
+            configuredProviders: configuredProvidersFor(next, { envGeminiKey: KEY_FROM_ENV }),
+          },
         });
       })
       .then(() => send({ type: 'connection.test' }))
@@ -293,13 +320,18 @@ function mountOnboarding(initial: Settings): void {
   // failures only; the view only shows this button after such a failure). Persists directly,
   // no connection.test call, with a status that makes clear the key was NOT verified.
   view.addEventListener('save-anyway', (e) => {
-    const { apiKey, targetLang } = (e as CustomEvent<OnboardingValue>).detail;
+    const { provider, apiKey, targetLang } = (e as CustomEvent<OnboardingValue>).detail;
     void load()
-      .then((cur) =>
-        chrome.storage.local.set({
-          settings: { ...cur, apiKey, targetLang, hasKey: Boolean(apiKey) },
-        }),
-      )
+      .then((cur) => {
+        const next = applyProviderKey(cur, provider, apiKey, targetLang);
+        return chrome.storage.local.set({
+          settings: {
+            ...next,
+            hasKey: hasKeyFor(next),
+            configuredProviders: configuredProvidersFor(next, { envGeminiKey: KEY_FROM_ENV }),
+          },
+        });
+      })
       .then(load)
       .then(
         (s) =>
