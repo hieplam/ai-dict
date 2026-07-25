@@ -222,7 +222,7 @@ git commit -m "feat: setup health check — add pure row-derivation functions (C
 - Modify: `packages/app/src/ui/settings-form.ts`
 - Modify: `packages/app/test/ui/settings-form.test.ts`
 
-- [ ] **Step 1: Write the failing tests.** Append a new `describe` block to
+- [x] **Step 1: Write the failing tests.** Append a new `describe` block to
       `packages/app/test/ui/settings-form.test.ts`, after the closing `});` of the existing
       provider-selection `describe` block:
 
@@ -327,7 +327,7 @@ Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: 8 new failures (the `#key-status-*`/`#health-active-label` elements don't exist yet;
 `focus()` assertion fails since nothing is focusable there yet).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
   1. Extend the domain import line:
 
   ```ts
@@ -519,7 +519,7 @@ Expected: all tests pass (existing + 8 new). Existing tests unaffected — `#tes
 `test-connection` still fires, `settings-form.test.ts`'s "keeps every required control" test
 (asserting `#test` presence) still passes since the id is unchanged.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

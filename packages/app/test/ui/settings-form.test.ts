@@ -482,6 +482,104 @@ describe('<settings-form> provider selection', () => {
   });
 });
 
+describe('<settings-form> setup health check — API keys + connection (C9)', () => {
+  it('mounts with all three provider rows Missing and their fix buttons visible', () => {
+    const el = mountForm();
+    for (const p of ['gemini', 'openai', 'anthropic'] as const) {
+      expect(el.shadowRoot!.querySelector(`#key-status-${p}-badge`)!.textContent).toBe('Missing');
+      expect(el.shadowRoot!.querySelector<HTMLButtonElement>(`#key-status-${p}-fix`)!.hidden).toBe(
+        false,
+      );
+    }
+  });
+
+  it('hydrating with a Gemini key marks that row Configured and hides its fix button', () => {
+    const el = mountForm();
+    el.value = {
+      provider: 'gemini',
+      apiKey: 'AIza-test',
+      openaiApiKey: '',
+      anthropicApiKey: '',
+      targetLang: 'vi',
+      outputFormat: 'T',
+      promptEnvelope: '',
+      cacheEnabled: true,
+      saveHistory: true,
+      theme: 'sepia',
+    };
+    expect(el.shadowRoot!.querySelector('#key-status-gemini-badge')!.textContent).toBe(
+      'Configured',
+    );
+    expect(el.shadowRoot!.querySelector('#key-status-gemini-badge')!.classList.contains('ok')).toBe(
+      true,
+    );
+    expect(el.shadowRoot!.querySelector<HTMLButtonElement>('#key-status-gemini-fix')!.hidden).toBe(
+      true,
+    );
+    expect(el.shadowRoot!.querySelector('#key-status-openai-badge')!.textContent).toBe('Missing');
+  });
+
+  it('typing into #key updates the selected provider row live, before Save', () => {
+    const el = mountForm();
+    el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.value = 'AIza-live';
+    el.shadowRoot!.querySelector<HTMLInputElement>('#key')!.dispatchEvent(
+      new Event('input', { bubbles: true }),
+    );
+    expect(el.shadowRoot!.querySelector('#key-status-gemini-badge')!.textContent).toBe(
+      'Configured',
+    );
+  });
+
+  it('the active-provider label follows the provider switch', () => {
+    const el = mountForm();
+    expect(el.shadowRoot!.querySelector('#health-active-label')!.textContent).toBe(
+      'Gemini responds',
+    );
+    const select = el.shadowRoot!.querySelector<HTMLSelectElement>('#provider')!;
+    select.value = 'openai';
+    select.dispatchEvent(new Event('change'));
+    expect(el.shadowRoot!.querySelector('#health-active-label')!.textContent).toBe(
+      'OpenAI responds',
+    );
+  });
+
+  it('clicking a fix button switches the provider and focuses #key', () => {
+    const el = mountForm(); // mountForm() already appends el to document.body
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#key-status-openai-fix')!.click();
+    expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#provider')!.value).toBe('openai');
+    // shadowRoot.activeElement (not a ':focus' selector) — happy-dom's ':focus' matcher checks
+    // `ownerDocument.activeElement === element`, and per spec ownerDocument.activeElement
+    // retargets to the shadow HOST across an open shadow boundary, so ':focus' can never match an
+    // element inside a shadow root here. shadowRoot.activeElement reports the true focused
+    // descendant and is what actually reflects this component's focus state.
+    expect(el.shadowRoot!.activeElement).toBe(el.shadowRoot!.querySelector('#key'));
+  });
+
+  it('an env-locked Gemini key always shows Configured with no fix button', () => {
+    const el = mountForm();
+    el.keyFromEnv = true;
+    expect(el.shadowRoot!.querySelector('#key-status-gemini-badge')!.textContent).toBe(
+      'Configured',
+    );
+    expect(el.shadowRoot!.querySelector<HTMLButtonElement>('#key-status-gemini-fix')!.hidden).toBe(
+      true,
+    );
+  });
+
+  it('the relocated #test button still fires test-connection and still exists', () => {
+    const el = mountForm();
+    const handler = vi.fn();
+    el.addEventListener('test-connection', handler);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#test')!.click();
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  it('has no axe violations with the new section present', async () => {
+    const el = mountForm();
+    expect(await axeViolations(el)).toEqual([]);
+  });
+});
+
 describe('<settings-form> key paste hygiene (C5)', () => {
   function keyInput(el: SettingsForm): HTMLInputElement {
     return el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;
@@ -644,6 +742,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
     // 'Developer mode' is a hidden section (revealed only by the Konami code) sitting after Translation.
     expect(heads).toEqual([
       'Connection',
+      'Check my setup',
       'Translation',
       'Developer mode',
       'Appearance',

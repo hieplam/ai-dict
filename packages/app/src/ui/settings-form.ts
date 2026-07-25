@@ -2,8 +2,9 @@ import { adoptStyles } from './styles/adopt';
 import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG, ICON_SHIELD } from './styles/tokens';
 import { DEFAULT_OUTPUT_FORMAT, PROMPT_ENVELOPE } from '../domain/default-template';
 import { buildPrompt } from '../domain/prompt-template';
-import type { Provider, Theme } from '../domain/types';
+import { PROVIDERS, configuredProvidersFor, type Provider, type Theme } from '../domain/types';
 import { normalize, hintFor } from '../domain/key-hygiene';
+import { deriveKeyStatusRows } from '../domain/setup-health-policy';
 
 // The Konami code (↑↑↓↓←→←→BA), matched on `KeyboardEvent.code` so it is layout-independent.
 const KONAMI_SEQUENCE = [
@@ -141,6 +142,16 @@ details.advanced>summary:focus-visible{outline:2px solid var(--ad-accent);outlin
 #devmode{margin:0 0 10px;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);color:var(--ad-ink-soft)}
 #devprompt{margin:0;font-family:var(--adp-font-mono,monospace);font-size:var(--adp-text-2xs);background:var(--ad-surface-raised);border:1px solid var(--ad-line);border-radius:var(--adp-radius-control);padding:10px;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ad-ink-soft)}
 @media (prefers-reduced-motion:reduce){details.advanced>summary::before{transition:none}#devpanel.unlocked{animation:none}}
+.health-group-h{margin:14px 0 8px;font-size:var(--adp-text-sm);font-weight:var(--adp-weight-semi);color:var(--ad-ink)}
+.sec-h + .health-group-h{margin-top:0}
+.health-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--ad-line)}
+.health-row:last-child{border-bottom:none}
+.health-label{flex:1;font-size:var(--adp-text-sm);color:var(--ad-ink)}
+.health-badge{font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);color:var(--ad-error)}
+.health-badge.ok{color:var(--ad-accent-ink)}
+.health-row .health-fix{padding:4px 0}
+.health-hint{margin:8px 0 0;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
+.health-url{font-family:var(--adp-font-mono);background:var(--ad-surface-sunken);padding:2px 6px;border-radius:4px;user-select:all}
 [hidden]{display:none}`;
 
 const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary</span></span></header>
@@ -175,9 +186,33 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
       <p id="key-help">Stored locally on this device only.</p>
       <p id="key-hint" aria-live="polite" hidden></p>
       <p id="env-notice" class="env-notice" hidden></p>
-      <div class="inline-actions">
+    </section>
+    <section class="sec" aria-labelledby="sec-health">
+      <h2 class="sec-h" id="sec-health">Check my setup</h2>
+      <p class="health-group-h">API keys</p>
+      ${PROVIDERS.map(
+        (p) => `<div class="health-row" id="key-status-${p}">
+        <span class="health-label">${KEY_LABEL[p]}</span>
+        <span class="health-badge" id="key-status-${p}-badge">Missing</span>
+        <button type="button" class="link health-fix" id="key-status-${p}-fix" hidden>Add key</button>
+      </div>`,
+      ).join('')}
+      <p class="health-group-h">Connection</p>
+      <div class="health-row">
+        <span class="health-label" id="health-active-label">Gemini responds</span>
         <button type="button" id="test">Test connection</button>
       </div>
+      <p class="health-hint">Sends one real request to your active provider — uses a small
+        amount of your own API quota. Runs only when you click it; nothing runs in the
+        background.</p>
+      <p class="health-group-h">Keyboard shortcuts</p>
+      <div id="shortcut-rows"></div>
+      <div class="inline-actions">
+        <button type="button" id="assign-shortcuts" class="link">Assign shortcuts</button>
+      </div>
+      <p class="health-hint">Opens <code>chrome://extensions/shortcuts</code> in a new tab. If
+        nothing opens, copy this address into a new tab yourself:
+        <code class="health-url">chrome://extensions/shortcuts</code></p>
     </section>
     <section class="sec" aria-labelledby="sec-trans">
       <h2 class="sec-h" id="sec-trans">Translation</h2>
@@ -292,10 +327,12 @@ export class SettingsForm extends HTMLElement {
       if (this.isKeyLocked()) help.textContent = ENV_KEY_HINT;
     });
     key.addEventListener('input', () => this.refreshKeyHint());
+    key.addEventListener('input', () => this.renderHealthRows());
     this.q<HTMLSelectElement>('#provider').addEventListener('change', () => {
       this.commitKeyField();
       this._provider = this.q<HTMLSelectElement>('#provider').value as Provider;
       this.syncKeyField();
+      this.renderHealthRows();
     });
     // Live theme preview: the shadow CSS folds in THEME_CSS keyed on :host([data-ad-theme="…"]),
     // so stamping the host attribute the instant a segment is pressed re-themes the WHOLE page (the
@@ -333,6 +370,11 @@ export class SettingsForm extends HTMLElement {
     this.relay('#clear-cache', 'clear-cache');
     this.relay('#clear-history', 'clear-history');
     this.relay('#export', 'export-history');
+    for (const p of PROVIDERS) {
+      this.q<HTMLButtonElement>(`#key-status-${p}-fix`).addEventListener('click', () =>
+        this.jumpToProviderKey(p),
+      );
+    }
     this.q<HTMLInputElement>('#error-reporting').addEventListener('change', () => {
       this.dispatchEvent(
         new CustomEvent<{ enabled: boolean }>('error-reporting-change', {
@@ -367,6 +409,7 @@ export class SettingsForm extends HTMLElement {
     // Enforce the lock last so it wins over any value just hydrated above.
     this.syncKeyField();
     this.q<HTMLInputElement>('#error-reporting').checked = this._errorReporting;
+    this.renderHealthRows();
   }
 
   disconnectedCallback(): void {
@@ -432,6 +475,7 @@ export class SettingsForm extends HTMLElement {
   set keyFromEnv(on: boolean) {
     this._keyFromEnv = on;
     if (this.shadowRoot) this.syncKeyField();
+    if (this.shadowRoot) this.renderHealthRows();
   }
   get keyFromEnv(): boolean {
     return this._keyFromEnv;
@@ -515,6 +559,39 @@ export class SettingsForm extends HTMLElement {
       envNotice.hidden = true;
     }
     this.refreshKeyHint();
+  }
+
+  /**
+   * C9: recompute + repaint the "API keys" rows and the active-provider label. Reads the key
+   * currently displayed in `#key` for the SELECTED provider (live, before Save) and the stashed
+   * `_keys` for every other provider.
+   */
+  private renderHealthRows(): void {
+    if (!this.shadowRoot) return;
+    const keys = { ...this._keys };
+    if (!this.isKeyLocked()) keys[this._provider] = this.q<HTMLInputElement>('#key').value;
+    const configured = configuredProvidersFor(
+      { apiKey: keys.gemini, openaiApiKey: keys.openai, anthropicApiKey: keys.anthropic },
+      { envGeminiKey: this._keyFromEnv },
+    );
+    for (const row of deriveKeyStatusRows(configured)) {
+      const badge = this.q<HTMLElement>(`#key-status-${row.provider}-badge`);
+      badge.textContent = row.configured ? 'Configured' : 'Missing';
+      badge.classList.toggle('ok', row.configured);
+      this.q<HTMLButtonElement>(`#key-status-${row.provider}-fix`).hidden = row.configured;
+    }
+    this.q<HTMLElement>('#health-active-label').textContent =
+      `${KEY_LABEL[this._provider].replace(' API key', '')} responds`;
+  }
+
+  /** C9: switch the Connection section to `provider` and focus its key field — the "Add key" fix. */
+  private jumpToProviderKey(provider: Provider): void {
+    this.commitKeyField();
+    this._provider = provider;
+    this.q<HTMLSelectElement>('#provider').value = provider;
+    this.syncKeyField();
+    this.renderHealthRows();
+    this.q<HTMLInputElement>('#key').focus();
   }
 
   /** C5: live, non-blocking hint when the visible provider's key looks like a different
@@ -679,5 +756,6 @@ export class SettingsForm extends HTMLElement {
     // Render the key row for the (possibly changed) provider + lock state.
     this.syncKeyField();
     this.clearDirty();
+    this.renderHealthRows();
   }
 }
