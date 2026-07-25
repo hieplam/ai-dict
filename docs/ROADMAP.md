@@ -579,6 +579,24 @@ savedAt, status, senses[] }`. **Depends on:** B1.
 
 ### Category C — First-run onboarding & activation
 
+> ## ✅ CATEGORY COMPLETE — all 11 cards shipped (2026-07-25)
+>
+> **C1 · C2 · C3 · C4 · C5 · C6 · C7 · C8 · C9 · C10 · C11 — every card merged, none abandoned.**
+> The category's measured goal is met: the seven audited funnel dead-ends are closed, and each
+> closure is guarded by the C10 e2e harness that was built first for exactly that purpose.
+>
+> Shipped across three campaigns: **C10** (#113, the proof harness) · **C1** (#144) and **C2**
+> (#148) from `least-effort-5` · and the final eight — **C5** (#152), **C6** (#154), **C7** (#155),
+> **C8** (#156), **C3** (#157), **C9** (#158), **C11** (#159), **C4** (#160) — from the
+> `onboarding-top3` campaign (owner directive 2026-07-25, run unattended end-to-end).
+>
+> **Every one of the 11 merge commits has exactly 2 parents** (regular merge, no squash — §8 owner
+> ruling), and all eight cards of the final campaign were independently re-verified with the
+> `verify-shipped` gate at **PASS 4/4** — PR merged · 2-parent merge · master in sync · worktree
+> removed. Zero escalations reached the owner.
+>
+> Campaign record: `docs/tribe/campaigns/onboarding-top3/` (state, rulings R1–R16, report).
+
 _A funnel audit (2026-07-16, live extension driven through the Playwright harness) found the
 install → key → first-lookup funnel leaks at every step: nothing opens onboarding on install,
 activation claims success without ever testing the key, and a bad key fails minutes later as a
@@ -613,6 +631,8 @@ never depend on the live site** — it uses a local fixture standing in for the 
 
 #### C1 — Open onboarding on install `Impact 5 · Effort S · Score 5.0` · **foundation**
 
+> **Status: ✅ Implemented (2026-07-24) — landed via regular-merge PR [#144](https://github.com/hieplam/ai-dict/pull/144) (merge commit `6ff56c6f`, 2 parents — no-squash policy).**
+
 - **Today:** Installing the extension does nothing — `sw.ts` has no `chrome.runtime.onInstalled`
   listener. The welcome screen (`onboarding-view`, options page) is only ever reached if the user
   happens to select text, spot the ~20px Define button, click it, get the no-key card, and click
@@ -633,6 +653,8 @@ never depend on the live site** — it uses a local fixture standing in for the 
 
 #### C2 — Verified activation `Impact 5 · Effort S · Score 5.0` · **foundation**
 
+> **Status: ✅ Implemented (2026-07-24) — landed via regular-merge PR [#148](https://github.com/hieplam/ai-dict/pull/148) (merge commit `e1ab2159`, 2 parents — no-squash policy).**
+
 - **Today:** "Save & activate" accepts any non-empty string — `onboarding-view.submit()` checks only
   `length > 0`, `options.ts` persists it and immediately shows **"You're all set."** The wire
   message `connection.test` and its router path already exist but are reachable only from the
@@ -651,6 +673,8 @@ never depend on the live site** — it uses a local fixture standing in for the 
   persist only on pass, with a "save anyway" escape hatch for offline setups). **Escalate:** none.
 
 #### C8 — Gesture demo on the welcome screen `Impact 4 · Effort S · Score 4.0`
+
+> **Status: ✅ Implemented (2026-07-24) — landed via regular-merge PR [#156](https://github.com/hieplam/ai-dict/pull/156) (merge commit `2934ffad`, 2 parents — no-squash policy).**
 
 - **Today:** The welcome lead paragraph _tells_ ("Look up any English word right where you're
   reading") but never _shows_ the select → Define gesture; after activation the settings status
@@ -671,6 +695,8 @@ never depend on the live site** — it uses a local fixture standing in for the 
 
 #### C5 — Key paste hygiene & format hints `Impact 3 · Effort S · Score 3.0`
 
+> **Status: ✅ Implemented (2026-07-24) — landed via regular-merge PR [#152](https://github.com/hieplam/ai-dict/pull/152) (merge commit `c7f57506`, 2 parents — no-squash policy).**
+
 - **Today:** The key input saves verbatim. A trailing newline from a copy, smart quotes from a chat
   app, or an OpenAI `sk-…` key pasted into the Gemini-only field are all accepted silently and fail
   later as INVALID_KEY. The placeholder "AIza…" is the only format guidance.
@@ -685,6 +711,8 @@ never depend on the live site** — it uses a local fixture standing in for the 
 - **Depends on:** — · **Lead decides:** hint copy, prefix table. **Escalate:** none.
 
 #### C6 — Invalid-key recovery flow `Impact 3 · Effort S · Score 3.0`
+
+> **Status: ✅ Implemented (2026-07-24) — landed via regular-merge PR [#154](https://github.com/hieplam/ai-dict/pull/154) (merge commit `734b5967`, 2 parents — no-squash policy).**
 
 - **Today:** A rejected key renders "Lookup failed / Google rejected the API key." with an "Open
   Settings" button that lands on the generic settings form — key field unfocused, no explanation of
@@ -704,6 +732,8 @@ never depend on the live site** — it uses a local fixture standing in for the 
   Google reject my key" explanations — the card itself stays terse.
 
 #### C7 — Finish-setup toolbar badge `Impact 3 · Effort S · Score 3.0`
+
+> **Status: ✅ Implemented (2026-07-24) — landed via regular-merge PR [#155](https://github.com/hieplam/ai-dict/pull/155) (merge commit `cb239879`, 2 parents — no-squash policy).**
 
 - **Today:** A keyless install looks identical to a configured one in the toolbar; if the user
   closes the welcome tab (or never sees it), no surface anywhere says setup is unfinished.
@@ -748,6 +778,8 @@ never depend on the live site** — it uses a local fixture standing in for the 
 
 #### C3 — Guided first lookup `Impact 5 · Effort S · Score 5.0` · _needs C2_ · **revised 2026-07-16**
 
+> **Status: ✅ Implemented (2026-07-25) — landed via regular-merge PR [#157](https://github.com/hieplam/ai-dict/pull/157) (merge commit `fe89127e`, 2 parents — no-squash policy).**
+
 > **Revision (2026-07-16, landing-page leverage):** the original mechanism recomposed the lookup
 > pipeline inside the options page (Effort M). Superseded: the landing page
 > (<https://hieplam.github.io/ai-dict/>) is a real webpage where **the real content script already
@@ -777,6 +809,8 @@ never depend on the live site** — it uses a local fixture standing in for the 
 
 #### C4 — Any-provider onboarding `Impact 4 · Effort M · Score 2.0`
 
+> **Status: ✅ Implemented (2026-07-25) — landed via regular-merge PR [#160](https://github.com/hieplam/ai-dict/pull/160) (merge commit `44eeb580`, 2 parents — no-squash policy).**
+
 - **Today:** The manifest and settings already support Gemini, OpenAI, **and** Anthropic — but the
   welcome screen is hard-wired Gemini (`OnboardingValue = { apiKey, targetLang }`, Gemini copy, AI
   Studio link). An OpenAI/Claude user must abandon onboarding, discover full settings, and
@@ -797,6 +831,8 @@ never depend on the live site** — it uses a local fixture standing in for the 
 
 #### C9 — Setup health check `Impact 3 · Effort M · Score 1.5`
 
+> **Status: ✅ Implemented (2026-07-25) — landed via regular-merge PR [#158](https://github.com/hieplam/ai-dict/pull/158) (merge commit `036cee81`, 2 parents — no-squash policy).**
+
 - **Today:** When setup breaks later (key revoked, provider outage, shortcut unassigned), the pieces
   are scattered: `connection.test` hides in settings, shortcut assignment lives in
   `chrome://extensions/shortcuts`, configured-provider state is invisible.
@@ -814,6 +850,8 @@ never depend on the live site** — it uses a local fixture standing in for the 
   one-line fix.
 
 #### C11 — Install-aware landing page `Impact 3 · Effort S · Score 3.0` · **added 2026-07-16**
+
+> **Status: ✅ Implemented (2026-07-25) — landed via regular-merge PR [#159](https://github.com/hieplam/ai-dict/pull/159) (merge commit `38480de4`, 2 parents — no-squash policy).**
 
 - **Today:** The landing page's "Get started" section (`docs/index.html#start`) shows the same
   3 static steps (install → get a key → activate) to everyone — including a visitor who already
@@ -1100,3 +1138,31 @@ API key (S1)> } }`; import offers merge or replace, and importers ignore unknown
   boundary; a new session resumes by reading state first, then verifying every claim against
   live GitHub/git reality before acting. Adopted as the owner's global standard across
   projects · decided by Owner.
+
+**Campaign: "onboarding-top3" (2026-07-25) — Category C completed.** Owner directive: implement the
+3 highest-scored onboarding ideas by orchestration, extended mid-run to 5 more ("so there are 8
+items"), then delegated fully — _"I sleep now, you decide from now on. do not stop until 8 cards
+finish."_ Cards picked by ROADMAP score, with the 3.0 four-way tie broken by the category's own
+stated sequencing; the owner chose "finish Category C" over a strict cross-roadmap ranking, which
+brought the category's measured goal (funnel dead-ends **7 → 0**) into scope. **All 8 shipped
+(#152, #154, #155, #156, #157, #158, #159, #160), 0 escalated, 0 blocked**, each independently
+re-verified at `verify-shipped` **PASS 4/4**; every merge commit has exactly 2 parents. Combined
+with C10 (#113), C1 (#144) and C2 (#148), **Category C is 11/11 complete** · decided by Owner
+(scope) + Shaman-authority orchestrator (all in-run rulings, R1–R16).
+
+Three findings from the run, recorded because each cost real time and will recur:
+
+- **A fresh `git worktree` has no `node_modules`** (it is gitignored), so typed-eslint resolves no
+  types and `bun run lint` reports ~1610 phantom `no-unsafe-*` errors. `bun install` is the fix;
+  re-running never clears it. Initially misdiagnosed as a flake — the misdiagnosis was caused by
+  `bun run lint | tail -6; echo $?` reporting **`tail`'s** exit status, not the lint's.
+- **`c2-verified-activation.spec.ts:80` and `cooldown.spec.ts:17` are genuinely flaky** (browser-
+  closed race; first lookup not settled). Diagnose against master-at-base-sha and re-run once —
+  never weaken the spec, since both guard real behaviour. A spec related to the card failing twice
+  on one commit is real, not flake.
+- **The campaign runner does not commit its own ship records.** After 5 cards shipped, `master`'s
+  `state.json` still showed only the first as shipped; the sole record of the rest was an
+  uncommitted working-tree file that a routine `git checkout`/`pull` would have destroyed. It also
+  lost track of an already-open PR (`pr: null` while #158 was open), which would have caused a
+  duplicate PR on resume. Back that file up before any git operation on it, and reconcile state
+  from GitHub reality (`gh pr view` + parent-count checks), never from the runner's own claim.
