@@ -181,4 +181,25 @@ test.describe('C11 install-aware landing page', () => {
       'Đã cài ✓ — tiếp theo: thêm khoá của bạn.',
     );
   });
+
+  test('no marker (non-landing origin): the status pill stays truly hidden', async ({
+    context,
+  }) => {
+    // Same fixture markup, but served from a non-landing origin so content.ts's isLandingPage()
+    // gate is false and never stamps the marker — the exact "no extension marker" render the
+    // page must degrade to. Guards the .start-status:not([hidden]) fix: a visible empty pill here
+    // would mean author CSS is overriding the [hidden] UA rule again (design spec §2.5).
+    const NON_LANDING_URL = 'https://example.com/';
+    const page = await context.newPage();
+    await page.route(`${NON_LANDING_URL}**`, (route) =>
+      route.fulfill({ status: 200, contentType: 'text/html', body: FIXTURE_HTML }),
+    );
+    await page.goto(NON_LANDING_URL);
+
+    // No marker is ever stamped here; the pill must remain hidden (display:none via the UA
+    // [hidden] rule, no longer overridden by .start-status).
+    await expect(page.locator('#start-status')).toBeHidden();
+    // And the hero CTA keeps its authored install pitch (adaptation script early-returns).
+    await expect(page.locator('#hero-cta')).toHaveText('Add to Chrome, it’s free');
+  });
 });
