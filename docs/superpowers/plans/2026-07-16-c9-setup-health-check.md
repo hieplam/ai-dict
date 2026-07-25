@@ -78,7 +78,7 @@ export interface ShortcutStatusRow {
 export function deriveShortcutRows(commands: readonly CommandLike[]): ShortcutStatusRow[];
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/setup-health-policy.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/setup-health-policy.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -139,7 +139,7 @@ describe('setup-health-policy', () => {
 Run: `cd packages/app && bunx vitest run test/setup-health-policy.test.ts`
 Expected: 5 failures — the module doesn't exist yet.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/setup-health-policy.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/setup-health-policy.ts`:
 
 ```ts
 import { PROVIDERS, type Provider } from './types';
@@ -201,7 +201,7 @@ export * from './domain/setup-health-policy';
 Run: `cd packages/app && bunx vitest run test/setup-health-policy.test.ts`
 Expected: all 5 tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
