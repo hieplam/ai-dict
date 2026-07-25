@@ -4,7 +4,7 @@ import { DEFAULT_OUTPUT_FORMAT, PROMPT_ENVELOPE } from '../domain/default-templa
 import { buildPrompt } from '../domain/prompt-template';
 import { PROVIDERS, configuredProvidersFor, type Provider, type Theme } from '../domain/types';
 import { normalize, hintFor } from '../domain/key-hygiene';
-import { deriveKeyStatusRows } from '../domain/setup-health-policy';
+import { deriveKeyStatusRows, type ShortcutStatusRow } from '../domain/setup-health-policy';
 
 // The Konami code (↑↑↓↓←→←→BA), matched on `KeyboardEvent.code` so it is layout-independent.
 const KONAMI_SEQUENCE = [
@@ -302,6 +302,7 @@ export class SettingsForm extends HTMLElement {
   private _dirty = false;
   // C6: armed by enterFixKeyMode(), consumed by exactly the next Save.
   private _autoRetestArmed = false;
+  private _shortcuts: ShortcutStatusRow[] = [];
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -370,6 +371,7 @@ export class SettingsForm extends HTMLElement {
     this.relay('#clear-cache', 'clear-cache');
     this.relay('#clear-history', 'clear-history');
     this.relay('#export', 'export-history');
+    this.relay('#assign-shortcuts', 'open-shortcuts-page');
     for (const p of PROVIDERS) {
       this.q<HTMLButtonElement>(`#key-status-${p}-fix`).addEventListener('click', () =>
         this.jumpToProviderKey(p),
@@ -499,6 +501,36 @@ export class SettingsForm extends HTMLElement {
   }
   get errorReporting(): boolean {
     return this._errorReporting;
+  }
+
+  /** C9: the current keyboard-shortcut assignment state, supplied by the composition root (the
+   * only layer allowed to call `chrome.commands.getAll()`). Renders one row per entry; empty
+   * until the composition root's first `chrome.commands.getAll()` resolves. */
+  set shortcuts(rows: ShortcutStatusRow[]) {
+    this._shortcuts = rows;
+    if (this.shadowRoot) this.renderShortcutRows();
+  }
+  get shortcuts(): ShortcutStatusRow[] {
+    return this._shortcuts;
+  }
+
+  private renderShortcutRows(): void {
+    const container = this.q<HTMLElement>('#shortcut-rows');
+    container.replaceChildren(
+      ...this._shortcuts.map((row) => {
+        const div = document.createElement('div');
+        div.className = 'health-row';
+        const label = document.createElement('span');
+        label.className = 'health-label';
+        label.textContent = row.description || row.name;
+        const badge = document.createElement('span');
+        badge.className = 'health-badge';
+        badge.classList.toggle('ok', row.assigned);
+        badge.textContent = row.assigned ? 'Assigned' : 'Not assigned';
+        div.append(label, badge);
+        return div;
+      }),
+    );
   }
 
   /** The env lock applies to the Gemini key only — OpenAI keys always come from the user. */

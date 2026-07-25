@@ -580,6 +580,66 @@ describe('<settings-form> setup health check — API keys + connection (C9)', ()
   });
 });
 
+describe('<settings-form> setup health check — shortcuts (C9)', () => {
+  it('renders no shortcut rows until the shortcuts setter is called', () => {
+    const el = mountForm();
+    expect(el.shadowRoot!.querySelectorAll('#shortcut-rows .health-row').length).toBe(0);
+  });
+
+  it('renders one row per entry with the right Assigned/Not-assigned badge', () => {
+    const el = mountForm();
+    el.shortcuts = [
+      {
+        name: 'define-selection',
+        description: 'Define the current text selection',
+        assigned: false,
+      },
+      { name: 'dismiss-lookup', description: 'Dismiss the lookup card', assigned: true },
+    ];
+    const rows = el.shadowRoot!.querySelectorAll('#shortcut-rows .health-row');
+    expect(rows.length).toBe(2);
+    expect(rows[0]!.querySelector('.health-label')!.textContent).toBe(
+      'Define the current text selection',
+    );
+    expect(rows[0]!.querySelector('.health-badge')!.textContent).toBe('Not assigned');
+    expect(rows[0]!.querySelector('.health-badge')!.classList.contains('ok')).toBe(false);
+    expect(rows[1]!.querySelector('.health-badge')!.textContent).toBe('Assigned');
+    expect(rows[1]!.querySelector('.health-badge')!.classList.contains('ok')).toBe(true);
+  });
+
+  it('a second shortcuts assignment replaces rows cleanly (no leaked children)', () => {
+    const el = mountForm();
+    el.shortcuts = [{ name: 'a', description: 'A', assigned: false }];
+    el.shortcuts = [{ name: 'b', description: 'B', assigned: true }];
+    const rows = el.shadowRoot!.querySelectorAll('#shortcut-rows .health-row');
+    expect(rows.length).toBe(1);
+    expect(rows[0]!.querySelector('.health-label')!.textContent).toBe('B');
+  });
+
+  it('falls back to the raw command name when description is empty', () => {
+    const el = mountForm();
+    el.shortcuts = [{ name: 'define-selection', description: '', assigned: false }];
+    expect(el.shadowRoot!.querySelector('#shortcut-rows .health-label')!.textContent).toBe(
+      'define-selection',
+    );
+  });
+
+  it('clicking Assign shortcuts fires open-shortcuts-page', () => {
+    const el = mountForm();
+    const handler = vi.fn();
+    el.addEventListener('open-shortcuts-page', handler);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#assign-shortcuts')!.click();
+    expect(handler).toHaveBeenCalledOnce();
+  });
+
+  it('renders the plain chrome://extensions/shortcuts fallback text unconditionally', () => {
+    const el = mountForm();
+    expect(el.shadowRoot!.querySelector('.health-url')!.textContent).toBe(
+      'chrome://extensions/shortcuts',
+    );
+  });
+});
+
 describe('<settings-form> key paste hygiene (C5)', () => {
   function keyInput(el: SettingsForm): HTMLInputElement {
     return el.shadowRoot!.querySelector<HTMLInputElement>('#key')!;

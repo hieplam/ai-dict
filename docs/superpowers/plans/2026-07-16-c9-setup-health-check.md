@@ -543,7 +543,7 @@ git commit -m "feat: setup health check — add API-key rows, relocate connectio
 (The `#shortcut-rows`/`#assign-shortcuts` markup already landed in Task 2's section insertion —
 this task only adds behavior.)
 
-- [ ] **Step 1: Write the failing tests.** Append next to Task 2's C9 setup-health-check
+- [x] **Step 1: Write the failing tests.** Append next to Task 2's C9 setup-health-check
       `describe` block — actually add a
       **new** sibling block, since this covers a distinct row:
 
@@ -612,7 +612,7 @@ describe('<settings-form> setup health check — shortcuts (C9)', () => {
 Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: 6 new failures — `shortcuts` setter doesn't exist; `open-shortcuts-page` never fires.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
   1. Add the import:
 
   ```ts
@@ -665,7 +665,7 @@ Expected: 6 new failures — `shortcuts` setter doesn't exist; `open-shortcuts-p
 Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: all tests pass (existing + 6 new from this task + 8 from Task 2).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
