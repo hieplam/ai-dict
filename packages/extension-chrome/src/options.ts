@@ -5,6 +5,8 @@ import {
   buildHistoryExport,
   hasKeyFor,
   FIX_KEY_PENDING_STORAGE_KEY,
+  deriveShortcutRows,
+  type ShortcutStatusRow,
   type Provider,
   type Settings,
   type SettingsForm,
@@ -69,6 +71,14 @@ function download(filename: string, content: string): void {
   URL.revokeObjectURL(url);
 }
 
+/** C9: read the current keyboard-shortcut assignment state and push it into the form. Direct
+ * chrome.commands.getAll() call — the options page has its own chrome.* namespace, no SW round
+ * trip needed (see the design spec §3.4). */
+async function refreshShortcuts(form: SettingsForm): Promise<void> {
+  const commands = await chrome.commands.getAll();
+  (form as unknown as { shortcuts: ShortcutStatusRow[] }).shortcuts = deriveShortcutRows(commands);
+}
+
 // Map full Settings to the form value shape (SettingsFormValue has no hasKey).
 function toFormValue(s: Settings): SettingsFormValue {
   return {
@@ -94,6 +104,13 @@ function mountSettings(initial: Settings, status?: string, opts?: { showTryIt?: 
   app.replaceChildren(form);
   (form as unknown as { value: SettingsFormValue }).value = toFormValue(initial);
   wireSettings(form);
+  void refreshShortcuts(form);
+  form.addEventListener('open-shortcuts-page', () => {
+    void chrome.tabs.create({ url: 'chrome://extensions/shortcuts' }).catch(() => undefined);
+  });
+  // C9: the reader's most likely path back from chrome://extensions/shortcuts is refocusing this
+  // tab — re-read on focus so a just-assigned shortcut flips to "Assigned" without a manual reload.
+  window.addEventListener('focus', () => void refreshShortcuts(form));
   // C6: consume the one-shot invalid-key deep-link flag, if the reader arrived via the
   // INVALID_KEY card's "Fix key in Settings" button (see router.ts's open-options handler) or the
   // side panel's equivalent direct-storage path.

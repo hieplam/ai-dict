@@ -11,6 +11,7 @@ export * from './domain/saved-words-policy';
 export * from './domain/badge-policy';
 export * from './domain/nudge-policy';
 export * from './domain/onboarding-policy'; // C1
+export * from './domain/setup-health-policy';
 export * from './domain/ui-flags';
 export * from './domain/error-mapper';
 export {
