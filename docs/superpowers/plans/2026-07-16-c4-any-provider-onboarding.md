@@ -770,7 +770,7 @@ git commit -m "feat: any-provider onboarding — provider-aware persist in mount
 - Modify: `packages/extension-chrome/e2e/onboarding.spec.ts`
 - Create: `packages/extension-chrome/e2e/c4-any-provider-onboarding.spec.ts`
 
-- [ ] **Step 1: Pin the default in the existing suite.** In
+- [x] **Step 1: Pin the default in the existing suite.** In
       `packages/extension-chrome/e2e/onboarding.spec.ts`, extend the first test's final assertion
       (the one C2's own plan already updated to mock Gemini and assert `apiKey`/`hasKey`) to also
       read `settings.provider`:
@@ -794,7 +794,7 @@ cd packages/extension-chrome && bunx playwright test onboarding
 
 Expected: all tests in `onboarding.spec.ts` still pass, now also asserting the default provider.
 
-- [ ] **Step 2: Write the new functional spec.** Create
+- [x] **Step 2: Write the new functional spec.** Create
       `packages/extension-chrome/e2e/c4-any-provider-onboarding.spec.ts`:
 
 ```ts
@@ -929,7 +929,7 @@ cd packages/extension-chrome && bunx playwright test c4-any-provider-onboarding
 
 Expected: 5 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
