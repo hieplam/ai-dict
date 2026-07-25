@@ -14,6 +14,7 @@ import {
 import { ChromeFloatingTrigger } from './adapters/chrome-floating-trigger';
 import { MessageRelaySettingsStore } from './adapters/message-relay-settings-store';
 import { ChromeSidePanelMirror } from './adapters/chrome-side-panel-mirror';
+import { isLandingPage, stampInstallMarker, stampReadyMarker } from './adapters/landing-marker';
 import type { SidePanelFocus, OpenSidePanelMessage } from './side-panel-messages';
 import { isCommandMessage } from './command-messages';
 
@@ -35,7 +36,19 @@ const themedSettings: SettingsStore = {
     }),
   set: (patch) => settings.set(patch),
 };
-void themedSettings.get().catch(() => undefined); // seed before the first lookup; light until known
+const initialSettings = themedSettings.get();
+void initialSettings.catch(() => undefined); // seed before the first lookup; light until known
+
+// C11: install-aware landing page — stamp a minimal, non-sensitive marker (install + version +
+// setup-finished) on <html> so docs/index.html's checklist/CTA can adapt. Landing origin only
+// (see design spec §2.2); only PublicSettings.hasKey (a boolean, S1-safe — never the key itself)
+// crosses into the marker. See design spec §2.4 for why this does not live-update later.
+if (isLandingPage(location)) {
+  stampInstallMarker(document.documentElement, chrome.runtime.getManifest().version);
+  void initialSettings
+    .then((s) => stampReadyMarker(document.documentElement, s.hasKey))
+    .catch(() => undefined);
+}
 
 let lastFocus: SidePanelFocus | undefined;
 
