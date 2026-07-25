@@ -84,6 +84,10 @@ header{display:flex;align-items:center;gap:8px;max-width:640px;margin:0 auto;pad
 .brand{display:inline-flex;align-items:center;gap:8px;font-size:var(--adp-text-sm);font-weight:var(--adp-weight-bold);letter-spacing:var(--adp-tracking-label);color:var(--ad-accent-ink)}
 .mark{width:22px;height:22px;flex:none}
 .col{max-width:640px;margin:0 auto;padding:2px 22px 26px}
+.tryit-cta{margin:0 0 16px;border:1px solid var(--ad-accent);border-radius:12px;padding:16px 20px;background:var(--ad-accent-soft)}
+.tryit-cta-h{margin:0 0 6px;font-size:var(--adp-text-body);font-weight:var(--adp-weight-bold);color:var(--ad-ink)}
+.tryit-cta-lead{margin:0 0 12px;font-size:var(--adp-text-sm);line-height:1.5;color:var(--ad-ink-soft)}
+.tryit-cta-caption{margin:10px 0 0;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
 h1.title{font-family:var(--adp-font-serif);font-weight:var(--adp-weight-reg);font-size:1.9rem;line-height:1.15;letter-spacing:var(--adp-tracking-head);margin:.2em 0 .6em;color:var(--ad-ink)}
 .sec{background:var(--ad-surface);border:1px solid var(--ad-line);border-radius:12px;padding:18px 20px;margin:0 0 16px}
 .sec-h{margin:0 0 14px;font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-bold);letter-spacing:.08em;text-transform:uppercase;color:var(--ad-ink-faint)}
@@ -143,6 +147,18 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
 <form>
   <div class="col">
     <h1 class="title">Settings</h1>
+    <section class="tryit-cta" id="tryit-cta" hidden aria-labelledby="tryit-cta-h">
+      <h2 class="tryit-cta-h" id="tryit-cta-h">Try it now</h2>
+      <p class="tryit-cta-lead">
+        See a real definition card in seconds, on a practice page — using your own key.
+      </p>
+      <div class="inline-actions">
+        <button type="button" id="tryit-open" class="primary">Try it on a real page</button>
+      </div>
+      <p class="tryit-cta-caption">
+        Uses your key — nothing runs until you select a word and click Define there.
+      </p>
+    </section>
     <section class="sec" aria-labelledby="sec-conn">
       <h2 class="sec-h" id="sec-conn">Connection</h2>
       <label for="provider">AI provider</label>
@@ -312,6 +328,7 @@ export class SettingsForm extends HTMLElement {
     const dirtyForm = this.q<HTMLFormElement>('form');
     dirtyForm.addEventListener('input', markDirtyOnEdit);
     dirtyForm.addEventListener('change', markDirtyOnEdit);
+    this.relay('#tryit-open', 'tryit-open');
     this.relay('#test', 'test-connection');
     this.relay('#clear-cache', 'clear-cache');
     this.relay('#clear-history', 'clear-history');
@@ -418,6 +435,13 @@ export class SettingsForm extends HTMLElement {
   }
   get keyFromEnv(): boolean {
     return this._keyFromEnv;
+  }
+
+  /** C3: show/hide the post-activation "Try it now" CTA. Set true exactly once, by the
+   * composition root, right after a verified activation succeeds (see options.ts). */
+  set tryIt(show: boolean) {
+    if (!this.shadowRoot) return;
+    this.q<HTMLElement>('#tryit-cta').hidden = !show;
   }
 
   /**

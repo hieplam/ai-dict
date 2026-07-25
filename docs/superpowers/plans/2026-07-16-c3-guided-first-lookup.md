@@ -91,7 +91,7 @@ set tryIt(show: boolean): void;
 // dispatches a composed 'tryit-open' event (no detail) when #tryit-open is clicked
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`
       as a new top-level `describe` block, after the closing `});` of the existing A16
       sticky-save-bar `describe` block (the file's last block). Reuse the file's existing
       `mountForm()` helper (`settings-form.test.ts:15-19`) verbatim — do not introduce a second
@@ -132,7 +132,7 @@ Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: 3 new failures (`#tryit-cta` not found / `tryIt` not a setter, or TS errors to that
 effect); all pre-existing tests in this file still pass.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
   1. Insert this markup into `MARKUP` (`settings-form.ts:140-221`), right after
      `<h1 class="title">Settings</h1>` and before the Connection `<section>`:
 
@@ -202,7 +202,7 @@ set tryIt(show: boolean) {
 Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: all tests pass (existing + 3 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -237,7 +237,7 @@ there is no separate "e2e task" in this smaller v2 plan). Still run the gate com
 end of this task so a regression in existing behavior (onboarding, settings save, etc.) is caught
 immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
   1. Add a new top-level constant, near the other top-level constants (`KEY_FROM_ENV`,
      `DEFAULTS`, `options.ts:28-43`):
 
@@ -298,7 +298,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Write and run the e2e.** Create
+- [x] **Step 2: Write and run the e2e.** Create
       `packages/extension-chrome/e2e/c3-guided-first-lookup.spec.ts`, modeled on
       `onboarding.spec.ts`'s pattern for capturing an opened tab
       (`context.waitForEvent('page')`, already used there for the no-key card's "Open Settings"
@@ -390,7 +390,7 @@ cd packages/extension-chrome && bunx playwright test c3-guided-first-lookup
 
 Expected: 2 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -417,7 +417,7 @@ does not add one; Task 2's e2e already proves the real gesture works against a l
 this exact markup. Verification here is: (a) the diff matches the design spec §3.1 markup/CSS/i18n
 keys, (b) `bun run format:check` passes, and (c) a manual local render (see Step 2).
 
-- [ ] **Step 1: Implement.** In `docs/index.html`:
+- [x] **Step 1: Implement.** In `docs/index.html`:
   1. Add the nav link, between the existing `#start` and `#faq` entries (`docs/index.html:963-964`):
 
 ```html
@@ -492,7 +492,7 @@ fixed English in both languages (design spec §3.1's explicit reasoning: source-
 is out of this card's scope, and A12 — the card that would generalize this — is "build, don't
 advertise" per its own 2026-07-16 owner ruling).
 
-- [ ] **Step 2: Manual verification.** From the repo root:
+- [x] **Step 2: Manual verification.** From the repo root:
 
 ```
 cd docs && python3 -m http.server 8080
@@ -509,7 +509,7 @@ Open `http://localhost:8080/` and confirm:
 - The Sepia/Dark/Contrast theme toggle re-themes the new section identically to its neighbors (no
   hard-coded colors visible as a mismatch).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 bun run format:check
