@@ -690,7 +690,7 @@ by e2e only (same precedent as B1's/B5's/B7's own composition-root edits). This 
 correctness is proven by Task 5's e2e test; still run the typecheck gate at the end so a
 regression in existing behavior is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
   1. Add the import, alongside the existing `@ai-dict/app` import block:
 
   ```ts
@@ -730,7 +730,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
