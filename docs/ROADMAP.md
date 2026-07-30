@@ -874,6 +874,120 @@ never depend on the live site** — it uses a local fixture standing in for the 
 
 ---
 
+#### D1 — Correct billing/quota-exhaustion errors for OpenAI & Anthropic `Impact 5 · Effort M · Score 2.5` · **P0 bug fix, added 2026-07-30**
+
+> **Status: 🔧 Dispatched — out-of-band P0 fix, jumps the queue.** Owner-diagnosed and delegated
+> directly (root-cause investigation already complete via live curl against both real provider
+> APIs before this card was written — see §8 Decision Log, 2026-07-30 entries). Sits outside the
+> scored backlog in §7; it is user-blocking breakage on 2 of 3 supported providers, not a
+> competing-on-score backlog item.
+
+> **in-flight: D1 -> (worktree TBD, see report)** — dispatched to Warchief 2026-07-30. Report/heartbeat: `~/.tribe/-Users-home-repos-ai-dict-/reports/d1-billing-quota-errors.md`.
+
+- **Today:** `packages/app/src/domain/error-mapper.ts`'s `mapError` (http arm, lines 70-98) has no
+  case for billing/quota exhaustion.
+  - **Anthropic** (verified live 2026-07-30): a valid, unfunded key gets `HTTP 400` +
+    `error.type: "invalid_request_error"`, `error.message: "Your credit balance is too low to
+access the Anthropic API..."`. No mapper arm matches (the `status===400` arm only fires for
+    `geminiStatus==='INVALID_ARGUMENT'`, a Gemini-shaped field; there is no 400 arm keyed off
+    `vendorStatus`). It falls through to `return { code: 'UNKNOWN', message: sanitize('HTTP
+${status}'), retryable: false }` — **the user reads the literal string "HTTP 400."**
+  - **OpenAI** (verified live 2026-07-30): the same account state gets `HTTP 429` +
+    `error.code: "insufficient_quota"`. The mapper's `status === 429` arm (line 88) matches and
+    returns `{ code: 'RATE_LIMIT', message: 'Hit OpenAI rate limit.', retryable: true }` —
+    **actively wrong**: it is a dead quota, not a transient rate limit, and `retryable: true`
+    invites a retry that can never succeed.
+  - **Contrast proof the keys themselves are fine:** a genuinely invalid key gets `401` on both
+    providers (`"API key is invalid"` / `invalid_api_key`) — a different, already-correctly-mapped
+    shape (`INVALID_KEY`, mapper lines 77-87). This is not a "your key is bad" case.
+  - **Plumbing gap:** `packages/app/src/app/openai-lookup-client.ts`'s `parseErr` (lines 38-41)
+    forwards only `error.message` as `vendorMessage` — it drops `error.code`/`error.type`, so the
+    mapper cannot see `insufficient_quota` even once it has an arm for it. Anthropic's client
+    already forwards `error.type` as `vendorStatus` (`anthropic-lookup-client.ts:44-49`) — the
+    asymmetry must close.
+  - **UI consequence:** `packages/extension-chrome/src/options.ts`'s `mountOnboarding` (lines
+    296-309) rolls the just-saved key back to the pre-onboarding snapshot on **any** non-`NETWORK`
+    failure — so today a billing failure discards the user's genuinely-valid key and stops them
+    on the onboarding screen reading "HTTP 400."
+- **Missing:** A billing/quota-exhaustion classification, detected per-provider from the verified
+  response shapes above, that (a) tells the user the truth — the key works, the account has no
+  credits/quota — instead of "HTTP 400" or a bogus retryable rate-limit, and (b) lets a
+  verified-valid key persist through onboarding instead of being silently discarded.
+- **Why:** This is the exact bug the owner hit: "Gemini works, Claude fails, OpenAI fails" — at
+  onboarding (key gets discarded, stuck rereading an opaque error) and at lookup time afterwards
+  (same wrong/opaque message). Two of the extension's three supported providers are effectively
+  unusable for any account without spare quota, and the error message actively lies about why
+  (calls it a rate limit) or says nothing useful (`"HTTP 400"`).
+- **Payoff:** A user with a valid-but-unfunded Anthropic or OpenAI key sees an honest,
+  provider-specific message ("your key works, but this account has no billing/credits"), the key
+  is NOT thrown away, `retryable` is `false` (no futile auto-retry), and the same correct message
+  shows both at onboarding and at every subsequent lookup.
+- **Scope fence (pinned by the Shaman — do not reopen):**
+  - **New `LookupErrorCode` value `'BILLING'`**, added to the union in `domain/types.ts` (:112-118)
+    and the wire enum in `wire.ts` (:11) + regenerated `wire-schema.snapshot.json`. Ordinary
+    wire-protocol evolution (an error-code enum on an in-flight reply), **not** an E1/E2-style
+    persisted-data-shape escalation — nothing about `BILLING` is written to history/cache/saved
+    words/backup files (same reasoning already logged for A8/B2/B7's optional wire fields, §8,
+    2026-07-10 entry).
+  - **OpenAI client must forward `error.code`** (and may forward `error.type`) as `vendorStatus`,
+    matching Anthropic's existing pattern — required plumbing, not optional.
+  - **Detection must be provider-specific and robust.** OpenAI's `error.code ===
+'insufficient_quota'` is unambiguous — use it directly. Anthropic's `status===400 &&
+vendorStatus==='invalid_request_error'` is **NOT** sufficient alone (that combination also
+    fires for ordinary malformed requests) — detection needs the message content too; use the
+    verified real message bodies below as positive/negative fixtures. Exact detection mechanics
+    are the Warchief's How call.
+  - **Onboarding rollback (`options.ts` `mountOnboarding`) — CORRECTED 2026-07-30, read this
+    version, not an earlier draft:** the rollback (`chrome.storage.local.set({ settings: cur })`,
+    line 298) is **unconditional today — it fires for every non-ok `connection.test` reply,
+    NETWORK included.** What is NETWORK-only is the _escape hatch on top of it_:
+    `view.showSaveAnyway(true)` (line 305) only appears inside the `if (r.error.code ===
+'NETWORK')` branch (line 300); every other code — BILLING included, as the mapper stands
+    today — falls to the bare `view.setStatus(r.error.message, 'error')` else-branch (line 307)
+    with the key already discarded and no way to keep it. **The required change is: on a
+    `BILLING`-classified failure, the key must survive** — the API's own 400/429 response is
+    itself proof the key is valid (unlike a 401/403, which correctly keeps the hard rollback).
+    Skip the rollback for `BILLING` specifically (or roll back and immediately re-persist via the
+    save-anyway machinery reused from the NETWORK branch — pick whichever is the smaller, cleaner
+    diff; either satisfies this requirement) with copy making clear the key was saved but is not
+    yet usable until credits/billing are added. **Acceptance test (either mechanism):** after a
+    BILLING failure during onboarding, the pasted key is still present in `chrome.storage.local`.
+    Exact mechanics are the Warchief's How call.
+  - **No CTA button / no hardcoded provider billing URL.** `lookup-card.ts`'s `INVALID_KEY` arm
+    already renders a "Fix key in Settings" button (lines 279-280) — wrong for `BILLING` (fixing
+    the key won't help) and must not appear for it. Do not add a new "Check billing" button/link
+    in this card — provider billing URLs change and picking one is a bigger, separate product
+    decision. Wording only.
+  - **No change to `lookup-client-selector.ts`'s any-failure fallback pool.** It silently tries
+    the next configured provider on any failure today, by design (its own doc comment calls this
+    "any-failure semantics"). Whether a `BILLING` failure on the user's _explicitly chosen_
+    provider should still surface instead of being silently masked by a successful fallback is a
+    real, separate product question that touches an existing, deliberate feature — explicitly OUT
+    of this card's scope. Do not touch this file.
+  - **No telemetry/diag field changes.** `httpStatus`/`vendorStatus`/`vendorMessage` already exist
+    on `LookupError` and already cross the wire — `BILLING` reuses them as-is.
+  - **Tests are mocked-fetch only**, using these exact verified response bodies as fixtures (real
+    account state, no keys inside — safe to commit):
+    - Anthropic 400 (→ BILLING): `{"type":"error","error":{"type":"invalid_request_error","message":"Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits."}}`
+    - Anthropic 401 (must stay INVALID_KEY, NOT BILLING): `{"error":{"type":"authentication_error","message":"API key is invalid."}}`
+    - OpenAI 429 quota (→ BILLING): `{"error":{"message":"You exceeded your current quota, please check your plan and billing details...","type":"insufficient_quota","code":"insufficient_quota"}}`
+    - OpenAI 401 (must stay INVALID_KEY, NOT BILLING): `{"error":{"code":"invalid_api_key", ...}}`
+    - Natural homes: `packages/app/test/error-mapper.test.ts`,
+      `packages/app/test/app/openai-lookup-client.test.ts`,
+      `packages/app/test/app/anthropic-lookup-client.test.ts` (if not already present).
+  - The owner's real keys in `.env.local` are NEVER read, echoed, or committed by this work — the
+    fixtures above are response bodies only, already fully disclosed in the diagnosis; no test
+    ever makes a live network call.
+- **Depends on:** — (self-contained; touches only the error-mapping path). **Shaman decided
+  autonomously:** new `BILLING` code (`RATE_LIMIT`'s `retryable:true` is actively wrong here;
+  `UNKNOWN`'s generic copy can't carry provider-specific billing wording); no CTA button;
+  onboarding persists a `BILLING`-classified key via the existing escape-hatch shape; no change to
+  the fallback pool; exact detection logic and code structure are the Warchief's How.
+  **Escalate:** none — no persisted data shape, no product-promise change, no new permission, no
+  privacy-surface change.
+
+---
+
 ## 5. Dependency map
 
 ```mermaid
@@ -959,6 +1073,8 @@ new permission remain owner calls, as does E5 and E6).
 **Score ≠ sequence.** B1 leads despite being foundational-first, not because of raw score; the lead
 sequences by dependency (B1→B2→B5→B3) and by quick-win clustering (the S-effort A-ideas), escalating
 only the six items in §6.
+
+**D1 (P0 bug fix, added 2026-07-30)** sits outside this table — see Category D in §4. It jumped the queue as user-blocking breakage on 2 of 3 providers, not by score.
 
 ---
 
@@ -1166,3 +1282,54 @@ Three findings from the run, recorded because each cost real time and will recur
   lost track of an already-open PR (`pr: null` while #158 was open), which would have caused a
   duplicate PR on resume. Back that file up before any git operation on it, and reconcile state
   from GitHub reality (`gh pr view` + parent-count checks), never from the runner's own claim.
+
+**Campaign: "P0 bug fix — billing/quota errors" (2026-07-30).** Owner-diagnosed bug, delegated
+directly (bypassing full roadmap ideation): Gemini works, Claude/OpenAI both fail at onboarding
+and at lookup. Root cause independently verified via live curl against both real provider APIs
+before dispatch (see D1, §4): both keys are valid (contrast-proven against real 401s) but the
+accounts have no spendable balance; the mapper has no arm for billing/quota exhaustion, so
+Anthropic's 400 falls through to the raw string "HTTP 400" and OpenAI's 429 is misclassified as a
+retryable `RATE_LIMIT`. Added as **D1** — a new, unscored P0 category outside the normal backlog —
+since it is user-blocking breakage, not a backlog item competing on score.
+
+- 2026-07-30 · D1 · New `LookupErrorCode: 'BILLING'` vs. folding into an existing code · Ruled:
+  new code. `RATE_LIMIT`'s `retryable:true` is actively wrong (a dead quota can never succeed on
+  retry) and `UNKNOWN`'s generic copy can't carry the provider-specific "your key is fine, add
+  billing" wording the payoff requires. Not an E1/E2-style irreversible-schema escalation — same
+  reasoning as the 2026-07-10 ruling on A8/B2/B7's optional wire fields: an error-code enum on an
+  in-flight reply is not persisted user data · decided by Shaman.
+- 2026-07-30 · D1 · Onboarding rollback behavior for a BILLING failure · Ruled: extend the
+  existing NETWORK-only "Save anyway" escape hatch to also cover BILLING, since the API's own
+  400/429 response is itself proof the key is valid (unlike a 401/403, which still hard-rolls-back)
+  · decided by Shaman.
+- 2026-07-30 · D1 · **Correction to the entry immediately above**, caught before the Warchief
+  reached the file: the wording "extend the NETWORK-only escape hatch to also cover BILLING"
+  mischaracterized the code and would have pointed a Hunter at the wrong line. Re-verified
+  `options.ts` directly: the rollback (`chrome.storage.local.set({ settings: cur })`, line 298)
+  is **unconditional** — it already fires for every non-ok `connection.test` reply, NETWORK
+  included. What is NETWORK-only is the _escape-hatch button on top of it_
+  (`view.showSaveAnyway(true)`, gated to `r.error.code === 'NETWORK'` at line 300); every other
+  code, BILLING included, has no way to keep the key. The Shaman's own justification ("the key is
+  valid, proven by the API's own 400/429") in fact argues for the opposite of what was written:
+  BILLING needs the rollback _skipped_ (or reversed via the same save-anyway machinery), not
+  "extended." The card's scope-fence bullet (§4, D1) has been corrected in place to state this
+  precisely, with an explicit acceptance test (pasted key still present in `chrome.storage.local`
+  after a BILLING failure). This entry stands as the accurate ruling; the one above is retained
+  per the log's append-only rule but is superseded on this specific point · decided by Shaman.
+- 2026-07-30 · D1 · Whether to add a "Check billing" CTA/link · Ruled: no — wording only. A
+  clickable CTA needs a hardcoded per-provider billing URL, a separate, bigger product decision
+  (URLs drift, and it implies a commitment to keep them current) · decided by Shaman.
+- 2026-07-30 · D1 · Whether `lookup-client-selector.ts`'s silent any-failure fallback should stop
+  masking a BILLING failure on the user's explicitly chosen provider · Ruled: out of scope for
+  this card. That fallback is a deliberate, already-shipped feature (its own code comments call it
+  "any-failure semantics") — changing when it does vs. doesn't apply is a separate product
+  question deserving its own card, not a rider on a bug fix · decided by Shaman.
+- 2026-07-30 · (campaign-wide) · `resume-check.sh` crashed (`FileNotFoundError` on a stale
+  absolute path from a different machine, found inside old, already-shipped C10/C1/C5/C7 state
+  files under `docs/tribe/state/` and `.claude/state/onboarding-category-c/`) instead of reporting
+  clean JSON · Verified manually that nothing is genuinely in-flight (no `in-flight:` marker
+  anywhere in this roadmap, and the only worktrees present under `.claude/worktrees/` —
+  `advanced-prompt-konami`, `b2-evidence-master-scratch`, `chrome-web-store` — are unrelated to
+  this card) before proceeding · decided by Shaman (operational diagnostics, not a product
+  decision). **Flagged for the owner: `resume-check.sh` needs hardening against stale historical
+  state files** — worth its own idea card later.
