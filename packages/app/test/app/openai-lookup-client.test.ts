@@ -178,6 +178,45 @@ describe('OpenAILookupClient', () => {
     });
   });
 
+  it('D1: HTTP 429 insufficient_quota body → BILLING (client forwards error.code)', async () => {
+    const c = client(() =>
+      Promise.resolve(
+        res({
+          ok: false,
+          status: 429,
+          body: {
+            error: {
+              message:
+                'You exceeded your current quota, please check your plan and billing details.',
+              type: 'insufficient_quota',
+              code: 'insufficient_quota',
+            },
+          },
+        }),
+      ),
+    );
+    await expect(c.lookup(req)).rejects.toMatchObject({ code: 'BILLING', retryable: false });
+  });
+
+  it('D1: HTTP 401 invalid_api_key body stays INVALID_KEY, not BILLING', async () => {
+    const c = client(() =>
+      Promise.resolve(
+        res({
+          ok: false,
+          status: 401,
+          body: {
+            error: {
+              code: 'invalid_api_key',
+              message: 'Incorrect API key provided: sk-fake***.',
+              type: 'invalid_request_error',
+            },
+          },
+        }),
+      ),
+    );
+    await expect(c.lookup(req)).rejects.toMatchObject({ code: 'INVALID_KEY' });
+  });
+
   it('HTTP 5xx → NETWORK', async () => {
     const c = client(() => Promise.resolve(res({ ok: false, status: 503, body: {} })));
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'NETWORK', retryable: true });

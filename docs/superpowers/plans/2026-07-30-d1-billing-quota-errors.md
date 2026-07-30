@@ -444,7 +444,7 @@ EOF
 **Depends on Task 2** (the mapper must already have the `BILLING` arm for this end-to-end test to
 go green).
 
-- [ ] **Step 1: Write the failing tests.** Add to
+- [x] **Step 1: Write the failing tests.** Add to
       `packages/app/test/app/openai-lookup-client.test.ts`, immediately after the existing `'HTTP
 429 → RATE_LIMIT with retryAfterSec from header'` test:
 
@@ -494,7 +494,7 @@ sees `insufficient_quota` and the existing bare `status === 429` arm returns `RA
 The second new test currently passes already (401 is unaffected either way) — kept as an explicit
 regression guard for the widened `parseErr`.
 
-- [ ] **Step 2: Widen `parseErr` to forward `error.code` as `vendorStatus`.** In
+- [x] **Step 2: Widen `parseErr` to forward `error.code` as `vendorStatus`.** In
       `packages/app/src/app/openai-lookup-client.ts`, change:
 
 ```ts
@@ -528,7 +528,7 @@ to:
         },
 ```
 
-- [ ] **Step 3: Verify green + typecheck.**
+- [x] **Step 3: Verify green + typecheck.**
 
 Run: `bun run test`
 Expected: all suites pass, including both new tests and every pre-existing
@@ -539,7 +539,7 @@ retryAfterSec from header'` test has no `error.code` in its body, so `vendorStat
 Run: `bun run typecheck`
 Expected: no errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 
