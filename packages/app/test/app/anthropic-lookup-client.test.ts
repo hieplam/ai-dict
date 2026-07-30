@@ -185,6 +185,26 @@ describe('AnthropicLookupClient', () => {
     });
   });
 
+  it('D1: HTTP 400 credit-balance body → BILLING end-to-end (no client change needed)', async () => {
+    const c = client(() =>
+      Promise.resolve(
+        res({
+          ok: false,
+          status: 400,
+          body: {
+            type: 'error',
+            error: {
+              type: 'invalid_request_error',
+              message:
+                'Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.',
+            },
+          },
+        }),
+      ),
+    );
+    await expect(c.lookup(req)).rejects.toMatchObject({ code: 'BILLING', retryable: false });
+  });
+
   it('HTTP 5xx → NETWORK', async () => {
     const c = client(() => Promise.resolve(res({ ok: false, status: 503, body: {} })));
     await expect(c.lookup(req)).rejects.toMatchObject({ code: 'NETWORK', retryable: true });

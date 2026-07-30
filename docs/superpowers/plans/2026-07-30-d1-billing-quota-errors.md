@@ -195,7 +195,7 @@ EOF
 
 **Depends on Task 1** (uses the `'BILLING'` literal, which must already typecheck).
 
-- [ ] **Step 1: Write the failing tests.** Add to `packages/app/test/error-mapper.test.ts`, as a
+- [x] **Step 1: Write the failing tests.** Add to `packages/app/test/error-mapper.test.ts`, as a
       new `describe` block after the existing `'mapError — vendor diagnostic fields
 (adr-20260618)'` block (end of file):
 
@@ -344,7 +344,7 @@ Expected (RED): the new `describe('mapError — BILLING ...')` tests fail (`mapE
 (the generic fallthrough already renders no CTA) — leave it as an explicit regression guard, not a
 red-then-green requirement.
 
-- [ ] **Step 2: Implement `BILLING` detection in `mapError`.** In
+- [x] **Step 2: Implement `BILLING` detection in `mapError`.** In
       `packages/app/src/domain/error-mapper.ts`, inside the `case 'http':` block, change the `base`
       IIFE from:
 
@@ -398,7 +398,7 @@ to (inserting two new checks first):
 (Everything below this point in the IIFE — the 401/403, 429, 5xx, and fallthrough arms — is
 unchanged.)
 
-- [ ] **Step 3: Verify green + typecheck.**
+- [x] **Step 3: Verify green + typecheck.**
 
 Run: `bun run test`
 Expected: all suites pass, including every new test from Step 1 and every pre-existing test in
@@ -408,7 +408,7 @@ Expected: all suites pass, including every new test from Step 1 and every pre-ex
 Run: `bun run typecheck`
 Expected: no errors.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 Run:
 
