@@ -79,14 +79,17 @@ export function mapError(input: ErrorInput): LookupError {
           };
         }
         if (
+          input.provider === 'anthropic' &&
           status === 400 &&
           vendorStatus === 'invalid_request_error' &&
           vendorMessage !== undefined &&
-          /credit balance|billing/i.test(vendorMessage)
+          /credit balance/i.test(vendorMessage)
         ) {
-          // Anthropic: status + type alone ALSO fire for ordinary malformed requests, so the
-          // message content is load-bearing — anchored to the two phrases the verified real
-          // message actually contains ("credit balance", "Plans & Billing").
+          // Anthropic-only: status + type alone ALSO fire for ordinary malformed requests (from
+          // ANY provider), so both the provider AND the message content are load-bearing —
+          // anchored to the specific phrase the verified real message actually contains
+          // ("credit balance"), not the bare word "billing" which appears in unrelated
+          // validation errors too (e.g. a "billing_address" field-validation message).
           return {
             code: 'BILLING',
             message: `${product} account has no credits or billing set up. Add credits with ${vendor}, then try again.`,

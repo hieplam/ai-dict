@@ -347,6 +347,35 @@ describe('mapError — BILLING (D1: billing/quota exhaustion)', () => {
     expect(e.code).toBe('RATE_LIMIT');
   });
 
+  // F1 (adversarial review): the Anthropic billing branch must be gated on
+  // input.provider === 'anthropic' — an OpenAI 400 with the SAME status/vendorStatus/message
+  // shape must never be misclassified as BILLING just because it resembles Anthropic's signature.
+  it('F1: OpenAI 400 invalid_request_error mentioning "billing" is NOT gated to anthropic-only branch → stays UNKNOWN', () => {
+    const e = mapError({
+      kind: 'http',
+      status: 400,
+      provider: 'openai',
+      vendorStatus: 'invalid_request_error',
+      vendorMessage: "Invalid value for 'billing_profile': must be a string.",
+    });
+    expect(e.code).not.toBe('BILLING');
+    expect(e.code).toBe('UNKNOWN');
+  });
+
+  // F2 (adversarial review): the regex must not fire on the bare substring "billing" in an
+  // unrelated validation message — only the specific "credit balance" phrase should qualify.
+  it('F2: Anthropic 400 mentioning bare "billing" in an unrelated validation error stays UNKNOWN, not BILLING', () => {
+    const e = mapError({
+      kind: 'http',
+      status: 400,
+      provider: 'anthropic',
+      vendorStatus: 'invalid_request_error',
+      vendorMessage: 'billing_address: field is not allowed for this endpoint',
+    });
+    expect(e.code).not.toBe('BILLING');
+    expect(e.code).toBe('UNKNOWN');
+  });
+
   it('genuinely invalid keys stay INVALID_KEY, never BILLING (contrast fixtures)', () => {
     const anthropic401 = mapError({
       kind: 'http',
