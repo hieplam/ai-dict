@@ -260,9 +260,6 @@ function mountOnboarding(initial: Settings): void {
     apiKey: '',
     targetLang: initial.targetLang,
   };
-  // D1: tracks which failure reason last opened the "Save anyway" escape hatch, so its
-  // confirmation copy can be honest about whether the connection was ever reached.
-  let saveAnywayReason: 'NETWORK' | 'BILLING' | null = null;
   view.addEventListener('save', (e) => {
     const { provider, apiKey, targetLang } = (e as CustomEvent<OnboardingValue>).detail;
     view.setStatus('Testing your key…');
@@ -297,13 +294,17 @@ function mountOnboarding(initial: Settings): void {
             return;
           }
           // D1: a BILLING failure is itself proof the key is valid (the provider's own
-          // 400/429 response required a genuine key to reach that check) — unlike every
-          // other failure, the just-tested key must survive, so the rollback is skipped.
+          // 400/429 response required a genuine key to reach that check) — the key is
+          // already persisted (optimistic-save above), so there's nothing left to save.
+          // Go straight to Settings with the honest status instead of offering a
+          // "Save anyway" button that would contradict "your key is already saved".
           if (r.error.code === 'BILLING') {
-            saveAnywayReason = 'BILLING';
-            view.setBusy(false);
-            view.setStatus(`${r.error.message} Your key was saved.`, 'error');
-            view.showSaveAnyway(true);
+            void load().then((s) =>
+              mountSettings(
+                s,
+                `${r.error.message} Your key is saved — run Test connection in Settings once billing is set up.`,
+              ),
+            );
             return;
           }
           // C2: persist only on pass — roll back to the exact pre-onboarding snapshot on any
@@ -311,7 +312,6 @@ function mountOnboarding(initial: Settings): void {
           void chrome.storage.local.set({ settings: cur }).then(() => {
             view.setBusy(false);
             if (r.error.code === 'NETWORK') {
-              saveAnywayReason = 'NETWORK';
               view.setStatus(
                 `${r.error.message} You can save without testing and verify later in Settings.`,
                 'error',
@@ -335,7 +335,6 @@ function mountOnboarding(initial: Settings): void {
   // no connection.test call, with a status that makes clear the key was NOT verified.
   view.addEventListener('save-anyway', (e) => {
     const { provider, apiKey, targetLang } = (e as CustomEvent<OnboardingValue>).detail;
-    const reason = saveAnywayReason;
     void load()
       .then((cur) => {
         const next = applyProviderKey(cur, provider, apiKey, targetLang);
@@ -352,11 +351,8 @@ function mountOnboarding(initial: Settings): void {
         (s) =>
           mountSettings(
             s,
-            reason === 'BILLING'
-              ? 'Saved. Your key is valid — add billing with your provider, then run Test ' +
-                  'connection in Settings.'
-              : 'Saved without testing — the connection could not be reached. Run Test connection ' +
-                  'in Settings once you’re back online.',
+            'Saved without testing — the connection could not be reached. Run Test connection ' +
+              'in Settings once you’re back online.',
           ),
         () => {
           view.setBusy(false);

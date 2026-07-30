@@ -2,7 +2,7 @@ import { test, expect } from './fixtures';
 import { mockAnthropic, mockOpenAI } from './helpers';
 
 test.describe('D1 billing/quota-exhaustion errors', () => {
-  test('an Anthropic BILLING failure keeps the pasted key and offers Save anyway with honest copy', async ({
+  test('an Anthropic BILLING failure keeps the pasted key and lands directly on Settings with honest copy', async ({
     context,
     extensionId,
   }) => {
@@ -25,12 +25,13 @@ test.describe('D1 billing/quota-exhaustion errors', () => {
     await page.locator('onboarding-view #key').fill('sk-ant-fake-key-for-e2e');
     await page.locator('onboarding-view #activate').click();
 
-    await expect(page.locator('onboarding-view #status')).toContainText('no credits or billing', {
-      timeout: 10_000,
-    });
-    await expect(page.locator('onboarding-view #status')).toHaveClass(/error/);
-    // The pasted key must already be present — no click required (the corrected acceptance test).
-    let stored = await page.evaluate(async () => {
+    // No "Save anyway" round trip — a BILLING failure already proved the key valid and it is
+    // already persisted, so onboarding hands straight off to Settings (same shape as success).
+    await page.waitForSelector('settings-form', { timeout: 10_000 });
+    await expect(page.locator('settings-form #status')).toContainText('no credits or billing');
+    await expect(page.locator('settings-form #status')).toContainText('Your key is saved');
+
+    const stored = await page.evaluate(async () => {
       const { settings } = (await chrome.storage.local.get('settings')) as {
         settings?: { anthropicApiKey?: string };
       };
@@ -38,24 +39,6 @@ test.describe('D1 billing/quota-exhaustion errors', () => {
     });
     expect(stored).toBe('sk-ant-fake-key-for-e2e');
     expect(calls.count).toBe(1);
-
-    // "Save anyway" is offered and its confirmation copy is honest (never the NETWORK wording).
-    const saveAnyway = page.locator('onboarding-view #save-anyway');
-    await expect(saveAnyway).toBeVisible();
-    await saveAnyway.click();
-    await page.waitForSelector('settings-form', { timeout: 10_000 });
-    await expect(page.locator('settings-form #status')).toContainText('add billing');
-    await expect(page.locator('settings-form #status')).not.toContainText(
-      'connection could not be reached',
-    );
-
-    stored = await page.evaluate(async () => {
-      const { settings } = (await chrome.storage.local.get('settings')) as {
-        settings?: { anthropicApiKey?: string };
-      };
-      return settings?.anthropicApiKey ?? '';
-    });
-    expect(stored).toBe('sk-ant-fake-key-for-e2e');
   });
 
   test('an OpenAI BILLING failure keeps the pasted key too (provider-agnostic fix)', async ({
@@ -80,9 +63,8 @@ test.describe('D1 billing/quota-exhaustion errors', () => {
     await page.locator('onboarding-view #key').fill('sk-openai-fake-key-for-e2e');
     await page.locator('onboarding-view #activate').click();
 
-    await expect(page.locator('onboarding-view #status')).toContainText('no credits or billing', {
-      timeout: 10_000,
-    });
+    await page.waitForSelector('settings-form', { timeout: 10_000 });
+    await expect(page.locator('settings-form #status')).toContainText('no credits or billing');
     const stored = await page.evaluate(async () => {
       const { settings } = (await chrome.storage.local.get('settings')) as {
         settings?: { openaiApiKey?: string };
