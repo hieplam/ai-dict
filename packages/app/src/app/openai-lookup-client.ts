@@ -33,11 +33,14 @@ export class OpenAILookupClient implements LookupClient {
         body: (prompt, model) =>
           JSON.stringify({ model, messages: [{ role: 'user', content: prompt }] }),
         parseOk: (json) => (json as OpenAIOkBody).choices?.[0]?.message?.content,
-        // OpenAI carries no status vocabulary we map (HTTP status alone drives mapping); its
-        // error.message is the diagnostic signal for telemetry.
+        // D1: error.code is now a mapping signal too (e.g. 'insufficient_quota' → BILLING),
+        // forwarded as vendorStatus to match Anthropic's existing pattern (error.type).
         parseErr: (json) => {
-          const message = (json as OpenAIErrBody).error?.message;
-          return message !== undefined ? { vendorMessage: message } : {};
+          const err = (json as OpenAIErrBody).error;
+          return {
+            ...(err?.code !== undefined ? { vendorStatus: err.code } : {}),
+            ...(err?.message !== undefined ? { vendorMessage: err.message } : {}),
+          };
         },
       },
       this.deps,

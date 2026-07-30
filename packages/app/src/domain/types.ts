@@ -113,6 +113,7 @@ export type LookupErrorCode =
   | 'NO_KEY'
   | 'INVALID_KEY'
   | 'RATE_LIMIT'
+  | 'BILLING'
   | 'NETWORK'
   | 'PARSE'
   | 'UNKNOWN';

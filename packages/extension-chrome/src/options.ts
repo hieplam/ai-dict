@@ -293,8 +293,22 @@ function mountOnboarding(initial: Settings): void {
             );
             return;
           }
+          // D1: a BILLING failure is itself proof the key is valid (the provider's own
+          // 400/429 response required a genuine key to reach that check) — the key is
+          // already persisted (optimistic-save above), so there's nothing left to save.
+          // Go straight to Settings with the honest status instead of offering a
+          // "Save anyway" button that would contradict "your key is already saved".
+          if (r.error.code === 'BILLING') {
+            void load().then((s) =>
+              mountSettings(
+                s,
+                `${r.error.message} Your key is saved — run Test connection in Settings once billing is set up.`,
+              ),
+            );
+            return;
+          }
           // C2: persist only on pass — roll back to the exact pre-onboarding snapshot on any
-          // connection.test failure so a bad/unverified key never lingers silently.
+          // other connection.test failure so a bad/unverified key never lingers silently.
           void chrome.storage.local.set({ settings: cur }).then(() => {
             view.setBusy(false);
             if (r.error.code === 'NETWORK') {

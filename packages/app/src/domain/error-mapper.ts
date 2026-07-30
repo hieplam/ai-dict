@@ -68,6 +68,34 @@ export function mapError(input: ErrorInput): LookupError {
         ...(vendorMessage ? { vendorMessage: sanitize(vendorMessage) } : {}),
       };
       const base = ((): LookupError => {
+        // D1: billing/quota exhaustion, checked FIRST so a dead account is never miscaught
+        // by the INVALID_KEY/RATE_LIMIT arms below. Detection is provider-specific:
+        if (vendorStatus === 'insufficient_quota') {
+          // OpenAI's own error.code is unambiguous on its own — no status check needed.
+          return {
+            code: 'BILLING',
+            message: `${product} account has no credits or billing set up. Add credits with ${vendor}, then try again.`,
+            retryable: false,
+          };
+        }
+        if (
+          input.provider === 'anthropic' &&
+          status === 400 &&
+          vendorStatus === 'invalid_request_error' &&
+          vendorMessage !== undefined &&
+          /credit balance/i.test(vendorMessage)
+        ) {
+          // Anthropic-only: status + type alone ALSO fire for ordinary malformed requests (from
+          // ANY provider), so both the provider AND the message content are load-bearing —
+          // anchored to the specific phrase the verified real message actually contains
+          // ("credit balance"), not the bare word "billing" which appears in unrelated
+          // validation errors too (e.g. a "billing_address" field-validation message).
+          return {
+            code: 'BILLING',
+            message: `${product} account has no credits or billing set up. Add credits with ${vendor}, then try again.`,
+            retryable: false,
+          };
+        }
         if (status === 400 && geminiStatus === 'INVALID_ARGUMENT')
           return {
             code: 'INVALID_KEY',

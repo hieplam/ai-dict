@@ -168,6 +168,21 @@ describe('<lookup-card>', () => {
     expect(event.detail?.fixKey).toBe(true);
   });
 
+  it('D1: a BILLING error renders the honest message with NO CTA button', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'error',
+      error: {
+        code: 'BILLING',
+        message:
+          'Claude account has no credits or billing set up. Add credits with Anthropic, then try again.',
+        retryable: false,
+      },
+    };
+    expect(el.querySelector('.err')!.textContent).toContain('no credits or billing');
+    expect(el.querySelector('.setup-cta')).toBeNull();
+  });
+
   it('the NO_KEY setup-invite CTA still fires open-settings with no fixKey (C6 regression guard)', () => {
     const el = mountCard();
     el.state = {

@@ -190,6 +190,17 @@ describe('wire-schema', () => {
     expect(result.success).toBe(true);
   });
 
+  // D1: BILLING is a new, valid error code on the wire reply.
+  it('accepts a valid error reply (ok:false with BILLING error)', () => {
+    const result = WireReplySchema.safeParse({
+      ok: false,
+      type: 'lookup',
+      error: { code: 'BILLING', message: 'x', retryable: false },
+      requestId: 'r1',
+    });
+    expect(result.success).toBe(true);
+  });
+
   // FIX 4b: WireReply error arm — malformed error body must be rejected
   it('rejects an error reply with invalid error.code (not in enum)', () => {
     const result = WireReplySchema.safeParse({
