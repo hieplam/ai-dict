@@ -37,10 +37,10 @@ dependency — see design spec §3 (pure core / impure edges).
 - Commit subject convention for every task in this plan: `[D1BillingQuotaErrors] feat: <task
 summary> (D1)` (fix tasks: `fix:` instead of `feat:`). No `Co-Authored-By` trailer.
 - Every task commit carries trailers `Tribe-Card: d1-billing-quota-errors` and
-  `Tribe-Task: N/6` (N = this task's number, 6 = total tasks in this plan).
+  `Tribe-Task: N/4` (N = this task's number, 4 = total tasks in this plan).
 - `bun run format:check` and `bun run lint` must be green before every commit (the
   `.githooks/pre-commit` hook enforces `format:check` already). `bun run typecheck` green after
-  every task that touches TypeScript (Tasks 1-4, 6).
+  every task that touches TypeScript (all four tasks touch TypeScript).
 - **Tests are mocked-fetch (or mocked-route, for e2e) only — no test may make a live network
   call.** Use the exact verified response bodies below as fixtures. The 401 contrast fixtures use
   an obviously-fake placeholder key string, never anything derived from a real key. **Never read,
@@ -70,7 +70,7 @@ summary> (D1)` (fix tasks: `fix:` instead of `feat:`). No `Co-Authored-By` trail
 manifest.json`) so every task's own `format:check`/CI can go green. **Do not touch
   `manifest.json` again in this plan.** Before opening the PR, rebase onto latest `master`; if PR
   #162 ("chore: unred master's format-check gate (round 2)") has landed by then, drop this
-  branch's own copy of the fix as redundant (see step 7 of this plan's execution).
+  branch's own copy of the fix as redundant (see the "Verification + delivery" section below).
 
 ---
 
@@ -159,7 +159,7 @@ Expected: all suites pass (no regressions elsewhere — `BILLING` is purely addi
 Run: `bun run typecheck`
 Expected: no errors.
 
-- [ ] **Step 6: Commit.**
+- [ ] **Step 6: Commit**
 
 Run:
 
@@ -173,7 +173,7 @@ not persisted user data) — see Decision Log 2026-07-30. Nothing downstream
 (cache/history/saved words/backup) ever stores a LookupError.
 
 Tribe-Card: d1-billing-quota-errors
-Tribe-Task: 1/6
+Tribe-Task: 1/4
 EOF
 )"
 ```
@@ -408,7 +408,7 @@ Expected: all suites pass, including every new test from Step 1 and every pre-ex
 Run: `bun run typecheck`
 Expected: no errors.
 
-- [ ] **Step 4: Commit.**
+- [ ] **Step 4: Commit**
 
 Run:
 
@@ -427,7 +427,7 @@ through the (unmodified) Anthropic client and confirmed lookup-card renders
 no CTA for BILLING by construction (generic error fallthrough).
 
 Tribe-Card: d1-billing-quota-errors
-Tribe-Task: 2/6
+Tribe-Task: 2/4
 EOF
 )"
 ```
@@ -539,7 +539,7 @@ retryAfterSec from header'` test has no `error.code` in its body, so `vendorStat
 Run: `bun run typecheck`
 Expected: no errors.
 
-- [ ] **Step 4: Commit.**
+- [ ] **Step 4: Commit**
 
 Run:
 
@@ -553,7 +553,7 @@ vendorStatus). Without this the mapper's insufficient_quota check can never
 fire for OpenAI — the 429 body's error.code was previously dropped entirely.
 
 Tribe-Card: d1-billing-quota-errors
-Tribe-Task: 3/6
+Tribe-Task: 3/4
 EOF
 )"
 ```
@@ -866,7 +866,7 @@ path and exact confirmation copy are untouched by this diff).
 Run: `bun run typecheck`
 Expected: no errors.
 
-- [ ] **Step 6: Commit.**
+- [ ] **Step 6: Commit**
 
 Run:
 
@@ -889,20 +889,21 @@ is already present in chrome.storage.local with no click required — proven by
 e2e for both providers, plus a regression guard for INVALID_KEY.
 
 Tribe-Card: d1-billing-quota-errors
-Tribe-Task: 4/6
+Tribe-Task: 4/4
 EOF
 )"
 ```
 
 ---
 
-### Task 5: Full-suite verification + rebase check before PR
+## Verification + delivery (not a plan task — Warchief-owned, no Hunter dispatch)
 
-**No new files.** This task is a verification/cleanup pass, not new implementation — still gets
-its own commit only if something needs fixing; otherwise it is a no-op step recorded in the
-report, not a commit.
+This is a verification/cleanup + delivery pass, not new implementation — it is deliberately NOT a
+numbered plan "Task" (no dedicated Hunter task, no single mandatory commit): if a gate below turns
+up a real regression, fix it via a fresh Hunter dispatch against the specific task it regressed
+(tagged with that task's own `Tribe-Task: N/4` trailer), not as a new task number.
 
-- [ ] **Step 1: Run every gate from a clean state.**
+- [ ] Run every gate from a clean state:
 
 ```bash
 bun run format:check
@@ -913,10 +914,9 @@ bun run build:chrome
 bun run e2e:chrome
 ```
 
-Expected: all green. If anything fails, fix it in a follow-up commit under this same task number
-before proceeding (still tagged `Tribe-Task: 5/6` if a fix commit is needed).
+Expected: all green.
 
-- [ ] **Step 2: Rebase onto latest `master` and resolve the pre-existing-fix redundancy.**
+- [ ] Rebase onto latest `master` and resolve the pre-existing-fix redundancy:
 
 ```bash
 git fetch origin master
@@ -926,17 +926,12 @@ git rebase origin/master
 If PR #162 ("chore: unred master's format-check gate (round 2)") has merged into `master` by now,
 this branch's own standalone `manifest.json` prettier-fix commit becomes a no-op/duplicate during
 the rebase (identical resulting content) — keep it only if the rebase does not naturally drop it;
-do not manually re-introduce a diff against an already-fixed file. Re-run Step 1's gates after the
+do not manually re-introduce a diff against an already-fixed file. Re-run the gates above after the
 rebase to confirm everything is still green on top of the new `master`.
 
----
-
-## Execution note (not a plan task — Warchief-owned)
-
-After Task 5 is green and the branch is rebased on latest `master`:
-
-1. Open the PR (title/body per Global Constraints).
-2. Watch CI to green (`gh run watch`).
-3. Merge (`gh pr merge --merge`) once green — regular merge, no squash.
-4. Update `docs/ROADMAP.md`'s D1 card status is the Shaman's job, not this plan's — leave the card
-   text as delivered; report the shipped outcome back to the Shaman instead of editing the roadmap.
+- [ ] Open the PR (title/body per Global Constraints).
+- [ ] Watch CI to green (`gh run watch`).
+- [ ] Merge (`gh pr merge --merge`) once green — regular merge, no squash.
+- [ ] Updating `docs/ROADMAP.md`'s D1 card status is the Shaman's job, not this plan's — leave the
+      card text as delivered; report the shipped outcome back to the Shaman instead of editing the
+      roadmap.
