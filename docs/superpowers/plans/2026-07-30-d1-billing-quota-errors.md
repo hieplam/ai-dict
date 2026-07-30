@@ -575,12 +575,12 @@ unit-test coverage in `packages/extension-chrome/vitest.config.ts` — its only 
 project's Playwright e2e harness, per repo convention. TDD here means: write the e2e spec first
 (RED — it fails against today's unconditional-rollback code), then implement the fix (GREEN).
 
-- [ ] **Step 1: Build first so the e2e harness has a current `dist/`.**
+- [x] **Step 1: Build first so the e2e harness has a current `dist/`.**
 
 Run: `bun run build:chrome`
 Expected: build succeeds, `packages/extension-chrome/dist` is refreshed.
 
-- [ ] **Step 2: Write the failing e2e spec.** Create
+- [x] **Step 2: Write the failing e2e spec.** Create
       `packages/extension-chrome/e2e/d1-billing-quota-errors.spec.ts`:
 
 ```ts
@@ -716,7 +716,7 @@ Expected (RED): the first two tests fail — today's unconditional rollback disc
 non-`NETWORK` failure, so `stored` comes back `''`/`undefined`, not the pasted key. The third test
 (INVALID_KEY) already passes today — kept as an explicit regression guard.
 
-- [ ] **Step 3: Implement the onboarding fix.** In `packages/extension-chrome/src/options.ts`,
+- [x] **Step 3: Implement the onboarding fix.** In `packages/extension-chrome/src/options.ts`,
       inside `mountOnboarding`, add a closure variable right after the `value` assignment:
 
 ```ts
@@ -850,13 +850,13 @@ view.addEventListener('save-anyway', (e) => {
 (A genuine `INVALID_KEY`/`NO_KEY`/`PARSE`/`UNKNOWN` failure is unaffected: the rollback still fires
 unconditionally and no escape hatch appears.)
 
-- [ ] **Step 4: Rebuild and re-run the e2e spec.**
+- [x] **Step 4: Rebuild and re-run the e2e spec.**
 
 Run: `bun run build:chrome`
 Run: `cd packages/extension-chrome && bunx playwright test d1-billing-quota-errors.spec.ts`
 Expected (GREEN): all three tests pass.
 
-- [ ] **Step 5: Verify the full e2e suite + typecheck (no regressions to C2/other onboarding
+- [x] **Step 5: Verify the full e2e suite + typecheck (no regressions to C2/other onboarding
       specs).**
 
 Run: `bun run e2e:chrome`
@@ -866,7 +866,7 @@ path and exact confirmation copy are untouched by this diff).
 Run: `bun run typecheck`
 Expected: no errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
