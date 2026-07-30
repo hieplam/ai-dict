@@ -8,7 +8,7 @@ import type {
 } from './domain/types';
 
 const LookupErrorSchema = z.strictObject({
-  code: z.enum(['NO_KEY', 'INVALID_KEY', 'RATE_LIMIT', 'NETWORK', 'PARSE', 'UNKNOWN']),
+  code: z.enum(['NO_KEY', 'INVALID_KEY', 'RATE_LIMIT', 'BILLING', 'NETWORK', 'PARSE', 'UNKNOWN']),
   message: z.string().max(200),
   retryable: z.boolean(),
   retryAfterSec: z.number().optional(),

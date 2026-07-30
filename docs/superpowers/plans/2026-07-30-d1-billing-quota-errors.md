@@ -83,7 +83,7 @@ manifest.json`) so every task's own `format:check`/CI can go green. **Do not tou
 - Modify: `packages/app/test/wire-schema.test.ts`
 - Regenerate: `packages/app/wire-schema.snapshot.json` (via `vitest -u`, not hand-edited)
 
-- [ ] **Step 1: Write the failing test.** Add to `packages/app/test/wire-schema.test.ts`,
+- [x] **Step 1: Write the failing test.** Add to `packages/app/test/wire-schema.test.ts`,
       immediately after the existing `'accepts a valid error reply (ok:false with RATE_LIMIT
 error)'` test (~line 191):
 
@@ -104,7 +104,7 @@ Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts`
 Expected (RED): the new test fails — `BILLING` is not yet in `LookupErrorSchema`'s `code` enum, so
 `safeParse` returns `success: false`.
 
-- [ ] **Step 2: Add `BILLING` to the type union.** In `packages/app/src/domain/types.ts`, change:
+- [x] **Step 2: Add `BILLING` to the type union.** In `packages/app/src/domain/types.ts`, change:
 
 ```ts
 export type LookupErrorCode =
@@ -129,7 +129,7 @@ export type LookupErrorCode =
   | 'UNKNOWN';
 ```
 
-- [ ] **Step 3: Add `BILLING` to the wire schema enum.** In `packages/app/src/wire.ts`, change:
+- [x] **Step 3: Add `BILLING` to the wire schema enum.** In `packages/app/src/wire.ts`, change:
 
 ```ts
 const LookupErrorSchema = z.strictObject({
@@ -143,7 +143,7 @@ const LookupErrorSchema = z.strictObject({
   code: z.enum(['NO_KEY', 'INVALID_KEY', 'RATE_LIMIT', 'BILLING', 'NETWORK', 'PARSE', 'UNKNOWN']),
 ```
 
-- [ ] **Step 4: Regenerate the JSON-schema snapshot.** The existing JSON-schema snapshot test uses
+- [x] **Step 4: Regenerate the JSON-schema snapshot.** The existing JSON-schema snapshot test uses
       `toMatchFileSnapshot` and will now also fail (RED) because the schema's enum changed.
       Regenerate it (do not hand-edit the `.json` file):
 
@@ -151,7 +151,7 @@ Run: `cd packages/app && bunx vitest run -u`
 Expected: `wire-schema.snapshot.json` is rewritten with `BILLING` added to the `code` enum's list;
 all tests in this run report PASS (both the new Step-1 test and the now-updated snapshot test).
 
-- [ ] **Step 5: Verify green + typecheck.**
+- [x] **Step 5: Verify green + typecheck.**
 
 Run: `bun run test`
 Expected: all suites pass (no regressions elsewhere — `BILLING` is purely additive to a union/enum).
@@ -159,7 +159,7 @@ Expected: all suites pass (no regressions elsewhere — `BILLING` is purely addi
 Run: `bun run typecheck`
 Expected: no errors.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 Run:
 
