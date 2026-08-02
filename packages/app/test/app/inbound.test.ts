@@ -10,7 +10,7 @@
 // path, limiting the attack surface to extension-internal contexts.
 
 import { describe, it, expect } from 'vitest';
-import { classifyInbound } from '../../src/app/inbound';
+import { classifyInbound, acceptAny } from '../../src/app/inbound';
 
 const valid = { type: 'settings.get' };
 
@@ -35,5 +35,40 @@ describe('classifyInbound (S3 sender guard + wire-schema gate)', () => {
     expect(classifyInbound(msg1, 'ext-id', 'ext-id')).toEqual({ action: 'route', msg: msg1 });
     const msg2 = { type: 'errlog.set-consent', state: 'declined' };
     expect(classifyInbound(msg2, 'ext-id', 'ext-id')).toEqual({ action: 'route', msg: msg2 });
+  });
+});
+
+// S3 refactor (V3 Task 1): content.ts and side-panel.ts hand-roll ONLY the sender check today,
+// on non-WireMessage shapes (CommandMessage / mirror-message) that never go through the router.
+// classifyInbound gains an optional 4th `parse` param defaulting to the WireMessageSchema path
+// above — these cases prove (a) omitting it is byte-identical to today (parity), and (b) a
+// pass-through parse (acceptAny) performs ONLY the S3 sender-guard, never rejecting, so
+// content.ts/side-panel.ts can route arbitrary non-WireMessage shapes through the same gate.
+describe('classifyInbound with a pass-through parse (acceptAny) — content.ts/side-panel.ts shape', () => {
+  it('ignores a foreign sender even with acceptAny', () => {
+    expect(
+      classifyInbound({ command: 'define-selection' }, 'evil-extension', 'my-id', acceptAny),
+    ).toEqual({
+      action: 'ignore',
+    });
+  });
+  it('ignores an undefined sender id even with acceptAny', () => {
+    expect(classifyInbound({ command: 'define-selection' }, undefined, 'my-id', acceptAny)).toEqual(
+      {
+        action: 'ignore',
+      },
+    );
+  });
+  it('routes an arbitrary non-WireMessage shape from the same extension, unchanged — reject never triggers', () => {
+    const commandMsg = { command: 'define-selection' };
+    expect(classifyInbound(commandMsg, 'my-id', 'my-id', acceptAny)).toEqual({
+      action: 'route',
+      msg: commandMsg,
+    });
+    const mirrorMsg = { to: 'side-panel', state: 'loading' };
+    expect(classifyInbound(mirrorMsg, 'my-id', 'my-id', acceptAny)).toEqual({
+      action: 'route',
+      msg: mirrorMsg,
+    });
   });
 });
