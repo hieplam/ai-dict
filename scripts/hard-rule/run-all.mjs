@@ -7,8 +7,8 @@
 // a bug in the runner/folder — never a silent green no-op — so a future
 // refactor that empties this folder can't accidentally disable the gate.
 //
-// Wiring into `bun run lint`, both extension builds, and the pre-commit hook
-// happens in later cards of this campaign (see docs/superpowers/plans/V2.md).
+// Wired into `bun run lint`, both extension builds, and the pre-commit hook
+// (see docs/superpowers/plans/V2.md).
 //
 // Usage: bun scripts/hard-rule/run-all.mjs
 
