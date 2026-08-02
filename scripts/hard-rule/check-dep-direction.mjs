@@ -11,7 +11,7 @@
 //   packages/app/**             → never an extension shell, never outside the package
 //   packages/extension-A/**     → never packages/extension-B
 //
-// Usage: bun scripts/check-dep-direction.mjs
+// Usage: bun scripts/hard-rule/check-dep-direction.mjs
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, posix } from 'node:path';
@@ -173,7 +173,7 @@ export function checkRepo(repoRoot) {
 }
 
 function main() {
-  const repoRoot = new URL('..', import.meta.url).pathname;
+  const repoRoot = new URL('../..', import.meta.url).pathname;
   const violations = checkRepo(repoRoot);
   if (violations.length === 0) {
     console.log('✓ dependency direction OK — all imports point inward (ref-core-dependency-rule)');

@@ -6,7 +6,7 @@ paths:
 # domain-purity
 
 Keep the domain core inward-only so it stays portable and unit-testable.
-Canonical rule: `.c3/rules/rule-domain-purity.md` (+ `ref-core-dependency-rule`). Mechanically gated by `scripts/check-dep-direction.mjs` and ESLint `import-x/no-restricted-paths`.
+Canonical rule: `.c3/rules/rule-domain-purity.md` (+ `ref-core-dependency-rule`). Mechanically gated by `scripts/hard-rule/check-dep-direction.mjs` and ESLint `import-x/no-restricted-paths`.
 
 ## NEVER
 

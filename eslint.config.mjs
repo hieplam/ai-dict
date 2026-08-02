@@ -35,7 +35,7 @@ export default tseslint.config(
     },
     rules: {
       // §8.3 structural zones (rule-domain-purity / ref-core-dependency-rule).
-      // IDE-time feedback only — the hard allowlist gate is scripts/check-dep-direction.mjs,
+      // IDE-time feedback only — the hard allowlist gate is scripts/hard-rule/check-dep-direction.mjs,
       // which runs before every extension build and at the front of `bun run lint`.
       'import-x/no-restricted-paths': [
         'error',
