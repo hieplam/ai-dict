@@ -85,6 +85,7 @@ export default tseslint.config(
   // *.storage.local — it holds the Gemini apiKey. Every other extension-source file is
   // content-side and must relay through settings.get -> PublicSettings. Fail-safe scope:
   // ban across all extension src, exempt only the four trusted entries (+ tests).
+  // IDE-time feedback only — the hard gate is scripts/hard-rule/check-key-isolation.mjs.
   {
     files: ['packages/extension-chrome/src/**/*.ts', 'packages/extension-safari/src/**/*.ts'],
     ignores: [
