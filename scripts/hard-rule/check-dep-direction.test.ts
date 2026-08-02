@@ -126,7 +126,7 @@ describe('checkFile — shells never import each other', () => {
 
 describe('checkRepo — integration on this repository', () => {
   it('finds zero violations on the current clean tree', () => {
-    const violations = checkRepo(new URL('..', import.meta.url).pathname);
+    const violations = checkRepo(new URL('../..', import.meta.url).pathname);
     expect(violations).toEqual([]);
   });
 });

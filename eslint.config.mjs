@@ -35,7 +35,7 @@ export default tseslint.config(
     },
     rules: {
       // §8.3 structural zones (rule-domain-purity / ref-core-dependency-rule).
-      // IDE-time feedback only — the hard allowlist gate is scripts/check-dep-direction.mjs,
+      // IDE-time feedback only — the hard allowlist gate is scripts/hard-rule/check-dep-direction.mjs,
       // which runs before every extension build and at the front of `bun run lint`.
       'import-x/no-restricted-paths': [
         'error',
@@ -85,6 +85,7 @@ export default tseslint.config(
   // *.storage.local — it holds the Gemini apiKey. Every other extension-source file is
   // content-side and must relay through settings.get -> PublicSettings. Fail-safe scope:
   // ban across all extension src, exempt only the four trusted entries (+ tests).
+  // IDE-time feedback only — the hard gate is scripts/hard-rule/check-key-isolation.mjs.
   {
     files: ['packages/extension-chrome/src/**/*.ts', 'packages/extension-safari/src/**/*.ts'],
     ignores: [

@@ -10,4 +10,7 @@ if command -v "${WTGUARD_BIN:-wtguard}" >/dev/null 2>&1; then
 fi
 
 # Enforce formatting before a commit lands, matching the CI format-check gate.
-exec bun run format:check
+bun run format:check
+
+# Enforce the hard-rule scanners + ESLint, matching the CI lint gate.
+bun run lint
