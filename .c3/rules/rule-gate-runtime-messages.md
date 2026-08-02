@@ -1,6 +1,6 @@
 ---
 id: rule-gate-runtime-messages
-c3-seal: e1b18ef528a3d4e311b16d7ca21946ab6d7db65bbe0a2430515aa6ed7c17c0da
+c3-seal: 8340158258bf74e6e7667bdc568630cfa19fd963eb97317e7e214649c049f0e1
 title: gate-runtime-messages
 type: rule
 goal: Enforce that the service worker acts only on messages that originate from this extension and conform to the wire schema — closing the door on cross-extension and page-injected traffic.
@@ -46,3 +46,7 @@ The `onMessage` listeners in `packages/extension-chrome/src/sw.ts` and `packages
 ## Override
 
 None — security invariant **S3**.
+
+**Enforcement (mechanical — added by `adr-20260803-verification-loop-doc`):**
+
+`scripts/hard-rule/check-msg-gate.mjs` flags every `onMessage.addListener` registration (call form or TypeScript-cast form) that does not call `classifyInbound(` within a small fixed window of forward lines — a literal substring/window existence check, not semantic analysis of the guard idiom used (ratified, spec `2026-08-03-v3-code-touching-gates`). Runs as part of `bun run lint` and before every extension build. Locked by `scripts/hard-rule/check-msg-gate.test.ts`.
