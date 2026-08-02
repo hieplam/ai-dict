@@ -17,3 +17,8 @@ Project workflow conventions — an imperative checklist that complements the na
 - If media is ever explicitly requested again: same-origin `github.com/<owner>/<repo>/raw/...`
   URLs only (raw.githubusercontent.com 404s on this private repo).
 - Consult C3 (`/c3` or read `.c3/`) before architecture changes.
+- Merge only after `gh pr checks` reports every check green (branch protection is unavailable
+  on this private free-plan repo — this is the substitute merge gate; see CLAUDE.md
+  "Verification loop").
+- Reproduce a red check on current `master` HEAD before waving it off; put the waiver + evidence
+  in the PR body (docs-only diffs may use the documented docs-only waiver instead).

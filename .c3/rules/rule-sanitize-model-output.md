@@ -1,6 +1,6 @@
 ---
 id: rule-sanitize-model-output
-c3-seal: 1bc5c6b401868452c7c54ea53209df816872bf431fc876d6916f3b8fe6b7d29b
+c3-seal: 3f79a89b3069c38b341f1f99de873aafbb1ecc39c7ec04609b2326309ca270b6
 title: sanitize-model-output
 type: rule
 goal: Enforce that Gemini-generated markdown — which is attacker-influenceable via the selected text and the custom prompt — can never reach the DOM as unsanitized HTML.
@@ -47,3 +47,7 @@ Any code rendering `LookupResult.markdown` (UI cards/sheets, side panel). The `S
 ## Override
 
 None — security invariant **S4**. New allowed tags/attrs require updating the allowlist *in this file only*, with a threat-model note.
+
+**Enforcement (mechanical — added by `adr-20260803-verification-loop-doc`):**
+
+`scripts/hard-rule/check-safe-html.mjs` flags every raw-HTML sink line (`.innerHTML =`, `.outerHTML =`, `insertAdjacentHTML(`) that carries neither a `// s4: static-template — <reason>` annotation nor a reference to the sanctioned sanitize path (`safeHtml`/`SafeHtml`/`sanitizeMarkdown`). Runs as part of `bun run lint` and before every extension build. Locked by `scripts/hard-rule/check-safe-html.test.ts`. Accepted limit (ratified, spec `2026-08-03-v3-code-touching-gates`): a false annotation is a deliberate diff-visible act — the scanner defends against accidents, not lies.

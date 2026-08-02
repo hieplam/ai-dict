@@ -7,6 +7,76 @@
 - Always start work even trivial work with git worktree. Default worktree path is `.claude/worktrees`.
 - Run `bun run lint` and `bun run format:check` before committing — the `.githooks/pre-commit` hook and CI also gate this.
 
+# Verification loop (verification-loop campaign, card V5)
+
+What must pass before merge, and what each gate proves — read this before claiming a PR is
+ready. Mechanism lives in `.github/workflows/ci.yml`; this section is the policy layer that
+tells an LLM (or a person) which command to run and why it exists.
+
+## Gate registry
+
+| Gate                        | Command                                                                                                      | Proves                                                                                                                                                                                                                                       | When        |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------- |
+| Hard-rule scanners (6)      | `bun run lint` (runs `bun scripts/hard-rule/run-all.mjs`)                                                    | Named invariants below — the registry is `scripts/hard-rule/`, discovered by filename, never hardcoded                                                                                                                                       | commit + CI |
+| — `check-dep-direction.mjs` | (same)                                                                                                       | `rule-domain-purity`: inward-only import direction (domain → ports only; shells never cross)                                                                                                                                                 | commit + CI |
+| — `check-core-agnostic.mjs` | (same)                                                                                                       | `rule-domain-purity`: the portable core never references `chrome.*`                                                                                                                                                                          | commit + CI |
+| — `check-key-isolation.mjs` | (same)                                                                                                       | `rule-api-key-isolation` (S1): the Gemini/OpenAI/Anthropic key stays in the SW + options page only                                                                                                                                           | commit + CI |
+| — `check-msg-gate.mjs`      | (same)                                                                                                       | `rule-gate-runtime-messages` (S3): every `onMessage` listener gates via `classifyInbound(` first                                                                                                                                             | commit + CI |
+| — `check-safe-html.mjs`     | (same)                                                                                                       | `rule-sanitize-model-output` (S4): every raw-HTML sink is sanitized or carries an `s4:` review annotation                                                                                                                                    | commit + CI |
+| — `check-token-law.mjs`     | (same)                                                                                                       | Paperlight token law: components read only `--ad-*`/`--adp-*`, never a hard-coded hex/oklch value                                                                                                                                            | commit + CI |
+| ESLint                      | `bun run lint` (runs `eslint .` after the scanners)                                                          | IDE-parity lint, incl. `@typescript-eslint/only-throw-error` (`rule-typed-errors`' throw form) and `import-x/no-restricted-paths` (dep-direction, IDE-time mirror of the scanner)                                                            | commit + CI |
+| Typecheck                   | `bun run typecheck`                                                                                          | `tsc --noEmit` clean across `app`, `extension-chrome`, `extension-safari`                                                                                                                                                                    | CI          |
+| Format                      | `bun run format:check`                                                                                       | Prettier formatting matches `.prettierrc`                                                                                                                                                                                                    | commit + CI |
+| Unit suite                  | `bun run --filter @ai-dict/app test`                                                                         | `@ai-dict/app` domain/app-layer correctness (703 tests)                                                                                                                                                                                      | CI          |
+| Wire-schema contract tests  | `bun run --filter @ai-dict/app test wire-schema`                                                             | The zod wire schema accepts/rejects every message shape, incl. S1 apiKey stripping, **and** the typed-errors wire-flatten contract (`rule-typed-errors`: an error reply survives the `chrome.runtime` JSON round-trip with `message` intact) | CI          |
+| Coverage gate               | `bun run --filter '*' test -- --coverage`                                                                    | Per-package coverage floors (own `vitest.config.ts` thresholds): `app` 90%, `extension-chrome` 80%, `extension-safari` 90% — run per package so each package's own gate applies, not a merged global number                                  | CI          |
+| Build (Chrome)              | `bun run build:chrome`                                                                                       | The MV3 bundle builds; the hard-rule scanners re-run first, so a violating tree can't produce a bundle                                                                                                                                       | CI          |
+| Build (Safari)              | `bun run build:safari`                                                                                       | The Safari `web-ext` bundle builds (Xcode archive is a separate release-time step)                                                                                                                                                           | CI          |
+| E2E suite                   | `bun run e2e:chrome` (CI: build with `GA4_MEASUREMENT_ID`/`GA4_API_SECRET` set, then `bunx playwright test`) | Real Chromium flows through `packages/extension-chrome/e2e/` — coverage floor tracked in `docs/testing/e2e-case-inventory.md`                                                                                                                | CI          |
+| knip                        | `bunx knip`                                                                                                  | No dead exports / unused dependencies                                                                                                                                                                                                        | CI          |
+| gitleaks                    | `gitleaks/gitleaks-action` (GitHub Action)                                                                   | No committed secrets — advisory-shaped scan, blocking on PR and nightly                                                                                                                                                                      | CI          |
+
+Pre-commit (`.githooks/pre-commit`) runs only `format:check` + `lint` (scanners + eslint) —
+fast, local, matches the two CI jobs of the same name. Everything else in the table is CI-only.
+
+## Hard/soft boundary
+
+**Hard** = the `scripts/hard-rule/` folder + the named contract tests above — the registry _is_
+the folder: `run-all.mjs` discovers every `check-*.mjs` file by filename (no hardcoded list) and
+refuses to pass on zero scanners, so an emptied folder fails loud instead of silently going
+green. **Soft** = rules with no scanner, enforced by review only — labeled "review-enforced".
+At minimum: **"adapters stay thin and decision-free"** (`pure-core.md` — effects belong at the
+edge, decisions never do) is ratified soft.
+
+## Merge gate
+
+GitHub branch protection is unavailable here (private repo, free plan — ratified skip). The
+substitute is a hard workflow rule: **merge only after `gh pr checks` reports every check
+green.** An LLM performing a merge MUST run `gh pr checks` first and read its output — do not
+infer green from "CI usually passes" or from a partial job list.
+
+## Flake-triage protocol
+
+A red check may be waved off ONLY after reproducing the _same_ failure on current `master`
+HEAD — if master is also red on that check, it's a pre-existing flake, not this PR's bug. The
+waiver and its reproduction evidence (command + output) go in the PR body. **Docs-only
+waiver:** if the diff touches no source or test file, and a check fails for a reason clearly
+unrelated to the change (e.g. e2e timing flake), the PR body may state
+`docs-only waiver: <check name> — <reason>` without a master-HEAD repro.
+
+## Deliberate advisory
+
+`dep-audit` (`bun audit --audit-level=high`) is **advisory on PRs, blocking on the nightly
+schedule** (`continue-on-error: ${{ github.event_name != 'schedule' }}` in `ci.yml`) — by
+ratified design, not neglect: a new high-severity advisory shouldn't block an unrelated PR, but
+must page someone within a day.
+
+## Pointers
+
+- `docs/testing/e2e-case-inventory.md` — the e2e coverage floor (≥80%) and the zero-flake wall
+  (3 consecutive green full-suite runs) behind the E2E suite gate.
+- `docs/superpowers/specs/` (verification-loop campaign) — the "why" behind each gate above.
+
 **This repo is PRIVATE.** When embedding image/video evidence in a PR or issue, the asset URL MUST be a **same-origin `github.com` URL** so the authorized viewer's session cookies authenticate the request:
 
 - ✅ Use `https://github.com/<owner>/<repo>/raw/<branch>/<path>` (or `.../blob/<branch>/<path>?raw=true`).

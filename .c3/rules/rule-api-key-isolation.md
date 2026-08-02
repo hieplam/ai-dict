@@ -1,6 +1,6 @@
 ---
 id: rule-api-key-isolation
-c3-seal: d34cd467c36ed2cee05ea658dbd151f514b239c0d2e2f8e9c882b6398caaa3b2
+c3-seal: c3d70755376546615e9b34b04eab8686295a16d77b235c4887cebcf0c6dc6710
 title: api-key-isolation
 type: rule
 goal: Enforce, project-wide, that the secret Gemini API key stays in trusted contexts only — it must never be readable by a content script or a host web page, and must never travel over the message wire.
@@ -52,3 +52,8 @@ const PublicSettingsSchema = z.strictObject({
 ## Override
 
 None — this is security invariant **S1** (`docs/superpowers/specs/2026-05-24-ai-dict-design.md` §7.3). A deviation requires a new ADR amending the threat model.
+
+**Enforcement (mechanical, two surfaces — added by `adr-20260803-verification-loop-doc`):**
+
+1. **Build gate:** `scripts/hard-rule/check-key-isolation.mjs` scans every extension-source file outside the four allowlisted trusted entry files (service worker + options page, per extension) and flags any `*.storage.local` access. Runs as part of `bun run lint` (via `scripts/hard-rule/run-all.mjs`) and before every extension build. Locked by `scripts/hard-rule/check-key-isolation.test.ts`.
+2. **IDE/lint feedback:** `eslint.config.mjs`'s `no-restricted-syntax` selector on `storage.local` member access mirrors the same scope (the scanner is authoritative; ESLint is IDE-time feedback only).
