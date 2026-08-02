@@ -34,18 +34,20 @@ Rules of the file:
 
 ## A. Selection & trigger (in-page)
 
-| Case                                                               | Status                        |
-| ------------------------------------------------------------------ | ----------------------------- |
-| Collapsed selection shows no trigger                               | [covered] `selection.spec.ts` |
-| Multi-word phrase selection shows trigger and renders a result     | [covered] `selection.spec.ts` |
-| Dismiss then re-select shows the trigger again                     | [covered] `selection.spec.ts` |
-| Define click works under hostile z-index stacking contexts         | [covered] `selection.spec.ts` |
-| Selection inside `<textarea>` / `<input>` — behavior unknown       | [gap:P2]                      |
-| Selection inside `contenteditable` — behavior unknown              | [gap:P2]                      |
-| Selection inside an iframe — behavior unknown                      | [gap:P2]                      |
-| CJK / diacritics / non-Latin word round-trips correctly            | [gap:P2]                      |
-| Very long (paragraph-length) selection — trigger + prompt behavior | [gap:P2]                      |
-| Trigger position after page scroll / window resize                 | [gap:P2]                      |
+| Case                                                                                                      | Status                           |
+| --------------------------------------------------------------------------------------------------------- | -------------------------------- |
+| Collapsed selection shows no trigger                                                                      | [covered] `selection.spec.ts`    |
+| Multi-word phrase selection shows trigger and renders a result                                            | [covered] `selection.spec.ts`    |
+| Dismiss then re-select shows the trigger again                                                            | [covered] `selection.spec.ts`    |
+| Define click works under hostile z-index stacking contexts                                                | [covered] `selection.spec.ts`    |
+| Select → Define works under a page's own strict CSP (script/style `'none'`)                               | [covered] `hostile-page.spec.ts` |
+| Select → Define survives a page's own competing `mouseup`/`selectionchange` listeners (`stopPropagation`) | [covered] `hostile-page.spec.ts` |
+| Selection inside `<textarea>` / `<input>` — behavior unknown                                              | [gap:P2]                         |
+| Selection inside `contenteditable` — behavior unknown                                                     | [gap:P2]                         |
+| Selection inside an iframe — behavior unknown                                                             | [gap:P2]                         |
+| CJK / diacritics / non-Latin word round-trips correctly                                                   | [gap:P2]                         |
+| Very long (paragraph-length) selection — trigger + prompt behavior                                        | [gap:P2]                         |
+| Trigger position after page scroll / window resize                                                        | [gap:P2]                         |
 
 ## B. Lookup core flow
 
@@ -244,3 +246,9 @@ Rules of the file:
 | Card header Settings gear opens the options page                | [covered] `settings-nav.spec.ts`          |
 | Side panel header Settings gear opens the options page          | [covered] `settings-nav.spec.ts`          |
 | Narrow-viewport card layout                                     | [gap:P3]                                  |
+
+## R. Browser restart & MV3 service-worker persistence
+
+| Case                                                                                                                                     | Status                                  |
+| ---------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Settings, a saved word, and a fresh lookup all survive closing and relaunching against the same real profile (service-worker cold start) | [covered] `restart-persistence.spec.ts` |
