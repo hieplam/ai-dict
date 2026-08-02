@@ -9,7 +9,7 @@
  * recording is deterministic and needs no real network call.
  *
  * Run with:
- *   bunx playwright test e2e/readme-demo.spec.ts
+ *   PLAYWRIGHT_RUN_README_DEMO=1 bunx playwright test e2e/readme-demo.spec.ts
  */
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -18,6 +18,7 @@ import { test as base, expect, chromium, type BrowserContext } from '@playwright
 import { seedSettings } from './helpers';
 import { E2E_HEADLESS } from '../playwright.config';
 
+const RUN = process.env.PLAYWRIGHT_RUN_README_DEMO === '1';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(here, '../dist');
 const videoDir = path.resolve(here, '../../../.kanna/demos/readme-define');
@@ -91,6 +92,8 @@ const beat = (page: import('@playwright/test').Page, ms: number) => page.waitFor
 test('readme demo: select serendipity, click Define, read the definition card', async ({
   context,
 }) => {
+  test.skip(!RUN, 'set PLAYWRIGHT_RUN_README_DEMO=1 to (re)record the README demo video');
+
   await mkdir(videoDir, { recursive: true });
 
   // Mock Gemini on the CONTEXT (the real fetch fires from the service worker) with a
