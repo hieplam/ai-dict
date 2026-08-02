@@ -5,6 +5,8 @@ import {
   MessageRelayLookupClient,
   buildConsentFooter,
   createSaveReplyGuard,
+  classifyInbound,
+  acceptAny,
   type SettingsStore,
   type SavedWordStatus,
   type WireReply,
@@ -224,9 +226,10 @@ document.addEventListener('open-side-panel', () => {
 
 // A4: keyboard-only flow. The service worker relays a fired chrome.commands shortcut here.
 chrome.runtime.onMessage.addListener((msg: unknown, sender) => {
-  if (sender.id !== chrome.runtime.id) return; // S3: same-extension only
-  if (!isCommandMessage(msg)) return;
-  switch (msg.command) {
+  const decision = classifyInbound(msg, sender.id, chrome.runtime.id, acceptAny); // S3: same-extension only
+  if (decision.action !== 'route') return;
+  if (!isCommandMessage(decision.msg)) return;
+  switch (decision.msg.command) {
     case 'define-selection':
       trigger.activate();
       break;

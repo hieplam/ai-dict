@@ -221,7 +221,7 @@ function settingsCta(label: string, opts?: { fixKey?: boolean }): HTMLButtonElem
  */
 function renderSetupInvite(): Node[] {
   const tpl = document.createElement('template');
-  tpl.innerHTML = BRAND_MARK_SVG; // decorative (aria-hidden in BRAND_MARK_SVG); text carries meaning
+  tpl.innerHTML = BRAND_MARK_SVG; // s4: static-template — decorative (aria-hidden in BRAND_MARK_SVG); text carries meaning
   const mark = tpl.content.firstElementChild as Element;
   const title = document.createElement('p');
   title.className = 'setup-title';
@@ -342,7 +342,7 @@ function renderSaveRow(state: {
     'aria-label',
     isSaved ? `Remove ${state.word} from saved words` : `Save ${state.word} to your word list`,
   );
-  btn.innerHTML = ICON_STAR; // decorative aria-hidden SVG; name comes from aria-label
+  btn.innerHTML = ICON_STAR; // s4: static-template — decorative aria-hidden SVG; name comes from aria-label
   const lbl = document.createElement('span');
   lbl.className = 'save-lbl';
   lbl.textContent = isSaved ? 'Saved' : 'Save';
@@ -418,7 +418,7 @@ function renderNudgeRow(state: { word: string }): HTMLElement {
   dismissBtn.type = 'button';
   dismissBtn.className = 'nudge-row__dismiss-btn';
   dismissBtn.setAttribute('aria-label', 'Dismiss nudge');
-  dismissBtn.innerHTML = ICON_CLOSE; // decorative aria-hidden SVG; name comes from aria-label
+  dismissBtn.innerHTML = ICON_CLOSE; // s4: static-template — decorative aria-hidden SVG; name comes from aria-label
   dismissBtn.addEventListener('click', () =>
     dismissBtn.dispatchEvent(new CustomEvent('dismiss-nudge', { bubbles: true, composed: true })),
   );
@@ -522,7 +522,7 @@ export class LookupCard extends HTMLElement {
     bar.className = 'bar';
     const brand = document.createElement('span');
     brand.className = 'brand';
-    brand.innerHTML = `${BRAND_MARK_SVG}<span>AI Dictionary</span>`;
+    brand.innerHTML = `${BRAND_MARK_SVG}<span>AI Dictionary</span>`; // s4: static-template — fixed brand mark + literal label, no model content
     const actions = document.createElement('span');
     actions.className = 'actions';
     if (this.hasAttribute('side-panel')) {
@@ -541,7 +541,7 @@ export class LookupCard extends HTMLElement {
 
     const footer = document.createElement('div');
     footer.className = 'footer';
-    footer.innerHTML = `${ICON_SHIELD}<span>Stays on your device</span>`;
+    footer.innerHTML = `${ICON_SHIELD}<span>Stays on your device</span>`; // s4: static-template — fixed shield icon + literal copy, no model content
 
     // 3px spruce → clay accent strip; decorative (aria-hidden), clipped by the rounded host
     const accent = document.createElement('div');
@@ -568,7 +568,7 @@ export class LookupCard extends HTMLElement {
     // A native tooltip on the icon-only side-panel control (Settings carries a visible word; the
     // bare panel/close glyphs benefit from a hover title — and the handoff specifies title here).
     if (act === 'side-panel') b.title = label;
-    b.innerHTML = icon; // decorative aria-hidden SVG; accessible name comes from aria-label
+    b.innerHTML = icon; // s4: static-template — icon param comes from a fixed internal set; decorative aria-hidden SVG, accessible name comes from aria-label
     // Settings carries a visible "Settings" word so it reads as a control, not a twin of the
     // bare X. aria-label still wins as the accessible name, so this never double-announces.
     if (act === 'settings') {

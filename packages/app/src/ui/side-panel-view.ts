@@ -96,7 +96,7 @@ footer svg{width:13px;height:13px;flex:none}
 function renderEmpty(): Node[] {
   const wrap = document.createElement('div');
   wrap.className = 'empty';
-  // Brand mark is decorative (aria-hidden inside BRAND_MARK_SVG); the text carries the meaning.
+  // s4: static-template — brand mark is decorative (aria-hidden inside BRAND_MARK_SVG); the text carries the meaning.
   wrap.innerHTML =
     BRAND_MARK_SVG +
     '<p class="empty-title">Select a word on any page</p>' +
@@ -126,14 +126,14 @@ export class SidePanelView extends HTMLElement {
     const header = document.createElement('header');
     const brand = document.createElement('span');
     brand.className = 'brand';
-    brand.innerHTML = `${BRAND_MARK_SVG}<span>AI Dictionary</span>`;
+    brand.innerHTML = `${BRAND_MARK_SVG}<span>AI Dictionary</span>`; // s4: static-template — fixed brand mark + literal label, no model content
     // Persistent path to the options page; same `open-settings` contract as the lookup card,
     // caught by the panel's composition root (a trusted page, it calls openOptionsPage itself).
     const settings = document.createElement('button');
     settings.type = 'button';
     settings.className = 'settings';
     settings.setAttribute('aria-label', 'Settings');
-    settings.innerHTML = ICON_SETTINGS; // decorative aria-hidden SVG; name comes from aria-label
+    settings.innerHTML = ICON_SETTINGS; // s4: static-template — decorative aria-hidden SVG; name comes from aria-label
     settings.addEventListener('click', () =>
       this.dispatchEvent(new CustomEvent('open-settings', { bubbles: true, composed: true })),
     );
@@ -162,7 +162,7 @@ export class SidePanelView extends HTMLElement {
     main.append(this.focusEl, this.recentEl);
 
     const footer = document.createElement('footer');
-    footer.innerHTML = `${ICON_SHIELD}<span>Stays on your device</span>`;
+    footer.innerHTML = `${ICON_SHIELD}<span>Stays on your device</span>`; // s4: static-template — fixed shield icon + literal copy, no model content
 
     root.append(accent, header, main, footer);
     this.renderFocus();
@@ -226,7 +226,7 @@ export class SidePanelView extends HTMLElement {
     del.className = 'recent-del';
     del.setAttribute('aria-label', `Delete ${e.word} from history and cache`);
     del.title = 'Delete — the next lookup fetches a fresh definition';
-    del.innerHTML = ICON_TRASH; // decorative aria-hidden SVG; name comes from aria-label
+    del.innerHTML = ICON_TRASH; // s4: static-template — decorative aria-hidden SVG; name comes from aria-label
     del.addEventListener('click', () =>
       this.dispatchEvent(
         new CustomEvent('delete', { detail: { id: e.id }, bubbles: true, composed: true }),

@@ -3,6 +3,8 @@ import {
   sanitizeMarkdown,
   mapError,
   createSaveReplyGuard,
+  classifyInbound,
+  acceptAny,
   type PanelFocusState,
   type SidePanelView,
   type LookupResult,
@@ -244,46 +246,50 @@ async function initFromSettings(): Promise<void> {
   }
 }
 
+// Shape of the mirror message posted by ChromeSidePanelMirror over runtime messaging — not a
+// WireMessage, so classifyInbound is called with the pass-through `acceptAny` parse (S3
+// sender-guard only); the fields are read the same way they were before the refactor.
+interface MirrorMessage {
+  to?: string;
+  state?: string;
+  word?: unknown;
+  payload?: unknown;
+  sentence?: unknown;
+  url?: unknown;
+  title?: unknown;
+}
+
 // Live mirror of the in-page lookup (posted by ChromeSidePanelMirror over runtime messaging).
-chrome.runtime.onMessage.addListener(
-  (
-    msg: {
-      to?: string;
-      state?: string;
-      word?: unknown;
-      payload?: unknown;
-      sentence?: unknown;
-      url?: unknown;
-      title?: unknown;
-    },
-    sender,
-  ) => {
-    // S3: reject anything from outside this extension.
-    if (sender.id !== chrome.runtime.id) return;
-    if (msg.to !== 'side-panel') return;
-    if (msg.state === 'loading') {
-      view.focusState =
-        typeof msg.word === 'string' ? { kind: 'loading', word: msg.word } : { kind: 'loading' };
-    } else if (msg.state === 'result') {
-      if (!isLookupResult(msg.payload)) {
-        console.warn('[side-panel] invalid result payload');
-        return;
-      }
-      view.focusState = resultToFocus(msg.payload);
-      trackSaveContext(msg.payload, {
-        sentence: typeof msg.sentence === 'string' ? msg.sentence : undefined,
-        url: typeof msg.url === 'string' ? msg.url : undefined,
-        title: typeof msg.title === 'string' ? msg.title : undefined,
-      });
-      // The router just appended this lookup to history; pull it into Recent.
-      void refreshRecent();
-    } else if (msg.state === 'error') {
-      view.focusState = { kind: 'error', error: msg.payload as LookupError };
+chrome.runtime.onMessage.addListener((msg: unknown, sender) => {
+  // S3: reject anything from outside this extension.
+  const decision = classifyInbound(msg, sender.id, chrome.runtime.id, acceptAny);
+  if (decision.action !== 'route') return;
+  const mirrorMsg = decision.msg as MirrorMessage;
+  if (mirrorMsg.to !== 'side-panel') return;
+  if (mirrorMsg.state === 'loading') {
+    view.focusState =
+      typeof mirrorMsg.word === 'string'
+        ? { kind: 'loading', word: mirrorMsg.word }
+        : { kind: 'loading' };
+  } else if (mirrorMsg.state === 'result') {
+    if (!isLookupResult(mirrorMsg.payload)) {
+      console.warn('[side-panel] invalid result payload');
+      return;
     }
-    // `state === 'close'` (the in-page card was dismissed) is intentionally ignored: the panel
-    // is persistent and keeps showing the last lookup.
-  },
-);
+    view.focusState = resultToFocus(mirrorMsg.payload);
+    trackSaveContext(mirrorMsg.payload, {
+      sentence: typeof mirrorMsg.sentence === 'string' ? mirrorMsg.sentence : undefined,
+      url: typeof mirrorMsg.url === 'string' ? mirrorMsg.url : undefined,
+      title: typeof mirrorMsg.title === 'string' ? mirrorMsg.title : undefined,
+    });
+    // The router just appended this lookup to history; pull it into Recent.
+    void refreshRecent();
+  } else if (mirrorMsg.state === 'error') {
+    view.focusState = { kind: 'error', error: mirrorMsg.payload as LookupError };
+  }
+  // `state === 'close'` (the in-page card was dismissed) is intentionally ignored: the panel
+  // is persistent and keeps showing the last lookup.
+});
 
 // On boot, recover the lookup the panel may have missed: when the reader clicks "Open in side
 // panel", the SW caches that lookup, but a freshly-opened panel might not have its onMessage

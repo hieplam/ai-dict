@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { WireMessageSchema, WireReplySchema, wireJsonSchema } from '../src/wire';
+import { mapError } from '../src/index';
+import { toLookupError } from '../src/app/router';
 
 describe('wire-schema', () => {
   it('accepts a valid lookup message', () => {
@@ -555,5 +557,80 @@ describe('errlog wire messages', () => {
       error: { code: 'NETWORK', message: 'x', retryable: true, bogus: 1 },
     };
     expect(WireReplySchema.safeParse(reply).success).toBe(false);
+  });
+});
+
+// typed-errors: the wire-flatten contract. GeminiLookupClient (and every LookupClient) throws
+// via `Object.assign(new Error(msg), lookupError)` (rule-typed-errors) — a raw JS Error whose
+// `message` is a NON-enumerable own property. router.ts's toLookupError flattens that into a
+// plain object before it is ever placed on an error reply, specifically so `message` survives
+// the chrome.runtime wire's JSON.stringify/JSON.parse round-trip. This suite pins that behavior
+// for every error-reply shape the router can produce (grepped `toLookupError(` call sites in
+// router.ts: the 'lookup' reply at ~line 168 and the 'connection.test' reply at ~line 210).
+describe('typed-errors: wire-flatten contract (rule-typed-errors)', () => {
+  // Builds a thrown error exactly the way a real LookupClient does, so the test exercises the
+  // production construction path rather than a hand-rolled stand-in.
+  function thrownFrom(input: Parameters<typeof mapError>[0]): unknown {
+    const mapped = mapError(input);
+    return Object.assign(new Error(mapped.message), mapped);
+  }
+
+  function roundTripReply(reply: unknown): { error: Record<string, unknown> } {
+    return JSON.parse(JSON.stringify(reply)) as { error: Record<string, unknown> };
+  }
+
+  function assertErrorSurvivesRoundTrip(error: Record<string, unknown>): void {
+    for (const key of ['code', 'message', 'retryable']) {
+      expect(
+        Object.prototype.hasOwnProperty.call(error, key),
+        `expected round-tripped error to have own enumerable key "${key}"`,
+      ).toBe(true);
+    }
+    expect(Object.keys(error)).toEqual(expect.arrayContaining(['code', 'message', 'retryable']));
+  }
+
+  it('a "lookup" error reply built from an http-mapped error round-trips code/message/retryable', () => {
+    const err = thrownFrom({ kind: 'http', status: 503, provider: 'gemini' });
+    const reply = { ok: false, type: 'lookup', error: toLookupError(err), requestId: 'r1' };
+    const roundTripped = roundTripReply(reply);
+    assertErrorSurvivesRoundTrip(roundTripped.error);
+    expect(roundTripped.error.code).toBe('NETWORK');
+    expect(roundTripped.error.retryable).toBe(true);
+    expect(typeof roundTripped.error.message).toBe('string');
+    expect((roundTripped.error.message as string).length).toBeGreaterThan(0);
+  });
+
+  it('a "connection.test" error reply built from a no-key error round-trips code/message/retryable', () => {
+    const err = thrownFrom({ kind: 'no-key' });
+    const reply = { ok: false, type: 'connection.test', error: toLookupError(err) };
+    const roundTripped = roundTripReply(reply);
+    assertErrorSurvivesRoundTrip(roundTripped.error);
+    expect(roundTripped.error.code).toBe('NO_KEY');
+    expect(roundTripped.error.retryable).toBe(false);
+    expect(typeof roundTripped.error.message).toBe('string');
+    expect((roundTripped.error.message as string).length).toBeGreaterThan(0);
+  });
+
+  it('a "lookup" error reply built from a timeout-mapped error also round-trips (a third mapError kind)', () => {
+    const err = thrownFrom({ kind: 'timeout' });
+    const reply = { ok: false, type: 'lookup', error: toLookupError(err), requestId: 'r2' };
+    const roundTripped = roundTripReply(reply);
+    assertErrorSurvivesRoundTrip(roundTripped.error);
+    expect(roundTripped.error.code).toBe('NETWORK');
+    expect(roundTripped.error.retryable).toBe(true);
+    expect(typeof roundTripped.error.message).toBe('string');
+    expect((roundTripped.error.message as string).length).toBeGreaterThan(0);
+  });
+
+  // Negative control: a raw Error's `message` is set by the Error constructor as a
+  // NON-enumerable own property, so JSON.stringify never visits it and JSON.parse comes back
+  // without it. This is exactly the failure mode toLookupError's flatten-to-plain-object exists
+  // to prevent (see router.ts's comment beside toLookupError) — without the flatten, an error
+  // reply would arrive at the card as `{}` and render an empty error.
+  it('[negative control] a raw `new Error("x")` LOSES `message` over the same JSON round-trip', () => {
+    const raw = new Error('x');
+    const roundTripped = JSON.parse(JSON.stringify(raw)) as Record<string, unknown>;
+    expect(Object.keys(roundTripped)).not.toContain('message');
+    expect(roundTripped.message).toBeUndefined();
   });
 });
