@@ -1,1 +1,28 @@
-{}
+{
+  "rule-token-law": [
+    {
+      "path": "packages/extension-chrome/src/sw.ts",
+      "reason": "chrome.action.setBadgeBackgroundColor paints the extension toolbar badge outside any DOM the extension styles, so it cannot read a CSS custom property and needs a literal color."
+    },
+    {
+      "path": "design-system/tokens.css",
+      "reason": "the portable token export mirroring tokens.ts — a definition file, not a consumer."
+    },
+    {
+      "path": "design-system/AI Dictionary Design System.html",
+      "reason": "the living visual reference embedding the same token literals to drive its Sepia/Dark/Contrast toggle demo — a definition, not a consuming component."
+    },
+    {
+      "path": "docs/index.html",
+      "reason": "the public GitHub Pages landing page can't import a TypeScript module, so it embeds its own copy of the Paperlight token literals inside its own :root[data-ad-theme=...] definition blocks; the rest of its stylesheet consumes var(--ad-*) only."
+    },
+    {
+      "path": "packages/extension-chrome/scripts/generate-brand-assets.mjs",
+      "reason": "a standalone brand/icon-generation script with its own fixed brand palette for store icon assets, unrelated to the extension's runtime theming."
+    },
+    {
+      "path": "scripts/hard-rule/check-token-law.mjs",
+      "reason": "the scanner's own pattern definitions and rule ids necessarily spell out the literal banned substrings (oklch(, prefers-color-scheme) it detects in code — it is the detector, not a themed UI component consuming tokens."
+    }
+  ]
+}
