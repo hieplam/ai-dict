@@ -71,7 +71,9 @@ export interface RouterDeps {
   };
 }
 
-function toLookupError(err: unknown): LookupError {
+// Exported (visibility-only change) so the wire-schema contract suite can round-trip the exact
+// production flatten path — see typed-errors' wire-flatten test in test/wire-schema.test.ts.
+export function toLookupError(err: unknown): LookupError {
   const e = isLookupError(err) ? err : mapError({ kind: 'thrown', error: err });
   // Normalise to a PLAIN object before it crosses the chrome.runtime message boundary.
   // A LookupError thrown by GeminiLookupClient is `Object.assign(new Error(msg), …)`, whose
