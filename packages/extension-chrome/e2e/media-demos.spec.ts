@@ -3,8 +3,10 @@
  * theme-switch walkthrough, recorded as Playwright videos and converted to the
  * mp4+gif pairs under docs/media/demos/. Not part of the normal suite — no
  * behavioural assertions beyond "the flow rendered" (the *.spec.ts siblings own
- * those). The hero videos (context-bank, define flow) come from
- * context-bank-demo.spec.ts and readme-demo.spec.ts.
+ * those). The define-flow hero video comes from readme-demo.spec.ts; the
+ * context-bank hero video under docs/media/demos/context-bank/ is a frozen
+ * recorded asset (its regenerator spec was retired — the disambiguation
+ * behavior it demonstrated now has real assertions in lookup.spec.ts).
  *
  * Each test drives its own recording context and saves the finished clip to a
  * stable path via video.saveAs():

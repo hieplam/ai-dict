@@ -34,18 +34,18 @@ Rules of the file:
 
 ## A. Selection & trigger (in-page)
 
-| Case                                                               | Status                              |
-| ------------------------------------------------------------------ | ----------------------------------- |
-| Collapsed selection shows no trigger                               | [covered] `selection.spec.ts`       |
-| Multi-word phrase selection shows trigger and renders a result     | [covered] `selection.spec.ts`       |
-| Dismiss then re-select shows the trigger again                     | [covered] `selection.spec.ts`       |
-| Define click works under hostile z-index stacking contexts         | [covered] `define-fix-demo.spec.ts` |
-| Selection inside `<textarea>` / `<input>` — behavior unknown       | [gap:P2]                            |
-| Selection inside `contenteditable` — behavior unknown              | [gap:P2]                            |
-| Selection inside an iframe — behavior unknown                      | [gap:P2]                            |
-| CJK / diacritics / non-Latin word round-trips correctly            | [gap:P2]                            |
-| Very long (paragraph-length) selection — trigger + prompt behavior | [gap:P2]                            |
-| Trigger position after page scroll / window resize                 | [gap:P2]                            |
+| Case                                                               | Status                        |
+| ------------------------------------------------------------------ | ----------------------------- |
+| Collapsed selection shows no trigger                               | [covered] `selection.spec.ts` |
+| Multi-word phrase selection shows trigger and renders a result     | [covered] `selection.spec.ts` |
+| Dismiss then re-select shows the trigger again                     | [covered] `selection.spec.ts` |
+| Define click works under hostile z-index stacking contexts         | [covered] `selection.spec.ts` |
+| Selection inside `<textarea>` / `<input>` — behavior unknown       | [gap:P2]                      |
+| Selection inside `contenteditable` — behavior unknown              | [gap:P2]                      |
+| Selection inside an iframe — behavior unknown                      | [gap:P2]                      |
+| CJK / diacritics / non-Latin word round-trips correctly            | [gap:P2]                      |
+| Very long (paragraph-length) selection — trigger + prompt behavior | [gap:P2]                      |
+| Trigger position after page scroll / window resize                 | [gap:P2]                      |
 
 ## B. Lookup core flow
 
@@ -55,7 +55,7 @@ Rules of the file:
 | Cache miss calls the provider and renders the result            | [covered] `lookup.spec.ts`                 |
 | Repeat lookup of the same word served from cache                | [covered] `lookup.spec.ts`                 |
 | Cooldown: rapid second Define within 2s blocked, no extra call  | [covered] `cooldown.spec.ts`               |
-| Context disambiguation: same word, two sentences, two senses    | [covered] `context-bank-demo.spec.ts`      |
+| Context disambiguation: same word, two sentences, two senses    | [covered] `lookup.spec.ts`                 |
 | New selection while a lookup is in-flight (abort / ordering)    | [gap:P1]                                   |
 | Dismiss the card while a lookup is pending — no orphaned render | [covered] `lookup-pending-dismiss.spec.ts` |
 | In-page card loading state (before result arrives)              | [gap:P2]                                   |
