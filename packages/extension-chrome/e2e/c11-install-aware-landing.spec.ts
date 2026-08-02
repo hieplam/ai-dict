@@ -15,63 +15,40 @@ const EXTENSION_VERSION = (JSON.parse(readFileSync(manifestPath, 'utf8')) as { v
 
 const LANDING_URL = 'https://hieplam.github.io/ai-dict/';
 
-// Byte-for-byte the same script docs/index.html ships (design spec §3.3(d) / plan Task 3 Step 4).
-const INSTALL_STATE_SCRIPT = `
-  (function () {
-    var COPY = {
-      en: {
-        ctaInstalled: 'Open setup',
-        ctaReady: 'You’re all set ✓',
-        statusInstalled: 'Install ✓ — next: add your key.',
-        statusReady: 'All set ✓ — you’re ready to read.',
-      },
-      vi: {
-        ctaInstalled: 'Mở phần thiết lập',
-        ctaReady: 'Đã kích hoạt ✓',
-        statusInstalled:
-          'Đã cài ✓ — tiếp theo: thêm khoá của bạn.',
-        statusReady: 'Đã xong ✓ — bạn đã sẵn sàng đọc.',
-      },
-    };
+// Extract the REAL install-state script straight out of docs/index.html — the actual file
+// GitHub Pages serves in production — instead of hand-copying it into a spec-local constant.
+// A hand-copy can silently drift from the real script (someone edits docs/index.html, this spec
+// keeps testing its own stale copy, and the drift goes undetected); reading the real file makes
+// any future edit to the real script show up here automatically, and any structural drift (the
+// marker moving, the script tag no longer immediately following it) throws loudly below instead
+// of quietly testing nothing.
+const docsIndexPath = path.resolve(
+  path.dirname(fileURLToPath(import.meta.url)),
+  '../../../docs/index.html',
+);
+const docsIndexHtml = readFileSync(docsIndexPath, 'utf8');
 
-    function applyInstallState() {
-      var root = document.documentElement;
-      var installed = root.getAttribute('data-ad-dict-installed') === 'true';
-      if (!installed) return;
-      var ready = root.getAttribute('data-ad-dict-ready') === 'true';
-      var lang = root.lang === 'vi' ? 'vi' : 'en';
-      var t = COPY[lang];
-
-      var cta = document.getElementById('hero-cta');
-      if (cta) {
-        cta.removeAttribute('data-i18n');
-        if (ready) {
-          cta.textContent = t.ctaReady;
-          cta.removeAttribute('href');
-          cta.setAttribute('aria-disabled', 'true');
-          cta.setAttribute('tabindex', '-1');
-        } else {
-          cta.textContent = t.ctaInstalled;
-          cta.setAttribute('href', '#start');
-          cta.removeAttribute('aria-disabled');
-          cta.removeAttribute('tabindex');
-        }
-      }
-
-      var status = document.getElementById('start-status');
-      if (status) {
-        status.textContent = ready ? t.statusReady : t.statusInstalled;
-        status.hidden = false;
-      }
-    }
-
-    applyInstallState();
-    new MutationObserver(applyInstallState).observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-ad-dict-installed', 'data-ad-dict-ready', 'lang'],
-    });
-  })();
-`;
+const C11_MARKER =
+  '<!-- ====================== C11: INSTALL-AWARE LANDING ====================== -->';
+const markerIndex = docsIndexHtml.indexOf(C11_MARKER);
+if (markerIndex === -1) {
+  throw new Error(
+    `docs/index.html: C11 install-state script marker not found — did the landing page markup change? Expected to find: ${C11_MARKER}`,
+  );
+}
+const afterMarker = docsIndexHtml.slice(markerIndex + C11_MARKER.length);
+const scriptMatch = /^\s*<script>([\s\S]*?)<\/script>/.exec(afterMarker);
+if (!scriptMatch) {
+  throw new Error(
+    'docs/index.html: no <script>...</script> tag immediately follows the C11 install-state marker — did the landing page markup change?',
+  );
+}
+const INSTALL_STATE_SCRIPT = scriptMatch[1];
+if (!INSTALL_STATE_SCRIPT.trim()) {
+  throw new Error(
+    'docs/index.html: the extracted C11 install-state script body is empty — did the landing page markup change?',
+  );
+}
 
 // Minimal local stand-in for docs/index.html's #start/hero markup — mirrors the real structure
 // (design spec §3.3(a)/(b)) plus a bare-bones stand-in for the real language-toggle click handler
