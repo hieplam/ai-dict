@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
+
 import { describe, expect, it } from 'vitest';
 
 import { checkFile, checkRepo, WINDOW_LINES } from './check-msg-gate.mjs';
@@ -77,9 +80,62 @@ describe('checkFile — classifyInbound must gate every onMessage.addListener( s
   });
 });
 
+describe('checkFile — the safari cast idiom (as (fn: T) => void)( must still be recognized', () => {
+  // packages/extension-safari/src/sw.ts:82 registers via a TypeScript cast:
+  //   (browser.runtime.onMessage.addListener as (fn: OnMsgListener) => void)(
+  // There is no `(` immediately after `addListener` (there's ` as (fn: ...) => void)(` in
+  // between), so a scanner keyed on the literal `onMessage.addListener(` (with trailing paren)
+  // never recognizes this as a listener-registration site at all — it silently contributes zero
+  // sites rather than being checked. This must be a real, inspected site, not a blind spot.
+  const file = 'packages/extension-safari/src/sw.ts';
+  const castSrc = [
+    'type OnMsgListener = (msg: unknown, sender: { id?: string }, sendResponse: (r: unknown) => void) => boolean;',
+    '(browser.runtime.onMessage.addListener as (fn: OnMsgListener) => void)(',
+    '  (msg, sender, sendResponse) => {',
+    '    const decision = classifyInbound(msg, sender.id, browser.runtime.id);',
+    '    if (decision.action === "ignore") return false;',
+    '    return true;',
+    '  },',
+    ');',
+  ].join('\n');
+
+  it('recognizes the cast-wrapped registration as a listener site and finds it compliant', () => {
+    expect(checkFile(file, castSrc)).toEqual([]);
+  });
+
+  it('flags the cast-wrapped registration when classifyInbound( is removed from the callback', () => {
+    const mutated = castSrc.replace(
+      '    const decision = classifyInbound(msg, sender.id, browser.runtime.id);\n',
+      '',
+    );
+    const violations = checkFile(file, mutated);
+    expect(violations).toHaveLength(1);
+    expect(violations[0]).toMatchObject({ file, line: 2 });
+  });
+});
+
 describe('checkRepo — integration on this repository', () => {
   it('finds zero violations on the current clean tree', () => {
     const violations = checkRepo(new URL('../..', import.meta.url).pathname);
     expect(violations).toEqual([]);
+  });
+
+  it('actually inspects the real safari cast-idiom site (not a silent blind spot)', () => {
+    // Prove the scanner sees packages/extension-safari/src/sw.ts's real listener registration
+    // (line 82), not just trivially passing because it saw nothing there at all: run checkFile
+    // directly on the real file content, then again with its real classifyInbound( call
+    // stripped, and confirm the mutated version DOES trigger a violation.
+    const repoRoot = new URL('../..', import.meta.url).pathname;
+    const safariFile = 'packages/extension-safari/src/sw.ts';
+    const realSrc = readFileSync(join(repoRoot, safariFile), 'utf8');
+
+    expect(checkFile(safariFile, realSrc)).toEqual([]);
+
+    const realGateLine = 'const decision = classifyInbound(msg, sender.id, browser.runtime.id);';
+    expect(realSrc).toContain(realGateLine);
+    const mutatedSrc = realSrc.replace(realGateLine, '// classifyInbound removed for this test');
+    const violations = checkFile(safariFile, mutatedSrc);
+    expect(violations).toHaveLength(1);
+    expect(violations[0].file).toBe(safariFile);
   });
 });
