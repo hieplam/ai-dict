@@ -308,7 +308,7 @@ export class SettingsForm extends HTMLElement {
     if (this.shadowRoot) return;
     this.root = this.attachShadow({ mode: 'open' });
     adoptStyles(this.root, CSS);
-    this.root.innerHTML = MARKUP;
+    this.root.innerHTML = MARKUP; // s4: static-template — own fixed template (MARKUP const above), no model content
 
     this.q<HTMLButtonElement>('#reveal').addEventListener('click', () => {
       const key = this.q<HTMLInputElement>('#key');

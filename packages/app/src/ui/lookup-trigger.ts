@@ -35,7 +35,7 @@ export class LookupTrigger extends HTMLElement {
     btn.setAttribute('aria-label', 'Look up selected text');
     // Brand mark + visible label. The mark is decorative (aria-hidden in BRAND_MARK_SVG); the
     // button's accessible name comes from aria-label, so the name is stable across states.
-    btn.innerHTML = `${BRAND_MARK_SVG}<span class="label">Define</span>`;
+    btn.innerHTML = `${BRAND_MARK_SVG}<span class="label">Define</span>`; // s4: static-template — fixed brand mark + literal label, no model content
     btn.addEventListener('click', () => {
       // swap label → spinner; `disabled` alone signals unavailability — aria-busy on a
       // disabled button is contradictory (AT removes disabled buttons from the tree).
