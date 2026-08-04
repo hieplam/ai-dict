@@ -1124,7 +1124,7 @@ git commit -m "[B8AnkiCsvExport] feat: mirror the export wiring in Safari option
 
 - Create: `packages/extension-chrome/e2e/anki-export.spec.ts`
 
-- [ ] **Step 1: Write the new e2e spec.** Create
+- [x] **Step 1: Write the new e2e spec.** Create
       `packages/extension-chrome/e2e/anki-export.spec.ts`:
 
 ```ts
@@ -1288,7 +1288,7 @@ cd packages/extension-chrome && bunx playwright test anki-export
 
 Expected: 4 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
