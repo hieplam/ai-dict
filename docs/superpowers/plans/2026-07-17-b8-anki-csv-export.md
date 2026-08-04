@@ -73,7 +73,7 @@ title, savedAt, status` — one row/block per **sense**, not per saved word.
 // New WireReplySchema arm: { ok: true, type: 'saved.list', entries: SavedWordEntry[] }.
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 In `packages/app/test/wire-schema.test.ts`, insert a new `describe` block immediately after the
 existing `describe('saved.save / saved.delete wire messages (B1)', ...)` block's closing `});`
@@ -167,7 +167,7 @@ Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: both new tests fail (`saved.list` is not a valid `WireMessage`/switch case yet — a
 TypeScript compile error surfaces first, matching the "exhaustive switch, no default" guarantee).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 If `saved.list` already exists in `wire.ts`/`router.ts` (landed via another card — B6, B10, and
 B15 pin the identical shape), verify it matches this exact request/reply shape byte-for-byte and
@@ -300,7 +300,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts test/app/router.test
 Expected: all tests pass (5 new wire-schema tests + 2 new router tests + all existing tests
 unchanged).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check

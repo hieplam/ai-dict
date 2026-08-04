@@ -230,6 +230,19 @@
         "properties": {
           "type": {
             "type": "string",
+            "const": "saved.list"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
             "const": "cache.clear"
           }
         },
@@ -689,6 +702,84 @@
           },
           "type": {
             "type": "string",
+            "const": "saved.list"
+          },
+          "entries": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "word": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "learning",
+                    "known"
+                  ]
+                },
+                "savedAt": {
+                  "type": "number"
+                },
+                "senses": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "definition": {
+                        "type": "string"
+                      },
+                      "translation": {
+                        "type": "string"
+                      },
+                      "sentence": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "definition",
+                      "translation",
+                      "sentence",
+                      "url",
+                      "title"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "word",
+                "status",
+                "savedAt",
+                "senses"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "entries"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
             "const": "errlog"
           },
           "consent": {
@@ -738,7 +829,8 @@
               "errlog.set-consent",
               "saved.save",
               "saved.delete",
-              "saved.setStatus"
+              "saved.setStatus",
+              "saved.list"
             ]
           },
           "error": {

@@ -125,6 +125,10 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
     word: z.string(),
     status: z.enum(['learning', 'known']),
   }),
+  // B8: read every saved word (no pagination — mirrors savedWordsList's "full list" contract,
+  // saved-words-policy.ts:108-109). Read-only; the only caller today is the Anki/CSV/Markdown
+  // export flow in settings-form.ts.
+  z.strictObject({ type: z.literal('saved.list') }),
   z.object({ type: z.literal('cache.clear') }),
   z.object({ type: z.literal('connection.test') }),
   // Open the extension's options page. Sent by a content script (which cannot call
@@ -155,6 +159,7 @@ const MessageTypeEnum = z.enum([
   'saved.save',
   'saved.delete',
   'saved.setStatus',
+  'saved.list',
 ]);
 
 export const WireReplySchema = z.union([
@@ -173,6 +178,13 @@ export const WireReplySchema = z.union([
   }),
   z.object({ ok: z.literal(true), type: z.literal('ack') }),
   z.object({ ok: z.literal(true), type: z.literal('saved'), entry: SavedWordEntrySchema }),
+  // B8: reply type is 'saved.list' (bound to the message's own name), not a second synonym for
+  // 'saved' — 'saved' already means "one entry" (saved.save/setStatus replies); see design spec §2.
+  z.object({
+    ok: z.literal(true),
+    type: z.literal('saved.list'),
+    entries: z.array(SavedWordEntrySchema),
+  }),
   z.object({
     ok: z.literal(true),
     type: z.literal('errlog'),
