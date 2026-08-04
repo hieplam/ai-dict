@@ -1309,7 +1309,7 @@ git commit -m "[B8AnkiCsvExport] feat: e2e coverage for TSV/CSV/Markdown export 
 
 **Files:** none (verification + PR only).
 
-- [ ] **Step 1: Run the full gate.**
+- [x] **Step 1: Run the full gate.**
 
 ```
 cd packages/app && bun run typecheck
@@ -1324,9 +1324,9 @@ bun run build:safari
 cd packages/extension-chrome && bunx playwright test anki-export options-actions saved-word
 ```
 
-Expected: typecheck clean on all three packages; the full Vitest suite green (690 pre-existing +
-this card's new unit tests: 5 wire-schema + 2 router + 15 anki-export + updated settings-form
-event tests); lint/format clean; both extension builds succeed (Chrome with the env key cleared);
+Expected: typecheck clean on all three packages; the full Vitest suite green (703 pre-existing +
+this card's new unit tests: 5 wire-schema + 2 router + 16 anki-export + updated settings-form
+event tests, 726 total); lint/format clean; both extension builds succeed (Chrome with the env key cleared);
 `anki-export.spec.ts` (this card's new suite), `options-actions.spec.ts` (regression guard for the
 rest of the options page this task's edits share a file with), and `saved-word.spec.ts`
 (regression guard confirming `saved.save`/`saved:*` storage still behaves exactly as B1 shipped
@@ -1348,3 +1348,14 @@ Body must include:
 - Merge: **regular merge commit only — squash prohibited** (owner ruling 2026-07-16).
 
 No `pr-assets/*` branch is created for this card (no media evidence, per policy).
+
+> Step 2 status (audit-fix pass, 2026-08-05): Step 1's gate reran clean (typecheck x3, full
+> Vitest suite, lint, format:check, both builds, and the three e2e specs — 18/18 passed). Step 2
+> (push branch + `gh pr create`) was intentionally NOT run in this pass: the dispatching session
+> constrained this pass to "Do not push." Opening the PR is the one remaining action and must be
+> done by a session with push permission. Include this waiver verbatim in the PR body per the
+> flake-triage protocol: the `<settings-form> sticky save bar + dirty state (A16) > has no axe
+violations with the dirty cue shown` test (`packages/app/test/ui/settings-form.test.ts`) times
+> out intermittently at its hardcoded 5000ms limit under `bun run --filter @ai-dict/app test --
+coverage` — reproduced 3/3 on this branch and 2/2 on `origin/master` HEAD (15b94f3) in an
+> isolated scratch worktree, so it predates this card and is not a B8 regression.
