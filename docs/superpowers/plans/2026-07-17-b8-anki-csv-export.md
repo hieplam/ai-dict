@@ -986,7 +986,7 @@ task's correctness is proven by typecheck + the shared `settings-form.test.ts` (
 the component itself; Safari-specific behavior is limited to this file's plumbing, identical to
 Chrome's.
 
-- [ ] **Step 1: Implement.** In `packages/extension-safari/src/options.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-safari/src/options.ts`:
 
 1. Add the three new named imports (right after `buildHistoryExport,`):
 
@@ -1102,7 +1102,7 @@ cd packages/extension-safari && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-safari && bun run typecheck && cd ../.. && bun run lint && bun run format:check
