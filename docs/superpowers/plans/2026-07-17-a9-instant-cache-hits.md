@@ -511,7 +511,7 @@ git commit -m "[A9InstantCacheHits] feat: thread fromCache into the side panel's
 
 - Create: `packages/extension-chrome/e2e/a9-instant-cache-hits.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create
+- [x] **Step 1: Write the spec.** Create
       `packages/extension-chrome/e2e/a9-instant-cache-hits.spec.ts`:
 
 ```ts
@@ -640,7 +640,7 @@ cd packages/extension-chrome && bunx playwright test a9-instant-cache-hits
 
 Expected: 4 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
