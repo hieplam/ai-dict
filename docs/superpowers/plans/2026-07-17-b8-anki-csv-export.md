@@ -682,7 +682,7 @@ git commit -m "[B8AnkiCsvExport] feat: add buildAnkiTsv/Csv/Markdown pure builde
 // 'export-anki-tsv' | 'export-anki-csv' | 'export-anki-md'
 ```
 
-- [ ] **Step 1: Write the failing tests.** In `packages/app/test/ui/settings-form.test.ts`, replace
+- [x] **Step 1: Write the failing tests.** In `packages/app/test/ui/settings-form.test.ts`, replace
       the existing `'emits the four action events'` test (currently lines 61-83) with a
       seven-event version:
 
@@ -766,7 +766,7 @@ Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: both updated tests fail (`#export-anki-tsv`/`#export-anki-csv`/`#export-anki-md` do not
 exist yet — `querySelector` returns `null`, the `!` assertion throws).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`, insert a new `<section>`
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`, insert a new `<section>`
       into `MARKUP` immediately after the existing `sec-priv` (Privacy & data) section's closing
       `</section>` and before the `<div class="savebar">`:
 
@@ -803,7 +803,7 @@ cd packages/app && bunx vitest run test/ui/settings-form.test.ts
 
 Expected: all tests pass (including the two updated seven-event tests).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
