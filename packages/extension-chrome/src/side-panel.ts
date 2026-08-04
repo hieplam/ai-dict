@@ -121,6 +121,10 @@ function resultToFocus(r: LookupResult): PanelFocusState {
     safeHtml: sanitizeMarkdown(r.markdown),
     word: r.word,
     target: r.target,
+    // A9: fromCache is a required boolean on LookupResult; thread it unconditionally, same as
+    // word/target above — see inline-bottom-sheet-renderer.ts's identical choice (A9 design
+    // spec §3.3/§3.4).
+    fromCache: r.fromCache,
     ...(r.provider !== undefined ? { provider: r.provider } : {}),
     ...(r.fallbackFrom !== undefined ? { fallbackFrom: r.fallbackFrom } : {}),
     // B7: nudge is a transient per-reply annotation on LookupResult (never persisted); thread it

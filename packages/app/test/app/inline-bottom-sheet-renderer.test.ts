@@ -334,3 +334,17 @@ describe('InlineBottomSheetRenderer — repeat-offender nudge (B7)', () => {
     expect(h.querySelector('bottom-sheet')).toBeNull();
   });
 });
+
+describe('InlineBottomSheetRenderer — instant-cache badge (A9)', () => {
+  it('renderResult reflects r.fromCache=true', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderResult({ ...result, fromCache: true });
+    expect(card(h).querySelector('.cache-badge')).not.toBeNull();
+  });
+
+  it('renderResult reflects r.fromCache=false (the shared fixture default)', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderResult(result);
+    expect(card(h).querySelector('.cache-badge')).toBeNull();
+  });
+});

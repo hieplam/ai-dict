@@ -72,7 +72,7 @@ structurally rather than with a flaky ms-level CI gate — is in
 This task has no red/green cycle (it changes zero executable lines), so its "test" is a
 before/after regression run of the existing suite proving byte-for-byte identical behavior.
 
-- [ ] **Step 1: Run the existing suite first (baseline).**
+- [x] **Step 1: Run the existing suite first (baseline).**
 
 ```
 cd packages/app && bunx vitest run test/cache-policy.test.ts
@@ -80,7 +80,7 @@ cd packages/app && bunx vitest run test/cache-policy.test.ts
 
 Expected: all tests pass (baseline, before any edit).
 
-- [ ] **Step 2: Add the comment.** In `packages/app/src/domain/cache-policy.ts`, insert this doc
+- [x] **Step 2: Add the comment.** In `packages/app/src/domain/cache-policy.ts`, insert this doc
       comment immediately above the existing `deriveCacheKey` function (currently line 15,
       `export function deriveCacheKey(...)`), with NO other change to the function body:
 
@@ -99,7 +99,7 @@ export function deriveCacheKey(req: { word: string; context: string; target: str
 }
 ```
 
-- [ ] **Step 3: Re-run the same suite (confirm zero drift).**
+- [x] **Step 3: Re-run the same suite (confirm zero drift).**
 
 ```
 cd packages/app && bunx vitest run test/cache-policy.test.ts
@@ -108,7 +108,7 @@ cd packages/app && bunx vitest run test/cache-policy.test.ts
 Expected: identical pass count to Step 1 — same tests, same result, proving the comment changed
 nothing executable.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -141,7 +141,7 @@ fromCache?: boolean;
 // `if (!state.provider) return null;` to `if (!state.provider && state.fromCache !== true) return null;`
 ```
 
-- [ ] **Step 1: Write the failing tests.** Insert a new `describe` block into
+- [x] **Step 1: Write the failing tests.** Insert a new `describe` block into
       `packages/app/test/ui/lookup-card.test.ts` immediately after the existing provider-metadata
       block's closing `});` (currently line 466, right before
       `describe('<lookup-card> idiom label + force-literal button (A8)', ...)`):
@@ -214,7 +214,7 @@ Expected: the 4 new tests fail — `CardState` has no `fromCache` field yet (a t
 `el.state = {..., fromCache: true}` /`renderCardState({..., fromCache: true})`), and no
 `.cache-badge` exists in the render output.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
 
 1. Add `fromCache?: boolean` to `CardState`'s `'result'` variant, right after the existing `nudge?`
    field (currently `lookup-card.ts:51-53`):
@@ -346,7 +346,7 @@ lookup-card .cache-badge {
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all tests pass (existing + 4 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -372,7 +372,7 @@ git commit -m "[A9InstantCacheHits] feat: render a Cached badge in the lookup-ca
 **Interfaces:** none new — `renderResult`'s signature is unchanged; only the `CardState` object
 it builds internally gains one field.
 
-- [ ] **Step 1: Write the failing tests.** Append to
+- [x] **Step 1: Write the failing tests.** Append to
       `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`, as a new `describe` block at
       the very end of the file (after the existing `describe('InlineBottomSheetRenderer —
 repeat-offender nudge (B7)', ...)` block's closing `});`, currently the file's last line):
@@ -398,7 +398,7 @@ Expected: the first new test fails (`.cache-badge` is null — `renderResult` ne
 `fromCache` yet); the second passes vacuously (already null before this change) but is kept as
 the paired regression guard.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, add one
+- [x] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, add one
       line to the object literal inside `renderResult` (currently `inline-bottom-sheet-renderer.ts:93-105`),
       right after the existing `target: r.target,` line:
 
@@ -426,7 +426,7 @@ this.setState({
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: all tests pass (existing + 2 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -453,7 +453,7 @@ No dedicated unit test exists for `side-panel.ts` in this repo — it is a compo
 proven by Task 5's e2e scenario 3; still run the typecheck gate below so a regression elsewhere
 in this file (which many other cards also touch) is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`, add one line to
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`, add one line to
       the object `resultToFocus` returns (currently `side-panel.ts:114-128`), right after the
       existing `target: r.target,` line:
 
@@ -489,7 +489,7 @@ Expected: clean (no type errors) — `fromCache` is already an optional field on
 (Task 2), so assigning `PanelFocusState`'s `'result'` variant (a `CardState` alias) the value of
 `r.fromCache` typechecks.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -511,7 +511,7 @@ git commit -m "[A9InstantCacheHits] feat: thread fromCache into the side panel's
 
 - Create: `packages/extension-chrome/e2e/a9-instant-cache-hits.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create
+- [x] **Step 1: Write the spec.** Create
       `packages/extension-chrome/e2e/a9-instant-cache-hits.spec.ts`:
 
 ```ts
@@ -640,7 +640,7 @@ cd packages/extension-chrome && bunx playwright test a9-instant-cache-hits
 
 Expected: 4 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome

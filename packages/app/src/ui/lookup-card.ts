@@ -51,6 +51,12 @@ export type CardState =
       /** B7: whether to show the repeat-offender nudge banner — stamped once, ever, per word by
        * the router the moment its within-30-day history count first crosses the threshold. */
       nudge?: boolean;
+      /** A9: true when this result was served from the local cache (zero tokens, no network
+       * call) — see domain/cache-policy.ts's cacheGet. Renders a leading "Cached" badge in the
+       * meta-row. Always explicit true/false when the composition root threads a real
+       * LookupResult (LookupResult.fromCache is a required field); absent only for hand-built
+       * test/legacy CardState literals that predate this field. */
+      fromCache?: boolean;
     }
   | { kind: 'error'; error: LookupError };
 
@@ -144,6 +150,7 @@ button[data-act="settings"] .lbl{line-height:1}
 // and inherit into its light-DOM children, so these page-level rules resolve the themed values.
 const CARD_DOC_CSS = `@keyframes spin{to{transform:rotate(360deg)}}
 lookup-card .prov-badge{border:1px solid var(--ad-line);border-radius:var(--adp-radius-control);padding:1px 8px;color:var(--ad-ink-soft)}
+lookup-card .cache-badge{border:1px solid var(--ad-accent);border-radius:var(--adp-radius-control);padding:1px 8px;color:var(--ad-accent-ink);background:var(--ad-accent-soft)}
 lookup-card .fallback-note{font-style:italic;color:var(--ad-ink-faint)}
 lookup-card .prov-switch{margin-left:auto;border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:2px 10px;font:inherit;font-size:var(--adp-text-2xs);cursor:pointer}
 lookup-card .prov-switch:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
@@ -427,10 +434,11 @@ function renderNudgeRow(state: { word: string }): HTMLElement {
 }
 
 /**
- * The metadata row shown beneath a result: a provider badge naming the answering
- * provider, an optional fallback note when a non-primary answered, and a one-shot
- * provider picker when ≥2 providers are configured. Returns null when no provider
- * is known (e.g. entries cached before this feature) — nothing to show.
+ * The metadata row shown beneath a result: a leading Cached badge on a cache hit
+ * (A9), a provider badge naming the answering provider, an optional fallback note
+ * when a non-primary answered, and a one-shot provider picker when ≥2 providers
+ * are configured. Returns null only when there is nothing to show at all — no
+ * provider known (e.g. entries cached before this feature) AND not a cache hit.
  *
  * Descendants of this row are styled by the document-scoped rules in
  * `CARD_DOC_CSS` (::slotted cannot reach a slotted node's own descendants).
@@ -439,71 +447,84 @@ function renderMetaRow(state: {
   provider?: Provider;
   fallbackFrom?: Provider;
   providers?: Provider[];
+  fromCache?: boolean;
 }): HTMLElement | null {
-  if (!state.provider) return null;
+  if (!state.provider && state.fromCache !== true) return null;
   const row = document.createElement('div');
   row.className = 'meta-row';
 
-  const badge = document.createElement('span');
-  badge.className = 'prov-badge';
-  badge.textContent = providerLabel(state.provider);
-  row.append(badge);
-
-  if (state.fallbackFrom) {
-    const note = document.createElement('span');
-    note.className = 'fallback-note';
-    note.textContent = `${providerLabel(state.fallbackFrom)} unavailable — answered by ${providerLabel(state.provider)}`;
-    row.append(note);
+  // A9: leads the row — the card's own payoff is "you can see it was free", so this is the
+  // first thing the eye should land on for a repeat lookup, ahead of which provider answered.
+  if (state.fromCache === true) {
+    const cacheBadge = document.createElement('span');
+    cacheBadge.className = 'cache-badge';
+    cacheBadge.textContent = 'Cached';
+    cacheBadge.title = 'Served from your local cache — no tokens used';
+    row.append(cacheBadge);
   }
 
-  if (state.providers && state.providers.length >= 2) {
-    const current = state.provider;
-    const switchBtn = document.createElement('button');
-    switchBtn.type = 'button';
-    switchBtn.className = 'prov-switch';
-    switchBtn.setAttribute('aria-haspopup', 'listbox');
-    switchBtn.setAttribute('aria-expanded', 'false');
-    switchBtn.textContent = 'Switch';
+  if (state.provider) {
+    const badge = document.createElement('span');
+    badge.className = 'prov-badge';
+    badge.textContent = providerLabel(state.provider);
+    row.append(badge);
 
-    const menu = document.createElement('span');
-    menu.className = 'prov-menu';
-    menu.setAttribute('role', 'listbox');
-    menu.hidden = true;
-
-    for (const p of state.providers) {
-      const opt = document.createElement('button');
-      opt.type = 'button';
-      opt.setAttribute('role', 'option');
-      opt.dataset['provider'] = p;
-      opt.textContent = providerLabel(p);
-      const isCurrent = p === current;
-      opt.setAttribute('aria-selected', String(isCurrent));
-      if (isCurrent) {
-        opt.disabled = true;
-      } else {
-        opt.addEventListener('click', () => {
-          menu.hidden = true;
-          switchBtn.setAttribute('aria-expanded', 'false');
-          // Ask the shell to re-run this lookup once against the picked provider.
-          opt.dispatchEvent(
-            new CustomEvent('switch-provider', {
-              detail: { provider: p },
-              bubbles: true,
-              composed: true,
-            }),
-          );
-        });
-      }
-      menu.append(opt);
+    if (state.fallbackFrom) {
+      const note = document.createElement('span');
+      note.className = 'fallback-note';
+      note.textContent = `${providerLabel(state.fallbackFrom)} unavailable — answered by ${providerLabel(state.provider)}`;
+      row.append(note);
     }
 
-    switchBtn.addEventListener('click', () => {
-      const willOpen = menu.hidden;
-      menu.hidden = !willOpen;
-      switchBtn.setAttribute('aria-expanded', String(willOpen));
-    });
+    if (state.providers && state.providers.length >= 2) {
+      const current = state.provider;
+      const switchBtn = document.createElement('button');
+      switchBtn.type = 'button';
+      switchBtn.className = 'prov-switch';
+      switchBtn.setAttribute('aria-haspopup', 'listbox');
+      switchBtn.setAttribute('aria-expanded', 'false');
+      switchBtn.textContent = 'Switch';
 
-    row.append(switchBtn, menu);
+      const menu = document.createElement('span');
+      menu.className = 'prov-menu';
+      menu.setAttribute('role', 'listbox');
+      menu.hidden = true;
+
+      for (const p of state.providers) {
+        const opt = document.createElement('button');
+        opt.type = 'button';
+        opt.setAttribute('role', 'option');
+        opt.dataset['provider'] = p;
+        opt.textContent = providerLabel(p);
+        const isCurrent = p === current;
+        opt.setAttribute('aria-selected', String(isCurrent));
+        if (isCurrent) {
+          opt.disabled = true;
+        } else {
+          opt.addEventListener('click', () => {
+            menu.hidden = true;
+            switchBtn.setAttribute('aria-expanded', 'false');
+            // Ask the shell to re-run this lookup once against the picked provider.
+            opt.dispatchEvent(
+              new CustomEvent('switch-provider', {
+                detail: { provider: p },
+                bubbles: true,
+                composed: true,
+              }),
+            );
+          });
+        }
+        menu.append(opt);
+      }
+
+      switchBtn.addEventListener('click', () => {
+        const willOpen = menu.hidden;
+        menu.hidden = !willOpen;
+        switchBtn.setAttribute('aria-expanded', String(willOpen));
+      });
+
+      row.append(switchBtn, menu);
+    }
   }
 
   return row;
