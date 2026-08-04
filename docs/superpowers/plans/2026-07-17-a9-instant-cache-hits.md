@@ -372,7 +372,7 @@ git commit -m "[A9InstantCacheHits] feat: render a Cached badge in the lookup-ca
 **Interfaces:** none new — `renderResult`'s signature is unchanged; only the `CardState` object
 it builds internally gains one field.
 
-- [ ] **Step 1: Write the failing tests.** Append to
+- [x] **Step 1: Write the failing tests.** Append to
       `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`, as a new `describe` block at
       the very end of the file (after the existing `describe('InlineBottomSheetRenderer —
 repeat-offender nudge (B7)', ...)` block's closing `});`, currently the file's last line):
@@ -398,7 +398,7 @@ Expected: the first new test fails (`.cache-badge` is null — `renderResult` ne
 `fromCache` yet); the second passes vacuously (already null before this change) but is kept as
 the paired regression guard.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, add one
+- [x] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, add one
       line to the object literal inside `renderResult` (currently `inline-bottom-sheet-renderer.ts:93-105`),
       right after the existing `target: r.target,` line:
 
@@ -426,7 +426,7 @@ this.setState({
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: all tests pass (existing + 2 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

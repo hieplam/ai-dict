@@ -95,6 +95,10 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
       safeHtml: this.sanitize(r.markdown),
       word: r.word,
       target: r.target,
+      // A9: fromCache is a required boolean on LookupResult (never undefined), so thread it
+      // unconditionally — same style as word/target above, not the `? {...} : {}` pattern used
+      // for genuinely optional fields like provider/definedAs below.
+      fromCache: r.fromCache,
       ...(r.provider !== undefined ? { provider: r.provider } : {}),
       ...(r.fallbackFrom !== undefined ? { fallbackFrom: r.fallbackFrom } : {}),
       ...(r.definedAs !== undefined ? { definedAs: r.definedAs } : {}),
