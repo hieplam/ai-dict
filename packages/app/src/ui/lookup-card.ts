@@ -434,10 +434,11 @@ function renderNudgeRow(state: { word: string }): HTMLElement {
 }
 
 /**
- * The metadata row shown beneath a result: a provider badge naming the answering
- * provider, an optional fallback note when a non-primary answered, and a one-shot
- * provider picker when ≥2 providers are configured. Returns null when no provider
- * is known (e.g. entries cached before this feature) — nothing to show.
+ * The metadata row shown beneath a result: a leading Cached badge on a cache hit
+ * (A9), a provider badge naming the answering provider, an optional fallback note
+ * when a non-primary answered, and a one-shot provider picker when ≥2 providers
+ * are configured. Returns null only when there is nothing to show at all — no
+ * provider known (e.g. entries cached before this feature) AND not a cache hit.
  *
  * Descendants of this row are styled by the document-scoped rules in
  * `CARD_DOC_CSS` (::slotted cannot reach a slotted node's own descendants).
