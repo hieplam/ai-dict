@@ -125,28 +125,36 @@ Rules of the file:
 
 ## H. Cache & history policy
 
-| Case                                                                    | Status                            |
-| ----------------------------------------------------------------------- | --------------------------------- |
-| `cacheEnabled:false` hits the network on every lookup                   | [covered] `cache-history.spec.ts` |
-| `saveHistory:true` writes a history entry                               | [covered] `cache-history.spec.ts` |
-| `saveHistory:false` writes no history entry                             | [covered] `cache-history.spec.ts` |
-| Cache-miss write updates `cache:index`                                  | [covered] `cache-history.spec.ts` |
-| Cache eviction beyond cap (unit: `cache-policy.test.ts`)                | [gap:P3]                          |
-| History cap eviction visible in Recent (unit: `history-policy.test.ts`) | [gap:P3]                          |
+| Case                                                                    | Status                                    |
+| ----------------------------------------------------------------------- | ----------------------------------------- |
+| `cacheEnabled:false` hits the network on every lookup                   | [covered] `cache-history.spec.ts`         |
+| `saveHistory:true` writes a history entry                               | [covered] `cache-history.spec.ts`         |
+| `saveHistory:false` writes no history entry                             | [covered] `cache-history.spec.ts`         |
+| Cache-miss write updates `cache:index`                                  | [covered] `cache-history.spec.ts`         |
+| Cache eviction beyond cap (unit: `cache-policy.test.ts`)                | [gap:P3]                                  |
+| History cap eviction visible in Recent (unit: `history-policy.test.ts`) | [gap:P3]                                  |
+| Repeat lookup shows the Cached badge with zero extra network calls (A9) | [covered] `a9-instant-cache-hits.spec.ts` |
+| `cacheEnabled:false` never renders the Cached badge                     | [covered] `a9-instant-cache-hits.spec.ts` |
+| Side panel mirrors the Cached badge for a `fromCache:true` payload      | [covered] `a9-instant-cache-hits.spec.ts` |
+| Repeat lookup renders the badge under the CI-jitter wall-clock margin   | [covered] `a9-instant-cache-hits.spec.ts` |
 
 ## I. Saved words & learning status
 
-| Case                                                     | Status                                  |
-| -------------------------------------------------------- | --------------------------------------- |
-| Star persists a `saved:<word>` entry matching the schema | [covered] `saved-word.spec.ts`          |
-| Un-star removes the saved entry                          | [covered] `saved-word.spec.ts`          |
-| Save from side panel persists sentence/url/title         | [covered] `saved-word.spec.ts`          |
-| `history.clear` leaves saved words untouched             | [covered] `saved-word.spec.ts`          |
-| TRANSLATION line persisted on save                       | [covered] `saved-word.spec.ts`          |
-| Missing TRANSLATION saves `""` (back-compat)             | [covered] `saved-word.spec.ts`          |
-| Learning toggle flips storage + UI to Known and back     | [covered] `b5-status-lifecycle.spec.ts` |
-| Unsaved lookup renders no status toggle                  | [covered] `b5-status-lifecycle.spec.ts` |
-| Side panel exposes its own independent status toggle     | [covered] `b5-status-lifecycle.spec.ts` |
+| Case                                                                       | Status                                  |
+| -------------------------------------------------------------------------- | --------------------------------------- |
+| Star persists a `saved:<word>` entry matching the schema                   | [covered] `saved-word.spec.ts`          |
+| Un-star removes the saved entry                                            | [covered] `saved-word.spec.ts`          |
+| Save from side panel persists sentence/url/title                           | [covered] `saved-word.spec.ts`          |
+| `history.clear` leaves saved words untouched                               | [covered] `saved-word.spec.ts`          |
+| TRANSLATION line persisted on save                                         | [covered] `saved-word.spec.ts`          |
+| Missing TRANSLATION saves `""` (back-compat)                               | [covered] `saved-word.spec.ts`          |
+| Learning toggle flips storage + UI to Known and back                       | [covered] `b5-status-lifecycle.spec.ts` |
+| Unsaved lookup renders no status toggle                                    | [covered] `b5-status-lifecycle.spec.ts` |
+| Side panel exposes its own independent status toggle                       | [covered] `b5-status-lifecycle.spec.ts` |
+| Export Anki deck (TSV): tab-separated, no header, pinned column order (B8) | [covered] `anki-export.spec.ts`         |
+| Export CSV: comma-separated with the pinned header row                     | [covered] `anki-export.spec.ts`         |
+| Export Markdown: one heading per saved word                                | [covered] `anki-export.spec.ts`         |
+| Export with zero saved words: notice shown, no download                    | [covered] `anki-export.spec.ts`         |
 
 ## J. Repeat-lookup nudge
 
