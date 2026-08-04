@@ -141,7 +141,7 @@ fromCache?: boolean;
 // `if (!state.provider) return null;` to `if (!state.provider && state.fromCache !== true) return null;`
 ```
 
-- [ ] **Step 1: Write the failing tests.** Insert a new `describe` block into
+- [x] **Step 1: Write the failing tests.** Insert a new `describe` block into
       `packages/app/test/ui/lookup-card.test.ts` immediately after the existing provider-metadata
       block's closing `});` (currently line 466, right before
       `describe('<lookup-card> idiom label + force-literal button (A8)', ...)`):
@@ -214,7 +214,7 @@ Expected: the 4 new tests fail — `CardState` has no `fromCache` field yet (a t
 `el.state = {..., fromCache: true}` /`renderCardState({..., fromCache: true})`), and no
 `.cache-badge` exists in the render output.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
 
 1. Add `fromCache?: boolean` to `CardState`'s `'result'` variant, right after the existing `nudge?`
    field (currently `lookup-card.ts:51-53`):
@@ -346,7 +346,7 @@ lookup-card .cache-badge {
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all tests pass (existing + 4 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

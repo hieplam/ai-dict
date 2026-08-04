@@ -511,6 +511,67 @@ describe('<lookup-card> provider metadata row (badge, fallback note, picker)', (
   });
 });
 
+describe('<lookup-card> instant-cache badge (A9)', () => {
+  it('fromCache:true renders a .cache-badge reading "Cached", before the provider badge', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      provider: 'gemini',
+      fromCache: true,
+    };
+    const row = el.querySelector('.meta-row')!;
+    const badge = row.querySelector('.cache-badge')!;
+    expect(badge.textContent).toBe('Cached');
+    // Cache badge is the leading child — first thing the eye lands on.
+    expect(row.firstElementChild).toBe(badge);
+    expect(row.querySelector('.prov-badge')).not.toBeNull();
+  });
+
+  it('fromCache:true with NO provider still renders the row with the cache badge', () => {
+    const nodes = renderCardState({
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      fromCache: true,
+    });
+    const row = nodes.find(
+      (n): n is HTMLElement => n instanceof HTMLElement && n.classList.contains('meta-row'),
+    );
+    expect(row).toBeDefined();
+    expect(row!.querySelector('.cache-badge')!.textContent).toBe('Cached');
+    expect(row!.querySelector('.prov-badge')).toBeNull();
+  });
+
+  it('fromCache:false renders no .cache-badge', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      provider: 'gemini',
+      fromCache: false,
+    };
+    expect(el.querySelector('.cache-badge')).toBeNull();
+    expect(el.querySelector('.prov-badge')).not.toBeNull(); // unaffected
+  });
+
+  it('fromCache absent and no provider still renders no .meta-row at all (unchanged guard)', () => {
+    const nodes = renderCardState({
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+    });
+    const hasMeta = nodes.some((n) => n instanceof HTMLElement && n.classList.contains('meta-row'));
+    expect(hasMeta).toBe(false);
+  });
+});
+
 describe('<lookup-card> idiom label + force-literal button (A8)', () => {
   it('an idiom result renders the defined-as label and a "Show literal word" button', () => {
     const el = mountCard();
