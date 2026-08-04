@@ -453,7 +453,7 @@ No dedicated unit test exists for `side-panel.ts` in this repo — it is a compo
 proven by Task 5's e2e scenario 3; still run the typecheck gate below so a regression elsewhere
 in this file (which many other cards also touch) is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`, add one line to
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`, add one line to
       the object `resultToFocus` returns (currently `side-panel.ts:114-128`), right after the
       existing `target: r.target,` line:
 
@@ -489,7 +489,7 @@ Expected: clean (no type errors) — `fromCache` is already an optional field on
 (Task 2), so assigning `PanelFocusState`'s `'result'` variant (a `CardState` alias) the value of
 `r.fromCache` typechecks.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
