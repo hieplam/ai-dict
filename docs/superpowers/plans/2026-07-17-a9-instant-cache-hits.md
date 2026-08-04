@@ -72,7 +72,7 @@ structurally rather than with a flaky ms-level CI gate — is in
 This task has no red/green cycle (it changes zero executable lines), so its "test" is a
 before/after regression run of the existing suite proving byte-for-byte identical behavior.
 
-- [ ] **Step 1: Run the existing suite first (baseline).**
+- [x] **Step 1: Run the existing suite first (baseline).**
 
 ```
 cd packages/app && bunx vitest run test/cache-policy.test.ts
@@ -80,7 +80,7 @@ cd packages/app && bunx vitest run test/cache-policy.test.ts
 
 Expected: all tests pass (baseline, before any edit).
 
-- [ ] **Step 2: Add the comment.** In `packages/app/src/domain/cache-policy.ts`, insert this doc
+- [x] **Step 2: Add the comment.** In `packages/app/src/domain/cache-policy.ts`, insert this doc
       comment immediately above the existing `deriveCacheKey` function (currently line 15,
       `export function deriveCacheKey(...)`), with NO other change to the function body:
 
@@ -99,7 +99,7 @@ export function deriveCacheKey(req: { word: string; context: string; target: str
 }
 ```
 
-- [ ] **Step 3: Re-run the same suite (confirm zero drift).**
+- [x] **Step 3: Re-run the same suite (confirm zero drift).**
 
 ```
 cd packages/app && bunx vitest run test/cache-policy.test.ts
@@ -108,7 +108,7 @@ cd packages/app && bunx vitest run test/cache-policy.test.ts
 Expected: identical pass count to Step 1 — same tests, same result, proving the comment changed
 nothing executable.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

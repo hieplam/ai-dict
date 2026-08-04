@@ -12,6 +12,14 @@ export function fnv1a64Hex(input: string): string {
   return hash.toString(16).padStart(16, '0');
 }
 
+/**
+ * A9: the hash already includes `context` (the full sentence the word was selected in, see
+ * `workflow.ts`'s `context: e.sentence`), not just the word — so two different senses of the
+ * same headword ("bank" river vs. money) never collide, because they never share the same
+ * sentence. This was verified against the roadmap's stated concern (docs/ROADMAP.md §4 A9) and
+ * intentionally left unchanged; do not add a separate "sense" field without re-reading
+ * `docs/superpowers/specs/2026-07-17-a9-instant-cache-hits-design.md` §2.1 first.
+ */
 export function deriveCacheKey(req: { word: string; context: string; target: string }): string {
   const norm = `${req.word.trim().toLowerCase()}|${req.context.trim()}|${req.target}`;
   return fnv1a64Hex(norm);
