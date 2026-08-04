@@ -13,6 +13,7 @@ import {
   savedWordUpsert,
   savedWordDelete,
   savedWordSetStatus,
+  savedWordsList,
   evaluateNudge,
   FIX_KEY_PENDING_STORAGE_KEY,
   type WireMessage,
@@ -213,6 +214,11 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
     }
   }
 
+  async function handleSavedList(): Promise<RouterReply> {
+    const entries = await savedWordsList({ storage: deps.kv });
+    return { ok: true, type: 'saved.list', entries };
+  }
+
   return async (msg: WireMessage): Promise<RouterReply> => {
     switch (msg.type) {
       case 'lookup':
@@ -267,6 +273,8 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
         );
         return entry ? { ok: true, type: 'saved', entry } : { ok: true, type: 'ack' };
       }
+      case 'saved.list':
+        return handleSavedList();
       case 'cache.clear':
         await cacheClear({ storage: deps.kv });
         return { ok: true, type: 'ack' };

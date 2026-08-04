@@ -38,6 +38,7 @@ export * from './app/inline-bottom-sheet-renderer';
 export * from './app/save-reply-guard';
 export * from './app/router';
 export * from './app/history-export';
+export * from './app/anki-export';
 export * from './app/inbound';
 export * from './app/dom-selection-source';
 export * from './app/message-relay-lookup-client';

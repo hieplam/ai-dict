@@ -578,6 +578,39 @@ describe('buildRouter', () => {
     expect(reply).toMatchObject({ ok: true, type: 'saved', entry: { status: 'known' } });
   });
 
+  it('saved.list on an empty store replies with an empty entries array (B8)', async () => {
+    const route = buildRouter(deps());
+    const reply = await route({ type: 'saved.list' });
+    expect(reply).toMatchObject({ ok: true, type: 'saved.list', entries: [] });
+  });
+
+  it('saved.list replies every saved word after multiple saved.save calls (B8)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'a financial institution',
+      translation: '',
+      sentence: 'the river bank',
+      url: 'https://example.com',
+      title: 'Example',
+    });
+    await route({
+      type: 'saved.save',
+      word: 'serendipity',
+      definition: 'a happy accident',
+      translation: '',
+      sentence: 'pure serendipity',
+      url: 'https://example.com/2',
+      title: 'Example 2',
+    });
+    const reply = await route({ type: 'saved.list' });
+    expect(reply).toMatchObject({ ok: true, type: 'saved.list' });
+    const entries = (reply as { entries: { word: string }[] }).entries;
+    expect(entries.map((e) => e.word).sort()).toEqual(['bank', 'serendipity']);
+  });
+
   it('lookup.cancel with no inflight request still returns ack (no crash)', async () => {
     const route = buildRouter(deps());
     const ack = await route({ type: 'lookup.cancel', requestId: 'nonexistent' });

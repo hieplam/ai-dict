@@ -58,9 +58,17 @@ describe('<settings-form>', () => {
     });
   });
 
-  it('emits the four action events', () => {
+  it('emits the seven action events', () => {
     const el = mountForm();
-    const events = ['clear-cache', 'clear-history', 'test-connection', 'export-history'] as const;
+    const events = [
+      'clear-cache',
+      'clear-history',
+      'test-connection',
+      'export-history',
+      'export-anki-tsv',
+      'export-anki-csv',
+      'export-anki-md',
+    ] as const;
     const captured = new Map<string, Event>();
     const spies = Object.fromEntries(
       events.map((n) => [
@@ -75,6 +83,9 @@ describe('<settings-form>', () => {
     el.shadowRoot!.querySelector<HTMLButtonElement>('#clear-history')!.click();
     el.shadowRoot!.querySelector<HTMLButtonElement>('#test')!.click();
     el.shadowRoot!.querySelector<HTMLButtonElement>('#export')!.click();
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#export-anki-tsv')!.click();
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#export-anki-csv')!.click();
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#export-anki-md')!.click();
     for (const n of events) {
       expect(spies[n]!).toHaveBeenCalledOnce();
       // Assert the frozen cross-bundle event-name contract.
@@ -158,13 +169,16 @@ describe('<settings-form>', () => {
     expect(el.shadowRoot!.querySelector<HTMLSelectElement>('#target')!.value).toBe('en');
   });
 
-  it('four action events cross shadow boundary (composed: true)', () => {
+  it('seven action events cross shadow boundary (composed: true)', () => {
     const el = mountForm();
     const actionMap = [
       ['clear-cache', '#clear-cache'],
       ['clear-history', '#clear-history'],
       ['test-connection', '#test'],
       ['export-history', '#export'],
+      ['export-anki-tsv', '#export-anki-tsv'],
+      ['export-anki-csv', '#export-anki-csv'],
+      ['export-anki-md', '#export-anki-md'],
     ] as const;
     const captured: Map<string, CustomEvent> = new Map();
     const handlers: Map<string, EventListener> = new Map();
@@ -807,6 +821,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
       'Developer mode',
       'Appearance',
       'Privacy & data',
+      'Saved words',
     ]);
   });
 

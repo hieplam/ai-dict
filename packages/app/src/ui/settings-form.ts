@@ -264,6 +264,18 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
         <button type="button" id="export" class="link">Export history</button>
       </div>
     </section>
+    <section class="sec" aria-labelledby="sec-saved">
+      <h2 class="sec-h" id="sec-saved">Saved words</h2>
+      <p id="saved-help">
+        Export every saved word as an Anki-importable deck, or as CSV/Markdown for other tools. Your API
+        key is never included.
+      </p>
+      <div class="inline-actions">
+        <button type="button" id="export-anki-tsv" class="link">Export Anki deck (TSV)</button>
+        <button type="button" id="export-anki-csv" class="link">Export CSV</button>
+        <button type="button" id="export-anki-md" class="link">Export Markdown</button>
+      </div>
+    </section>
     <div class="savebar">
       <button type="submit" id="save" class="primary">Save settings</button>
       <span class="muted">Changes apply after saving</span>
@@ -371,6 +383,9 @@ export class SettingsForm extends HTMLElement {
     this.relay('#clear-cache', 'clear-cache');
     this.relay('#clear-history', 'clear-history');
     this.relay('#export', 'export-history');
+    this.relay('#export-anki-tsv', 'export-anki-tsv');
+    this.relay('#export-anki-csv', 'export-anki-csv');
+    this.relay('#export-anki-md', 'export-anki-md');
     this.relay('#assign-shortcuts', 'open-shortcuts-page');
     for (const p of PROVIDERS) {
       this.q<HTMLButtonElement>(`#key-status-${p}-fix`).addEventListener('click', () =>

@@ -518,6 +518,47 @@ describe('saved.save / saved.delete wire messages (B1)', () => {
   });
 });
 
+describe('saved.list wire message (B8)', () => {
+  it('accepts a saved.list message with no payload; rejects one with an extra field', () => {
+    expect(WireMessageSchema.safeParse({ type: 'saved.list' }).success).toBe(true);
+    expect(WireMessageSchema.safeParse({ type: 'saved.list', limit: 10 }).success).toBe(false);
+  });
+
+  it('accepts a saved.list reply with an empty entries array', () => {
+    expect(WireReplySchema.safeParse({ ok: true, type: 'saved.list', entries: [] }).success).toBe(
+      true,
+    );
+  });
+
+  it('accepts a saved.list reply carrying the ratified entry shape', () => {
+    const entry = {
+      word: 'bank',
+      status: 'learning',
+      savedAt: 1,
+      senses: [{ definition: 'd', translation: 't', sentence: 's', url: 'u', title: 'ti' }],
+    };
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'saved.list', entries: [entry] }).success,
+    ).toBe(true);
+  });
+
+  it('rejects a saved.list reply with a malformed entry inside entries (strictObject)', () => {
+    const bad = {
+      word: 'bank',
+      status: 'archived', // not 'learning' | 'known'
+      savedAt: 1,
+      senses: [],
+    };
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'saved.list', entries: [bad] }).success,
+    ).toBe(false);
+  });
+
+  it('rejects a saved.list reply missing entries', () => {
+    expect(WireReplySchema.safeParse({ ok: true, type: 'saved.list' }).success).toBe(false);
+  });
+});
+
 describe('errlog wire messages', () => {
   it('accepts errlog.status and errlog.set-consent', () => {
     expect(WireMessageSchema.safeParse({ type: 'errlog.status' }).success).toBe(true);

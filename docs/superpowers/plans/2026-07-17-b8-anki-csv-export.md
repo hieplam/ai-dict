@@ -73,7 +73,7 @@ title, savedAt, status` — one row/block per **sense**, not per saved word.
 // New WireReplySchema arm: { ok: true, type: 'saved.list', entries: SavedWordEntry[] }.
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 In `packages/app/test/wire-schema.test.ts`, insert a new `describe` block immediately after the
 existing `describe('saved.save / saved.delete wire messages (B1)', ...)` block's closing `});`
@@ -167,7 +167,7 @@ Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: both new tests fail (`saved.list` is not a valid `WireMessage`/switch case yet — a
 TypeScript compile error surfaces first, matching the "exhaustive switch, no default" guarantee).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 If `saved.list` already exists in `wire.ts`/`router.ts` (landed via another card — B6, B10, and
 B15 pin the identical shape), verify it matches this exact request/reply shape byte-for-byte and
@@ -300,7 +300,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts test/app/router.test
 Expected: all tests pass (5 new wire-schema tests + 2 new router tests + all existing tests
 unchanged).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
@@ -332,7 +332,7 @@ export function buildAnkiCsv(entries: SavedWordEntry[]): { filename: string; con
 export function buildAnkiMarkdown(entries: SavedWordEntry[]): { filename: string; content: string };
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/app/anki-export.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/app/anki-export.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -504,7 +504,7 @@ describe('buildAnkiMarkdown', () => {
 Run: `cd packages/app && bunx vitest run test/app/anki-export.test.ts`
 Expected: fails — `../../src/app/anki-export` does not exist yet.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/app/anki-export.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/app/anki-export.ts`:
 
 ```ts
 import type { SavedWordEntry } from '../domain/types';
@@ -652,7 +652,7 @@ cd packages/app && bunx vitest run test/app/anki-export.test.ts
 
 Expected: all 15 new tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
@@ -682,7 +682,7 @@ git commit -m "[B8AnkiCsvExport] feat: add buildAnkiTsv/Csv/Markdown pure builde
 // 'export-anki-tsv' | 'export-anki-csv' | 'export-anki-md'
 ```
 
-- [ ] **Step 1: Write the failing tests.** In `packages/app/test/ui/settings-form.test.ts`, replace
+- [x] **Step 1: Write the failing tests.** In `packages/app/test/ui/settings-form.test.ts`, replace
       the existing `'emits the four action events'` test (currently lines 61-83) with a
       seven-event version:
 
@@ -766,7 +766,7 @@ Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: both updated tests fail (`#export-anki-tsv`/`#export-anki-csv`/`#export-anki-md` do not
 exist yet — `querySelector` returns `null`, the `!` assertion throws).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`, insert a new `<section>`
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`, insert a new `<section>`
       into `MARKUP` immediately after the existing `sec-priv` (Privacy & data) section's closing
       `</section>` and before the `<div class="savebar">`:
 
@@ -803,7 +803,7 @@ cd packages/app && bunx vitest run test/ui/settings-form.test.ts
 
 Expected: all tests pass (including the two updated seven-event tests).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
@@ -831,7 +831,7 @@ This task's correctness is proven by Task 6's e2e; still run the typecheck/lint 
 regression in existing behavior (settings save, cache/history/history-export, etc. — all in the
 same file) is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
 
 1. Add the three new named imports from `@ai-dict/app` to the existing import block (right after
    `buildHistoryExport,`):
@@ -957,7 +957,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -986,7 +986,7 @@ task's correctness is proven by typecheck + the shared `settings-form.test.ts` (
 the component itself; Safari-specific behavior is limited to this file's plumbing, identical to
 Chrome's.
 
-- [ ] **Step 1: Implement.** In `packages/extension-safari/src/options.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-safari/src/options.ts`:
 
 1. Add the three new named imports (right after `buildHistoryExport,`):
 
@@ -1102,7 +1102,7 @@ cd packages/extension-safari && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-safari && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1124,7 +1124,7 @@ git commit -m "[B8AnkiCsvExport] feat: mirror the export wiring in Safari option
 
 - Create: `packages/extension-chrome/e2e/anki-export.spec.ts`
 
-- [ ] **Step 1: Write the new e2e spec.** Create
+- [x] **Step 1: Write the new e2e spec.** Create
       `packages/extension-chrome/e2e/anki-export.spec.ts`:
 
 ```ts
@@ -1288,7 +1288,7 @@ cd packages/extension-chrome && bunx playwright test anki-export
 
 Expected: 4 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
@@ -1309,7 +1309,7 @@ git commit -m "[B8AnkiCsvExport] feat: e2e coverage for TSV/CSV/Markdown export 
 
 **Files:** none (verification + PR only).
 
-- [ ] **Step 1: Run the full gate.**
+- [x] **Step 1: Run the full gate.**
 
 ```
 cd packages/app && bun run typecheck
@@ -1324,9 +1324,9 @@ bun run build:safari
 cd packages/extension-chrome && bunx playwright test anki-export options-actions saved-word
 ```
 
-Expected: typecheck clean on all three packages; the full Vitest suite green (690 pre-existing +
-this card's new unit tests: 5 wire-schema + 2 router + 15 anki-export + updated settings-form
-event tests); lint/format clean; both extension builds succeed (Chrome with the env key cleared);
+Expected: typecheck clean on all three packages; the full Vitest suite green (703 pre-existing +
+this card's new unit tests: 5 wire-schema + 2 router + 16 anki-export + updated settings-form
+event tests, 726 total); lint/format clean; both extension builds succeed (Chrome with the env key cleared);
 `anki-export.spec.ts` (this card's new suite), `options-actions.spec.ts` (regression guard for the
 rest of the options page this task's edits share a file with), and `saved-word.spec.ts`
 (regression guard confirming `saved.save`/`saved:*` storage still behaves exactly as B1 shipped
@@ -1348,3 +1348,14 @@ Body must include:
 - Merge: **regular merge commit only — squash prohibited** (owner ruling 2026-07-16).
 
 No `pr-assets/*` branch is created for this card (no media evidence, per policy).
+
+> Step 2 status (audit-fix pass, 2026-08-05): Step 1's gate reran clean (typecheck x3, full
+> Vitest suite, lint, format:check, both builds, and the three e2e specs — 18/18 passed). Step 2
+> (push branch + `gh pr create`) was intentionally NOT run in this pass: the dispatching session
+> constrained this pass to "Do not push." Opening the PR is the one remaining action and must be
+> done by a session with push permission. Include this waiver verbatim in the PR body per the
+> flake-triage protocol: the `<settings-form> sticky save bar + dirty state (A16) > has no axe
+violations with the dirty cue shown` test (`packages/app/test/ui/settings-form.test.ts`) times
+> out intermittently at its hardcoded 5000ms limit under `bun run --filter @ai-dict/app test --
+coverage` — reproduced 3/3 on this branch and 2/2 on `origin/master` HEAD (15b94f3) in an
+> isolated scratch worktree, so it predates this card and is not a B8 regression.

@@ -3,6 +3,9 @@ import {
   registerOnboarding,
   DEFAULT_OUTPUT_FORMAT,
   buildHistoryExport,
+  buildAnkiTsv,
+  buildAnkiCsv,
+  buildAnkiMarkdown,
   hasKeyFor,
   configuredProvidersFor,
   FIX_KEY_PENDING_STORAGE_KEY,
@@ -63,8 +66,8 @@ async function send(msg: unknown): Promise<WireReply> {
 }
 
 // Trigger a client-side file download from the options page (the SW has no DOM).
-function download(filename: string, content: string): void {
-  const url = URL.createObjectURL(new Blob([content], { type: 'application/json' }));
+function download(filename: string, content: string, mime = 'application/json'): void {
+  const url = URL.createObjectURL(new Blob([content], { type: mime }));
   const a = document.createElement('a');
   a.href = url;
   a.download = filename;
@@ -245,6 +248,49 @@ function wireSettings(form: SettingsForm): void {
         form.setStatus(`Exported ${r.entries.length} entries`);
       },
       () => form.setStatus('Could not export history', 'error'),
+    );
+  });
+
+  wireAnkiExport(form, 'export-anki-tsv', 'tsv');
+  wireAnkiExport(form, 'export-anki-csv', 'csv');
+  wireAnkiExport(form, 'export-anki-md', 'md');
+}
+
+type AnkiFormat = 'tsv' | 'csv' | 'md';
+
+const ANKI_EXPORTERS: Record<
+  AnkiFormat,
+  {
+    build: (entries: Parameters<typeof buildAnkiTsv>[0]) => { filename: string; content: string };
+    mime: string;
+    label: string;
+  }
+> = {
+  tsv: { build: buildAnkiTsv, mime: 'text/tab-separated-values', label: 'TSV' },
+  csv: { build: buildAnkiCsv, mime: 'text/csv', label: 'CSV' },
+  md: { build: buildAnkiMarkdown, mime: 'text/markdown', label: 'Markdown' },
+};
+
+// B8: shared wiring for all three "export saved words" buttons — saved.list with no payload
+// returns every saved word (saved-words-policy.ts's "full list, no pagination" contract).
+function wireAnkiExport(form: SettingsForm, eventName: string, format: AnkiFormat): void {
+  form.addEventListener(eventName, () => {
+    void send({ type: 'saved.list' }).then(
+      (r) => {
+        if (!r.ok || r.type !== 'saved.list') {
+          form.setStatus(r.ok ? 'Unexpected reply' : r.error.message, 'error');
+          return;
+        }
+        if (r.entries.length === 0) {
+          form.setStatus('No saved words to export');
+          return;
+        }
+        const { build, mime, label } = ANKI_EXPORTERS[format];
+        const { filename, content } = build(r.entries);
+        download(filename, content, mime);
+        form.setStatus(`Exported ${r.entries.length} saved words as ${label}`);
+      },
+      () => form.setStatus('Could not export saved words', 'error'),
     );
   });
 }
