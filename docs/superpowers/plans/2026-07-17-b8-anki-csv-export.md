@@ -831,7 +831,7 @@ This task's correctness is proven by Task 6's e2e; still run the typecheck/lint 
 regression in existing behavior (settings save, cache/history/history-export, etc. — all in the
 same file) is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`:
 
 1. Add the three new named imports from `@ai-dict/app` to the existing import block (right after
    `buildHistoryExport,`):
@@ -957,7 +957,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
