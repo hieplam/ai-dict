@@ -332,7 +332,7 @@ export function buildAnkiCsv(entries: SavedWordEntry[]): { filename: string; con
 export function buildAnkiMarkdown(entries: SavedWordEntry[]): { filename: string; content: string };
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/app/anki-export.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/app/anki-export.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -504,7 +504,7 @@ describe('buildAnkiMarkdown', () => {
 Run: `cd packages/app && bunx vitest run test/app/anki-export.test.ts`
 Expected: fails — `../../src/app/anki-export` does not exist yet.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/app/anki-export.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/app/anki-export.ts`:
 
 ```ts
 import type { SavedWordEntry } from '../domain/types';
@@ -652,7 +652,7 @@ cd packages/app && bunx vitest run test/app/anki-export.test.ts
 
 Expected: all 15 new tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && bun run lint && bun run format:check
