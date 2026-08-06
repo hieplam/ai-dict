@@ -2,6 +2,10 @@ import { test, expect } from './fixtures';
 import { seedSettings, gotoFixture, selectWord, openTrigger, mockGemini } from './helpers';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Import the pure domain constant directly, not via the '@ai-dict/app' barrel: the barrel
+// re-exports the UI web components (`class … extends HTMLElement`), which throw at module load
+// under Node during Playwright's test collection. card-placement.ts is pure and Node-safe.
+import { CARD_PLACEMENT_MARGIN } from '../../app/src/domain/card-placement';
 
 // Issue #52: the in-page bottom sheet "breaks when text too much" on short / mobile viewports.
 // The panel is bottom-anchored and caps its height at the viewport (88dvh, 88vh fallback) and
@@ -53,10 +57,13 @@ test('long content stays bounded and scrolls within the sheet on a short viewpor
     };
   });
 
-  // The panel never extends above the top of the viewport (the header/close button stay reachable)…
-  expect(m.panelTop).toBeGreaterThanOrEqual(0);
-  // …it is anchored to the bottom of the viewport…
-  expect(m.panelBottom).toBe(m.viewportH);
+  // A6: the panel is no longer always bottom-anchored — it's positioned near the selection via
+  // computeCardPlacement, which guarantees (by construction, for any anchor that fits within this
+  // 480px viewport with an 88dvh-capped panel) that the panel stays within
+  // [CARD_PLACEMENT_MARGIN, viewportH - CARD_PLACEMENT_MARGIN] on both edges. ±1 tolerates this
+  // test's own Math.round.
+  expect(m.panelTop).toBeGreaterThanOrEqual(CARD_PLACEMENT_MARGIN - 1);
+  expect(m.panelBottom).toBeLessThanOrEqual(m.viewportH - CARD_PLACEMENT_MARGIN + 1);
   // …and the long definition scrolls inside it rather than overflowing the sheet.
   expect(m.scrolls).toBe(true);
 
