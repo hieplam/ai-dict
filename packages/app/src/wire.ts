@@ -65,6 +65,8 @@ const PublicSettingsSchema = z.strictObject({
   hasKey: z.boolean(),
   theme: z.enum(['sepia', 'dark', 'contrast', 'system']),
   configuredProviders: z.array(ProviderEnum),
+  // B3: paint saved learning-status words on pages. See PublicSettings' doc comment (domain/types.ts).
+  highlightSavedWords: z.boolean(),
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]
 
 const HistoryEntrySchema = z.strictObject({

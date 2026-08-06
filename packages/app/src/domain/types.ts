@@ -174,6 +174,8 @@ export interface PublicSettings {
   theme: Theme;
   /** Provider names that have an API key configured. Keys themselves are never included. */
   configuredProviders: Provider[];
+  /** B3: paint saved learning-status words on pages. Default true; legacy stored settings lack the key — every reader applies `?? true`. */
+  highlightSavedWords: boolean;
 }
 
 /**

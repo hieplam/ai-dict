@@ -54,6 +54,7 @@ function deps(over: DepsOverrides = {}) {
       hasKey: true,
       theme: 'sepia' as const,
       configuredProviders: [],
+      highlightSavedWords: true,
     }),
   );
   return {
@@ -267,6 +268,7 @@ describe('buildRouter', () => {
             hasKey: true,
             theme: 'sepia' as const,
             configuredProviders: [],
+            highlightSavedWords: true,
           }),
         ),
         set: vi.fn(),
@@ -321,6 +323,7 @@ describe('buildRouter', () => {
         hasKey: true,
         theme: 'sepia' as const,
         configuredProviders: [],
+        highlightSavedWords: true,
       },
     });
   });

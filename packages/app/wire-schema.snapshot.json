@@ -472,6 +472,9 @@
                     "anthropic"
                   ]
                 }
+              },
+              "highlightSavedWords": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -480,7 +483,8 @@
               "promptEnvelope",
               "hasKey",
               "theme",
-              "configuredProviders"
+              "configuredProviders",
+              "highlightSavedWords"
             ],
             "additionalProperties": false
           }

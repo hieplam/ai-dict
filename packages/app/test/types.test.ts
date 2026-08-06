@@ -11,6 +11,7 @@ describe('Settings public shape (FIX 1 — contract lock)', () => {
       promptEnvelope: '',
       hasKey: true,
       configuredProviders: ['gemini'],
+      highlightSavedWords: true,
       apiKey: 'AIzaFake',
       cacheEnabled: true,
       saveHistory: false,
