@@ -1,13 +1,14 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
 import { registerContentElements } from '../../src/ui/register';
+import type { BottomSheet } from '../../src/ui/bottom-sheet';
 
 beforeAll(() => {
   registerContentElements();
 });
 
-function mountSheet(): HTMLElement {
-  const el = document.createElement('bottom-sheet');
+function mountSheet(): BottomSheet {
+  const el = document.createElement('bottom-sheet') as BottomSheet;
   el.innerHTML = '<button id="a">a</button><button id="b">b</button>';
   document.body.append(el); // connectedCallback wires ARIA + focus
   return el;

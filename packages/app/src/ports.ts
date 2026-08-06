@@ -52,8 +52,13 @@ export interface ResultRenderer {
    * Show the loading state. `word` is the reader's selected text, known the
    * instant they click Define — render it immediately as the headword so the
    * card never appears empty while waiting for the model's reply.
+   * `anchor` (A6): the selection's viewport rect, when known. Implementations that render as a
+   * page overlay (InlineBottomSheetRenderer) use it to place the card near the selection
+   * without covering it — see the design spec's §2. Renderers with no on-page position concept
+   * (the side-panel mirror) ignore the extra parameter; TypeScript permits an implementer to
+   * declare fewer parameters than the interface.
    */
-  renderLoading(word?: string): void;
+  renderLoading(word?: string, anchor?: AnchorRect): void;
   renderResult(r: LookupResult, ctx?: ResultRenderContext): void;
   renderError(e: LookupError): void;
   close(): void;

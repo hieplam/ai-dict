@@ -6,7 +6,9 @@ import type {
   Provider,
   Theme,
   SavedWordStatus,
+  AnchorRect,
 } from '../index';
+import { computeCardPlacement } from '../domain/card-placement';
 import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '../ui/index';
 import { sanitizeMarkdown } from './markdown-sanitize';
 
@@ -22,6 +24,11 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   // B1: the last CardState rendered, so setSaved() can re-emit it with the flag flipped without
   // a full re-lookup. null before any render, or after close().
   private lastState: CardState | null = null;
+  // A6: the selection's anchor rect for the currently-open card, captured by renderLoading and
+  // reused by every subsequent render of the same card (setState → positionNear) — see the
+  // design spec §2.2. null before any render, after close(), or when no anchor was ever known
+  // (the NO_KEY short-circuit path, design spec §2.4).
+  private lastAnchor: AnchorRect | null = null;
 
   constructor(
     private readonly host: HTMLElement,
@@ -79,9 +86,45 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // stuck on "Looking up…". Shared-DOM mutations like replaceChildren do cross the boundary.
     this.lastState = state;
     this.ensureCard().replaceChildren(...renderCardState(state));
+    // A6: reposition after every content update — the panel's own height changes between the
+    // loading and result states, so a position fixed only at renderLoading time could leave a
+    // now-taller result card covering the sentence it was clear of while loading (spec §2.2).
+    this.positionSheet();
   }
 
-  renderLoading(word?: string): void {
+  /**
+   * A6: place the sheet's panel as an overlay near the cached selection anchor so it never covers
+   * the sentence the reader is looking at (spec §2.5); `lastAnchor === null` falls back to the
+   * pre-A6 bottom-center default (§2.4). The pure rect math lives in computeCardPlacement; this
+   * edge only measures the live panel and applies the result as inline styles.
+   *
+   * Why the renderer does the DOM work (not a BottomSheet method): in the Chrome MV3 content
+   * script the <bottom-sheet> custom element is defined in the page's MAIN world, while this
+   * renderer runs in the ISOLATED world — so a custom-class METHOD call would not cross the world
+   * boundary (the same Chromium 390807 limitation setState documents for property writes). Only
+   * shared-DOM access crosses, so this reaches the panel through the element's open shadow root
+   * and writes native inline styles — exactly how the renderer already crosses the boundary with
+   * replaceChildren/setAttribute. This also makes placement work unchanged in Safari's
+   * single-world shell, which passes this same renderer directly.
+   */
+  private positionSheet(): void {
+    const panel = this.sheet?.shadowRoot?.querySelector<HTMLElement>('.panel');
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    const { top, left } = computeCardPlacement(
+      this.lastAnchor,
+      { width: rect.width, height: rect.height },
+      { width: window.innerWidth, height: window.innerHeight },
+    );
+    panel.style.bottom = 'auto';
+    panel.style.top = `${top}px`;
+    panel.style.left = `${left}px`;
+  }
+
+  renderLoading(word?: string, anchor?: AnchorRect): void {
+    // A6: cache the selection anchor so every later render of this same open card (setState →
+    // positionNear) reuses it; null when no anchor was passed (spec §2.4 fallback).
+    this.lastAnchor = anchor ?? null;
     this.setState(word === undefined ? { kind: 'loading' } : { kind: 'loading', word });
   }
 
@@ -173,5 +216,6 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.sheet = null;
     this.card = null;
     this.lastState = null;
+    this.lastAnchor = null;
   }
 }

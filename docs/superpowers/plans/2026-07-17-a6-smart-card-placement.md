@@ -117,7 +117,7 @@ export function computeCardPlacement(
 ): CardPlacement;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/card-placement.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/card-placement.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -187,7 +187,7 @@ Run: `cd packages/app && bunx vitest run test/card-placement.test.ts`
 Expected: failure — `Cannot find module '../src/domain/card-placement'` (the module does not
 exist yet).
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/card-placement.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/card-placement.ts`:
 
 ```ts
 import type { AnchorRect } from './types';
@@ -259,7 +259,7 @@ export * from './domain/card-placement';
 Run: `cd packages/app && bunx vitest run test/card-placement.test.ts`
 Expected: 8 passed.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

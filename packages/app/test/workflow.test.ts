@@ -70,6 +70,9 @@ describe('runLookupWorkflow', () => {
     expect(h.renderer.calls).toEqual(['loading', 'result']);
     // the selected word is threaded into renderLoading so the card shows it immediately
     expect(h.renderer.loadingWord).toBe('bank');
+    // A6: the selection's anchor rect is threaded into renderLoading too, so the card can
+    // position itself near the selection from its very first paint.
+    expect(h.renderer.loadingAnchor).toEqual(sel.anchor);
     expect(h.client.lastReq).toMatchObject({
       word: 'bank',
       context: 'river bank',

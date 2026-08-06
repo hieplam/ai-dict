@@ -11,6 +11,7 @@ import type {
   LookupError,
   LookupRequest,
   PublicSettings,
+  AnchorRect,
 } from '../../src';
 
 export class FakeSelectionSource implements SelectionSource {
@@ -47,9 +48,12 @@ export class FakeResultRenderer implements ResultRenderer {
   lastCtx: ResultRenderContext | undefined;
   lastError: LookupError | null = null;
   loadingWord: string | undefined;
-  renderLoading(word?: string) {
+  // A6: the anchor renderLoading was called with, so tests can assert workflow.ts forwards it.
+  loadingAnchor: AnchorRect | undefined;
+  renderLoading(word?: string, anchor?: AnchorRect) {
     this.calls.push('loading');
     this.loadingWord = word;
+    this.loadingAnchor = anchor;
   }
   renderResult(r: LookupResult, ctx?: ResultRenderContext) {
     this.calls.push('result');

@@ -61,7 +61,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
       deps.renderer.renderError(mapError({ kind: 'no-key' }));
       return;
     }
-    deps.renderer.renderLoading(e.text);
+    deps.renderer.renderLoading(e.text, e.anchor);
     const req: LookupRequest = {
       word: e.text,
       context: e.sentence,

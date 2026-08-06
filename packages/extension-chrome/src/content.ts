@@ -172,13 +172,13 @@ runLookupWorkflow({
   selection: new DomSelectionSource(document),
   trigger,
   renderer: {
-    renderLoading(word) {
+    renderLoading(word, anchor) {
       lastFocus = word === undefined ? { state: 'loading' } : { state: 'loading', word };
       lastSavePayload = undefined;
       lastSaved = false;
       lastStatus = undefined;
       saveReplyGuard.next();
-      inline.renderLoading(word);
+      inline.renderLoading(word, anchor);
       mirror.renderLoading(word);
     },
     renderResult(r, ctx) {

@@ -21,7 +21,8 @@ import { BASE_VARS, THEME_CSS } from './styles/tokens';
 const CSS = `:host{${BASE_VARS};position:fixed;inset:0;z-index:var(--adp-z-overlay)}
 ${THEME_CSS}
 .scrim{position:absolute;inset:0;background:var(--ad-scrim)}
-.panel{position:absolute;left:0;right:0;bottom:0;
+.panel{position:absolute;
+  width:min(var(--adp-card-width), calc(100% - 28px));
   max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;padding:0 14px max(14px, env(safe-area-inset-bottom));
   transition:transform var(--adp-dur-slow) var(--adp-ease)}
 ::slotted(*){display:block;margin:0 auto}
