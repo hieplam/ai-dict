@@ -147,6 +147,8 @@ idiom|literal` signal line (stripped by `domain/defined-as.ts`) drives the card'
 
 #### A6 — Smart card placement `Impact 3 · Effort S · Score 3.0`
 
+> **Status: ✅ Implemented (2026-08-06) — landed via regular-merge PR [#175](https://github.com/hieplam/ai-dict/pull/175) (merge commit `037b98c0`, 2 parents — no-squash policy; R8 infra-outage exception; world-safe shadow-DOM positioning per R12).**
+
 - **Today:** The card opens near the selection and can land **on top of the sentence** being read.
 - **Missing:** A placement rule that treats the selected sentence as sacred ground.
 - **Why:** The product's promise is "meaning _in this sentence_" — then the UI hides the sentence.
@@ -200,6 +202,8 @@ idiom|literal` signal line (stripped by `domain/defined-as.ts`) drives the card'
 
 #### A10 — TTS pronunciation `Impact 3 · Effort S · Score 3.0`
 
+> **Status: ✅ Implemented (2026-08-06) — landed via regular-merge PR [#177](https://github.com/hieplam/ai-dict/pull/177) (merge commit `6e5493c8`, 2 parents — no-squash policy).**
+
 - **Today:** The card shows IPA (e.g. /ˌsɛrənˈdɪpɪti/). Most readers can't read IPA, so they
   never learn how the word sounds.
 - **Missing:** A speaker button that says the word aloud.
@@ -210,6 +214,8 @@ idiom|literal` signal line (stripped by `domain/defined-as.ts`) drives the card'
 - **Depends on:** — · **Lead decides:** voice/lang selection heuristic. **Escalate:** none.
 
 #### A15 — Trigger latency budget `Impact 3 · Effort S · Score 3.0`
+
+> **Status: ✅ Implemented (2026-08-06) — landed via regular-merge PR [#178](https://github.com/hieplam/ai-dict/pull/178) (merge commit `335af5b6`, 2 parents — no-squash policy).**
 
 - **Today:** The Define button appears after selection, but there's no speed target and no test
   guarding it; on heavy pages it can lag behind the selection.
@@ -394,6 +400,8 @@ savedAt, status, senses[] }`. **Depends on:** B1.
 
 #### B4 — Hover-recall `Impact 4 · Effort S · Score 4.0` · _needs B3_
 
+> **Status: ✅ Implemented (2026-08-06) — landed via regular-merge PR [#174](https://github.com/hieplam/ai-dict/pull/174) (merge commit `0547e3a5`, 2 parents — no-squash policy; R8 infra-outage exception, local gate parity).**
+
 - **Today:** Meeting a word you looked up last week means looking it up again — new API call, new
   wait, new tokens.
 - **Missing:** When a saved word is highlighted (B3), hovering shows **your own saved meaning**
@@ -473,6 +481,8 @@ savedAt, status, senses[] }`. **Depends on:** B1.
   format — lock it before shipping (see §6), same reasoning as the entry schema.
 
 #### B3 — Re-encounter highlighting `Impact 5 · Effort M · Score 2.5` · _needs B1, B5_
+
+> **Status: ✅ Implemented (2026-08-06) — landed via regular-merge PR [#173](https://github.com/hieplam/ai-dict/pull/173) (merge commit `4ec27777`, 2 parents — no-squash policy; R8 infra-outage exception, local gate parity).**
 
 - **Today:** You save a word and the extension never mentions it again; when it reappears in
   tomorrow's article, nothing happens — the single most valuable learning moment passes unmarked.
@@ -1046,29 +1056,29 @@ new permission remain owner calls, as does E5 and E6).
 
 ## 7. Ranked summary (flat, by score)
 
-| Rank | Idea                                | Score | Rank | Idea                       | Score |
-| ---- | ----------------------------------- | ----- | ---- | -------------------------- | ----- |
-| 1    | B1 Save word ·foundation ✅ Shipped | 5.0   | 12   | C10 Funnel e2e ·harness    | 3.0   |
-| 1    | C1 Open on install ·foundation      | 5.0   | 12   | C11 Install-aware landing  | 3.0   |
-| 1    | C2 Verified activation ·foundation  | 5.0   | 24   | A1 Streamed answers        | 2.5   |
-| 1    | C3 Guided first lookup ·revised     | 5.0   | 24   | B3 Re-encounter highlight  | 2.5   |
-| 5    | A4 Keyboard flow ✅ Shipped         | 4.0   | 26   | A2 Recursive lookup        | 2.0   |
-| 5    | A8 Idiom expansion ✅ Shipped       | 4.0   | 26   | A3 Follow-up chips         | 2.0   |
-| 5    | B2 Context capture ✅ Shipped       | 4.0   | 26   | A5 Gloss mode              | 2.0   |
-| 5    | B4 Hover-recall                     | 4.0   | 26   | A13 Quiet mode             | 2.0   |
-| 5    | B7 Repeat nudge ✅ Shipped          | 4.0   | 26   | A14 Double-click           | 2.0   |
-| 5    | B8 Anki export                      | 4.0   | 26   | B13 Related words          | 2.0   |
-| 5    | C8 Gesture demo                     | 4.0   | 26   | B15 Site stats             | 2.0   |
-| 12   | A6 Smart placement                  | 3.0   | 26   | C4 Any-provider onboarding | 2.0   |
-| 12   | A16 Sticky save bar ✅ Shipped      | 3.0   | 34   | A7 Pin cards               | 1.5   |
-| 12   | A9 Instant cache                    | 3.0   | 34   | A12 Non-English source     | 1.5   |
-| 12   | A10 TTS                             | 3.0   | 34   | B10 Weekly digest          | 1.5   |
-| 12   | A15 Latency budget                  | 3.0   | 34   | B11 Review flip            | 1.5   |
-| 12   | B5 Status lifecycle ✅ Shipped      | 3.0   | 34   | B12 Auto-grouping          | 1.5   |
-| 12   | B9 Backup/restore                   | 3.0   | 34   | B14 Sense dedup            | 1.5   |
-| 12   | C5 Key paste hygiene                | 3.0   | 34   | C9 Setup health check      | 1.5   |
-| 12   | C6 Invalid-key recovery             | 3.0   | 41   | A11 PDF (spike)            | 1.3   |
-| 12   | C7 Finish-setup badge               | 3.0   | —    |                            |       |
+| Rank | Idea                                | Score | Rank | Idea                                 | Score |
+| ---- | ----------------------------------- | ----- | ---- | ------------------------------------ | ----- |
+| 1    | B1 Save word ·foundation ✅ Shipped | 5.0   | 12   | C10 Funnel e2e ·harness              | 3.0   |
+| 1    | C1 Open on install ·foundation      | 5.0   | 12   | C11 Install-aware landing            | 3.0   |
+| 1    | C2 Verified activation ·foundation  | 5.0   | 24   | A1 Streamed answers                  | 2.5   |
+| 1    | C3 Guided first lookup ·revised     | 5.0   | 24   | B3 Re-encounter highlight ✅ Shipped | 2.5   |
+| 5    | A4 Keyboard flow ✅ Shipped         | 4.0   | 26   | A2 Recursive lookup                  | 2.0   |
+| 5    | A8 Idiom expansion ✅ Shipped       | 4.0   | 26   | A3 Follow-up chips                   | 2.0   |
+| 5    | B2 Context capture ✅ Shipped       | 4.0   | 26   | A5 Gloss mode                        | 2.0   |
+| 5    | B4 Hover-recall ✅ Shipped          | 4.0   | 26   | A13 Quiet mode                       | 2.0   |
+| 5    | B7 Repeat nudge ✅ Shipped          | 4.0   | 26   | A14 Double-click                     | 2.0   |
+| 5    | B8 Anki export                      | 4.0   | 26   | B13 Related words                    | 2.0   |
+| 5    | C8 Gesture demo                     | 4.0   | 26   | B15 Site stats                       | 2.0   |
+| 12   | A6 Smart placement ✅ Shipped       | 3.0   | 26   | C4 Any-provider onboarding           | 2.0   |
+| 12   | A16 Sticky save bar ✅ Shipped      | 3.0   | 34   | A7 Pin cards                         | 1.5   |
+| 12   | A9 Instant cache                    | 3.0   | 34   | A12 Non-English source               | 1.5   |
+| 12   | A10 TTS ✅ Shipped                  | 3.0   | 34   | B10 Weekly digest                    | 1.5   |
+| 12   | A15 Latency budget ✅ Shipped       | 3.0   | 34   | B11 Review flip                      | 1.5   |
+| 12   | B5 Status lifecycle ✅ Shipped      | 3.0   | 34   | B12 Auto-grouping                    | 1.5   |
+| 12   | B9 Backup/restore                   | 3.0   | 34   | B14 Sense dedup                      | 1.5   |
+| 12   | C5 Key paste hygiene                | 3.0   | 34   | C9 Setup health check                | 1.5   |
+| 12   | C6 Invalid-key recovery             | 3.0   | 41   | A11 PDF (spike)                      | 1.3   |
+| 12   | C7 Finish-setup badge               | 3.0   | —    |                                      |       |
 
 **Score ≠ sequence.** B1 leads despite being foundational-first, not because of raw score; the lead
 sequences by dependency (B1→B2→B5→B3) and by quick-win clustering (the S-effort A-ideas), escalating
