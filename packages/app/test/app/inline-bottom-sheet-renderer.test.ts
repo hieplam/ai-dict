@@ -1,7 +1,16 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeAll } from 'vitest';
 import { InlineBottomSheetRenderer } from '../../src/app/inline-bottom-sheet-renderer';
-import type { LookupResult, LookupError } from '../../src';
+import { computeCardPlacement } from '../../src/domain/card-placement';
+import { registerContentElements } from '../../src/ui/register';
+import type { LookupResult, LookupError, AnchorRect } from '../../src';
 import type { SafeHtml } from '../../src/ui/index';
+
+// A6: the new placement assertions read the bottom-sheet's shadow-root .panel and call the
+// BottomSheet-specific positionNear method, both of which require the custom elements to be
+// upgraded — register them the same way bottom-sheet.test.ts does.
+beforeAll(() => {
+  registerContentElements();
+});
 
 const result: LookupResult = {
   markdown: '**def** <script>alert(1)</script>',
@@ -20,6 +29,9 @@ function host(): HTMLElement {
 }
 function card(host: HTMLElement): HTMLElement {
   return host.querySelector('bottom-sheet > lookup-card') as HTMLElement;
+}
+function sheetPanel(host: HTMLElement): HTMLElement {
+  return host.querySelector('bottom-sheet')!.shadowRoot!.querySelector('.panel') as HTMLElement;
 }
 
 describe('InlineBottomSheetRenderer', () => {
@@ -46,6 +58,54 @@ describe('InlineBottomSheetRenderer', () => {
     const c = card(h);
     expect(c.querySelector('h2')!.textContent).toBe('resilient');
     expect(c.textContent).toContain('Looking up');
+  });
+
+  it('renderLoading(word, anchor) positions the sheet panel per computeCardPlacement (A6)', () => {
+    const h = host();
+    const anchor: AnchorRect = { x: 40, y: 60, w: 30, h: 10 };
+    new InlineBottomSheetRenderer(h).renderLoading('resilient', anchor);
+    const panel = sheetPanel(h);
+    const box = panel.getBoundingClientRect();
+    const expected = computeCardPlacement(
+      anchor,
+      { width: box.width, height: box.height },
+      { width: window.innerWidth, height: window.innerHeight },
+    );
+    expect(panel.style.bottom).toBe('auto');
+    expect(panel.style.top).toBe(`${expected.top}px`);
+    expect(panel.style.left).toBe(`${expected.left}px`);
+  });
+
+  it('a later renderResult (no anchor arg) reuses the anchor cached by the preceding renderLoading (A6)', () => {
+    const h = host();
+    const anchor: AnchorRect = { x: 40, y: 60, w: 30, h: 10 };
+    const renderer = new InlineBottomSheetRenderer(h);
+    renderer.renderLoading('bank', anchor);
+    const topAfterLoading = sheetPanel(h).style.top;
+    renderer.renderResult(result);
+    expect(sheetPanel(h).style.top).toBe(topAfterLoading);
+  });
+
+  it('close() clears the cached anchor — a later renderLoading with no anchor uses the bottom-center default (A6)', () => {
+    const h = host();
+    const renderer = new InlineBottomSheetRenderer(h);
+    renderer.renderLoading('bank', { x: 40, y: 60, w: 30, h: 10 });
+    renderer.close();
+    renderer.renderLoading('bank2');
+    const panel = sheetPanel(h);
+    const box = panel.getBoundingClientRect();
+    const expected = computeCardPlacement(
+      null,
+      { width: box.width, height: box.height },
+      { width: window.innerWidth, height: window.innerHeight },
+    );
+    expect(panel.style.top).toBe(`${expected.top}px`);
+    expect(panel.style.left).toBe(`${expected.left}px`);
+  });
+
+  it('renderLoading() with no anchor at all does not throw (A6)', () => {
+    const h = host();
+    expect(() => new InlineBottomSheetRenderer(h).renderLoading()).not.toThrow();
   });
 
   it('stamps the theme as an ATTRIBUTE on the card (crosses the MAIN/isolated world boundary)', () => {

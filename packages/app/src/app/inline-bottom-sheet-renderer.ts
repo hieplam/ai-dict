@@ -6,12 +6,19 @@ import type {
   Provider,
   Theme,
   SavedWordStatus,
+  AnchorRect,
 } from '../index';
-import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '../ui/index';
+import {
+  renderCardState,
+  type CardState,
+  type LookupCard,
+  type BottomSheet,
+  type SafeHtml,
+} from '../ui/index';
 import { sanitizeMarkdown } from './markdown-sanitize';
 
 export class InlineBottomSheetRenderer implements ResultRenderer {
-  private sheet: HTMLElement | null = null;
+  private sheet: BottomSheet | null = null;
   private card: LookupCard | null = null;
   private _theme: Theme = 'sepia';
   // Set on every renderResult from the render context; the card's one `switch-provider`
@@ -22,6 +29,11 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   // B1: the last CardState rendered, so setSaved() can re-emit it with the flag flipped without
   // a full re-lookup. null before any render, or after close().
   private lastState: CardState | null = null;
+  // A6: the selection's anchor rect for the currently-open card, captured by renderLoading and
+  // reused by every subsequent render of the same card (setState → positionNear) — see the
+  // design spec §2.2. null before any render, after close(), or when no anchor was ever known
+  // (the NO_KEY short-circuit path, design spec §2.4).
+  private lastAnchor: AnchorRect | null = null;
 
   constructor(
     private readonly host: HTMLElement,
@@ -46,7 +58,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
 
   private ensureCard(): LookupCard {
     if (this.card && this.sheet) return this.card;
-    const sheet = document.createElement('bottom-sheet');
+    const sheet = document.createElement('bottom-sheet') as BottomSheet;
     const card = document.createElement('lookup-card') as LookupCard;
     card.setAttribute('data-ad-theme', this._theme);
     // Chrome opts in to the "Open in side panel" affordance; the shared card reads this attribute
@@ -79,9 +91,16 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // stuck on "Looking up…". Shared-DOM mutations like replaceChildren do cross the boundary.
     this.lastState = state;
     this.ensureCard().replaceChildren(...renderCardState(state));
+    // A6: reposition after every content update — the panel's own height changes between the
+    // loading and result states, so a position fixed only at renderLoading time could leave a
+    // now-taller result card covering the sentence it was clear of while loading (spec §2.2).
+    this.sheet?.positionNear(this.lastAnchor);
   }
 
-  renderLoading(word?: string): void {
+  renderLoading(word?: string, anchor?: AnchorRect): void {
+    // A6: cache the selection anchor so every later render of this same open card (setState →
+    // positionNear) reuses it; null when no anchor was passed (spec §2.4 fallback).
+    this.lastAnchor = anchor ?? null;
     this.setState(word === undefined ? { kind: 'loading' } : { kind: 'loading', word });
   }
 
@@ -173,5 +192,6 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.sheet = null;
     this.card = null;
     this.lastState = null;
+    this.lastAnchor = null;
   }
 }
