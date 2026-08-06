@@ -1,5 +1,7 @@
 import { adoptStyles } from './styles/adopt';
 import { BASE_VARS, THEME_CSS } from './styles/tokens';
+import { computeCardPlacement } from '../domain/card-placement';
+import type { AnchorRect } from '../domain/types';
 
 // The panel is a transparent, centring container — the slotted <lookup-card> carries the
 // Paperlight surface (bg, radius, shadow), so the sheet never frames it in a second card
@@ -21,7 +23,8 @@ import { BASE_VARS, THEME_CSS } from './styles/tokens';
 const CSS = `:host{${BASE_VARS};position:fixed;inset:0;z-index:var(--adp-z-overlay)}
 ${THEME_CSS}
 .scrim{position:absolute;inset:0;background:var(--ad-scrim)}
-.panel{position:absolute;left:0;right:0;bottom:0;
+.panel{position:absolute;
+  width:min(var(--adp-card-width), calc(100% - 28px));
   max-height:88vh;max-height:88dvh;overflow-y:auto;overscroll-behavior:contain;padding:0 14px max(14px, env(safe-area-inset-bottom));
   transition:transform var(--adp-dur-slow) var(--adp-ease)}
 ::slotted(*){display:block;margin:0 auto}
@@ -106,5 +109,26 @@ export class BottomSheet extends HTMLElement {
 
   dismiss(): void {
     this.dispatchEvent(new CustomEvent('dismiss', { bubbles: true, composed: true }));
+  }
+
+  /**
+   * A6: position the panel as an overlay near `anchor` (the selection's viewport rect) so it
+   * never covers the sentence the reader is looking at — see the design spec §2.5 for the
+   * heuristic. `anchor === null` falls back to the pre-A6 bottom-center default (§2.4). Pure
+   * math lives in computeCardPlacement; this method only measures the live DOM and applies the
+   * result. Called by the renderer after every content update, since the panel's own height
+   * changes between the loading and result states (§2.2).
+   */
+  positionNear(anchor: AnchorRect | null): void {
+    if (!this.panel) return;
+    const rect = this.panel.getBoundingClientRect();
+    const { top, left } = computeCardPlacement(
+      anchor,
+      { width: rect.width, height: rect.height },
+      { width: window.innerWidth, height: window.innerHeight },
+    );
+    this.panel.style.bottom = 'auto';
+    this.panel.style.top = `${top}px`;
+    this.panel.style.left = `${left}px`;
   }
 }

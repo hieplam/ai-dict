@@ -1,13 +1,16 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
 import { registerContentElements } from '../../src/ui/register';
+import type { BottomSheet } from '../../src/ui/bottom-sheet';
+import { computeCardPlacement } from '../../src/domain/card-placement';
+import type { AnchorRect } from '../../src/domain/types';
 
 beforeAll(() => {
   registerContentElements();
 });
 
-function mountSheet(): HTMLElement {
-  const el = document.createElement('bottom-sheet');
+function mountSheet(): BottomSheet {
+  const el = document.createElement('bottom-sheet') as BottomSheet;
   el.innerHTML = '<button id="a">a</button><button id="b">b</button>';
   document.body.append(el); // connectedCallback wires ARIA + focus
   return el;
@@ -138,6 +141,67 @@ describe('<bottom-sheet>', () => {
       .find((t) => t.includes('.panel') && t.includes('max-height'))!;
     expect(panelRule).toBeDefined();
     expect(panelRule).toMatch(/max-height:\s*88dvh/);
+  });
+
+  it('positionNear(anchor) sets bottom to auto and positions the panel via computeCardPlacement (A6)', () => {
+    const el = mountSheet();
+    const panel = el.shadowRoot!.querySelector('.panel') as HTMLElement;
+    vi.spyOn(panel, 'getBoundingClientRect').mockReturnValue({
+      width: 400,
+      height: 200,
+      top: 0,
+      left: 0,
+      right: 400,
+      bottom: 200,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    vi.stubGlobal('innerWidth', 800);
+    vi.stubGlobal('innerHeight', 600);
+    const anchor: AnchorRect = { x: 100, y: 100, w: 50, h: 20 };
+    el.positionNear(anchor);
+    const expected = computeCardPlacement(
+      anchor,
+      { width: 400, height: 200 },
+      { width: 800, height: 600 },
+    );
+    expect(panel.style.bottom).toBe('auto');
+    expect(panel.style.top).toBe(`${expected.top}px`);
+    expect(panel.style.left).toBe(`${expected.left}px`);
+    vi.unstubAllGlobals();
+  });
+
+  it('positionNear(null) falls back to the bottom-center default without throwing (A6)', () => {
+    const el = mountSheet();
+    const panel = el.shadowRoot!.querySelector('.panel') as HTMLElement;
+    vi.spyOn(panel, 'getBoundingClientRect').mockReturnValue({
+      width: 400,
+      height: 200,
+      top: 0,
+      left: 0,
+      right: 400,
+      bottom: 200,
+      x: 0,
+      y: 0,
+      toJSON: () => ({}),
+    });
+    vi.stubGlobal('innerWidth', 800);
+    vi.stubGlobal('innerHeight', 600);
+    expect(() => el.positionNear(null)).not.toThrow();
+    const expected = computeCardPlacement(
+      null,
+      { width: 400, height: 200 },
+      { width: 800, height: 600 },
+    );
+    expect(panel.style.top).toBe(`${expected.top}px`);
+    expect(panel.style.left).toBe(`${expected.left}px`);
+    vi.unstubAllGlobals();
+  });
+
+  it('positionNear is a no-op before the element has ever connected (A6)', () => {
+    const el = document.createElement('bottom-sheet') as BottomSheet;
+    expect(() => el.positionNear({ x: 0, y: 0, w: 0, h: 0 })).not.toThrow();
   });
 
   it('has no axe violations', async () => {
