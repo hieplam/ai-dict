@@ -1,4 +1,6 @@
 import { registerContentElements, type TriggerUI, type AnchorRect, type Theme } from '@ai-dict/app';
+import { TRIGGER_SHOWN_MARK } from './trigger-marks';
+export { TRIGGER_SHOWN_MARK } from './trigger-marks';
 registerContentElements();
 
 const DISMISS_EVENTS = ['mousedown', 'touchstart'] as const;
@@ -39,6 +41,7 @@ export class ChromeFloatingTrigger implements TriggerUI {
     this.el.style.position = 'fixed';
     this.el.style.left = `${anchor.x}px`;
     this.el.style.top = `${anchor.y + anchor.h}px`;
+    requestAnimationFrame(() => performance.mark(TRIGGER_SHOWN_MARK));
   }
 
   /**

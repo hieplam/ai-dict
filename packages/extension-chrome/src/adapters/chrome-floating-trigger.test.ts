@@ -1,7 +1,11 @@
 import { describe, it, expect, vi } from 'vitest';
-import { ChromeFloatingTrigger } from './chrome-floating-trigger';
+import { ChromeFloatingTrigger, TRIGGER_SHOWN_MARK } from './chrome-floating-trigger';
 import { registerContentElements } from '@ai-dict/app';
 registerContentElements();
+
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
 
 describe('ChromeFloatingTrigger (TriggerUI via <lookup-trigger>)', () => {
   it('show() mounts the trigger and fires onClick on lookup-click; hide() removes it', () => {
@@ -98,5 +102,27 @@ describe('ChromeFloatingTrigger (TriggerUI via <lookup-trigger>)', () => {
     document.body.append(host);
     const trigger = new ChromeFloatingTrigger(host);
     expect(() => expect(trigger.activate()).toBe(false)).not.toThrow();
+  });
+
+  it('marks TRIGGER_SHOWN_MARK on the next animation frame after show(), once per call (A15)', async () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const trigger = new ChromeFloatingTrigger(host);
+
+    // Earlier tests in this file also call show(), each scheduling its own rAF-deferred mark on
+    // the one shared, module-global performance/rAF timeline happy-dom exposes; none of those
+    // tests ever await a frame, so their marks stay pending until something does. Draining once
+    // here — before taking the baseline count — flushes that cross-test debt so the two
+    // assertions below can check an exact delta instead of a flaky absolute count.
+    await nextFrame();
+    const before = performance.getEntriesByName(TRIGGER_SHOWN_MARK).length;
+
+    trigger.show({ x: 0, y: 0, w: 1, h: 1 }, vi.fn());
+    await nextFrame();
+    expect(performance.getEntriesByName(TRIGGER_SHOWN_MARK)).toHaveLength(before + 1);
+
+    trigger.show({ x: 9, y: 9, w: 1, h: 1 }, vi.fn()); // reuse path — still marks again
+    await nextFrame();
+    expect(performance.getEntriesByName(TRIGGER_SHOWN_MARK)).toHaveLength(before + 2);
   });
 });
