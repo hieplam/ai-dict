@@ -448,7 +448,7 @@ git commit -m "[A10TtsPronunciation] feat: speak button — icon + render logic 
 **Interfaces:** none new — `close(): void` already exists on `InlineBottomSheetRenderer`; this task
 only adds a line to its body.
 
-- [ ] **Step 1: Write the failing tests.** In
+- [x] **Step 1: Write the failing tests.** In
       `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`, change the import line from:
 
 ```ts
@@ -490,7 +490,7 @@ it('close() is safe when SpeechSynthesis is unsupported (A10)', () => {
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: failures — `cancel` is never called by `close()` yet (`toHaveBeenCalledTimes(1)` sees 0).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, the `close`
+- [x] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, the `close`
       method currently reads:
 
 ```ts
@@ -520,7 +520,7 @@ Expected: failures — `cancel` is never called by `close()` yet (`toHaveBeenCal
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: all tests pass (existing + 2 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
