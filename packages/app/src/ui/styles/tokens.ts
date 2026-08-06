@@ -213,3 +213,9 @@ export const ICON_SIDE_PANEL =
 export const ICON_STAR =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M12 3.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg>';
+
+// Speaker (say the word aloud) — card headword row, A10. A speaker cone + two sound-wave arcs,
+// stroked with currentColor like every other icon in this set.
+export const ICON_SPEAKER =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M4 9.5h3.2L11 6v12l-3.8-3.5H4z"/><path d="M15.2 9.2a4 4 0 0 1 0 5.6"/><path d="M17.7 6.8a7.6 7.6 0 0 1 0 10.4"/></svg>';
