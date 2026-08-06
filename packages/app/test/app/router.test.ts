@@ -581,6 +581,53 @@ describe('buildRouter', () => {
     expect(reply).toMatchObject({ ok: true, type: 'saved', entry: { status: 'known' } });
   });
 
+  it('saved.get returns the full entry for a saved word (B4)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'a financial institution',
+      translation: 'ngân hàng',
+      sentence: 'the river bank',
+      url: 'https://example.com',
+      title: 'Example',
+    });
+    const reply = await route({ type: 'saved.get', word: 'bank' });
+    expect(reply).toMatchObject({
+      ok: true,
+      type: 'savedEntry',
+      entry: {
+        word: 'bank',
+        status: 'learning',
+        senses: [{ definition: 'a financial institution', translation: 'ngân hàng' }],
+      },
+    });
+  });
+
+  it('saved.get on an unsaved word replies entry: null (B4)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    const reply = await route({ type: 'saved.get', word: 'ghost' });
+    expect(reply).toMatchObject({ ok: true, type: 'savedEntry', entry: null });
+  });
+
+  it('saved.get is case-insensitive on the word key (B4)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'Bank',
+      definition: 'd',
+      translation: '',
+      sentence: 's',
+      url: 'u',
+      title: 't',
+    });
+    const reply = await route({ type: 'saved.get', word: 'BANK' });
+    expect(reply).toMatchObject({ ok: true, type: 'savedEntry', entry: { word: 'Bank' } });
+  });
+
   it('saved.list on an empty store replies with an empty entries array (B8)', async () => {
     const route = buildRouter(deps());
     const reply = await route({ type: 'saved.list' });
