@@ -8,17 +8,12 @@ import type {
   SavedWordStatus,
   AnchorRect,
 } from '../index';
-import {
-  renderCardState,
-  type CardState,
-  type LookupCard,
-  type BottomSheet,
-  type SafeHtml,
-} from '../ui/index';
+import { computeCardPlacement } from '../domain/card-placement';
+import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '../ui/index';
 import { sanitizeMarkdown } from './markdown-sanitize';
 
 export class InlineBottomSheetRenderer implements ResultRenderer {
-  private sheet: BottomSheet | null = null;
+  private sheet: HTMLElement | null = null;
   private card: LookupCard | null = null;
   private _theme: Theme = 'sepia';
   // Set on every renderResult from the render context; the card's one `switch-provider`
@@ -58,7 +53,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
 
   private ensureCard(): LookupCard {
     if (this.card && this.sheet) return this.card;
-    const sheet = document.createElement('bottom-sheet') as BottomSheet;
+    const sheet = document.createElement('bottom-sheet');
     const card = document.createElement('lookup-card') as LookupCard;
     card.setAttribute('data-ad-theme', this._theme);
     // Chrome opts in to the "Open in side panel" affordance; the shared card reads this attribute
@@ -94,7 +89,36 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // A6: reposition after every content update — the panel's own height changes between the
     // loading and result states, so a position fixed only at renderLoading time could leave a
     // now-taller result card covering the sentence it was clear of while loading (spec §2.2).
-    this.sheet?.positionNear(this.lastAnchor);
+    this.positionSheet();
+  }
+
+  /**
+   * A6: place the sheet's panel as an overlay near the cached selection anchor so it never covers
+   * the sentence the reader is looking at (spec §2.5); `lastAnchor === null` falls back to the
+   * pre-A6 bottom-center default (§2.4). The pure rect math lives in computeCardPlacement; this
+   * edge only measures the live panel and applies the result as inline styles.
+   *
+   * Why the renderer does the DOM work (not a BottomSheet method): in the Chrome MV3 content
+   * script the <bottom-sheet> custom element is defined in the page's MAIN world, while this
+   * renderer runs in the ISOLATED world — so a custom-class METHOD call would not cross the world
+   * boundary (the same Chromium 390807 limitation setState documents for property writes). Only
+   * shared-DOM access crosses, so this reaches the panel through the element's open shadow root
+   * and writes native inline styles — exactly how the renderer already crosses the boundary with
+   * replaceChildren/setAttribute. This also makes placement work unchanged in Safari's
+   * single-world shell, which passes this same renderer directly.
+   */
+  private positionSheet(): void {
+    const panel = this.sheet?.shadowRoot?.querySelector<HTMLElement>('.panel');
+    if (!panel) return;
+    const rect = panel.getBoundingClientRect();
+    const { top, left } = computeCardPlacement(
+      this.lastAnchor,
+      { width: rect.width, height: rect.height },
+      { width: window.innerWidth, height: window.innerHeight },
+    );
+    panel.style.bottom = 'auto';
+    panel.style.top = `${top}px`;
+    panel.style.left = `${left}px`;
   }
 
   renderLoading(word?: string, anchor?: AnchorRect): void {

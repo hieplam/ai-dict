@@ -1,7 +1,5 @@
 import { adoptStyles } from './styles/adopt';
 import { BASE_VARS, THEME_CSS } from './styles/tokens';
-import { computeCardPlacement } from '../domain/card-placement';
-import type { AnchorRect } from '../domain/types';
 
 // The panel is a transparent, centring container — the slotted <lookup-card> carries the
 // Paperlight surface (bg, radius, shadow), so the sheet never frames it in a second card
@@ -109,26 +107,5 @@ export class BottomSheet extends HTMLElement {
 
   dismiss(): void {
     this.dispatchEvent(new CustomEvent('dismiss', { bubbles: true, composed: true }));
-  }
-
-  /**
-   * A6: position the panel as an overlay near `anchor` (the selection's viewport rect) so it
-   * never covers the sentence the reader is looking at — see the design spec §2.5 for the
-   * heuristic. `anchor === null` falls back to the pre-A6 bottom-center default (§2.4). Pure
-   * math lives in computeCardPlacement; this method only measures the live DOM and applies the
-   * result. Called by the renderer after every content update, since the panel's own height
-   * changes between the loading and result states (§2.2).
-   */
-  positionNear(anchor: AnchorRect | null): void {
-    if (!this.panel) return;
-    const rect = this.panel.getBoundingClientRect();
-    const { top, left } = computeCardPlacement(
-      anchor,
-      { width: rect.width, height: rect.height },
-      { width: window.innerWidth, height: window.innerHeight },
-    );
-    this.panel.style.bottom = 'auto';
-    this.panel.style.top = `${top}px`;
-    this.panel.style.left = `${left}px`;
   }
 }
