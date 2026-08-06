@@ -1,4 +1,3 @@
-import type { AnchorRect } from '../domain/types';
 import { adoptStyles } from './styles/adopt';
 import { BASE_VARS, THEME_CSS } from './styles/tokens';
 
@@ -7,11 +6,20 @@ export interface HoverRecallValue {
   preview: string;
 }
 
-// A small floating card, deliberately simpler than <lookup-card>/<bottom-sheet> — B4's design
-// spec §2.4 pins this as plain text only (never innerHTML), so there is no sanitize surface here
-// at all. Positioned by the caller (the Chrome adapter, packages/extension-chrome/src/adapters/
-// chrome-hover-recall-popup.ts) via inline left/top; this element owns only its own box styling.
-const CSS = `:host{all:initial;${BASE_VARS};position:fixed;z-index:var(--adp-z-overlay);color-scheme:light;font:var(--adp-text-sm)/1.4 var(--adp-font-sans)}
+// A small floating card, deliberately simpler than <lookup-card>/<bottom-sheet>. B4's design
+// spec §2.4 pins it to PLAIN TEXT only (textContent, never innerHTML) — no sanitize surface here.
+//
+// Cross-world contract: this element is DEFINED in the page's MAIN world (content-elements.ts,
+// world:MAIN) but DRIVEN from content.ts's ISOLATED world via the ChromeHoverRecallPopup adapter.
+// A JS method/property call never crosses that boundary (Chromium 390807 — see
+// inline-bottom-sheet-renderer.ts:74-81), so the adapter drives this element ONLY through
+// shared-DOM ATTRIBUTES: `word`/`preview` carry the content, presence of `open` toggles
+// visibility, `data-ad-theme` re-themes. attributeChangedCallback (dispatched in this element's
+// MAIN world whenever ANY world mutates the shared node's attribute) re-renders the text.
+// Visibility is an EXPLICIT shadow rule `:host([open])` — never the UA `[hidden]` rule, which
+// `all:initial` on :host resets away (its display would fall back to `inline`, staying visible).
+const CSS = `:host{all:initial;${BASE_VARS};position:fixed;z-index:var(--adp-z-overlay);color-scheme:light;font:var(--adp-text-sm)/1.4 var(--adp-font-sans);display:none}
+:host([open]){display:block}
 ${THEME_CSS}
 .pop{max-width:260px;padding:10px 12px;border-radius:var(--adp-radius-control);background:var(--ad-surface);border:1px solid var(--ad-line-strong);box-shadow:var(--ad-shadow-card);color:var(--ad-ink)}
 .word{display:block;font-family:var(--adp-font-serif);font-weight:var(--adp-weight-bold);font-size:15px;margin-bottom:2px}
@@ -20,12 +28,12 @@ ${THEME_CSS}
 .view-link:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}`;
 
 export class HoverRecallPopup extends HTMLElement {
+  static readonly observedAttributes = ['word', 'preview'];
+
   private wordEl!: HTMLElement;
   private previewEl!: HTMLElement;
-  private currentWord = '';
 
   connectedCallback(): void {
-    this.hidden = true;
     if (this.shadowRoot) return;
     const root = this.attachShadow({ mode: 'open' });
     adoptStyles(root, CSS);
@@ -43,7 +51,7 @@ export class HoverRecallPopup extends HTMLElement {
     link.addEventListener('click', () => {
       this.dispatchEvent(
         new CustomEvent('view-full-entry', {
-          detail: { word: this.currentWord },
+          detail: { word: this.getAttribute('word') ?? '' },
           bubbles: true,
           composed: true,
         }),
@@ -51,29 +59,18 @@ export class HoverRecallPopup extends HTMLElement {
     });
     pop.append(this.wordEl, this.previewEl, link);
     root.append(pop);
+    // Paint any attributes the adapter set BEFORE this element upgraded — same pre-upgrade
+    // attribute-read pattern lookup-card uses for data-ad-theme/side-panel in connectedCallback.
+    this.render();
   }
 
-  show(anchor: AnchorRect, value: HoverRecallValue): void {
-    this.currentWord = value.word;
-    this.wordEl.textContent = value.word;
-    this.previewEl.textContent = value.preview; // textContent only — never innerHTML (no sanitize surface)
-    this.hidden = false;
-    this.style.left = `${anchor.x}px`;
-    this.style.top = `${anchor.y + anchor.h}px`;
-    // Clamp to the viewport once the box has real layout (happy-dom returns a zero rect — a
-    // harmless no-op there; verified for real in the e2e suite, design spec §5.7).
-    const r = this.getBoundingClientRect();
-    const vw = globalThis.innerWidth ?? 0;
-    const vh = globalThis.innerHeight ?? 0;
-    let left = anchor.x;
-    let top = anchor.y + anchor.h;
-    if (r.width && left + r.width > vw) left = Math.max(0, vw - r.width - 8);
-    if (r.height && top + r.height > vh) top = Math.max(0, anchor.y - r.height);
-    this.style.left = `${left}px`;
-    this.style.top = `${top}px`;
+  attributeChangedCallback(): void {
+    if (this.shadowRoot) this.render();
   }
 
-  hide(): void {
-    this.hidden = true;
+  private render(): void {
+    // textContent ONLY — never innerHTML (S4: this element has no sanitize surface by construction).
+    this.wordEl.textContent = this.getAttribute('word') ?? '';
+    this.previewEl.textContent = this.getAttribute('preview') ?? '';
   }
 }
