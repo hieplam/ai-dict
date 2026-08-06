@@ -542,7 +542,7 @@ git commit -m "[A10TtsPronunciation] feat: cancel in-flight speech on card close
 
 - Create: `packages/extension-chrome/e2e/a10-tts-pronunciation.spec.ts`
 
-- [ ] **Step 1: Write the new e2e spec.** Create
+- [x] **Step 1: Write the new e2e spec.** Create
       `packages/extension-chrome/e2e/a10-tts-pronunciation.spec.ts`:
 
 ```ts
@@ -594,7 +594,7 @@ cd packages/extension-chrome && bunx playwright test a10-tts-pronunciation
 
 Expected: 1 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
