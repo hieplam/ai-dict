@@ -212,6 +212,10 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   }
 
   close(): void {
+    // A10: never let an utterance outlive the card it came from — dismissing (Esc, scrim click,
+    // the × button, the A4 dismiss-lookup command) also stops any speech still playing.
+    // renderCardState's own cancel-on-render doesn't cover this path: close() never re-renders.
+    globalThis.speechSynthesis?.cancel();
     this.sheet?.remove();
     this.sheet = null;
     this.card = null;

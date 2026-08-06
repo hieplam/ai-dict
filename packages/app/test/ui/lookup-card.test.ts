@@ -838,3 +838,169 @@ describe('<lookup-card> repeat-offender nudge (B7)', () => {
     expect(await axeViolations(el)).toEqual([]);
   });
 });
+
+describe('A10 speak button (TTS pronunciation)', () => {
+  class FakeSpeechSynthesis extends EventTarget {
+    cancel = vi.fn();
+    speak = vi.fn();
+    private _voices: SpeechSynthesisVoice[];
+    constructor(voices: SpeechSynthesisVoice[] = []) {
+      super();
+      this._voices = voices;
+    }
+    getVoices(): SpeechSynthesisVoice[] {
+      return this._voices;
+    }
+    setVoices(voices: SpeechSynthesisVoice[]): void {
+      this._voices = voices;
+      this.dispatchEvent(new Event('voiceschanged'));
+    }
+  }
+
+  class FakeUtterance {
+    voice: SpeechSynthesisVoice | null = null;
+    lang = '';
+    constructor(public text: string) {}
+  }
+
+  const LOCAL_EN_US = {
+    lang: 'en-US',
+    localService: true,
+    default: true,
+    name: 'Local US English',
+    voiceURI: 'local-en-US',
+  } as SpeechSynthesisVoice;
+
+  const REMOTE_EN_GB = {
+    lang: 'en-GB',
+    localService: false,
+    default: false,
+    name: 'Remote UK English',
+    voiceURI: 'remote-en-GB',
+  } as SpeechSynthesisVoice;
+
+  it('omits the speak button entirely when SpeechSynthesis is unsupported (A10)', () => {
+    vi.stubGlobal('speechSynthesis', undefined);
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>x</p>') };
+    expect(el.querySelector('.speak-btn')).toBeNull();
+    vi.unstubAllGlobals();
+  });
+
+  it('shows the speak button immediately when a local English voice is already installed (A10)', () => {
+    vi.stubGlobal('speechSynthesis', new FakeSpeechSynthesis([LOCAL_EN_US]));
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>x</p>') };
+    expect(el.querySelector<HTMLButtonElement>('.speak-btn')!.hidden).toBe(false);
+    vi.unstubAllGlobals();
+  });
+
+  it('renders the speak button hidden, then reveals it once voiceschanged reports a local English voice (A10)', () => {
+    const synth = new FakeSpeechSynthesis([]);
+    vi.stubGlobal('speechSynthesis', synth);
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>x</p>') };
+    const btn = el.querySelector<HTMLButtonElement>('.speak-btn')!;
+    expect(btn.hidden).toBe(true);
+    synth.setVoices([LOCAL_EN_US]);
+    expect(btn.hidden).toBe(false);
+    vi.unstubAllGlobals();
+  });
+
+  it('stays hidden when only a remote (non-local) voice is available — never risks a cloud TTS call (A10)', () => {
+    const synth = new FakeSpeechSynthesis([REMOTE_EN_GB]);
+    vi.stubGlobal('speechSynthesis', synth);
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>x</p>') };
+    const btn = el.querySelector<HTMLButtonElement>('.speak-btn')!;
+    expect(btn.hidden).toBe(true);
+    synth.setVoices([REMOTE_EN_GB]); // voiceschanged fires again, still zero local voices
+    expect(btn.hidden).toBe(true);
+    vi.unstubAllGlobals();
+  });
+
+  it('clicking the speak button cancels any in-flight utterance, then speaks the word ONLY with a local English voice (A10)', () => {
+    vi.stubGlobal('speechSynthesis', new FakeSpeechSynthesis([LOCAL_EN_US]));
+    vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance);
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<h2>IPA</h2><p>/bæŋk/</p><p>a financial institution</p>'),
+    };
+    const synth = globalThis.speechSynthesis as unknown as FakeSpeechSynthesis;
+    // mountCard()'s connectedCallback (default loading render) and el.state's own result render
+    // each already invoked cancel() once — isolate the click's own call, same pattern
+    // inline-bottom-sheet-renderer.test.ts uses for its close()-cancel test.
+    synth.cancel.mockClear();
+    el.querySelector<HTMLButtonElement>('.speak-btn')!.click();
+    expect(synth.cancel).toHaveBeenCalledTimes(1);
+    expect(synth.speak).toHaveBeenCalledTimes(1);
+    const utter = synth.speak.mock.calls[0]![0] as unknown as FakeUtterance;
+    expect(utter.text).toBe('bank'); // the word only — never the definition body
+    expect(utter.voice).toBe(LOCAL_EN_US);
+    expect(utter.lang).toBe('en-US');
+    vi.unstubAllGlobals();
+  });
+
+  it('a click makes zero speak() calls if no local voice remains at click time (never guesses) (A10)', () => {
+    const synth = new FakeSpeechSynthesis([LOCAL_EN_US]);
+    vi.stubGlobal('speechSynthesis', synth);
+    vi.stubGlobal('SpeechSynthesisUtterance', FakeUtterance);
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>x</p>') };
+    synth.setVoices([]); // degrade after render, before the click
+    el.querySelector<HTMLButtonElement>('.speak-btn')!.click();
+    expect(synth.speak).not.toHaveBeenCalled();
+    vi.unstubAllGlobals();
+  });
+
+  it('renders no speak button for loading or error states — only alongside a result (A10)', () => {
+    vi.stubGlobal('speechSynthesis', new FakeSpeechSynthesis([LOCAL_EN_US]));
+    const { nodes: loadingNodes } = loadingCaption();
+    expect(
+      loadingNodes.some((n) => n instanceof HTMLElement && n.classList.contains('speak-btn')),
+    ).toBe(false);
+    const errorNodes = renderCardState({
+      kind: 'error',
+      error: { code: 'NETWORK', message: 'x', retryable: true },
+    });
+    expect(
+      errorNodes.some((n) => n instanceof HTMLElement && n.classList.contains('speak-btn')),
+    ).toBe(false);
+    vi.unstubAllGlobals();
+  });
+
+  it('places the speak button as a top-level sibling immediately after the headword, before the save row (A10)', () => {
+    vi.stubGlobal('speechSynthesis', new FakeSpeechSynthesis([LOCAL_EN_US]));
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>x</p>') };
+    const h2 = el.querySelector('h2')!;
+    expect(h2.nextElementSibling?.classList.contains('speak-btn')).toBe(true);
+    expect(h2.nextElementSibling?.nextElementSibling?.classList.contains('save-row')).toBe(true);
+    vi.unstubAllGlobals();
+  });
+
+  it('cancels any in-flight utterance on every renderCardState call — loading, result, and error (A10)', () => {
+    const synth = new FakeSpeechSynthesis([LOCAL_EN_US]);
+    vi.stubGlobal('speechSynthesis', synth);
+    renderCardState({ kind: 'loading' });
+    expect(synth.cancel).toHaveBeenCalledTimes(1);
+    renderCardState({ kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>x</p>') });
+    expect(synth.cancel).toHaveBeenCalledTimes(2);
+    renderCardState({ kind: 'error', error: { code: 'NETWORK', message: 'x', retryable: true } });
+    expect(synth.cancel).toHaveBeenCalledTimes(3);
+    vi.unstubAllGlobals();
+  });
+
+  it('labels the speak button with the exact word for screen readers (A10)', () => {
+    vi.stubGlobal('speechSynthesis', new FakeSpeechSynthesis([LOCAL_EN_US]));
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'serendipity', target: 'vi', safeHtml: safe('<p>x</p>') };
+    expect(el.querySelector('.speak-btn')!.getAttribute('aria-label')).toBe(
+      'Say "serendipity" aloud',
+    );
+    vi.unstubAllGlobals();
+  });
+});

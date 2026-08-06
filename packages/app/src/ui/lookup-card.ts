@@ -9,6 +9,7 @@ import {
   ICON_SETTINGS,
   ICON_SIDE_PANEL,
   ICON_STAR,
+  ICON_SPEAKER,
 } from './styles/tokens';
 
 // Re-exported so existing consumers (side-panel-view) and the c3-117 public surface keep
@@ -142,6 +143,7 @@ button[data-act="settings"] .lbl{line-height:1}
 ::slotted(.meta-row){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 ::slotted(.defined-as){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 8px;font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
 ::slotted(.save-row){display:flex;margin:6px 0 10px}
+::slotted(.speak-btn){display:inline-flex;vertical-align:middle;margin:0 0 .35em 8px}
 ::slotted(.nudge-row){display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:7px 10px;border:1px solid var(--ad-accent);border-radius:var(--adp-radius-control);background:var(--ad-surface-raised)}`;
 
 // Descendants of the slotted .meta-row cannot be reached by ::slotted() (it only matches the
@@ -177,6 +179,11 @@ lookup-card .status-btn:hover{background:var(--ad-surface-raised);color:var(--ad
 lookup-card .status-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 lookup-card .status-btn[aria-pressed="true"]{border-color:var(--ad-accent);color:var(--ad-accent-ink)}
 @media (prefers-reduced-motion:reduce){lookup-card .status-btn{transition:none}}
+lookup-card .speak-btn{display:inline-grid;place-items:center;width:26px;height:26px;border:0;background:transparent;color:var(--ad-ink-faint);border-radius:var(--adp-radius-control);cursor:pointer;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease)}
+lookup-card .speak-btn svg{width:16px;height:16px;pointer-events:none}
+lookup-card .speak-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
+lookup-card .speak-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){lookup-card .speak-btn{transition:none}}
 lookup-card .nudge-row__text{flex:1 1 auto;min-width:0;font-size:var(--adp-text-2xs);color:var(--ad-ink)}
 lookup-card .nudge-row__save-btn{flex:none;border:1px solid var(--ad-accent);background:var(--ad-accent);color:var(--ad-on-accent);border-radius:var(--adp-radius-control);padding:3px 11px;font:inherit;font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-semi);cursor:pointer}
 lookup-card .nudge-row__save-btn:hover{filter:brightness(1.06)}
@@ -251,6 +258,9 @@ function renderSetupInvite(): Node[] {
  * (side panel) use the `state` setter, which funnels through this same helper.
  */
 export function renderCardState(state: CardState): Node[] {
+  // A10: at most one utterance in flight, tied to whatever is currently shown — every state
+  // transition (loading, result, error) interrupts any speech left over from the prior word.
+  globalThis.speechSynthesis?.cancel();
   if (state.kind === 'loading') {
     // The loading state must read as a populated, on-brand card, never an empty box. We show
     // the reader's own selected word as the headword the instant they click (it is known long
@@ -291,7 +301,10 @@ export function renderCardState(state: CardState): Node[] {
   h.textContent = state.word;
   const body = document.createElement('div');
   body.innerHTML = state.safeHtml; // trusted: sanitized upstream by adapters-shared (S4)
-  const nodes: Node[] = [h, renderSaveRow(state)];
+  const nodes: Node[] = [h];
+  const speakBtn = renderSpeakButton(state.word);
+  if (speakBtn) nodes.push(speakBtn);
+  nodes.push(renderSaveRow(state));
   if (state.nudge === true) nodes.push(renderNudgeRow(state));
   const definedAsRow = state.definedAs ? renderDefinedAsRow(state.definedAs) : null;
   if (definedAsRow) nodes.push(definedAsRow);
@@ -323,6 +336,62 @@ function renderDefinedAsRow(definedAs: { term: string; isIdiom: boolean }): HTML
   );
   row.append(label, btn);
   return row;
+}
+
+/**
+ * A10: pick the voice to speak `word` with. Filters to `localService === true` first — the
+ * mechanism that holds the roadmap's "100% local" / "No cloud TTS" fence (design spec §2.2):
+ * some browsers' bundled voices synthesize speech by calling out to a remote server, and a
+ * voice like that must never be silently chosen just because its language tag matches. Prefers
+ * an exact 'en-US' match, falling back to any other local English-tagged voice. Returns
+ * undefined if no local English voice exists at all — callers treat that identically to "no
+ * voices installed."
+ */
+function pickLocalEnglishVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisVoice | undefined {
+  const local = voices.filter((v) => v.localService && v.lang.toLowerCase().startsWith('en'));
+  return local.find((v) => v.lang === 'en-US') ?? local[0];
+}
+
+/**
+ * A10: the pronunciation control — a top-level light-DOM SIBLING of the headword `<h2>` (not a
+ * wrapper — mirrors renderSaveRow's own documented reason just above: ::slotted() only matches
+ * TOP-LEVEL assigned nodes, so wrapping h2 would silently drop its underline-swatch styling,
+ * `::slotted(h2)` at the top of this file's CSS). The caller (renderCardState) places this node
+ * immediately after `<h2>` so it flows onto the same visual line (both are inline-level slotted
+ * nodes) — as close to "next to the pronunciation info" as the card's DOM model supports; see
+ * the design spec §2.1 for why parsing into the sanitized markdown body was rejected instead.
+ *
+ * Returns null (button omitted, not disabled) when SpeechSynthesis doesn't exist at all — a
+ * control that can never work has no reason to occupy space. When it exists, the button renders
+ * `hidden` until at least one local English voice is confirmed installed (checked synchronously,
+ * then once more on a one-shot `voiceschanged` — browsers commonly return an empty voice list on
+ * the very first call and populate it asynchronously). The same voice check runs AGAIN at click
+ * time, since the list can change between render and click.
+ */
+function renderSpeakButton(word: string): HTMLButtonElement | null {
+  const synth = globalThis.speechSynthesis;
+  if (!synth) return null;
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'speak-btn';
+  btn.hidden = true;
+  btn.setAttribute('aria-label', `Say "${word}" aloud`);
+  btn.innerHTML = ICON_SPEAKER; // s4: static-template — decorative aria-hidden SVG; name comes from aria-label
+  const reveal = (): void => {
+    if (pickLocalEnglishVoice(synth.getVoices()) !== undefined) btn.hidden = false;
+  };
+  reveal();
+  if (btn.hidden) synth.addEventListener('voiceschanged', reveal, { once: true });
+  btn.addEventListener('click', () => {
+    const voice = pickLocalEnglishVoice(synth.getVoices());
+    if (!voice) return; // degraded further between render and click — do nothing, never guess
+    synth.cancel(); // at most one utterance in flight — a rapid re-click restarts, never queues
+    const utter = new SpeechSynthesisUtterance(word); // word only (A10 fence) — never the body
+    utter.voice = voice;
+    utter.lang = voice.lang;
+    synth.speak(utter);
+  });
+  return btn;
 }
 
 /**

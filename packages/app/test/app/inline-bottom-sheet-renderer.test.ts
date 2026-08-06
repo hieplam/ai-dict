@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach, beforeAll } from 'vitest';
+import { describe, it, expect, afterEach, beforeAll, vi } from 'vitest';
 import { InlineBottomSheetRenderer } from '../../src/app/inline-bottom-sheet-renderer';
 import { computeCardPlacement } from '../../src/domain/card-placement';
 import { registerContentElements } from '../../src/ui/register';
@@ -166,6 +166,34 @@ describe('InlineBottomSheetRenderer', () => {
     r.renderLoading();
     r.close();
     expect(h.querySelector('bottom-sheet')).toBeNull();
+  });
+
+  it('close() cancels any in-flight speech synthesis utterance (A10)', () => {
+    const cancel = vi.fn();
+    // renderResult's own render pass reaches renderSpeakButton, which registers a
+    // 'voiceschanged' listener when no local voice is found yet (real speechSynthesis is an
+    // EventTarget) — the stub needs a no-op addEventListener for that path to run harmlessly.
+    vi.stubGlobal('speechSynthesis', {
+      cancel,
+      getVoices: () => [],
+      addEventListener: () => {},
+    });
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result);
+    cancel.mockClear(); // renderResult's own renderCardState call already invoked cancel once
+    r.close();
+    expect(cancel).toHaveBeenCalledTimes(1);
+    vi.unstubAllGlobals();
+  });
+
+  it('close() is safe when SpeechSynthesis is unsupported (A10)', () => {
+    vi.stubGlobal('speechSynthesis', undefined);
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderLoading();
+    expect(() => r.close()).not.toThrow();
+    vi.unstubAllGlobals();
   });
 
   it('a bottom-sheet "dismiss" event tears the sheet down', () => {

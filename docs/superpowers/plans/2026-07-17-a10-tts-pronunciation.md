@@ -78,7 +78,7 @@ function pickLocalEnglishVoice(voices: SpeechSynthesisVoice[]): SpeechSynthesisV
 function renderSpeakButton(word: string): HTMLButtonElement | null;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add the following import to
+- [x] **Step 1: Write the failing tests.** Add the following import to
       `packages/app/test/ui/lookup-card.test.ts`'s existing import line (it currently reads
       `import { describe, it, expect, vi, beforeAll } from 'vitest';` — `vi` is already imported, no
       change needed there). Append this new `describe` block **after** the file's existing final
@@ -252,7 +252,7 @@ Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: failures — `.speak-btn` never appears (the function doesn't exist yet), so every
 assertion that looks for it fails or times out on a `null` query result.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
   1. In `packages/app/src/ui/styles/tokens.ts`, add the new icon right after `ICON_STAR`
      (currently the file's last export, ending `.../></svg>';`):
 
@@ -422,7 +422,7 @@ if (state.nudge === true) nodes.push(renderNudgeRow(state));
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all tests pass (existing + 10 new in the `A10 speak button` block).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -448,7 +448,7 @@ git commit -m "[A10TtsPronunciation] feat: speak button — icon + render logic 
 **Interfaces:** none new — `close(): void` already exists on `InlineBottomSheetRenderer`; this task
 only adds a line to its body.
 
-- [ ] **Step 1: Write the failing tests.** In
+- [x] **Step 1: Write the failing tests.** In
       `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`, change the import line from:
 
 ```ts
@@ -490,7 +490,7 @@ it('close() is safe when SpeechSynthesis is unsupported (A10)', () => {
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: failures — `cancel` is never called by `close()` yet (`toHaveBeenCalledTimes(1)` sees 0).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, the `close`
+- [x] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, the `close`
       method currently reads:
 
 ```ts
@@ -520,7 +520,7 @@ Expected: failures — `cancel` is never called by `close()` yet (`toHaveBeenCal
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: all tests pass (existing + 2 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -542,7 +542,7 @@ git commit -m "[A10TtsPronunciation] feat: cancel in-flight speech on card close
 
 - Create: `packages/extension-chrome/e2e/a10-tts-pronunciation.spec.ts`
 
-- [ ] **Step 1: Write the new e2e spec.** Create
+- [x] **Step 1: Write the new e2e spec.** Create
       `packages/extension-chrome/e2e/a10-tts-pronunciation.spec.ts`:
 
 ```ts
@@ -594,7 +594,7 @@ cd packages/extension-chrome && bunx playwright test a10-tts-pronunciation
 
 Expected: 1 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
