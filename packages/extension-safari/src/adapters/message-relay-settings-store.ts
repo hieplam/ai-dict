@@ -26,6 +26,7 @@ export class MessageRelaySettingsStore implements SettingsStore {
         hasKey: reply.settings.hasKey,
         theme: reply.settings.theme,
         configuredProviders: reply.settings.configuredProviders,
+        highlightSavedWords: reply.settings.highlightSavedWords,
       };
       this.cache = stripped;
       return stripped;

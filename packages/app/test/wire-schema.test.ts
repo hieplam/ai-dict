@@ -47,6 +47,7 @@ describe('wire-schema', () => {
         hasKey: true,
         theme: 'sepia',
         configuredProviders: [],
+        highlightSavedWords: true,
       },
       apiKey: 'leaked',
     });
@@ -66,6 +67,7 @@ describe('wire-schema', () => {
           hasKey: true,
           theme,
           configuredProviders: [],
+          highlightSavedWords: true,
         },
       });
       expect(ok.success, `theme=${theme} must parse`).toBe(true);
@@ -235,9 +237,48 @@ describe('wire-schema', () => {
         hasKey: true,
         theme: 'sepia',
         configuredProviders: ['gemini'],
+        highlightSavedWords: true,
       },
     });
     expect(r.success).toBe(true);
+  });
+
+  // B3: highlightSavedWords is a required PublicSettings field — a settings reply missing it
+  // must be rejected (mirrors the promptEnvelope-required contract above), and a reply carrying
+  // it (either boolean value) must parse.
+  it('[B3] settings reply requires highlightSavedWords: boolean', () => {
+    const base = {
+      targetLang: 'vi',
+      outputFormat: 'f',
+      promptEnvelope: '',
+      hasKey: true,
+      theme: 'sepia' as const,
+      configuredProviders: [],
+    };
+    expect(WireReplySchema.safeParse({ ok: true, type: 'settings', settings: base }).success).toBe(
+      false,
+    );
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'settings',
+        settings: { ...base, highlightSavedWords: true },
+      }).success,
+    ).toBe(true);
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'settings',
+        settings: { ...base, highlightSavedWords: false },
+      }).success,
+    ).toBe(true);
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'settings',
+        settings: { ...base, highlightSavedWords: 'yes' },
+      }).success,
+    ).toBe(false);
   });
 
   it('lookup req accepts an optional provider override and rejects unknown providers', () => {
@@ -394,6 +435,7 @@ describe('wire-schema', () => {
       hasKey: true,
       theme: 'sepia' as const,
       configuredProviders: [],
+      highlightSavedWords: true,
     };
     // Present (even '') → parses; omitted → rejected, exactly like outputFormat.
     expect(
@@ -556,6 +598,56 @@ describe('saved.list wire message (B8)', () => {
 
   it('rejects a saved.list reply missing entries', () => {
     expect(WireReplySchema.safeParse({ ok: true, type: 'saved.list' }).success).toBe(false);
+  });
+});
+
+describe('saved.learningWords wire message (B3)', () => {
+  it('accepts a valid saved.learningWords message', () => {
+    expect(WireMessageSchema.safeParse({ type: 'saved.learningWords' }).success).toBe(true);
+  });
+
+  it('accepts a valid savedWords reply', () => {
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'savedWords', words: ['bank'] }).success,
+    ).toBe(true);
+  });
+
+  it('rejects a savedWords reply with non-array words', () => {
+    expect(WireReplySchema.safeParse({ ok: true, type: 'savedWords', words: 'bank' }).success).toBe(
+      false,
+    );
+  });
+});
+
+describe('saved.get / savedEntry wire messages (B4)', () => {
+  it('accepts a valid saved.get message', () => {
+    expect(WireMessageSchema.safeParse({ type: 'saved.get', word: 'bank' }).success).toBe(true);
+  });
+
+  it('rejects a saved.get message missing word', () => {
+    expect(WireMessageSchema.safeParse({ type: 'saved.get' }).success).toBe(false);
+  });
+
+  it('accepts a savedEntry reply carrying a real entry', () => {
+    const entry = {
+      word: 'bank',
+      status: 'learning',
+      savedAt: 1,
+      senses: [{ definition: 'd', translation: 't', sentence: 's', url: 'u', title: 'ti' }],
+    };
+    expect(WireReplySchema.safeParse({ ok: true, type: 'savedEntry', entry }).success).toBe(true);
+  });
+
+  it('accepts a savedEntry reply with entry: null (word not saved)', () => {
+    expect(WireReplySchema.safeParse({ ok: true, type: 'savedEntry', entry: null }).success).toBe(
+      true,
+    );
+  });
+
+  it('rejects a savedEntry reply with a non-object, non-null entry', () => {
+    expect(WireReplySchema.safeParse({ ok: true, type: 'savedEntry', entry: 'nope' }).success).toBe(
+      false,
+    );
   });
 });
 

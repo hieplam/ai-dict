@@ -37,6 +37,7 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
       hasKey: true,
       theme: 'sepia',
       configuredProviders: ['gemini'],
+      highlightSavedWords: true,
     });
     expect('apiKey' in pub).toBe(false);
   });
@@ -50,6 +51,7 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
       hasKey: false,
       theme: 'sepia',
       configuredProviders: [],
+      highlightSavedWords: true,
     });
   });
 

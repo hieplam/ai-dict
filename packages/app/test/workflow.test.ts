@@ -33,6 +33,7 @@ const pub = (hasKey: boolean, configuredProviders?: Provider[]) => {
     hasKey,
     theme: 'sepia' as const,
     configuredProviders: configuredProviders ?? fallback,
+    highlightSavedWords: true,
   };
 };
 

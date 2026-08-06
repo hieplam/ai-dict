@@ -1,6 +1,7 @@
 export * from './lookup-trigger';
 export * from './lookup-card';
 export * from './bottom-sheet';
+export * from './hover-recall-popup';
 export * from './settings-form';
 export * from './side-panel-view';
 export * from './onboarding-view';

@@ -7,8 +7,13 @@ import {
   createSaveReplyGuard,
   classifyInbound,
   acceptAny,
+  PageHighlighter,
+  HoverRecallController,
+  buildHighlightMatcher,
+  findWordMatches,
   type SettingsStore,
   type SavedWordStatus,
+  type SavedWordEntry,
   type WireReply,
 } from '@ai-dict/app';
 // Custom elements are defined by content-elements.ts (world:MAIN) — see manifest.json.
@@ -16,6 +21,7 @@ import {
 import { ChromeFloatingTrigger } from './adapters/chrome-floating-trigger';
 import { MessageRelaySettingsStore } from './adapters/message-relay-settings-store';
 import { ChromeSidePanelMirror } from './adapters/chrome-side-panel-mirror';
+import { ChromeHoverRecallPopup } from './adapters/chrome-hover-recall-popup';
 import { isLandingPage, stampInstallMarker, stampReadyMarker } from './adapters/landing-marker';
 import type { SidePanelFocus, OpenSidePanelMessage } from './side-panel-messages';
 import { isCommandMessage } from './command-messages';
@@ -29,17 +35,94 @@ const trigger = new ChromeFloatingTrigger();
 // the relay store drops its cache on storage changes, so a theme saved on the options page
 // reaches already-open tabs on their next lookup — plus once at startup for the bubble.
 const settings = new MessageRelaySettingsStore(chrome.runtime);
+
+// B3: re-encounter highlighter — paints learning-status saved words on the page (spec §D7).
+// `refresh` is safe to call as the very first invocation too (its resets — collected=[],
+// walker=null, pendingRoots=[], highlight?.clear() — are no-ops against the class's own initial
+// state), so every repaint site below calls it uniformly instead of branching on first-vs-later.
+// The initial paint fires exactly ONCE at startup (chained off the one-time settings seed below,
+// gated on highlightSavedWords) — it does NOT ride the shared per-fetch `themedSettings.get`
+// closure, because that closure runs on every Define lookup (workflow.ts calls
+// `deps.settings.get()` per lookup) and re-running `refresh()` there would clear + repaint on
+// every single lookup: a visible flicker plus an unrequested `saved.learningWords` round trip
+// each time. The toggle-save / toggle-status handlers below are the only other repaint sites —
+// they are event-driven (fire once per actual save/status change), not per-lookup.
+const highlighter = new PageHighlighter(document);
+// B4: hover-recall popup + matcher + controller — see design spec §2.2/§2.5/§2.8/§3.8.
+// `hoverMatcher` is a `let`, declared before `refreshHighlights`, so its closure can assign the
+// same word list `highlighter.refresh` was just given (no second `saved.learningWords` round
+// trip — see the assignment inside refreshHighlights below).
+const hoverPopup = new ChromeHoverRecallPopup();
+let hoverMatcher = new Map<string, string>();
+const hoverGuard = createSaveReplyGuard();
+const hoverController = new HoverRecallController(document);
+function refreshHighlights(): void {
+  void chrome.runtime
+    .sendMessage({ type: 'saved.learningWords' })
+    .then((raw: unknown) => {
+      const reply = raw as WireReply | undefined;
+      if (reply?.ok && reply.type === 'savedWords') {
+        highlighter.refresh(reply.words);
+        hoverMatcher = buildHighlightMatcher(reply.words); // B4: same list, no extra fetch
+      }
+    })
+    .catch(() => undefined); // SW asleep / no reply — skip silently
+}
+
 const themedSettings: SettingsStore = {
   get: () =>
     settings.get().then((s) => {
       trigger.theme = s.theme;
       inline.theme = s.theme;
+      hoverPopup.theme = s.theme; // B4: same per-fetch theme stamp as the trigger/card
       return s;
     }),
   set: (patch) => settings.set(patch),
 };
+// seed before the first lookup; light until known — also the ONE-TIME initial highlight paint,
+// gated on the setting, reusing this same settings fetch (no second round trip).
 const initialSettings = themedSettings.get();
-void initialSettings.catch(() => undefined); // seed before the first lookup; light until known
+void initialSettings
+  .then((s) => {
+    if (s.highlightSavedWords !== false) refreshHighlights();
+  })
+  .catch(() => undefined);
+
+// B4: hover-recall — start the controller once at startup (design spec §2.2). It scans the
+// exact ranges the highlighter has already painted (`highlighter.ranges`), so a hover only ever
+// resolves to a word this tab already knows is saved/learning — no extra DOM walk of its own.
+hoverController.start(
+  () => highlighter.ranges,
+  (m) => {
+    const text = m.range.toString();
+    const headword = findWordMatches(text, hoverMatcher)[0]?.headword;
+    if (!headword) return;
+    const rect = m.range.getBoundingClientRect();
+    const token = hoverGuard.next();
+    void chrome.runtime
+      .sendMessage({ type: 'saved.get', word: headword })
+      .then((raw: unknown) => {
+        if (!hoverGuard.isCurrent(token)) return; // a later hover already superseded this reply
+        const reply = raw as WireReply | undefined;
+        if (!reply?.ok || reply.type !== 'savedEntry' || !reply.entry) return;
+        const entry: SavedWordEntry = reply.entry;
+        const primary = entry.senses[0];
+        if (!primary) return;
+        const preview =
+          primary.translation.trim() ||
+          (primary.definition.length > 140
+            ? `${primary.definition.slice(0, 140)}…`
+            : primary.definition);
+        hoverPopup.show(
+          { x: rect.x, y: rect.y, w: rect.width, h: rect.height },
+          { word: entry.word, preview },
+        );
+      })
+      .catch(() => undefined);
+  },
+  () => hoverPopup.hide(),
+  hoverPopup.element,
+);
 
 // C11: install-aware landing page — stamp a minimal, non-sensitive marker (install + version +
 // setup-finished) on <html> so docs/index.html's checklist/CTA can adapt. Landing origin only
@@ -185,6 +268,7 @@ document.addEventListener('toggle-save', () => {
         lastStatus = reply.entry.status;
         inline.setStatus(lastStatus);
       }
+      if (reply?.ok) refreshHighlights(); // B3: save/unsave changed the learning-word set
     })
     .catch(() => undefined);
 });
@@ -200,6 +284,10 @@ document.addEventListener('toggle-status', () => {
   inline.setStatus(next);
   void chrome.runtime
     .sendMessage({ type: 'saved.setStatus', word: lastSavePayload.word, status: next })
+    .then((raw: unknown) => {
+      const reply = raw as WireReply | undefined;
+      if (reply?.ok) refreshHighlights(); // B3: a known<->learning flip changed the match set
+    })
     .catch(() => undefined);
 });
 
@@ -222,6 +310,43 @@ document.addEventListener('open-side-panel', () => {
       : { type: 'open-side-panel' };
   void chrome.runtime.sendMessage(message).catch(() => undefined);
   inline.close();
+});
+
+// B4: the hover-recall popup's "View full entry" action bubbles a composed `view-full-entry`
+// event carrying the resolved headword. Re-resolves the entry with a second, cheap `saved.get`
+// rather than threading the hover-match closure's entry through — keeps this listener
+// independent of the hover-match code path (a click only ever fires after a deliberate
+// hover+click, not a hot path). Reuses the EXISTING open-side-panel pipeline verbatim (design
+// spec §2.5) by writing the same module-scoped `lastFocus` the live-lookup renderer callbacks
+// already write, then dispatching the same composed event that pipeline already listens for.
+document.addEventListener('view-full-entry', (e) => {
+  const { word } = (e as CustomEvent<{ word: string }>).detail;
+  void chrome.runtime
+    .sendMessage({ type: 'saved.get', word })
+    .then((raw: unknown) => {
+      const reply = raw as WireReply | undefined;
+      if (!reply?.ok || reply.type !== 'savedEntry' || !reply.entry) return;
+      const entry: SavedWordEntry = reply.entry;
+      const primary = entry.senses[0];
+      if (!primary) return;
+      lastFocus = {
+        state: 'result',
+        payload: {
+          markdown: primary.definition,
+          word: entry.word,
+          target: '', // unused by rendering — see design spec §2.5
+          model: 'saved',
+          fromCache: true,
+          fetchedAt: entry.savedAt,
+          ...(primary.translation ? { translation: primary.translation } : {}),
+        },
+        sentence: primary.sentence,
+        url: primary.url,
+        title: primary.title,
+      };
+      document.dispatchEvent(new CustomEvent('open-side-panel'));
+    })
+    .catch(() => undefined);
 });
 
 // A4: keyboard-only flow. The service worker relays a fired chrome.commands shortcut here.

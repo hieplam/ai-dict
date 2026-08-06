@@ -65,6 +65,8 @@ const PublicSettingsSchema = z.strictObject({
   hasKey: z.boolean(),
   theme: z.enum(['sepia', 'dark', 'contrast', 'system']),
   configuredProviders: z.array(ProviderEnum),
+  // B3: paint saved learning-status words on pages. See PublicSettings' doc comment (domain/types.ts).
+  highlightSavedWords: z.boolean(),
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]
 
 const HistoryEntrySchema = z.strictObject({
@@ -129,6 +131,13 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
   // saved-words-policy.ts:108-109). Read-only; the only caller today is the Anki/CSV/Markdown
   // export flow in settings-form.ts.
   z.strictObject({ type: z.literal('saved.list') }),
+  // B3: read every saved word whose status is 'learning' (known words excluded) — the
+  // re-encounter highlighter's word list. Read-only; payload-free like settings.get.
+  z.object({ type: z.literal('saved.learningWords') }),
+  // B4: fetch one full saved entry by word, for the hover-recall popup. Content scripts never
+  // read chrome.storage directly (S1/ref-kv-storage-prefixes) — this is the read counterpart to
+  // saved.save's write. Read-only, no queue.
+  z.object({ type: z.literal('saved.get'), word: z.string() }),
   z.object({ type: z.literal('cache.clear') }),
   z.object({ type: z.literal('connection.test') }),
   // Open the extension's options page. Sent by a content script (which cannot call
@@ -160,6 +169,8 @@ const MessageTypeEnum = z.enum([
   'saved.delete',
   'saved.setStatus',
   'saved.list',
+  'saved.learningWords',
+  'saved.get',
 ]);
 
 export const WireReplySchema = z.union([
@@ -184,6 +195,21 @@ export const WireReplySchema = z.union([
     ok: z.literal(true),
     type: z.literal('saved.list'),
     entries: z.array(SavedWordEntrySchema),
+  }),
+  // B3: reply to saved.learningWords — the flat list of learning-status words the
+  // re-encounter highlighter matches against.
+  z.object({
+    ok: z.literal(true),
+    type: z.literal('savedWords'),
+    words: z.array(z.string()),
+  }),
+  // B4: a nullable entry (the word may have been unsaved between B3 painting the highlight and
+  // the reader hovering it) — deliberately a NEW reply arm rather than widening the existing
+  // `saved` arm, which every saved.save/saved.setStatus caller already assumes is non-null.
+  z.object({
+    ok: z.literal(true),
+    type: z.literal('savedEntry'),
+    entry: SavedWordEntrySchema.nullable(),
   }),
   z.object({
     ok: z.literal(true),

@@ -33,6 +33,7 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       hasKey: true,
       theme: 'sepia',
       configuredProviders: ['gemini'],
+      highlightSavedWords: true,
     });
     expect('apiKey' in pub).toBe(false);
   });
@@ -69,6 +70,7 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       hasKey: false,
       theme: 'sepia',
       configuredProviders: [],
+      highlightSavedWords: true,
     });
     const noKey = await new ChromeStorageStore(
       fakeArea({ targetLang: 'en', outputFormat: 't', apiKey: '' }),

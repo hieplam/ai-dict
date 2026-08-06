@@ -15,6 +15,7 @@ export * from './domain/onboarding-policy'; // C1
 export * from './domain/setup-health-policy';
 export * from './domain/ui-flags';
 export * from './domain/error-mapper';
+export * from './domain/highlight-policy'; // B3
 export {
   toErrorRecord,
   appendCapped,
@@ -43,6 +44,8 @@ export * from './app/anki-export';
 export * from './app/inbound';
 export * from './app/dom-selection-source';
 export * from './app/message-relay-lookup-client';
+export * from './app/page-highlighter'; // B3
+export * from './app/hover-recall-controller';
 export { buildGa4Request, GA4_ENDPOINT, type Ga4Config, type Ga4Request } from './app/ga4-payload';
 export { ErrorReporter, type ErrorReporterDeps, type ErrorLogStatus } from './app/error-reporter';
 export { buildConsentFooter } from './ui/error-consent';
