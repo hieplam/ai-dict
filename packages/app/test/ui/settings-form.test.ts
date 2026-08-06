@@ -39,6 +39,7 @@ describe('<settings-form>', () => {
       outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
       theme: 'sepia',
     };
     let captured: SettingsFormValue | undefined;
@@ -55,6 +56,7 @@ describe('<settings-form>', () => {
       outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
     });
   });
 
@@ -162,6 +164,7 @@ describe('<settings-form>', () => {
       outputFormat: 'P',
       cacheEnabled: false,
       saveHistory: false,
+      highlightSavedWords: true,
       theme: 'sepia',
     };
     document.body.append(el); // connectedCallback flushes pending value
@@ -248,6 +251,7 @@ describe('<settings-form> restore default prompt', () => {
       outputFormat: 'my custom prompt',
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
       theme: 'sepia',
     };
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true);
@@ -272,6 +276,7 @@ describe('<settings-form> restore default prompt', () => {
       outputFormat: 'my custom prompt',
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
       theme: 'sepia',
     };
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
@@ -296,6 +301,7 @@ describe('<settings-form> restore default prompt', () => {
       outputFormat: DEFAULT_OUTPUT_FORMAT,
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
       theme: 'sepia',
     };
     const confirmSpy = vi.spyOn(window, 'confirm');
@@ -344,6 +350,7 @@ describe('<settings-form> env-key lock', () => {
       outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
       theme: 'sepia',
     };
     el.keyFromEnv = true;
@@ -369,6 +376,7 @@ describe('<settings-form> env-key lock', () => {
       outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
       theme: 'sepia',
     };
     el.keyFromEnv = true;
@@ -404,6 +412,7 @@ describe('<settings-form> provider selection', () => {
       outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
       theme: 'sepia',
       ...over,
     };
@@ -519,6 +528,7 @@ describe('<settings-form> setup health check — API keys + connection (C9)', ()
       promptEnvelope: '',
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
       theme: 'sepia',
     };
     expect(el.shadowRoot!.querySelector('#key-status-gemini-badge')!.textContent).toBe(
@@ -716,6 +726,7 @@ describe('<settings-form> key paste hygiene (C5)', () => {
       outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
       theme: 'sepia',
     };
     let captured: SettingsFormValue | undefined;
@@ -755,6 +766,7 @@ describe('<settings-form> error-reporting toggle', () => {
       outputFormat: 'x',
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
       theme: 'sepia',
     };
     form.errorReporting = true;
@@ -880,6 +892,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
       outputFormat: 'T',
       cacheEnabled: true,
       saveHistory: true,
+      highlightSavedWords: true,
       theme: 'dark',
     };
     const pressed = el.shadowRoot!.querySelector<HTMLButtonElement>(
@@ -903,6 +916,37 @@ describe('<settings-form> fully themed (§5.8)', () => {
     el.keyFromEnv = true;
     expect(notice.hidden).toBe(false);
     expect(notice.textContent).toBe(ENV_KEY_NOTICE);
+  });
+
+  it('[B3] renders a "Highlight saved words on pages" checkbox that round-trips through value and save', () => {
+    const el = mountForm();
+    const label = el
+      .shadowRoot!.querySelector<HTMLInputElement>('#highlight-saved')!
+      .closest<HTMLElement>('label.check')!;
+    expect(label.textContent?.trim()).toBe('Highlight saved words on pages');
+    el.value = {
+      provider: 'gemini',
+      apiKey: '',
+      openaiApiKey: '',
+      anthropicApiKey: '',
+      promptEnvelope: '',
+      targetLang: 'vi',
+      outputFormat: 'T',
+      cacheEnabled: true,
+      saveHistory: true,
+      highlightSavedWords: false,
+      theme: 'sepia',
+    };
+    const checkbox = el.shadowRoot!.querySelector<HTMLInputElement>('#highlight-saved')!;
+    expect(checkbox.checked).toBe(false);
+    let captured: SettingsFormValue | undefined;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(captured!.highlightSavedWords).toBe(false);
   });
 
   it('applies the picked theme to the host immediately on press — live preview, before Save (issue #51)', () => {
@@ -931,6 +975,7 @@ function baseValue(promptEnvelope: string): SettingsFormValue {
     outputFormat: 'T',
     cacheEnabled: true,
     saveHistory: true,
+    highlightSavedWords: true,
     theme: 'sepia',
   };
 }
@@ -1072,6 +1117,7 @@ describe('<settings-form> sticky save bar + dirty state (A16)', () => {
     outputFormat: 'T',
     cacheEnabled: true,
     saveHistory: true,
+    highlightSavedWords: true,
     theme: 'sepia',
     ...over,
   });
@@ -1101,6 +1147,15 @@ describe('<settings-form> sticky save bar + dirty state (A16)', () => {
     const cache = el.shadowRoot!.querySelector<HTMLInputElement>('#cache')!;
     cache.checked = false;
     cache.dispatchEvent(new Event('change', { bubbles: true }));
+    expect(dirty(el).hidden).toBe(false);
+  });
+
+  it('[B3] changing the highlight-saved-words checkbox marks the form dirty', () => {
+    const el = mountForm();
+    el.value = val();
+    const highlight = el.shadowRoot!.querySelector<HTMLInputElement>('#highlight-saved')!;
+    highlight.checked = false;
+    highlight.dispatchEvent(new Event('change', { bubbles: true }));
     expect(dirty(el).hidden).toBe(false);
   });
 

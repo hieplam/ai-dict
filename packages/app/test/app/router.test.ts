@@ -54,6 +54,7 @@ function deps(over: DepsOverrides = {}) {
       hasKey: true,
       theme: 'sepia' as const,
       configuredProviders: [],
+      highlightSavedWords: true,
     }),
   );
   return {
@@ -267,6 +268,7 @@ describe('buildRouter', () => {
             hasKey: true,
             theme: 'sepia' as const,
             configuredProviders: [],
+            highlightSavedWords: true,
           }),
         ),
         set: vi.fn(),
@@ -321,6 +323,7 @@ describe('buildRouter', () => {
         hasKey: true,
         theme: 'sepia' as const,
         configuredProviders: [],
+        highlightSavedWords: true,
       },
     });
   });
@@ -609,6 +612,38 @@ describe('buildRouter', () => {
     expect(reply).toMatchObject({ ok: true, type: 'saved.list' });
     const entries = (reply as { entries: { word: string }[] }).entries;
     expect(entries.map((e) => e.word).sort()).toEqual(['bank', 'serendipity']);
+  });
+
+  it('saved.learningWords replies only the learning-status words, newest-first, after a known word is set (B3)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'a financial institution',
+      translation: '',
+      sentence: 'the river bank',
+      url: 'https://example.com',
+      title: 'Example',
+    });
+    await route({
+      type: 'saved.save',
+      word: 'money',
+      definition: 'currency',
+      translation: '',
+      sentence: 'lots of money',
+      url: 'https://example.com/2',
+      title: 'Example 2',
+    });
+    await route({ type: 'saved.setStatus', word: 'money', status: 'known' });
+    const reply = await route({ type: 'saved.learningWords' });
+    expect(reply).toEqual({ ok: true, type: 'savedWords', words: ['bank'] });
+  });
+
+  it('saved.learningWords on an empty store replies with an empty words array (B3)', async () => {
+    const route = buildRouter(deps());
+    const reply = await route({ type: 'saved.learningWords' });
+    expect(reply).toEqual({ ok: true, type: 'savedWords', words: [] });
   });
 
   it('lookup.cancel with no inflight request still returns ack (no crash)', async () => {

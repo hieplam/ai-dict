@@ -65,6 +65,8 @@ const PublicSettingsSchema = z.strictObject({
   hasKey: z.boolean(),
   theme: z.enum(['sepia', 'dark', 'contrast', 'system']),
   configuredProviders: z.array(ProviderEnum),
+  // B3: paint saved learning-status words on pages. See PublicSettings' doc comment (domain/types.ts).
+  highlightSavedWords: z.boolean(),
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]
 
 const HistoryEntrySchema = z.strictObject({
@@ -129,6 +131,9 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
   // saved-words-policy.ts:108-109). Read-only; the only caller today is the Anki/CSV/Markdown
   // export flow in settings-form.ts.
   z.strictObject({ type: z.literal('saved.list') }),
+  // B3: read every saved word whose status is 'learning' (known words excluded) — the
+  // re-encounter highlighter's word list. Read-only; payload-free like settings.get.
+  z.object({ type: z.literal('saved.learningWords') }),
   z.object({ type: z.literal('cache.clear') }),
   z.object({ type: z.literal('connection.test') }),
   // Open the extension's options page. Sent by a content script (which cannot call
@@ -160,6 +165,7 @@ const MessageTypeEnum = z.enum([
   'saved.delete',
   'saved.setStatus',
   'saved.list',
+  'saved.learningWords',
 ]);
 
 export const WireReplySchema = z.union([
@@ -184,6 +190,13 @@ export const WireReplySchema = z.union([
     ok: z.literal(true),
     type: z.literal('saved.list'),
     entries: z.array(SavedWordEntrySchema),
+  }),
+  // B3: reply to saved.learningWords — the flat list of learning-status words the
+  // re-encounter highlighter matches against.
+  z.object({
+    ok: z.literal(true),
+    type: z.literal('savedWords'),
+    words: z.array(z.string()),
   }),
   z.object({
     ok: z.literal(true),

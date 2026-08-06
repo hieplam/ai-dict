@@ -40,6 +40,7 @@ const DEFAULTS: Settings = {
   promptEnvelope: '',
   hasKey: false,
   configuredProviders: [],
+  highlightSavedWords: true,
   apiKey: '',
   cacheEnabled: true,
   saveHistory: true,
@@ -95,6 +96,7 @@ function toFormValue(s: Settings): SettingsFormValue {
     promptEnvelope: s.promptEnvelope,
     cacheEnabled: s.cacheEnabled,
     saveHistory: s.saveHistory,
+    highlightSavedWords: s.highlightSavedWords,
     theme: s.theme,
   };
 }

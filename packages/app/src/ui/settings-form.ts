@@ -41,6 +41,8 @@ export interface SettingsFormValue {
   promptEnvelope: string;
   cacheEnabled: boolean;
   saveHistory: boolean;
+  // B3: paint saved learning-status words on pages. See PublicSettings' doc comment (domain/types.ts).
+  highlightSavedWords: boolean;
   theme: Theme;
   // NOTE: `hasKey` and `configuredProviders` are intentionally absent — they are
   // derived fields computed on save/read and never emitted by the form's 'save' event.
@@ -257,6 +259,7 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
       <h2 class="sec-h" id="sec-priv">Privacy &amp; data</h2>
       <label class="check"><input type="checkbox" id="cache" /> Cache lookups</label>
       <label class="check"><input type="checkbox" id="history" /> Save history</label>
+      <label class="check"><input type="checkbox" id="highlight-saved" /> Highlight saved words on pages</label>
       <label class="check"><input type="checkbox" id="error-reporting" /> Send anonymous error reports</label>
       <div class="inline-actions">
         <button type="button" id="clear-cache">Clear cache</button>
@@ -770,6 +773,7 @@ export class SettingsForm extends HTMLElement {
       promptEnvelope: this._envelopeEdited ? this.q<HTMLTextAreaElement>('#envelope').value : '',
       cacheEnabled: this.q<HTMLInputElement>('#cache').checked,
       saveHistory: this.q<HTMLInputElement>('#history').checked,
+      highlightSavedWords: this.q<HTMLInputElement>('#highlight-saved').checked,
       theme: this.getThemePref(),
     };
   }
@@ -799,6 +803,7 @@ export class SettingsForm extends HTMLElement {
     this._envelopeEdited = hasOverride;
     this.q<HTMLInputElement>('#cache').checked = v.cacheEnabled;
     this.q<HTMLInputElement>('#history').checked = v.saveHistory;
+    this.q<HTMLInputElement>('#highlight-saved').checked = v.highlightSavedWords;
     this.setThemePref(v.theme);
     // Render the key row for the (possibly changed) provider + lock state.
     this.syncKeyField();

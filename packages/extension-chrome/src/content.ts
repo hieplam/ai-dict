@@ -7,6 +7,7 @@ import {
   createSaveReplyGuard,
   classifyInbound,
   acceptAny,
+  PageHighlighter,
   type SettingsStore,
   type SavedWordStatus,
   type WireReply,
@@ -29,6 +30,29 @@ const trigger = new ChromeFloatingTrigger();
 // the relay store drops its cache on storage changes, so a theme saved on the options page
 // reaches already-open tabs on their next lookup — plus once at startup for the bubble.
 const settings = new MessageRelaySettingsStore(chrome.runtime);
+
+// B3: re-encounter highlighter — paints learning-status saved words on the page (spec §D7).
+// `refresh` is safe to call as the very first invocation too (its resets — collected=[],
+// walker=null, pendingRoots=[], highlight?.clear() — are no-ops against the class's own initial
+// state), so every repaint site below calls it uniformly instead of branching on first-vs-later.
+// The initial paint fires exactly ONCE at startup (chained off the one-time settings seed below,
+// gated on highlightSavedWords) — it does NOT ride the shared per-fetch `themedSettings.get`
+// closure, because that closure runs on every Define lookup (workflow.ts calls
+// `deps.settings.get()` per lookup) and re-running `refresh()` there would clear + repaint on
+// every single lookup: a visible flicker plus an unrequested `saved.learningWords` round trip
+// each time. The toggle-save / toggle-status handlers below are the only other repaint sites —
+// they are event-driven (fire once per actual save/status change), not per-lookup.
+const highlighter = new PageHighlighter(document);
+function refreshHighlights(): void {
+  void chrome.runtime
+    .sendMessage({ type: 'saved.learningWords' })
+    .then((raw: unknown) => {
+      const reply = raw as WireReply | undefined;
+      if (reply?.ok && reply.type === 'savedWords') highlighter.refresh(reply.words);
+    })
+    .catch(() => undefined); // SW asleep / no reply — skip silently
+}
+
 const themedSettings: SettingsStore = {
   get: () =>
     settings.get().then((s) => {
@@ -38,8 +62,14 @@ const themedSettings: SettingsStore = {
     }),
   set: (patch) => settings.set(patch),
 };
+// seed before the first lookup; light until known — also the ONE-TIME initial highlight paint,
+// gated on the setting, reusing this same settings fetch (no second round trip).
 const initialSettings = themedSettings.get();
-void initialSettings.catch(() => undefined); // seed before the first lookup; light until known
+void initialSettings
+  .then((s) => {
+    if (s.highlightSavedWords !== false) refreshHighlights();
+  })
+  .catch(() => undefined);
 
 // C11: install-aware landing page — stamp a minimal, non-sensitive marker (install + version +
 // setup-finished) on <html> so docs/index.html's checklist/CTA can adapt. Landing origin only
@@ -185,6 +215,7 @@ document.addEventListener('toggle-save', () => {
         lastStatus = reply.entry.status;
         inline.setStatus(lastStatus);
       }
+      if (reply?.ok) refreshHighlights(); // B3: save/unsave changed the learning-word set
     })
     .catch(() => undefined);
 });
@@ -200,6 +231,10 @@ document.addEventListener('toggle-status', () => {
   inline.setStatus(next);
   void chrome.runtime
     .sendMessage({ type: 'saved.setStatus', word: lastSavePayload.word, status: next })
+    .then((raw: unknown) => {
+      const reply = raw as WireReply | undefined;
+      if (reply?.ok) refreshHighlights(); // B3: a known<->learning flip changed the match set
+    })
     .catch(() => undefined);
 });
 

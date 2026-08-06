@@ -18,6 +18,7 @@ function defaults(): Settings {
     promptEnvelope: '',
     hasKey: false,
     configuredProviders: [],
+    highlightSavedWords: true,
     apiKey: '',
     cacheEnabled: true,
     saveHistory: true,
@@ -51,6 +52,8 @@ export class SafariStorageStore implements SettingsStore {
       // pre-Paperlight settings hold the legacy 'light' value → both normalise to 'sepia'.
       theme: normalizeTheme(s?.theme),
       configuredProviders: configuredProvidersFor(s ?? {}),
+      // B3: legacy stored settings lack the key — default true (see PublicSettings' doc comment).
+      highlightSavedWords: s?.highlightSavedWords ?? true,
     };
   }
 

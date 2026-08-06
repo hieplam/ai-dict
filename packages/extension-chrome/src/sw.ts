@@ -43,6 +43,7 @@ async function readFullSettings(): Promise<Settings> {
       promptEnvelope: '',
       hasKey: false,
       configuredProviders: [],
+      highlightSavedWords: true,
       apiKey: '',
       cacheEnabled: true,
       saveHistory: true,

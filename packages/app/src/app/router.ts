@@ -275,6 +275,14 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       }
       case 'saved.list':
         return handleSavedList();
+      case 'saved.learningWords': {
+        const entries = await savedWordsList({ storage: deps.kv });
+        return {
+          ok: true,
+          type: 'savedWords',
+          words: entries.filter((e) => e.status === 'learning').map((e) => e.word),
+        };
+      }
       case 'cache.clear':
         await cacheClear({ storage: deps.kv });
         return { ok: true, type: 'ack' };

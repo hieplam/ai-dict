@@ -243,6 +243,19 @@
         "properties": {
           "type": {
             "type": "string",
+            "const": "saved.learningWords"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
             "const": "cache.clear"
           }
         },
@@ -459,6 +472,9 @@
                     "anthropic"
                   ]
                 }
+              },
+              "highlightSavedWords": {
+                "type": "boolean"
               }
             },
             "required": [
@@ -467,7 +483,8 @@
               "promptEnvelope",
               "hasKey",
               "theme",
-              "configuredProviders"
+              "configuredProviders",
+              "highlightSavedWords"
             ],
             "additionalProperties": false
           }
@@ -780,6 +797,31 @@
           },
           "type": {
             "type": "string",
+            "const": "savedWords"
+          },
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "words"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
             "const": "errlog"
           },
           "consent": {
@@ -830,7 +872,8 @@
               "saved.save",
               "saved.delete",
               "saved.setStatus",
-              "saved.list"
+              "saved.list",
+              "saved.learningWords"
             ]
           },
           "error": {

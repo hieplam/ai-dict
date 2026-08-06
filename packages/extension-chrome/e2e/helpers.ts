@@ -33,6 +33,8 @@ export interface SettingsOverrides {
   provider?: 'gemini' | 'openai' | 'anthropic';
   openaiApiKey?: string;
   anthropicApiKey?: string;
+  /** B3: paint saved learning-status words on pages. Omit to exercise the `?? true` default. */
+  highlightSavedWords?: boolean;
 }
 
 /** Write a full settings object to storage. Overrides merge onto sensible defaults. */
