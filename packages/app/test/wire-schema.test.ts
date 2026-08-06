@@ -559,6 +559,24 @@ describe('saved.list wire message (B8)', () => {
   });
 });
 
+describe('saved.learningWords wire message (B3)', () => {
+  it('accepts a valid saved.learningWords message', () => {
+    expect(WireMessageSchema.safeParse({ type: 'saved.learningWords' }).success).toBe(true);
+  });
+
+  it('accepts a valid savedWords reply', () => {
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'savedWords', words: ['bank'] }).success,
+    ).toBe(true);
+  });
+
+  it('rejects a savedWords reply with non-array words', () => {
+    expect(WireReplySchema.safeParse({ ok: true, type: 'savedWords', words: 'bank' }).success).toBe(
+      false,
+    );
+  });
+});
+
 describe('errlog wire messages', () => {
   it('accepts errlog.status and errlog.set-consent', () => {
     expect(WireMessageSchema.safeParse({ type: 'errlog.status' }).success).toBe(true);

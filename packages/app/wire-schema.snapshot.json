@@ -243,6 +243,19 @@
         "properties": {
           "type": {
             "type": "string",
+            "const": "saved.learningWords"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
             "const": "cache.clear"
           }
         },
@@ -780,6 +793,31 @@
           },
           "type": {
             "type": "string",
+            "const": "savedWords"
+          },
+          "words": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "words"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
             "const": "errlog"
           },
           "consent": {
@@ -830,7 +868,8 @@
               "saved.save",
               "saved.delete",
               "saved.setStatus",
-              "saved.list"
+              "saved.list",
+              "saved.learningWords"
             ]
           },
           "error": {
