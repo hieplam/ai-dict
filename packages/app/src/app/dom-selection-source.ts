@@ -2,6 +2,11 @@ import type { SelectionSource, SelectionEvent, AnchorRect } from '../index';
 
 const TERMINATORS = ['.', '!', '?'];
 
+// A15: cheap, permanent instrumentation mark — the earliest synchronous JS observation of "the
+// browser told us the selection gesture ended." See docs/superpowers/specs/
+// 2026-07-17-a15-trigger-latency-budget-design.md §3.
+export const SELECTION_FIRED_MARK = 'ai-dict:selection-fired';
+
 export function extractSentence(full: string, selStart: number, selEnd: number): string {
   const before = full.slice(0, selStart);
   const start = Math.max(...TERMINATORS.map((t) => before.lastIndexOf(t))) + 1;
@@ -41,7 +46,10 @@ export class DomSelectionSource implements SelectionSource {
   onSelection(cb: (e: SelectionEvent) => void): () => void {
     const handler = (): void => {
       const e = this.read();
-      if (e) cb(e);
+      if (e) {
+        performance.mark(SELECTION_FIRED_MARK);
+        cb(e);
+      }
     };
     for (const t of ['mouseup', 'touchend'] as const) this.doc.addEventListener(t, handler);
     return () => {

@@ -1,5 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
-import { extractSentence, DomSelectionSource } from '../../src/app/dom-selection-source';
+import {
+  extractSentence,
+  DomSelectionSource,
+  SELECTION_FIRED_MARK,
+} from '../../src/app/dom-selection-source';
 import type { SelectionEvent } from '../../src';
 
 describe('extractSentence (sentence-boundary detection: . ! ?)', () => {
@@ -43,6 +47,20 @@ describe('DomSelectionSource (event wiring)', () => {
     const teardown = src.onSelection(cb);
     document.dispatchEvent(new Event('touchend'));
     expect(cb).toHaveBeenCalledWith(ev);
+    teardown();
+  });
+
+  it('marks SELECTION_FIRED_MARK exactly once per real selection, and not on a null read (A15)', () => {
+    performance.clearMarks(SELECTION_FIRED_MARK);
+    const read = vi.fn<() => SelectionEvent | null>(() => ev);
+    const src = new DomSelectionSource(document, read);
+    const cb = vi.fn();
+    const teardown = src.onSelection(cb);
+    document.dispatchEvent(new Event('mouseup'));
+    expect(performance.getEntriesByName(SELECTION_FIRED_MARK)).toHaveLength(1);
+    read.mockReturnValueOnce(null);
+    document.dispatchEvent(new Event('mouseup'));
+    expect(performance.getEntriesByName(SELECTION_FIRED_MARK)).toHaveLength(1); // null reader → no new mark
     teardown();
   });
 });
