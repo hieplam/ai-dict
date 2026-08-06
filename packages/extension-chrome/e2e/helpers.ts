@@ -216,6 +216,29 @@ export async function selectWord(page: Page, id: string, word: string): Promise<
   );
 }
 
+/** Move the real mouse to the center of `word`'s first occurrence inside `#${id}`, then nudge it
+ * by 1px so a throttled/rAF-gated first tick is never lost. Two calls (not one) so the
+ * controller's mousemove handler always sees at least one event after settling on the target
+ * coordinates — matches how a real hover gesture arrives as a short burst, not a single point. */
+export async function hoverWord(page: Page, id: string, word: string): Promise<void> {
+  const point = await page.evaluate(
+    ({ id, word }) => {
+      const p = document.getElementById(id)!;
+      const textNode = p.firstChild!;
+      const text = textNode.textContent ?? '';
+      const start = text.indexOf(word);
+      const range = document.createRange();
+      range.setStart(textNode, start);
+      range.setEnd(textNode, start + word.length);
+      const r = range.getBoundingClientRect();
+      return { x: r.x + r.width / 2, y: r.y + r.height / 2 };
+    },
+    { id, word },
+  );
+  await page.mouse.move(point.x, point.y);
+  await page.mouse.move(point.x + 1, point.y);
+}
+
 /** Wait for the floating trigger and click it. */
 export async function openTrigger(page: Page): Promise<void> {
   await page.locator('lookup-trigger').waitFor({ state: 'attached', timeout: 5_000 });

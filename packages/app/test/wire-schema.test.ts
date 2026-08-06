@@ -619,6 +619,38 @@ describe('saved.learningWords wire message (B3)', () => {
   });
 });
 
+describe('saved.get / savedEntry wire messages (B4)', () => {
+  it('accepts a valid saved.get message', () => {
+    expect(WireMessageSchema.safeParse({ type: 'saved.get', word: 'bank' }).success).toBe(true);
+  });
+
+  it('rejects a saved.get message missing word', () => {
+    expect(WireMessageSchema.safeParse({ type: 'saved.get' }).success).toBe(false);
+  });
+
+  it('accepts a savedEntry reply carrying a real entry', () => {
+    const entry = {
+      word: 'bank',
+      status: 'learning',
+      savedAt: 1,
+      senses: [{ definition: 'd', translation: 't', sentence: 's', url: 'u', title: 'ti' }],
+    };
+    expect(WireReplySchema.safeParse({ ok: true, type: 'savedEntry', entry }).success).toBe(true);
+  });
+
+  it('accepts a savedEntry reply with entry: null (word not saved)', () => {
+    expect(WireReplySchema.safeParse({ ok: true, type: 'savedEntry', entry: null }).success).toBe(
+      true,
+    );
+  });
+
+  it('rejects a savedEntry reply with a non-object, non-null entry', () => {
+    expect(WireReplySchema.safeParse({ ok: true, type: 'savedEntry', entry: 'nope' }).success).toBe(
+      false,
+    );
+  });
+});
+
 describe('errlog wire messages', () => {
   it('accepts errlog.status and errlog.set-consent', () => {
     expect(WireMessageSchema.safeParse({ type: 'errlog.status' }).success).toBe(true);

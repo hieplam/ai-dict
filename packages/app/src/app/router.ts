@@ -14,6 +14,7 @@ import {
   savedWordDelete,
   savedWordSetStatus,
   savedWordsList,
+  savedWordGet,
   evaluateNudge,
   FIX_KEY_PENDING_STORAGE_KEY,
   type WireMessage,
@@ -282,6 +283,10 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
           type: 'savedWords',
           words: entries.filter((e) => e.status === 'learning').map((e) => e.word),
         };
+      }
+      case 'saved.get': {
+        const entry = await savedWordGet({ storage: deps.kv }, msg.word);
+        return { ok: true, type: 'savedEntry', entry };
       }
       case 'cache.clear':
         await cacheClear({ storage: deps.kv });
