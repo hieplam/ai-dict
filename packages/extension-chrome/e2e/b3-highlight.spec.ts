@@ -115,8 +115,14 @@ test.describe('B3 re-encounter highlighting (e2e)', () => {
 
     expect(await page.evaluate(() => CSS.highlights.has('ad-saved-word'))).toBe(true);
 
+    // The fixture also plants 'bank'/'banks' occurrences INSIDE the <textarea> and the
+    // contenteditable div (see b3-large.html) — on top of the 3 body-only matches (bank/banks/
+    // banking). If the skip filter regressed (SHOW_ALL+nodeType or the isContentEditable-first
+    // check in page-highlighter.ts), those extra occurrences would get painted too and this
+    // exact-count assertion would fail — unlike a >=3 check, which the skip-block occurrences
+    // could never violate even when broken.
     const { texts, insideForbidden } = await readHighlightRanges(page);
-    expect(texts.length).toBeGreaterThanOrEqual(3);
+    expect(texts.length).toBe(3); // exactly the 3 body-only matches; skip-block occurrences excluded
     for (const t of texts) {
       expect(t.startsWith('bank')).toBe(true); // naive variants: bank/banks/banking all start with 'bank'
     }

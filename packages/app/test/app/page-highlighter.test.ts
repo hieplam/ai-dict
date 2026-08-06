@@ -137,6 +137,34 @@ describe('PageHighlighter (B3 re-encounter highlighting — idle-chunked scan)',
     expect(highlighter.ranges.map((r) => r.toString())).toEqual(['bank']);
   });
 
+  it('clear() before the mutation-debounce timer fires cancels it safely (no throw, ranges stay empty)', async () => {
+    // Real timers only for this test: happy-dom's MutationObserver delivery does not advance
+    // under vi's fake-timer clock in this runtime (verified — `vi.advanceTimersByTimeAsync`
+    // never delivers the mutation record here), so faking time would make this test a no-op
+    // that passes for the wrong reason. `vi.useRealTimers()` overrides the file-level
+    // `beforeEach`'s `vi.useFakeTimers()`; the file-level `afterEach` restores real timers
+    // regardless, so no other test is affected.
+    vi.useRealTimers();
+    document.body.innerHTML = '<p>bank</p>';
+    const highlighter = new PageHighlighter(document);
+    highlighter.apply(['bank']);
+    await new Promise((r) => setTimeout(r, 50)); // let the initial idle-chunked scan settle
+
+    // Trigger a mutation and let the MutationObserver callback actually run, which schedules
+    // the 1000ms debounce timer (MUTATION_DEBOUNCE_MS) — this is the pending timer under test.
+    const extra = document.createElement('p');
+    extra.textContent = 'bank';
+    document.body.appendChild(extra);
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(() => highlighter.clear()).not.toThrow(); // cancel the pending debounce timer
+
+    // Wait past MUTATION_DEBOUNCE_MS: if clear() had NOT cancelled the timer, it would fire
+    // here and add the second "bank" range from `extra`. It must not.
+    await new Promise((r) => setTimeout(r, 1200));
+    expect(highlighter.ranges.length).toBe(0);
+  }, 5000);
+
   it('no-ops entirely when CSS.highlights is truly absent (no throw, no style, empty ranges)', async () => {
     removeHighlightsShim(); // simulate a browser without the Custom Highlight API
     document.body.innerHTML = '<p>bank</p>';
