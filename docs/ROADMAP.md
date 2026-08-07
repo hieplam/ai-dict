@@ -605,7 +605,7 @@ savedAt, status, senses[] }`. **Depends on:** B1.
 > `verify-shipped` gate at **PASS 4/4** — PR merged · 2-parent merge · master in sync · worktree
 > removed. Zero escalations reached the owner.
 >
-> Campaign record: `docs/tribe/campaigns/onboarding-top3/` (state, rulings R1–R16, report).
+> Campaign record: `docs/superpowers/campaign/2026-07-25-onboarding-top3-runner-record.md` (rulings R1–R16, report).
 
 _A funnel audit (2026-07-16, live extension driven through the Playwright harness) found the
 install → key → first-lookup funnel leaks at every step: nothing opens onboarding on install,

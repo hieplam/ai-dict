@@ -1,6 +1,6 @@
 ---
 id: c3-102
-c3-seal: 784a2887c266edfeab3a06b2a6185fb06fdcac10088579a53756e901c654450d
+c3-seal: 866edd79bcb9884b09c43303ebde2cb87808565249f23b56360cad0674f45412
 title: ports
 type: component
 category: foundation
@@ -8,6 +8,7 @@ parent: c3-1
 goal: Declare the six port interfaces that form the only seam between the dependency-free core and all platform adapters.
 uses:
     - ref-core-dependency-rule
+    - rule-api-key-isolation
     - rule-domain-purity
 ---
 

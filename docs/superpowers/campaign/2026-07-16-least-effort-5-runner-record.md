@@ -1,3 +1,11 @@
+# Campaign runner record — least-effort-5
+
+> Collapsed from `docs/tribe/campaigns/least-effort-5/` (2026-08-07 docs audit): the runner's
+> machine-written run dir is retired; this file preserves its durable outcome —
+> the campaign report, the Shaman's binding rulings (answers), and escalations.
+
+---
+
 # Campaign rulings — "least-effort-5" (C1 · C2 · C5 · C7 · C8)
 
 > **What this file is.** The Shaman's binding rulings for this campaign. Its full content is
@@ -263,3 +271,19 @@ same card and open two PRs for one piece of work.
 
 `least-effort-5` is effectively complete: C1 (#144) and C2 (#148) shipped from it; C5 and C8 moved
 to `onboarding-top3` (C5 shipped there as #152), and C7 moves with this ruling.
+
+---
+
+## Escalation: C1.md
+
+# Escalation: C1
+
+**Reason:** verify_failed_twice
+
+## Context
+- worktreeAndBranchGone: card.branch is not set; cannot check worktree/branch state
+- schemaGuard: card.baseSha is not set; cannot diff baseSha..origin/master for the schema guard
+
+## Options
+- Append a ruling to `docs/tribe/campaigns/least-effort-5/answers.md` and re-run with `--include-escalated`.
+- Fix the underlying issue (plan, code, CI) directly and re-run.
