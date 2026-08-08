@@ -1004,3 +1004,48 @@ describe('A10 speak button (TTS pronunciation)', () => {
     vi.unstubAllGlobals();
   });
 });
+
+describe('renderCardState — streaming (A1)', () => {
+  it('renders the headword + sanitized body and nothing interactive', () => {
+    const nodes = renderCardState({
+      kind: 'streaming',
+      word: 'bank',
+      safeHtml: safe('<p>The land alongside a river.</p>'),
+    });
+    const wrap = document.createElement('div');
+    wrap.append(...nodes);
+    expect(wrap.querySelector('h2')!.textContent).toBe('bank');
+    expect(wrap.textContent).toContain('The land alongside a river.');
+    expect(wrap.querySelector('.save-row')).toBeNull();
+    expect(wrap.querySelector('.status-btn')).toBeNull();
+    expect(wrap.querySelector('.nudge-row')).toBeNull();
+    expect(wrap.querySelector('.meta-row')).toBeNull();
+  });
+
+  it('shows the defined-as label without the literal-word button while streaming', () => {
+    const nodes = renderCardState({
+      kind: 'streaming',
+      word: 'bucket',
+      safeHtml: safe('<p>...</p>'),
+      definedAs: { term: 'kick the bucket', isIdiom: true },
+    });
+    const wrap = document.createElement('div');
+    wrap.append(...nodes);
+    expect(wrap.querySelector('.defined-as__label')!.textContent).toContain('kick the bucket');
+    expect(wrap.querySelector('.defined-as__literal-btn')).toBeNull();
+  });
+});
+
+describe('LookupCard — data-streaming aria-live toggle (A1)', () => {
+  it('flips the region aria-live between "off" and "polite"', () => {
+    const el = document.createElement('lookup-card') as LookupCard;
+    document.body.append(el);
+    const region = el.shadowRoot!.querySelector('.region')!;
+    expect(region.getAttribute('aria-live')).toBe('polite');
+    el.toggleAttribute('data-streaming', true);
+    expect(region.getAttribute('aria-live')).toBe('off');
+    el.toggleAttribute('data-streaming', false);
+    expect(region.getAttribute('aria-live')).toBe('polite');
+    el.remove();
+  });
+});

@@ -1177,7 +1177,7 @@ type CardState =
   | { kind: 'error'; error: LookupError };
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add, inside `lookup-card.test.ts`'s existing top-level
+- [x] **Step 1: Write the failing tests.** Add, inside `lookup-card.test.ts`'s existing top-level
       `describe` block (check the file's existing helper for building a sanitized-looking
       `SafeHtml` test value and reuse it — do not hand-cast a raw string without going through
       that helper's pattern):
@@ -1233,7 +1233,7 @@ Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: failures — the `'streaming'` kind doesn't type-check/render, and the `data-streaming`
 attribute has no observed effect yet.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
 
 1. Extend the `CardState` union (currently lines 30-55) — insert a new member between the
    `'result'` and `'error'` variants:
@@ -1322,7 +1322,7 @@ if (state.kind === 'streaming') {
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all tests pass, including every pre-existing test in this file unmodified.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
