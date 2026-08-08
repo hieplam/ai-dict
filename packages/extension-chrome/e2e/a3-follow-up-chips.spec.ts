@@ -26,12 +26,13 @@ test.describe('A3 follow-up chips', () => {
     const card = page.locator('bottom-sheet lookup-card');
     await expect(card).toContainText('A financial institution.', { timeout: 10_000 });
     const chips = card.locator('.refine-chip');
-    await expect(chips).toHaveCount(4);
+    await expect(chips).toHaveCount(5); // B13 added the 5th "Related words" chip
     await expect(chips.nth(0)).toHaveText('Simpler');
     await expect(chips.nth(1)).toHaveText('More examples');
     await expect(chips.nth(2)).toHaveText('Etymology');
     await expect(chips.nth(3)).toHaveText('Use it');
-    for (const i of [0, 1, 2, 3]) {
+    await expect(chips.nth(4)).toHaveText('Related words');
+    for (const i of [0, 1, 2, 3, 4]) {
       await expect(chips.nth(i)).toHaveAttribute('aria-pressed', 'false');
       await expect(chips.nth(i)).toBeEnabled();
     }
@@ -101,7 +102,7 @@ test.describe('A3 follow-up chips', () => {
     await card.locator('.refine-back-btn').click();
     await expect(card).toContainText('A financial institution.', { timeout: 10_000 });
     await expect(card.locator('.refine-back-btn')).toHaveCount(0);
-    for (const i of [0, 1, 2, 3]) {
+    for (const i of [0, 1, 2, 3, 4]) {
       await expect(card.locator('.refine-chip').nth(i)).toHaveAttribute('aria-pressed', 'false');
       await expect(card.locator('.refine-chip').nth(i)).toBeEnabled();
     }
