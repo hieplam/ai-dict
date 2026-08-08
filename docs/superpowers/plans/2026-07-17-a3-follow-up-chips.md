@@ -1374,7 +1374,7 @@ git commit -m "[A3FollowUpChips] feat: track the original save payload and handl
 
 - Create: `packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts`
 
-- [ ] **Step 1: Write the e2e spec.**
+- [x] **Step 1: Write the e2e spec.**
 
 Create `packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts`:
 
@@ -1600,7 +1600,7 @@ cd packages/extension-chrome && bunx playwright test a3-follow-up-chips
 
 Expected: 6 passed.
 
-- [ ] **Step 2: Full gate.**
+- [x] **Step 2: Full gate.**
 
 ```
 cd packages/app && bun run typecheck
