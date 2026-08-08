@@ -1075,7 +1075,7 @@ is proven by Task 6's e2e scenarios 2 and 3. Still run the full gate below so a 
 existing behavior (save/status/nudge/refine-back handling, all in the same file) is caught
 immediately.
 
-- [ ] **Step 1: Implement.**
+- [x] **Step 1: Implement.**
 
 Update the `renderResult` handler inside the `runLookupWorkflow({ renderer: { ... } })` call —
 find A3's existing code (already carrying `lastOriginalSavePayload`):
@@ -1142,7 +1142,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Gate + commit.**
+- [x] **Step 2: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
