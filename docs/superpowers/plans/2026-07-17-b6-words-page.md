@@ -1417,7 +1417,7 @@ git commit -m "[B6WordsPage] feat: wire the words page into the Chrome side pane
 
 - Create: `packages/extension-chrome/e2e/b6-words-page.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b6-words-page.spec.ts`:
+- [x] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b6-words-page.spec.ts`:
 
 ```ts
 import { test, expect } from './fixtures';
@@ -1578,7 +1578,7 @@ cd packages/extension-chrome && bunx playwright test b6-words-page
 
 Expected: 3 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
