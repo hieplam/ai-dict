@@ -582,7 +582,7 @@ onRefine?: (kind: RefineKind) => void;
 refine?: RefineKind;
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/workflow.test.ts`, right after the existing `'ctx always carries
 sentence/url/title, even with only one provider configured (no picker)'` test:
@@ -634,7 +634,7 @@ cd packages/app && bunx vitest run test/workflow.test.ts
 
 Expected: failures — `ctx.onRefine` is `undefined`.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/ports.ts`, update the import list to add `RefineKind`:
 
@@ -782,7 +782,7 @@ cd packages/app && bunx vitest run test/workflow.test.ts
 
 Expected: all tests pass (existing + the 2 new ones).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

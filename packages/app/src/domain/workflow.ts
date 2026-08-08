@@ -6,7 +6,7 @@ import type {
   LookupClient,
   SettingsStore,
 } from '../ports';
-import type { SelectionEvent, LookupRequest, LookupError, Provider } from './types';
+import type { SelectionEvent, LookupRequest, LookupError, Provider, RefineKind } from './types';
 import { isLookupError } from './types';
 import { mapError } from './error-mapper';
 
@@ -46,6 +46,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
     e: SelectionEvent,
     providerOverride?: Provider,
     forceLiteral?: boolean,
+    refine?: RefineKind,
   ): Promise<void> {
     inFlight?.abort();
     const controller = new AbortController();
@@ -76,6 +77,9 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
     // A8: a manual "Show literal word" pick re-runs THIS selection once, forcing the literal
     // single-word reading (one-shot).
     if (forceLiteral) req.forceLiteral = true;
+    // A3: a refine chip tap re-runs THIS selection once, asking for a specific refinement
+    // (one-shot).
+    if (refine) req.refine = refine;
     try {
       const result = await deps.client.lookup(req, {
         signal: controller.signal,
@@ -97,6 +101,16 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
         sentence: e.sentence,
         url: e.url,
         title: e.title,
+        onRefine: (kind: RefineKind) => {
+          // A3: deliberate one-shot re-run of the SAME original selection; bypasses cooldown —
+          // same reasoning as onSwitchProvider/onForceLiteral below. Always resets provider
+          // override and forceLiteral to defaults (design spec §2.4(c)) rather than composing
+          // with whatever was last picked.
+          void runLookup(e, undefined, undefined, kind).catch((err) =>
+            deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
+          );
+        },
+        ...(refine !== undefined ? { refine } : {}),
         ...(showPicker
           ? {
               providers: settings.configuredProviders,
