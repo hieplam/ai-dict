@@ -7,6 +7,7 @@ import {
 } from '../index';
 import { parseDefinedAs } from '../domain/defined-as';
 import { parseTranslation } from '../domain/translation-line';
+import { parseRelated } from '../domain/related-line';
 import type { HttpLookupDeps } from './http-lookup-client';
 
 // Same DEFAULT_TIMEOUT_MS budget as the non-streaming path (http-lookup-client.ts:12) — covers
@@ -186,19 +187,22 @@ export async function runGeminiStreamingLookup(
           if (bothResolved || raw.length >= HEADER_MAX_BUFFER_CHARS) {
             headerResolved = true;
             resolvedDefinedAs = definedAs;
-            onChunk(afterBoth, resolvedDefinedAs);
+            const { body: afterRelated } = parseRelated(afterBoth);
+            onChunk(afterRelated, resolvedDefinedAs);
           }
         } else {
           const { body: afterDefined } = parseDefinedAs(raw);
           const { body: afterBoth } = parseTranslation(afterDefined);
-          onChunk(afterBoth, resolvedDefinedAs);
+          const { body: afterRelated } = parseRelated(afterBoth);
+          onChunk(afterRelated, resolvedDefinedAs);
         }
       }
     }
 
     if (raw.length === 0) rejectWith(mapError({ kind: 'parse', provider: 'gemini' }));
     const { definedAs, body: afterDefinedAs } = parseDefinedAs(raw);
-    const { translation, body: parsedBody } = parseTranslation(afterDefinedAs);
+    const { translation, body: afterTranslation } = parseTranslation(afterDefinedAs);
+    const { related, body: parsedBody } = parseRelated(afterTranslation);
     return {
       markdown: parsedBody,
       word: req.word,
@@ -209,6 +213,7 @@ export async function runGeminiStreamingLookup(
       fetchedAt: Date.now(),
       ...(definedAs !== undefined ? { definedAs } : {}),
       ...(translation !== undefined ? { translation } : {}),
+      ...(related !== undefined ? { related } : {}),
     };
   } catch (err) {
     if (opts?.signal?.aborted && !isThrownLookupError(err)) throw err;
