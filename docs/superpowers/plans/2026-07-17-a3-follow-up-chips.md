@@ -1262,7 +1262,7 @@ same precedent as `options.ts` in the C2 plan — "covered by e2e only"). This t
 proven by Task 7's e2e scenario 5. Still run the full gate below so a regression in existing
 behavior (save/status/nudge handling, all in the same file) is caught immediately.
 
-- [ ] **Step 1: Implement.**
+- [x] **Step 1: Implement.**
 
 Add a new module-level variable, right after the existing `let lastStatus: SavedWordStatus |
 undefined;` declaration (before the `saveReplyGuard` line):
@@ -1355,7 +1355,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Gate + commit.**
+- [x] **Step 2: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check

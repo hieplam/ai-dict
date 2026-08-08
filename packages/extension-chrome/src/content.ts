@@ -156,6 +156,11 @@ let lastSaved = false;
 // limitation" section for why an unsaved word starts with no known status). undefined hides the
 // status toggle (renderSaveRow's own guard).
 let lastStatus: SavedWordStatus | undefined;
+// A3: the save payload from the last GENUINELY ORIGINAL (non-refined) result, so a "Back to
+// original" tap can restore what Save would persist without re-running a lookup. Distinct from
+// lastSavePayload, which tracks whatever is CURRENTLY shown (including a refined body). See the
+// design spec's §2.5.
+let lastOriginalSavePayload: typeof lastSavePayload;
 // B5 (F2 audit fix): guards against a stale toggle-save reply resolving after a later
 // click/render has already superseded it — see save-reply-guard.ts's doc comment.
 const saveReplyGuard = createSaveReplyGuard();
@@ -199,6 +204,10 @@ runLookupWorkflow({
         url: ctx?.url ?? '',
         title: ctx?.title ?? '',
       };
+      // A3: snapshot the ORIGINAL save payload only when this result isn't itself a refine
+      // re-run, so a later "Back to original" tap can restore exactly what Save would have
+      // persisted before any refine tap happened (design spec §2.5).
+      if (ctx?.refine === undefined) lastOriginalSavePayload = lastSavePayload;
       lastSaved = false;
       lastStatus = undefined;
       saveReplyGuard.next();
@@ -305,6 +314,18 @@ document.addEventListener('toggle-status', () => {
 // was sent (domain/nudge-policy.ts) — dismissal is purely local, hiding the banner on this card.
 document.addEventListener('dismiss-nudge', () => {
   inline.dismissNudge();
+});
+
+// A3: the card's "Back to original" pill bubbles a composed `refine-back` event. This is a
+// local-only restore (no wire call, no token spend — design spec §2.4(b)): revert the visible
+// card AND the save-tracking bookkeeping together, so a Save immediately afterward persists the
+// original definition, not whatever refinement was showing a moment ago (design spec §2.5).
+document.addEventListener('refine-back', () => {
+  inline.restoreOriginal();
+  if (lastOriginalSavePayload) lastSavePayload = lastOriginalSavePayload;
+  lastSaved = false;
+  lastStatus = undefined;
+  saveReplyGuard.next();
 });
 
 // The card's "Open in side panel" action (Chrome only) bubbles a composed `open-side-panel`
