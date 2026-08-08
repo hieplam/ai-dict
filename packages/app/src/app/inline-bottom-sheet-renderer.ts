@@ -133,6 +133,10 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.lastAnchor = anchor ?? null;
     this.lastPartialPaintAt = -Infinity; // A1: a stale timestamp from a prior lookup must never
     // throttle this new lookup's very first partial repaint
+    // A superseded lookup's terminal renderResult/renderError can be dropped by the workflow
+    // abort guard, leaving data-streaming set on the reused card — clear it here too so the
+    // NEXT lookup's loading phase is never silently announced with aria-live="off" (Blocker).
+    this.card?.toggleAttribute('data-streaming', false);
     this.setState(word === undefined ? { kind: 'loading' } : { kind: 'loading', word });
   }
 

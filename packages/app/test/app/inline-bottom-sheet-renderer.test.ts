@@ -476,6 +476,24 @@ describe('renderPartial (A1)', () => {
     expect(card(h).textContent).toContain('abc');
   });
 
+  it('renderLoading clears a data-streaming attribute leaked by a superseded stream (Blocker fix)', () => {
+    // A lookup superseded mid-stream (its terminal renderResult/renderError dropped by the
+    // workflow abort guard) must not leave data-streaming set on the reused card — otherwise
+    // the NEXT lookup's renderLoading announces with aria-live="off" (silenced for screen
+    // readers), see lookup-card.ts's attributeChangedCallback.
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderPartial('bank', 'partial');
+    expect(card(h).hasAttribute('data-streaming')).toBe(true);
+    const region = h
+      .querySelector('lookup-card')!
+      .shadowRoot!.querySelector('.region') as HTMLElement;
+    expect(region.getAttribute('aria-live')).toBe('off');
+    r.renderLoading('shore');
+    expect(card(h).hasAttribute('data-streaming')).toBe(false);
+    expect(region.getAttribute('aria-live')).toBe('polite');
+  });
+
   it('renderLoading resets the throttle clock so the next lookup always paints its first frame', () => {
     const h = host();
     let t = 0;

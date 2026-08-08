@@ -215,7 +215,10 @@ runLookupWorkflow({
     },
     close: dismissAll,
   },
-  client: new MessageRelayLookupClient(chrome.runtime),
+  // A1/S3: pass chrome.runtime.id as the expected sender so the client's lookup.chunk guard
+  // (message-relay-lookup-client.ts) actually rejects a push from any other extension instead
+  // of being unconditionally skipped (spec §4.7). Middle arg `undefined` keeps the default genId.
+  client: new MessageRelayLookupClient(chrome.runtime, undefined, chrome.runtime.id),
   settings: themedSettings,
 });
 

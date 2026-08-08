@@ -131,7 +131,14 @@ describe('runGeminiStreamingLookup', () => {
     const deps = { fetch: fetchImpl, getApiKey: () => 'AIza-key' };
     const p = runGeminiStreamingLookup(spec, deps, req, vi.fn(), { signal: ac.signal });
     ac.abort();
-    await expect(p).rejects.toThrow();
+    const err = await p.catch((e: unknown) => e);
+    // Prove a rejection actually happened (not a silently-resolved promise) before asserting
+    // its shape, so isLookupError(undefined) can't false-positive as "not a LookupError".
+    expect(err).toBeInstanceOf(DOMException);
+    // The sibling non-streaming guarantee (gemini-lookup-client.test.ts) requires the raw
+    // AbortError/DOMException to propagate unmapped — a regression that wraps aborts into a
+    // LookupError must fail this assertion, not just "some rejection happened".
+    expect(isLookupError(err)).toBe(false);
   });
 
   it('maps a stall past the timeout to a timeout LookupError', async () => {

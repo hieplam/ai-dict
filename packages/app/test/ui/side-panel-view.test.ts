@@ -151,6 +151,31 @@ describe('<side-panel-view>', () => {
     expect(el.shadowRoot!.querySelector('.focus')!.getAttribute('aria-live')).toBe('polite');
   });
 
+  it('goes aria-live="off" while a streaming focus state is showing (per-chunk over-announce fix)', () => {
+    const el = mount();
+    el.focusState = { kind: 'streaming', word: 'bank', safeHtml: safe('<p>partial</p>') };
+    expect(el.shadowRoot!.querySelector('.focus')!.getAttribute('aria-live')).toBe('off');
+  });
+
+  it('returns to aria-live="polite" the instant a terminal result state renders after streaming', () => {
+    const el = mount();
+    el.focusState = { kind: 'streaming', word: 'bank', safeHtml: safe('<p>partial</p>') };
+    el.focusState = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+    };
+    expect(el.shadowRoot!.querySelector('.focus')!.getAttribute('aria-live')).toBe('polite');
+  });
+
+  it('returns to aria-live="polite" when an empty focus state renders after streaming', () => {
+    const el = mount();
+    el.focusState = { kind: 'streaming', word: 'bank', safeHtml: safe('<p>partial</p>') };
+    el.focusState = { kind: 'empty' };
+    expect(el.shadowRoot!.querySelector('.focus')!.getAttribute('aria-live')).toBe('polite');
+  });
+
   it('hides the Recent section entirely when there is no history', () => {
     const el = mount();
     el.recent = [];

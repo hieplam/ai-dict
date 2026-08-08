@@ -207,6 +207,11 @@ export class SidePanelView extends HTMLElement {
   private renderFocus(): void {
     const nodes = this._focus.kind === 'empty' ? renderEmpty() : renderCardState(this._focus);
     this.focusEl.replaceChildren(...nodes);
+    // A1 added an unthrottled 'streaming' focus state (side-panel.ts pushes one per chunk);
+    // announcing every chunk on the polite region is the exact over-announcement the in-page
+    // card's own aria-live="off" fix (lookup-card.ts) exists to prevent — mirror it here so a
+    // loading→result swap still announces once, but per-chunk streaming states stay silent.
+    this.focusEl.setAttribute('aria-live', this._focus.kind === 'streaming' ? 'off' : 'polite');
   }
 
   private renderRecent(): void {
