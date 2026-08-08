@@ -98,4 +98,70 @@ describe('MessageRelayLookupClient', () => {
     expect(sent).toContainEqual({ type: 'lookup', req, requestId: 'id-9' });
     expect(sent).toContainEqual({ type: 'lookup.cancel', requestId: 'id-9' });
   });
+
+  function fakeRuntimeWithOnMessage(sendMessage: (message: unknown) => Promise<unknown>) {
+    const listeners: ((msg: unknown, sender: { id?: string }) => void)[] = [];
+    return {
+      sendMessage,
+      onMessage: {
+        addListener: (cb: (msg: unknown, sender: { id?: string }) => void) => listeners.push(cb),
+        removeListener: (cb: (msg: unknown, sender: { id?: string }) => void) => {
+          const i = listeners.indexOf(cb);
+          if (i >= 0) listeners.splice(i, 1);
+        },
+      },
+      push: (msg: unknown, sender: { id?: string } = { id: 'this-ext' }) =>
+        listeners.forEach((l) => l(msg, sender)),
+      listenerCount: () => listeners.length,
+    };
+  }
+
+  it("invokes onChunk for a lookup.chunk push matching this call's requestId (A1)", async () => {
+    let resolveReply!: (v: unknown) => void;
+    const sendMessage = vi.fn(() => new Promise((r) => (resolveReply = r)));
+    const runtime = fakeRuntimeWithOnMessage(sendMessage);
+    const c = new MessageRelayLookupClient(runtime, () => 'id-1', 'this-ext');
+    const onChunk = vi.fn();
+    const p = c.lookup(req, { onChunk });
+    runtime.push({ type: 'lookup.chunk', requestId: 'id-1', markdown: 'partial' });
+    resolveReply({ ok: true, type: 'lookup', result: okResult, requestId: 'id-1' });
+    await p;
+    expect(onChunk).toHaveBeenCalledWith('partial', undefined);
+  });
+
+  it('ignores a lookup.chunk push for a DIFFERENT requestId (a stale/superseded lookup) (A1)', async () => {
+    let resolveReply!: (v: unknown) => void;
+    const sendMessage = vi.fn(() => new Promise((r) => (resolveReply = r)));
+    const runtime = fakeRuntimeWithOnMessage(sendMessage);
+    const c = new MessageRelayLookupClient(runtime, () => 'id-1', 'this-ext');
+    const onChunk = vi.fn();
+    const p = c.lookup(req, { onChunk });
+    runtime.push({ type: 'lookup.chunk', requestId: 'id-OTHER', markdown: 'not mine' });
+    resolveReply({ ok: true, type: 'lookup', result: okResult, requestId: 'id-1' });
+    await p;
+    expect(onChunk).not.toHaveBeenCalled();
+  });
+
+  it('removes its listener once the call settles, so a later push is a no-op (A1)', async () => {
+    const sendMessage = vi.fn(() =>
+      Promise.resolve({ ok: true, type: 'lookup', result: okResult, requestId: 'id-1' }),
+    );
+    const runtime = fakeRuntimeWithOnMessage(sendMessage);
+    const c = new MessageRelayLookupClient(runtime, () => 'id-1', 'this-ext');
+    const onChunk = vi.fn();
+    await c.lookup(req, { onChunk });
+    expect(runtime.listenerCount()).toBe(0);
+    runtime.push({ type: 'lookup.chunk', requestId: 'id-1', markdown: 'too late' });
+    expect(onChunk).not.toHaveBeenCalled();
+  });
+
+  it('never registers a listener when opts.onChunk is not passed', async () => {
+    const sendMessage = vi.fn(() =>
+      Promise.resolve({ ok: true, type: 'lookup', result: okResult, requestId: 'id-1' }),
+    );
+    const runtime = fakeRuntimeWithOnMessage(sendMessage);
+    const c = new MessageRelayLookupClient(runtime, () => 'id-1', 'this-ext');
+    await c.lookup(req);
+    expect(runtime.listenerCount()).toBe(0);
+  });
 });

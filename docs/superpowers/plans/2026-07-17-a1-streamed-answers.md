@@ -1534,7 +1534,7 @@ class MessageRelayLookupClient {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add, inside `message-relay-lookup-client.test.ts`'s
+- [x] **Step 1: Write the failing tests.** Add, inside `message-relay-lookup-client.test.ts`'s
       existing `describe` block:
 
 ```ts
@@ -1608,7 +1608,7 @@ it('never registers a listener when opts.onChunk is not passed', async () => {
 Run: `cd packages/app && bunx vitest run test/app/message-relay-lookup-client.test.ts`
 Expected: failures — the 3-arg constructor and `onChunk` wiring don't exist yet.
 
-- [ ] **Step 2: Implement.** Replace `packages/app/src/app/message-relay-lookup-client.ts` in
+- [x] **Step 2: Implement.** Replace `packages/app/src/app/message-relay-lookup-client.ts` in
       full:
 
 ```ts
@@ -1714,7 +1714,7 @@ Expected: all tests pass, including every pre-existing test in this file unmodif
 construct `MessageRelayLookupClient` with only `{ sendMessage }`, which still satisfies
 `RuntimeLike` since `onMessage`/`extensionId` are both optional).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
