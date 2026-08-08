@@ -98,6 +98,31 @@ export async function savedWordSetStatus(
 }
 
 /**
+ * B13: patch the related-words list onto an ALREADY-saved word's current (senses[0]) sense.
+ * No-op (returns null) when the word isn't currently saved — mirrors savedWordSetStatus's own
+ * contract exactly: "only persists when the word IS saved" (roadmap fence) is enforced HERE,
+ * atomically, because this is the only place with real ground truth (the composition root's own
+ * "is this saved" tracking is reset on every render and cannot answer reliably — see the design
+ * spec's §2.5). Targets senses[0] specifically: pre-B14, `senses` is always exactly one entry
+ * (savedWordUpsert never produces more), and a 'related' refine tap always answers about the
+ * single sense currently on screen.
+ */
+export async function savedWordSetRelated(
+  deps: SavedWordsDeps,
+  word: string,
+  related: string[],
+): Promise<SavedWordEntry | null> {
+  const key = normalizeWordKey(word);
+  const raw = await deps.storage.getItem(`saved:${key}`);
+  if (!raw) return null;
+  const existing = JSON.parse(raw) as SavedWordEntry;
+  const senses = existing.senses.map((s, i) => (i === 0 ? { ...s, related } : s));
+  const entry: SavedWordEntry = { ...existing, senses };
+  await deps.storage.setItem(`saved:${key}`, JSON.stringify(entry));
+  return entry;
+}
+
+/**
  * B9: write an already-fully-formed entry verbatim (status/savedAt/senses exactly as given) —
  * used only by backup import, which must preserve an imported entry's own history rather than
  * derive a fresh one the way savedWordUpsert does for a live save (savedWordUpsert always

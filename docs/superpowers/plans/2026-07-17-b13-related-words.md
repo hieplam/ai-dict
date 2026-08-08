@@ -782,7 +782,7 @@ export async function savedWordSetRelated(
 ): Promise<SavedWordEntry | null>; // domain/saved-words-policy.ts
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/wire-schema.test.ts`, as a new top-level `describe` (place it near
 the other `saved.*` describe blocks):
@@ -964,7 +964,7 @@ discriminant), `savedWordSetRelated` is not exported, the router has no matching
 compile error at this point is also expected/acceptable since `router.ts`'s exhaustive switch
 does not yet have a `case` for the new arm — proceed to Step 2).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/wire.ts`, add the new arm to `WireMessageSchema`'s array, positioned
 immediately after the existing `saved.setStatus` arm:
@@ -1034,7 +1034,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts test/saved-words-pol
 
 Expected: all tests pass (existing + the ones added in Step 1).
 
-- [ ] **Step 3: Regenerate the wire JSON-schema snapshot (a 2nd time — the new discriminant arm
+- [x] **Step 3: Regenerate the wire JSON-schema snapshot (a 2nd time — the new discriminant arm
       changes the schema again).**
 
 ```
@@ -1050,7 +1050,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts
 
 Expected: all pass, no further diff.
 
-- [ ] **Step 4: Gate + commit.**
+- [x] **Step 4: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

@@ -762,6 +762,48 @@ describe('saved.save / saved.delete wire messages (B1)', () => {
   });
 });
 
+describe('saved.setRelated wire message (B13)', () => {
+  it('accepts a valid saved.setRelated message', () => {
+    const parsed = WireMessageSchema.safeParse({
+      type: 'saved.setRelated',
+      word: 'bank',
+      related: ['shore', 'embankment'],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it('rejects a saved.setRelated message missing word', () => {
+    const parsed = WireMessageSchema.safeParse({
+      type: 'saved.setRelated',
+      related: ['shore'],
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('rejects a saved.setRelated message missing related', () => {
+    const parsed = WireMessageSchema.safeParse({ type: 'saved.setRelated', word: 'bank' });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('rejects a saved.setRelated message where related contains a non-string', () => {
+    const parsed = WireMessageSchema.safeParse({
+      type: 'saved.setRelated',
+      word: 'bank',
+      related: ['shore', 1],
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('accepts an empty related array (clears the field)', () => {
+    const parsed = WireMessageSchema.safeParse({
+      type: 'saved.setRelated',
+      word: 'bank',
+      related: [],
+    });
+    expect(parsed.success).toBe(true);
+  });
+});
+
 describe('saved.list wire message (B8)', () => {
   it('accepts a saved.list message with no payload; rejects one with an extra field', () => {
     expect(WireMessageSchema.safeParse({ type: 'saved.list' }).success).toBe(true);

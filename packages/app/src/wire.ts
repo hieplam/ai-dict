@@ -169,6 +169,15 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
     word: z.string(),
     status: z.enum(['learning', 'known']),
   }),
+  // B13: patch the related-words list onto an ALREADY-saved entry's current sense. No-op
+  // server-side (replies ack, writes nothing) when the word isn't currently saved — see
+  // domain/saved-words-policy.ts's savedWordSetRelated. Sent automatically by content.ts the
+  // instant a 'related' refine result renders; never sent by any explicit UI button.
+  z.object({
+    type: z.literal('saved.setRelated'),
+    word: z.string(),
+    related: z.array(z.string()),
+  }),
   // B8: read every saved word (no pagination — mirrors savedWordsList's "full list" contract,
   // saved-words-policy.ts:108-109). Read-only; the only caller today is the Anki/CSV/Markdown
   // export flow in settings-form.ts.
@@ -219,6 +228,7 @@ const MessageTypeEnum = z.enum([
   'saved.save',
   'saved.delete',
   'saved.setStatus',
+  'saved.setRelated',
   'saved.list',
   'backup.import',
   'saved.learningWords',

@@ -601,6 +601,62 @@ describe('buildRouter', () => {
     expect(reply).toMatchObject({ ok: true, type: 'saved', entry: { status: 'known' } });
   });
 
+  it('saved.setRelated patches an already-saved entry and returns it (B13)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'd',
+      translation: '',
+      sentence: 's',
+      url: 'u',
+      title: 't',
+    });
+    const reply = await route({
+      type: 'saved.setRelated',
+      word: 'bank',
+      related: ['shore', 'embankment'],
+    });
+    expect(reply).toMatchObject({
+      ok: true,
+      type: 'saved',
+      entry: { word: 'bank', senses: [{ related: ['shore', 'embankment'] }] },
+    });
+  });
+
+  it('saved.setRelated on an unsaved word replies ack and writes nothing (B13)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    const reply = await route({ type: 'saved.setRelated', word: 'ghost', related: ['x'] });
+    expect(reply).toMatchObject({ ok: true, type: 'ack' });
+    expect(await d.kv.getItem('saved:ghost')).toBeNull();
+  });
+
+  it('saved.setRelated is case-insensitive on the word key (B13)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'Bank',
+      definition: 'd',
+      translation: '',
+      sentence: 's',
+      url: 'u',
+      title: 't',
+    });
+    const reply = await route({
+      type: 'saved.setRelated',
+      word: 'BANK',
+      related: ['shore'],
+    });
+    expect(reply).toMatchObject({
+      ok: true,
+      type: 'saved',
+      entry: { senses: [{ related: ['shore'] }] },
+    });
+  });
+
   it('saved.get returns the full entry for a saved word (B4)', async () => {
     const d = deps();
     const route = buildRouter(d);
