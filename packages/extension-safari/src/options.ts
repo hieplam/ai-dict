@@ -6,10 +6,16 @@ import {
   buildAnkiCsv,
   buildAnkiMarkdown,
   hasKeyFor,
+  buildBackupExport,
+  parseBackupFile,
   type Settings,
   type SettingsForm,
   type SettingsFormValue,
   type WireReply,
+  type BackupImportRequest,
+  type SavedWordEntry,
+  type HistoryEntry,
+  type Theme,
 } from '@ai-dict/app';
 registerSettingsForm();
 
@@ -152,6 +158,85 @@ form.addEventListener('export-history', () => {
     },
     () => form.setStatus('Could not export history', 'error'),
   );
+});
+
+form.addEventListener('backup-export', () => {
+  void Promise.all([send({ type: 'saved.list' }), send({ type: 'history.list' }), load()]).then(
+    ([savedReply, historyReply, settings]) => {
+      if (!savedReply.ok || savedReply.type !== 'saved.list') {
+        form.setStatus(savedReply.ok ? 'Unexpected reply' : savedReply.error.message, 'error');
+        return;
+      }
+      if (!historyReply.ok || historyReply.type !== 'history') {
+        form.setStatus(historyReply.ok ? 'Unexpected reply' : historyReply.error.message, 'error');
+        return;
+      }
+      const { filename, json } = buildBackupExport(
+        savedReply.entries,
+        historyReply.entries,
+        settings,
+        () => Date.now(),
+      );
+      download(filename, json);
+      form.setStatus(
+        `Exported ${savedReply.entries.length} saved words and ${historyReply.entries.length} history entries`,
+      );
+    },
+    () => form.setStatus('Could not export backup', 'error'),
+  );
+});
+
+form.addEventListener('backup-import', (e) => {
+  const { mode, file } = (e as CustomEvent<BackupImportRequest>).detail;
+  void file
+    .text()
+    .then((text) => {
+      const parsed = parseBackupFile(text);
+      if (!parsed.ok) {
+        form.setStatus(parsed.error, 'error');
+        return;
+      }
+      form.setStatus('Importing…');
+      void send({
+        type: 'backup.import',
+        mode,
+        savedWords: parsed.savedWords as SavedWordEntry[],
+        history: parsed.history as HistoryEntry[],
+      }).then(
+        (r) => {
+          if (!r.ok || r.type !== 'backup-imported') {
+            form.setStatus(r.ok ? 'Unexpected reply' : r.error.message, 'error');
+            return;
+          }
+          const s = parsed.settings;
+          void load()
+            .then((cur) =>
+              browser.storage.local.set({
+                settings: {
+                  ...cur,
+                  ...(s.targetLang !== undefined ? { targetLang: s.targetLang } : {}),
+                  ...(s.outputFormat !== undefined ? { outputFormat: s.outputFormat } : {}),
+                  ...(s.promptEnvelope !== undefined ? { promptEnvelope: s.promptEnvelope } : {}),
+                  ...(s.theme !== undefined ? { theme: s.theme as Theme } : {}),
+                  ...(s.cacheEnabled !== undefined ? { cacheEnabled: s.cacheEnabled } : {}),
+                  ...(s.saveHistory !== undefined ? { saveHistory: s.saveHistory } : {}),
+                  ...(s.provider !== undefined ? { provider: s.provider } : {}),
+                },
+              }),
+            )
+            .then(load)
+            .then((fresh) => {
+              (form as unknown as HTMLElement).setAttribute('data-ad-theme', fresh.theme);
+              (form as unknown as { value: Settings }).value = fresh;
+              form.setStatus(
+                `Imported ${r.savedWordsImported} saved words and ${r.historyImported} history entries`,
+              );
+            });
+        },
+        () => form.setStatus('Could not import backup', 'error'),
+      );
+    })
+    .catch(() => form.setStatus('Could not read the selected file', 'error'));
 });
 
 wireAnkiExport('export-anki-tsv', 'tsv');
