@@ -1,3 +1,7 @@
+---
+allowsSchemaChange: true
+---
+
 # A5 — Gloss Mode Implementation Plan
 
 > **For agentic workers:** implement task-by-task, TDD (red → green → commit) per task. Steps
