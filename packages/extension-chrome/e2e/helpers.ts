@@ -92,11 +92,23 @@ export async function mockGemini(
       return;
     }
     if (opts.delayMs) await new Promise((r) => setTimeout(r, opts.delayMs));
+    const status = opts.status ?? 200;
+    const body = opts.body ?? GEMINI_OK_BODY;
+    const isStream = route.request().url().includes(':streamGenerateContent');
+    if (isStream && status < 400) {
+      await route.fulfill({
+        status,
+        contentType: 'text/event-stream',
+        headers: opts.headers ?? {},
+        body: `data: ${body}\n\n`,
+      });
+      return;
+    }
     await route.fulfill({
-      status: opts.status ?? 200,
+      status,
       contentType: 'application/json',
       headers: opts.headers ?? {},
-      body: opts.body ?? GEMINI_OK_BODY,
+      body,
     });
   });
   return calls;

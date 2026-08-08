@@ -123,13 +123,19 @@ test('context disambiguation: the same word "bank" in two different sentences re
   await context.route(GEMINI_GLOB, async (route) => {
     const body = route.request().postData() ?? '';
     const isRiver = /river|grassy/i.test(body);
-    await route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        candidates: [{ content: { parts: [{ text: isRiver ? RIVER_MD : MONEY_MD }] } }],
-      }),
+    const json = JSON.stringify({
+      candidates: [{ content: { parts: [{ text: isRiver ? RIVER_MD : MONEY_MD }] } }],
     });
+    const isStream = route.request().url().includes(':streamGenerateContent');
+    if (isStream) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: `data: ${json}\n\n`,
+      });
+      return;
+    }
+    await route.fulfill({ status: 200, contentType: 'application/json', body: json });
   });
 
   const page = await context.newPage();
