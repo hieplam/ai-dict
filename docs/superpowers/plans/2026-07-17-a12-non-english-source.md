@@ -1,3 +1,7 @@
+---
+allowsSchemaChange: true
+---
+
 # A12 Non-English Source Pages Implementation Plan
 
 > **For agentic workers:** implement task-by-task, TDD (red → green → commit) per task. Steps use
