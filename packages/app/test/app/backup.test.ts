@@ -127,3 +127,58 @@ describe('parseBackupFile', () => {
     expect(result.settings).toEqual({});
   });
 });
+
+describe('parseBackupFile — settings field-type validation (B9 fix)', () => {
+  it('round-trips a well-typed settings object across all 7 fields', () => {
+    const result = parseBackupFile(
+      JSON.stringify({ format: BACKUP_FORMAT, version: 1, data: { settings } }),
+    );
+    if (!result.ok) throw new Error('expected ok:true');
+    expect(result.settings).toEqual(settings);
+  });
+
+  it('drops a wrong-typed boolean field (cacheEnabled as string) instead of passing it through', () => {
+    // A hand-edited/corrupt file with cacheEnabled as a truthy string ("false") must not survive
+    // into the result — the overlay's `!== undefined` guard should keep the stored boolean.
+    const tainted = { ...settings, cacheEnabled: 'false' };
+    const result = parseBackupFile(
+      JSON.stringify({ format: BACKUP_FORMAT, version: 1, data: { settings: tainted } }),
+    );
+    if (!result.ok) throw new Error('expected ok:true');
+    expect(result.settings).not.toHaveProperty('cacheEnabled');
+    const expectedRest: Record<string, unknown> = { ...settings };
+    delete expectedRest['cacheEnabled'];
+    expect(result.settings).toEqual(expectedRest);
+  });
+
+  it('drops a wrong-typed string field (theme as number) instead of passing it through', () => {
+    const tainted = { ...settings, theme: 42 };
+    const result = parseBackupFile(
+      JSON.stringify({ format: BACKUP_FORMAT, version: 1, data: { settings: tainted } }),
+    );
+    if (!result.ok) throw new Error('expected ok:true');
+    expect(result.settings).not.toHaveProperty('theme');
+    const expectedRest: Record<string, unknown> = { ...settings };
+    delete expectedRest['theme'];
+    expect(result.settings).toEqual(expectedRest);
+  });
+
+  it('drops an unknown extra settings field', () => {
+    const result = parseBackupFile(
+      JSON.stringify({
+        format: BACKUP_FORMAT,
+        version: 1,
+        data: { settings: { ...settings, extraField: 'nope' } },
+      }),
+    );
+    if (!result.ok) throw new Error('expected ok:true');
+    expect(result.settings).toEqual(settings);
+    expect(result.settings).not.toHaveProperty('extraField');
+  });
+
+  it('a missing settings object still yields {}', () => {
+    const result = parseBackupFile(JSON.stringify({ format: BACKUP_FORMAT, version: 1 }));
+    if (!result.ok) throw new Error('expected ok:true');
+    expect(result.settings).toEqual({});
+  });
+});

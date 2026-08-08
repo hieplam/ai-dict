@@ -87,6 +87,37 @@ export function buildBackupExport(
   return { filename: 'ai-dict-backup.json', json: JSON.stringify(envelope, null, 2) };
 }
 
+const STRING_SETTINGS_FIELDS = [
+  'targetLang',
+  'outputFormat',
+  'promptEnvelope',
+  'theme',
+  'provider',
+] as const;
+const BOOLEAN_SETTINGS_FIELDS = ['cacheEnabled', 'saveHistory'] as const;
+
+/**
+ * B9 fix: a hand-edited/corrupt backup file can carry a wrong-typed value for a known settings
+ * field (e.g. `cacheEnabled: "false"` as a string, which is truthy and would silently invert the
+ * stored boolean once it flows through the client-side overlay). Copies through ONLY the 7 known
+ * BackupSettings fields whose runtime type matches, dropping any wrong-typed or absent field so
+ * the overlay's `!== undefined` guard keeps the current stored value instead.
+ */
+function parseBackupSettings(raw: unknown): Partial<BackupSettings> {
+  if (typeof raw !== 'object' || raw === null) return {};
+  const obj = raw as Record<string, unknown>;
+  const out: Partial<BackupSettings> = {};
+  for (const key of STRING_SETTINGS_FIELDS) {
+    const value = obj[key];
+    if (typeof value === 'string') out[key] = value;
+  }
+  for (const key of BOOLEAN_SETTINGS_FIELDS) {
+    const value = obj[key];
+    if (typeof value === 'boolean') out[key] = value;
+  }
+  return out;
+}
+
 export type ParsedBackupFile =
   | {
       ok: true;
@@ -128,6 +159,6 @@ export function parseBackupFile(text: string): ParsedBackupFile {
     ok: true,
     savedWords: Array.isArray(data['savedWords']) ? data['savedWords'] : [],
     history: Array.isArray(data['history']) ? data['history'] : [],
-    settings: (data['settings'] as Partial<BackupSettings> | undefined) ?? {},
+    settings: parseBackupSettings(data['settings']),
   };
 }
