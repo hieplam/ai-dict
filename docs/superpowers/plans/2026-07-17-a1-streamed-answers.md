@@ -283,7 +283,7 @@ export function runGeminiStreamingLookup(
 ): Promise<LookupResult>;
 ```
 
-- [ ] **Step 1: Write the failing tests.** First, extend `ResponseLike` usage: this test needs a
+- [x] **Step 1: Write the failing tests.** First, extend `ResponseLike` usage: this test needs a
       fake `Response`-shaped object exposing a real `ReadableStream<Uint8Array>` as `.body`, which
       `http-lookup-client.ts`'s existing `ResponseLike` (`.json()` only) does not model — this test
       file defines its own local fake shape, it does not modify `http-lookup-client.ts`. Create
@@ -447,7 +447,7 @@ Expected: failure — `../../src/app/gemini-streaming` does not exist. (Delete t
 helper above before implementing if the linter flags it as dead code — it is left from drafting
 and is not referenced by any test; remove it.)
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/app/gemini-streaming.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/app/gemini-streaming.ts`:
 
 ```ts
 import {
@@ -655,7 +655,7 @@ unused `client()` helper from the test file drafted in Step 1 if the linter flag
 Run: `cd packages/app && bunx vitest run test/app/gemini-streaming.test.ts`
 Expected: all 6 tests pass.
 
-- [ ] **Step 3: Wire `GeminiLookupClient` to dispatch to it.** Modify
+- [x] **Step 3: Wire `GeminiLookupClient` to dispatch to it.** Modify
       `packages/app/src/app/gemini-lookup-client.ts` in full:
 
 ```ts
@@ -736,7 +736,7 @@ export class GeminiLookupClient implements LookupClient {
 }
 ```
 
-- [ ] **Step 4: Extend `gemini-lookup-client.test.ts`.** Add, inside the existing top-level
+- [x] **Step 4: Extend `gemini-lookup-client.test.ts`.** Add, inside the existing top-level
       `describe` block (after the existing tests, do not remove or modify any of them — they are
       the regression guard proving the non-streaming path is unchanged):
 
@@ -795,7 +795,7 @@ Modify `packages/app/src/index.ts`: add, right after
 export * from './app/gemini-streaming';
 ```
 
-- [ ] **Step 5: Commit** — gate, then commit:
+- [x] **Step 5: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
