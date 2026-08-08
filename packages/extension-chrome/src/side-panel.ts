@@ -5,13 +5,16 @@ import {
   createSaveReplyGuard,
   classifyInbound,
   acceptAny,
+  normalizeWordKey,
   type PanelFocusState,
   type SidePanelView,
+  type WordsPageView,
   type LookupResult,
   type LookupError,
   type HistoryEntry,
   type WireReply,
   type SavedWordStatus,
+  type SavedWordEntry,
 } from '@ai-dict/app';
 import type {
   GetSidePanelFocusMessage,
@@ -29,6 +32,7 @@ reset.replaceSync('html,body{margin:0}');
 document.adoptedStyleSheets = [...document.adoptedStyleSheets, reset];
 
 const view = document.querySelector('side-panel-view') as SidePanelView;
+const wordsView = document.querySelector('words-page-view') as WordsPageView;
 
 // Entries currently shown under "Recent", kept in memory so a click can resolve an id back to
 // its full stored result without another round-trip to the service worker.
@@ -230,6 +234,56 @@ view.addEventListener('toggle-status', () => {
 // B7: the panel's own focus region bubbles the same composed dismiss-nudge event the in-page
 // card does. No wire message needed — see dismissNudge()'s doc comment above.
 view.addEventListener('dismiss-nudge', () => dismissNudge());
+
+// B6: "My Words" nav — swap the panel from the current lookup focus to the saved-word
+// collection. Both elements stay permanently mounted (side-panel.html) so SidePanelView's own
+// focus/Recent state survives the round trip; visibility is toggled via inline style.display,
+// NOT the `hidden` attribute — side-panel-view.ts's (and words-page-view.ts's) `:host{display:
+// flex}` rule is an unconditioned author-stylesheet declaration, which the CSS cascade lets win
+// over the UA stylesheet's `[hidden]{display:none}` regardless of the boolean attribute, so
+// `hidden` alone would silently do nothing on either element (design spec §2.2).
+view.addEventListener('open-words', () => {
+  view.style.display = 'none';
+  wordsView.style.display = '';
+  void loadSavedWords();
+});
+
+wordsView.addEventListener('back', () => {
+  wordsView.style.display = 'none';
+  view.style.display = '';
+});
+
+async function loadSavedWords(): Promise<void> {
+  try {
+    const raw: unknown = await chrome.runtime.sendMessage({ type: 'saved.list' });
+    const reply = raw as WireReply | undefined;
+    if (reply && reply.ok && reply.type === 'saved.list') {
+      wordsView.entries = reply.entries;
+    }
+  } catch {
+    // Best-effort; the words page's own "no saved words yet" empty state is a fine fallback.
+  }
+}
+
+// B6: reuse saved.setStatus (B5) / saved.delete (B1) verbatim — no new wire messages for row
+// actions. Optimistic, no-rollback update mirrors the existing toggle-save/toggle-status
+// listeners above in this same file — a failed round trip just leaves the words page's local
+// view slightly stale until the next saved.list fetch.
+wordsView.addEventListener('toggle-status', (e) => {
+  const { word, status } = (e as CustomEvent<{ word: string; status: SavedWordStatus }>).detail;
+  wordsView.entries = wordsView.entries.map((entry: SavedWordEntry) =>
+    normalizeWordKey(entry.word) === normalizeWordKey(word) ? { ...entry, status } : entry,
+  );
+  void chrome.runtime.sendMessage({ type: 'saved.setStatus', word, status }).catch(() => undefined);
+});
+
+wordsView.addEventListener('delete-word', (e) => {
+  const { word } = (e as CustomEvent<{ word: string }>).detail;
+  wordsView.entries = wordsView.entries.filter(
+    (entry: SavedWordEntry) => normalizeWordKey(entry.word) !== normalizeWordKey(word),
+  );
+  void chrome.runtime.sendMessage({ type: 'saved.delete', word }).catch(() => undefined);
+});
 
 // On open, one settings probe drives two things: stamp the reader's theme on the panel,
 // and — if no key is configured — swap the teaching empty state for the same setup invite

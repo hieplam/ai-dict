@@ -1284,7 +1284,7 @@ followed). Task 6's e2e proves this task's correctness; still run the typecheck/
 a regression in this file's EXISTING behavior (Recent, save/status/delete, nudge) is caught
 immediately.
 
-- [ ] **Step 1: Update the HTML.** In `packages/extension-chrome/src/side-panel.html`:
+- [x] **Step 1: Update the HTML.** In `packages/extension-chrome/src/side-panel.html`:
 
 ```html
 <!doctype html>
@@ -1301,7 +1301,7 @@ immediately.
 </html>
 ```
 
-- [ ] **Step 2: Wire the composition root.** In `packages/extension-chrome/src/side-panel.ts`:
+- [x] **Step 2: Wire the composition root.** In `packages/extension-chrome/src/side-panel.ts`:
 
 1. Extend the `@ai-dict/app` import (currently `side-panel.ts:1-13`):
 
@@ -1396,7 +1396,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
