@@ -48,6 +48,13 @@ export interface SettingsFormValue {
   // derived fields computed on save/read and never emitted by the form's 'save' event.
 }
 
+// B9: what the 'backup-import' event carries — which merge policy the user picked, and the file
+// they chose via the hidden #backup-file input.
+export interface BackupImportRequest {
+  mode: 'merge' | 'replace';
+  file: File;
+}
+
 // Per-provider copy for the single key row; the row morphs as the select changes
 // so both keys are kept and switching providers never wipes the other key.
 const KEY_LABEL: Record<Provider, string> = {
@@ -137,6 +144,7 @@ details.advanced>summary::before{content:"▸";display:inline-block;margin-right
 details.advanced[open]>summary::before{transform:rotate(90deg)}
 details.advanced>summary:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px;border-radius:4px}
 #envelope-help{margin:8px 0;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
+#backup-help{margin:0 0 10px;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
 #envelope{min-height:180px}
 #devpanel{opacity:1}
 #devpanel.unlocked{animation:dev-reveal var(--adp-dur-fast) var(--adp-ease)}
@@ -279,6 +287,19 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
         <button type="button" id="export-anki-md" class="link">Export Markdown</button>
       </div>
     </section>
+    <section class="sec" aria-labelledby="sec-backup">
+      <h2 class="sec-h" id="sec-backup">Backup &amp; restore</h2>
+      <p id="backup-help">
+        Save your saved words, history, and settings as one file — everything except your API key.
+        Import merges with what's already on this device, or replaces it entirely.
+      </p>
+      <div class="inline-actions">
+        <button type="button" id="backup-export" class="link">Export backup</button>
+        <button type="button" id="backup-import-merge">Import (merge)</button>
+        <button type="button" id="backup-import-replace">Import (replace)</button>
+      </div>
+      <input type="file" id="backup-file" accept="application/json" hidden />
+    </section>
     <div class="savebar">
       <button type="submit" id="save" class="primary">Save settings</button>
       <span class="muted">Changes apply after saving</span>
@@ -315,6 +336,9 @@ export class SettingsForm extends HTMLElement {
   private readonly _onKonamiKey = (e: KeyboardEvent): void => this.handleKonamiKey(e);
   // A16: the save bar shows an "Unsaved changes" cue while the form holds unsaved edits.
   private _dirty = false;
+  // B9: which import mode was requested — set just before the hidden file input is opened, read
+  // (and cleared) by its 'change' listener.
+  private _backupImportMode: 'merge' | 'replace' | null = null;
   // C6: armed by enterFixKeyMode(), consumed by exactly the next Save.
   private _autoRetestArmed = false;
   private _shortcuts: ShortcutStatusRow[] = [];
@@ -389,6 +413,28 @@ export class SettingsForm extends HTMLElement {
     this.relay('#export-anki-tsv', 'export-anki-tsv');
     this.relay('#export-anki-csv', 'export-anki-csv');
     this.relay('#export-anki-md', 'export-anki-md');
+    this.relay('#backup-export', 'backup-export');
+    this.q<HTMLButtonElement>('#backup-import-merge').addEventListener('click', () =>
+      this.startBackupImport('merge'),
+    );
+    this.q<HTMLButtonElement>('#backup-import-replace').addEventListener('click', () =>
+      this.startBackupImport('replace'),
+    );
+    this.q<HTMLInputElement>('#backup-file').addEventListener('change', () => {
+      const input = this.q<HTMLInputElement>('#backup-file');
+      const file = input.files?.[0];
+      input.value = ''; // reset so re-selecting the same file still fires 'change' next time
+      const mode = this._backupImportMode;
+      this._backupImportMode = null;
+      if (!file || !mode) return;
+      this.dispatchEvent(
+        new CustomEvent<BackupImportRequest>('backup-import', {
+          detail: { mode, file },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    });
     this.relay('#assign-shortcuts', 'open-shortcuts-page');
     for (const p of PROVIDERS) {
       this.q<HTMLButtonElement>(`#key-status-${p}-fix`).addEventListener('click', () =>
@@ -732,6 +778,24 @@ export class SettingsForm extends HTMLElement {
     tpl.value = DEFAULT_OUTPUT_FORMAT;
     this.markDirty();
     this.setStatus('Card format restored — Save settings to apply.');
+  }
+
+  /**
+   * B9: "Import (replace)" is destructive (wipes existing saved words + history before writing
+   * the file's contents) — gate it behind a confirm(), mirroring restoreDefaultTemplate's
+   * existing confirm-before-destructive-action pattern. "Import (merge)" needs no confirm — it
+   * only adds/updates, never deletes.
+   */
+  private startBackupImport(mode: 'merge' | 'replace'): void {
+    if (mode === 'replace') {
+      const ok = window.confirm(
+        'Replace ALL saved words and history with this backup file? Anything not in the file ' +
+          'will be deleted. This cannot be undone.',
+      );
+      if (!ok) return;
+    }
+    this._backupImportMode = mode;
+    this.q<HTMLInputElement>('#backup-file').click();
   }
 
   /**

@@ -471,6 +471,104 @@ describe('wire-schema', () => {
       '../wire-schema.snapshot.json',
     );
   });
+
+  it('[B9] accepts a valid backup.import message with one saved word and one history entry', () => {
+    const result = WireMessageSchema.safeParse({
+      type: 'backup.import',
+      mode: 'merge',
+      savedWords: [
+        {
+          word: 'bank',
+          status: 'learning',
+          savedAt: 1,
+          senses: [{ definition: 'd', translation: '', sentence: 's', url: 'u', title: 't' }],
+        },
+      ],
+      history: [
+        {
+          id: 'h1',
+          word: 'bank',
+          context: '',
+          createdAt: 1,
+          result: {
+            markdown: '',
+            word: 'bank',
+            target: 'vi',
+            model: 'gemini-2.5-flash',
+            fromCache: false,
+            fetchedAt: 1,
+          },
+        },
+      ],
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('[B9] rejects an invalid mode value on backup.import', () => {
+    const result = WireMessageSchema.safeParse({
+      type: 'backup.import',
+      mode: 'overwrite', // not 'merge' | 'replace'
+      savedWords: [],
+      history: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('[B9] backup.import ignores an unrecognised field on a saved-word sense (forward compat)', () => {
+    const result = WireMessageSchema.safeParse({
+      type: 'backup.import',
+      mode: 'merge',
+      savedWords: [
+        {
+          word: 'bank',
+          status: 'learning',
+          savedAt: 1,
+          senses: [
+            {
+              definition: 'd',
+              translation: '',
+              sentence: 's',
+              url: 'u',
+              title: 't',
+              future: 'a field this version does not know about',
+            },
+          ],
+        },
+      ],
+      history: [],
+    });
+    expect(result.success).toBe(true);
+    if (!result.success) throw new Error('expected success');
+    const msg = result.data as Extract<typeof result.data, { type: 'backup.import' }>;
+    expect('future' in msg.savedWords[0]!.senses[0]!).toBe(false); // stripped, not rejected
+  });
+
+  it('[B9] backup.import rejects a saved-word entry missing a required field', () => {
+    const result = WireMessageSchema.safeParse({
+      type: 'backup.import',
+      mode: 'merge',
+      savedWords: [
+        {
+          // 'word' omitted
+          status: 'learning',
+          savedAt: 1,
+          senses: [],
+        },
+      ],
+      history: [],
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('[B9] accepts a backup-imported reply with counts', () => {
+    const result = WireReplySchema.safeParse({
+      ok: true,
+      type: 'backup-imported',
+      savedWordsImported: 2,
+      historyImported: 0,
+    });
+    expect(result.success).toBe(true);
+  });
 });
 
 describe('saved.save / saved.delete wire messages (B1)', () => {

@@ -97,6 +97,23 @@ export async function savedWordSetStatus(
   return entry;
 }
 
+/**
+ * B9: write an already-fully-formed entry verbatim (status/savedAt/senses exactly as given) —
+ * used only by backup import, which must preserve an imported entry's own history rather than
+ * derive a fresh one the way savedWordUpsert does for a live save (savedWordUpsert always
+ * recomputes/preserves savedAt from `now()`/the existing record; this function never calls
+ * `now()` at all). Adds the key to the index only if not already present, so importing an entry
+ * that already exists (post merge-decision) never duplicates the index.
+ */
+export async function savedWordImport(deps: SavedWordsDeps, entry: SavedWordEntry): Promise<void> {
+  const key = normalizeWordKey(entry.word);
+  await deps.storage.setItem(`saved:${key}`, JSON.stringify(entry));
+  const idx = await readIndex(deps.storage);
+  if (!idx.includes(key)) {
+    await deps.storage.setItem(INDEX_KEY, JSON.stringify([key, ...idx]));
+  }
+}
+
 export async function savedWordGet(
   deps: SavedWordsDeps,
   word: string,

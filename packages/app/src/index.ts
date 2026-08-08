@@ -17,6 +17,7 @@ export * from './domain/setup-health-policy';
 export * from './domain/ui-flags';
 export * from './domain/error-mapper';
 export * from './domain/highlight-policy'; // B3
+export * from './domain/backup-policy';
 export {
   toErrorRecord,
   appendCapped,
@@ -41,6 +42,7 @@ export * from './app/inline-bottom-sheet-renderer';
 export * from './app/save-reply-guard';
 export * from './app/router';
 export * from './app/history-export';
+export * from './app/backup';
 export * from './app/anki-export';
 export * from './app/inbound';
 export * from './app/dom-selection-source';

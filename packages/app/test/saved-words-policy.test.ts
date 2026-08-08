@@ -6,6 +6,7 @@ import {
   savedWordsList,
   savedWordsClear,
   savedWordSetStatus,
+  savedWordImport,
   normalizeWordKey,
 } from '../src/domain/saved-words-policy';
 import type { Storage, SavedWordInput } from '../src';
@@ -148,5 +149,58 @@ describe('saved-words-policy', () => {
   it('savedWordSetStatus on an unsaved word is a no-op returning null (no throw)', async () => {
     const s = memStorage();
     await expect(savedWordSetStatus({ storage: s }, 'ghost', 'known')).resolves.toBeNull();
+  });
+
+  it('savedWordImport writes an entry verbatim (not now()-derived) and adds it to the index', async () => {
+    const s = memStorage();
+    const entry = {
+      word: 'imported',
+      status: 'known' as const,
+      savedAt: 555,
+      senses: [
+        {
+          definition: 'from a backup',
+          translation: 'nhập khẩu',
+          sentence: 'an imported sentence',
+          url: 'https://example.com/x',
+          title: 'X',
+        },
+      ],
+    };
+    await savedWordImport({ storage: s }, entry);
+    expect(await s.getItem('saved:imported')).toBe(JSON.stringify(entry));
+    const list = await savedWordsList({ storage: s });
+    expect(list).toEqual([entry]);
+  });
+
+  it('savedWordImport is idempotent on the index — importing the same word twice adds it once', async () => {
+    const s = memStorage();
+    const entry = {
+      word: 'bank',
+      status: 'learning' as const,
+      savedAt: 1,
+      senses: [{ definition: 'd', translation: '', sentence: 's', url: 'u', title: 't' }],
+    };
+    await savedWordImport({ storage: s }, entry);
+    await savedWordImport({ storage: s }, { ...entry, status: 'known' });
+    const list = await savedWordsList({ storage: s });
+    expect(list).toHaveLength(1);
+    expect(list[0]!.status).toBe('known'); // second import's content wins on the value itself
+  });
+
+  it('savedWordImport coexists with entries written by savedWordUpsert', async () => {
+    const s = memStorage();
+    await savedWordUpsert({ storage: s, now: () => 1000 }, input('live'));
+    await savedWordImport(
+      { storage: s },
+      {
+        word: 'imported',
+        status: 'learning',
+        savedAt: 2,
+        senses: [{ definition: 'd', translation: '', sentence: 's', url: 'u', title: 't' }],
+      },
+    );
+    const list = await savedWordsList({ storage: s });
+    expect(list.map((e) => e.word).sort()).toEqual(['imported', 'live']);
   });
 });
