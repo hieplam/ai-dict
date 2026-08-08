@@ -650,7 +650,7 @@ describe('<lookup-card> refine chips + back-to-original (A3)', () => {
     } as CardState;
   }
 
-  it('renders exactly 4 refine chips with the pinned copy, in order, none active', () => {
+  it('renders exactly 5 refine chips with the pinned copy, in order, none active (4 from A3 + related from B13)', () => {
     const el = mountCard();
     el.state = resultState();
     const chips = [...el.querySelectorAll<HTMLButtonElement>('.refine-chip')];
@@ -659,6 +659,7 @@ describe('<lookup-card> refine chips + back-to-original (A3)', () => {
       'More examples',
       'Etymology',
       'Use it',
+      'Related words',
     ]);
     for (const chip of chips) {
       expect(chip.getAttribute('aria-pressed')).toBe('false');

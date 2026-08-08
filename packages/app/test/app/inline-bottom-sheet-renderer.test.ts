@@ -297,10 +297,10 @@ describe('InlineBottomSheetRenderer', () => {
     expect(card(h).querySelector('.defined-as')).toBeNull();
   });
 
-  it('renderResult always sets refineChips:true so the card shows the 4-chip row (A3)', () => {
+  it('renderResult always sets refineChips:true so the card shows the 5-chip row (4 from A3 + related from B13)', () => {
     const h = host();
     new InlineBottomSheetRenderer(h).renderResult(result);
-    expect(card(h).querySelectorAll('.refine-chip').length).toBe(4);
+    expect(card(h).querySelectorAll('.refine-chip').length).toBe(5);
   });
 
   it("wiring ctx.onRefine — clicking a refine chip invokes the callback with the chip's kind (A3)", () => {

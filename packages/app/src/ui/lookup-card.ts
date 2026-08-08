@@ -97,6 +97,7 @@ export const REFINE_CHIPS: RefineChip[] = [
   { id: 'examples', label: 'More examples' },
   { id: 'etymology', label: 'Etymology' },
   { id: 'usage', label: 'Use it' },
+  { id: 'related', label: 'Related words' },
 ];
 
 // Icons (ICON_CLOSE, ICON_SHIELD, ICON_SETTINGS) are the canonical §5.10 set, imported from

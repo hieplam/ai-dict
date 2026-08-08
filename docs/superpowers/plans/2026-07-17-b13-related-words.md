@@ -638,7 +638,7 @@ git commit -m "[B13RelatedWords] feat: parse RELATED signal line and thread it t
 // REFINE_CHIPS (lookup-card.ts) gains a 5th entry: { id: 'related', label: 'Related words' }
 ```
 
-- [ ] **Step 1: Write the failing tests (fixing the two broken A3 assertions IS this step).**
+- [x] **Step 1: Write the failing tests (fixing the two broken A3 assertions IS this step).**
 
 In `packages/app/test/ui/lookup-card.test.ts`, find A3's existing test inside `describe('<lookup-
 card> refine chips + back-to-original (A3)', ...)`:
@@ -719,7 +719,7 @@ cd packages/app && bunx vitest run test/ui/lookup-card.test.ts test/app/inline-b
 Expected: the two modified tests fail (4 chips actually render; 5 expected). Every other existing
 test in both files still passes.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/ui/lookup-card.ts`, add a 5th entry to the existing A3 `REFINE_CHIPS` array:
 
@@ -745,7 +745,7 @@ cd packages/app && bunx vitest run test/ui/lookup-card.test.ts test/app/inline-b
 
 Expected: all tests pass (both modified tests now green, nothing else regresses).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
