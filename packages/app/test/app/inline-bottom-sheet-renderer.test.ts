@@ -436,3 +436,54 @@ describe('InlineBottomSheetRenderer — instant-cache badge (A9)', () => {
     expect(card(h).querySelector('.cache-badge')).toBeNull();
   });
 });
+
+describe('renderPartial (A1)', () => {
+  it('paints a streaming CardState with the sanitized body and no interactive rows', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderPartial('bank', '**The land** alongside a river.');
+    const c = card(h);
+    expect(c.querySelector('h2')!.textContent).toBe('bank');
+    expect(c.textContent).toContain('The land alongside a river.');
+    expect(c.querySelector('.save-row')).toBeNull();
+  });
+
+  it('sets data-streaming on the card host while streaming, clears it on renderResult/renderError/close', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderPartial('bank', 'partial');
+    expect(card(h).hasAttribute('data-streaming')).toBe(true);
+    r.renderResult(result);
+    expect(card(h).hasAttribute('data-streaming')).toBe(false);
+    r.renderPartial('bank', 'partial again');
+    expect(card(h).hasAttribute('data-streaming')).toBe(true);
+    r.renderError(error);
+    expect(card(h).hasAttribute('data-streaming')).toBe(false);
+  });
+
+  it('throttles repaints under the 80ms floor, using the injected clock', () => {
+    const h = host();
+    let t = 0;
+    const r = new InlineBottomSheetRenderer(h, undefined, {}, () => t);
+    r.renderLoading('bank');
+    t = 0;
+    r.renderPartial('bank', 'a');
+    expect(card(h).textContent).toContain('a');
+    t = 10; // under the 80ms floor
+    r.renderPartial('bank', 'ab');
+    expect(card(h).textContent).not.toContain('ab');
+    t = 90; // past the floor from the last PAINTED call (t=0)
+    r.renderPartial('bank', 'abc');
+    expect(card(h).textContent).toContain('abc');
+  });
+
+  it('renderLoading resets the throttle clock so the next lookup always paints its first frame', () => {
+    const h = host();
+    let t = 0;
+    const r = new InlineBottomSheetRenderer(h, undefined, {}, () => t);
+    r.renderPartial('bank', 'a');
+    t = 5; // still under 80ms of the previous lookup's timing
+    r.renderLoading('shore');
+    r.renderPartial('shore', 'b');
+    expect(card(h).textContent).toContain('b');
+  });
+});

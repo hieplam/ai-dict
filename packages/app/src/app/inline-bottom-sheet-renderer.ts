@@ -29,11 +29,17 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   // design spec §2.2. null before any render, after close(), or when no anchor was ever known
   // (the NO_KEY short-circuit path, design spec §2.4).
   private lastAnchor: AnchorRect | null = null;
+  // A1: throttle floor between two renderPartial repaints — a dropped intermediate frame is
+  // always safe (design spec §4.9): the very next partial, or the unthrottled terminal
+  // renderResult call, supersedes it a moment later.
+  private readonly THROTTLE_MS = 80;
+  private lastPartialPaintAt = -Infinity;
 
   constructor(
     private readonly host: HTMLElement,
     private readonly sanitize: (md: string) => SafeHtml = sanitizeMarkdown,
     private readonly opts: { sidePanel?: boolean } = {},
+    private readonly now: () => number = () => Date.now(),
   ) {}
 
   /**
@@ -125,7 +131,32 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // A6: cache the selection anchor so every later render of this same open card (setState →
     // positionNear) reuses it; null when no anchor was passed (spec §2.4 fallback).
     this.lastAnchor = anchor ?? null;
+    this.lastPartialPaintAt = -Infinity; // A1: a stale timestamp from a prior lookup must never
+    // throttle this new lookup's very first partial repaint
     this.setState(word === undefined ? { kind: 'loading' } : { kind: 'loading', word });
+  }
+
+  /**
+   * A1: an in-progress preview between renderLoading and the terminal renderResult/renderError.
+   * `markdown` is ALREADY stripped of DEFINED_AS:/TRANSLATION: signal lines by the producer
+   * (gemini-streaming.ts) — sanitized here, same trust boundary as renderResult (S4).
+   */
+  renderPartial(
+    word: string,
+    markdown: string,
+    definedAs?: { term: string; isIdiom: boolean },
+  ): void {
+    const t = this.now();
+    if (t - this.lastPartialPaintAt < this.THROTTLE_MS) return; // dropped — see THROTTLE_MS's doc
+    this.lastPartialPaintAt = t;
+    const card = this.ensureCard();
+    card.toggleAttribute('data-streaming', true); // shared-DOM attribute write, crosses worlds
+    this.setState({
+      kind: 'streaming',
+      word,
+      safeHtml: this.sanitize(markdown),
+      ...(definedAs ? { definedAs } : {}),
+    });
   }
 
   renderResult(r: LookupResult, ctx?: ResultRenderContext): void {
@@ -133,6 +164,11 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // No cast needed here — the DI param type `(md: string) => SafeHtml` guarantees it.
     this.onSwitch = ctx?.onSwitchProvider;
     this.onForceLiteral = ctx?.onForceLiteral;
+    this.card?.toggleAttribute('data-streaming', false);
+    // A1: a terminal renderResult always ends the current streaming session — the throttle clock
+    // must not carry over and spuriously drop a NEW session's very first renderPartial repaint
+    // (same reasoning as renderLoading's own reset above).
+    this.lastPartialPaintAt = -Infinity;
     this.setState({
       kind: 'result',
       safeHtml: this.sanitize(r.markdown),
@@ -154,6 +190,10 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   }
 
   renderError(e: LookupError): void {
+    this.card?.toggleAttribute('data-streaming', false);
+    // A1: same reasoning as renderResult's own reset above — a terminal error also ends the
+    // current streaming session.
+    this.lastPartialPaintAt = -Infinity;
     this.setState({ kind: 'error', error: e });
   }
 

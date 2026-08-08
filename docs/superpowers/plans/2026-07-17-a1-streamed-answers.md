@@ -1363,7 +1363,7 @@ class InlineBottomSheetRenderer implements ResultRenderer {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add, inside `inline-bottom-sheet-renderer.test.ts`'s
+- [x] **Step 1: Write the failing tests.** Add, inside `inline-bottom-sheet-renderer.test.ts`'s
       existing `describe` block:
 
 ```ts
@@ -1422,7 +1422,7 @@ describe('renderPartial (A1)', () => {
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: failures — `renderPartial` does not exist yet.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`:
 
 1. Extend the constructor and add the throttle field, right after the existing `lastState` field
    declaration (currently line 24):
@@ -1496,7 +1496,7 @@ this.card?.toggleAttribute('data-streaming', false);
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: all tests pass, including every pre-existing test in this file unmodified.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
