@@ -75,10 +75,11 @@ describe('PROMPT_ENVELOPE (A3 refine slot)', () => {
 });
 
 describe('REFINE_INSTRUCTIONS', () => {
-  it('has exactly the 4 v1 refine kinds, each a non-empty string', () => {
+  it('has exactly the 5 refine kinds (4 from A3 + related from B13), each a non-empty string', () => {
     expect(Object.keys(REFINE_INSTRUCTIONS).sort()).toEqual([
       'etymology',
       'examples',
+      'related',
       'simpler',
       'usage',
     ]);
@@ -89,5 +90,8 @@ describe('REFINE_INSTRUCTIONS', () => {
   it('examples and usage each mention {word}', () => {
     expect(REFINE_INSTRUCTIONS.examples).toContain('{word}');
     expect(REFINE_INSTRUCTIONS.usage).toContain('{word}');
+  });
+  it('related mentions {word} (B13)', () => {
+    expect(REFINE_INSTRUCTIONS.related).toContain('{word}');
   });
 });

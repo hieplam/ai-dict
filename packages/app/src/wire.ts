@@ -20,7 +20,7 @@ const LookupErrorSchema = z.strictObject({
 
 const ProviderEnum = z.enum(['gemini', 'openai', 'anthropic']);
 
-const RefineKindEnum = z.enum(['simpler', 'examples', 'etymology', 'usage']);
+const RefineKindEnum = z.enum(['simpler', 'examples', 'etymology', 'usage', 'related']);
 
 // A8: the idiom/literal unit the model actually defined.
 const DefinedAsSchema = z.strictObject({ term: z.string(), isIdiom: z.boolean() });
@@ -60,6 +60,8 @@ const LookupResultSchema = z.strictObject({
   translation: z.string().optional(),
   // B7: set once, ever, per word — see LookupResult.nudge's doc comment (domain/types.ts).
   nudge: z.boolean().optional(),
+  // B13: parsed RELATED words for this sense; present only on a 'related' refine result.
+  related: z.array(z.string()).optional(),
 });
 
 const PublicSettingsSchema = z.strictObject({
@@ -87,6 +89,8 @@ const SavedWordSenseSchema = z.strictObject({
   sentence: z.string(),
   url: z.string(),
   title: z.string(),
+  // B13: additive under the E1 lock — see domain/types.ts's SavedWordSense.related doc comment.
+  related: z.array(z.string()).optional(),
 });
 
 // B1: the ratified saved-word entry shape (escalation E1). No `id` field — the (normalized)

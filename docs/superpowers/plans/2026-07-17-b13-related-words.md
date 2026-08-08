@@ -106,7 +106,7 @@ const RefineKindEnum = z.enum(['simpler', 'examples', 'etymology', 'usage', 'rel
 export const REFINE_INSTRUCTIONS: Record<RefineKind, string>; // default-template.ts, gains a `related` key
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Modify `packages/app/test/default-template.test.ts`: find A3's existing test inside
 `describe('REFINE_INSTRUCTIONS', ...)`:
@@ -259,7 +259,7 @@ Expected: failures — `REFINE_INSTRUCTIONS.related` is not exported yet, `Looku
 `SavedWordSenseSchema` reject the extra `related` key (strict-object rejection), `RefineKindEnum`
 rejects `'related'`.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/domain/types.ts`, replace the existing A3 `RefineKind` type + its doc comment
 (currently ending "...B13 (a later, separate card) appends 'related' to this union — see the A3
@@ -342,7 +342,7 @@ cd packages/app && bunx vitest run test/default-template.test.ts test/wire-schem
 
 Expected: all tests pass (existing + the ones modified/added in Step 1).
 
-- [ ] **Step 3: Regenerate the wire JSON-schema snapshot.**
+- [x] **Step 3: Regenerate the wire JSON-schema snapshot.**
 
 ```
 cd packages/app && bunx vitest run test/wire-schema.test.ts -u
@@ -358,7 +358,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts
 
 Expected: all pass, no further snapshot diff.
 
-- [ ] **Step 4: Gate + commit.**
+- [x] **Step 4: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
