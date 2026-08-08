@@ -20,6 +20,8 @@ const LookupErrorSchema = z.strictObject({
 
 const ProviderEnum = z.enum(['gemini', 'openai', 'anthropic']);
 
+const RefineKindEnum = z.enum(['simpler', 'examples', 'etymology', 'usage']);
+
 // A8: the idiom/literal unit the model actually defined.
 const DefinedAsSchema = z.strictObject({ term: z.string(), isIdiom: z.boolean() });
 
@@ -36,6 +38,8 @@ const LookupRequestSchema = z.strictObject({
   provider: ProviderEnum.optional(),
   // A8: one-shot "Show literal word" override; absent on normal lookups.
   forceLiteral: z.boolean().optional(),
+  // A3: one-shot refine request; absent on normal lookups. See domain/types.ts's doc comment.
+  refine: RefineKindEnum.optional(),
 });
 
 const LookupResultSchema = z.strictObject({

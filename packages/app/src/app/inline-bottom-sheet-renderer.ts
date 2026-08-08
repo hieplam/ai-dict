@@ -7,6 +7,7 @@ import type {
   Theme,
   SavedWordStatus,
   AnchorRect,
+  RefineKind,
 } from '../index';
 import { computeCardPlacement } from '../domain/card-placement';
 import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '../ui/index';
@@ -21,6 +22,12 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   private onSwitch: ((p: Provider) => void) | undefined;
   // A8: same pattern for the card's one `force-literal` listener.
   private onForceLiteral: (() => void) | undefined;
+  // A3: same pattern as onSwitch/onForceLiteral for the card's one `refine` listener.
+  private onRefine: ((k: RefineKind) => void) | undefined;
+  // A3: the last render where ctx.refine was undefined (a genuine original result), so
+  // restoreOriginal() can revert a refined body without a new lookup. null before any render, or
+  // after close(). See the design spec's §2.4(b).
+  private originalState: CardState | null = null;
   // B1: the last CardState rendered, so setSaved() can re-emit it with the flag flipped without
   // a full re-lookup. null before any render, or after close().
   private lastState: CardState | null = null;
@@ -78,6 +85,13 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // One-shot idiom-literal override (A8): the card fires `force-literal` when the reader taps
     // "Show literal word"; delegate to the handler the workflow installed via the render context.
     card.addEventListener('force-literal', () => this.onForceLiteral?.());
+    // A3: the card fires `refine` when a chip is tapped; delegate to the handler the workflow
+    // installed via the render context (mirrors switch-provider/force-literal above).
+    // `refine-back` is deliberately NOT listened here — content.ts owns it directly (see the
+    // design spec's §2.5 for why).
+    card.addEventListener('refine', (e) =>
+      this.onRefine?.((e as CustomEvent<{ refine: RefineKind }>).detail.refine),
+    );
     this.host.append(sheet); // connection upgrades both elements + builds their shadow roots
     this.sheet = sheet;
     this.card = card;
@@ -168,12 +182,13 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // No cast needed here — the DI param type `(md: string) => SafeHtml` guarantees it.
     this.onSwitch = ctx?.onSwitchProvider;
     this.onForceLiteral = ctx?.onForceLiteral;
+    this.onRefine = ctx?.onRefine;
     this.card?.toggleAttribute('data-streaming', false);
     // A1: a terminal renderResult always ends the current streaming session — the throttle clock
     // must not carry over and spuriously drop a NEW session's very first renderPartial repaint
     // (same reasoning as renderLoading's own reset above).
     this.lastPartialPaintAt = -Infinity;
-    this.setState({
+    const state: CardState = {
       kind: 'result',
       safeHtml: this.sanitize(r.markdown),
       word: r.word,
@@ -190,7 +205,14 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
       // B7: r.nudge is a transient per-reply annotation (never persisted — see router.ts);
       // always explicit true/false, same style as `saved` above.
       nudge: r.nudge === true,
-    });
+      // A3: always true for the in-page card — the side panel never sets it (design spec §2.6).
+      refineChips: true,
+      ...(ctx?.refine !== undefined ? { refine: ctx.refine } : {}),
+    };
+    // A3: snapshot only when this is a genuine original (non-refine) result, so restoreOriginal()
+    // always has the true original to fall back to, never a previously-refined one.
+    if (ctx?.refine === undefined) this.originalState = state;
+    this.setState(state);
   }
 
   renderError(e: LookupError): void {
@@ -255,6 +277,16 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.setState({ ...this.lastState, nudge: false });
   }
 
+  /**
+   * A3: restore the last original (non-refined) result without a new lookup — zero tokens, zero
+   * wire calls. No-op if no original snapshot exists yet (mirrors the guard style setSaved/
+   * setStatus/dismissNudge already use).
+   */
+  restoreOriginal(): void {
+    if (!this.originalState) return;
+    this.setState(this.originalState);
+  }
+
   close(): void {
     // A10: never let an utterance outlive the card it came from — dismissing (Esc, scrim click,
     // the × button, the A4 dismiss-lookup command) also stops any speech still playing.
@@ -265,5 +297,6 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.card = null;
     this.lastState = null;
     this.lastAnchor = null;
+    this.originalState = null;
   }
 }

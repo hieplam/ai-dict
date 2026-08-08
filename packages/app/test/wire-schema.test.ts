@@ -329,6 +329,35 @@ describe('wire-schema', () => {
     expect(bad.success).toBe(false);
   });
 
+  it('lookup req accepts an optional refine kind and rejects an unrecognized string (A3)', () => {
+    const base = {
+      word: 'w',
+      context: 'c',
+      url: '',
+      title: '',
+      target: 'vi',
+      outputFormat: 'f',
+      promptEnvelope: '',
+    };
+    for (const kind of ['simpler', 'examples', 'etymology', 'usage']) {
+      const ok = WireMessageSchema.safeParse({
+        type: 'lookup',
+        requestId: '1',
+        req: { ...base, refine: kind },
+      });
+      expect(ok.success, `refine=${kind} must parse`).toBe(true);
+    }
+    const bad = WireMessageSchema.safeParse({
+      type: 'lookup',
+      requestId: '1',
+      req: { ...base, refine: 'nonsense' },
+    });
+    expect(bad.success).toBe(false);
+    // Old-shaped request without refine still parses (back-compat).
+    const old = WireMessageSchema.safeParse({ type: 'lookup', requestId: '1', req: base });
+    expect(old.success).toBe(true);
+  });
+
   it('lookup result carries an optional definedAs; rejects an unknown key inside it (strictObject)', () => {
     const result = {
       markdown: 'm',

@@ -148,4 +148,30 @@ describe('runGeminiStreamingLookup', () => {
     expect(isLookupError(err)).toBe(true);
     expect((err as { code: string }).code).toBe('NETWORK');
   });
+
+  it('req.refine="etymology" reaches the prompt sent over the streaming path', async () => {
+    let capturedBody = '';
+    const fetchImpl = vi.fn((_url: string, init: { body: string }) => {
+      capturedBody = init.body;
+      return okFetch([sseEvent('A riverbank.')])();
+    });
+    const deps = { fetch: fetchImpl, getApiKey: () => 'AIza-key' };
+    await runGeminiStreamingLookup(spec, deps, { ...req, refine: 'etymology' }, vi.fn());
+    const sent = (JSON.parse(capturedBody) as { contents: { parts: { text: string }[] }[] })
+      .contents[0]?.parts[0]?.text as string;
+    expect(sent).toContain("word's ETYMOLOGY");
+  });
+
+  it('req.refine is absent by default — no refine instruction text reaches the streaming prompt', async () => {
+    let capturedBody = '';
+    const fetchImpl = vi.fn((_url: string, init: { body: string }) => {
+      capturedBody = init.body;
+      return okFetch([sseEvent('A riverbank.')])();
+    });
+    const deps = { fetch: fetchImpl, getApiKey: () => 'AIza-key' };
+    await runGeminiStreamingLookup(spec, deps, req, vi.fn());
+    const sent = (JSON.parse(capturedBody) as { contents: { parts: { text: string }[] }[] })
+      .contents[0]?.parts[0]?.text as string;
+    expect(sent).not.toContain('ETYMOLOGY');
+  });
 });

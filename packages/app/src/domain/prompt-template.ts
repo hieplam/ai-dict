@@ -3,8 +3,10 @@ import {
   IDIOM_AUTO_INSTRUCTION,
   IDIOM_FORCE_LITERAL_INSTRUCTION,
   TRANSLATION_INSTRUCTION,
+  REFINE_INSTRUCTIONS,
 } from './default-template';
 import { redactPII } from './pii';
+import type { RefineKind } from './types';
 
 export interface TemplateVars {
   word: string;
@@ -53,12 +55,17 @@ export function renderTemplate(template: string, vars: TemplateVars): string {
  * direct replace, not the generic SUPPORTED-vars system), so a custom envelope override that
  * omits `{idiom_instruction}` is simply unaffected — consistent with how it already opts out
  * of other envelope-owned text.
+ *
+ * A3: `refine` selects which REFINE_INSTRUCTIONS entry fills `{refine_instruction}` — undefined
+ * or omitted substitutes ''. Substituted the same direct-replace way as `{idiom_instruction}`, so
+ * a custom envelope override that omits `{refine_instruction}` is simply unaffected.
  */
 export function buildPrompt(
   outputFormat: string,
   vars: TemplateVars,
   envelope?: string,
   forceLiteral?: boolean,
+  refine?: RefineKind,
 ): string {
   const env = envelope !== undefined && envelope.trim() !== '' ? envelope : PROMPT_ENVELOPE;
   let composed = env.includes('{output_format}')
@@ -70,6 +77,9 @@ export function buildPrompt(
     : composed;
   composed = composed.includes('{translation_instruction}')
     ? composed.replace('{translation_instruction}', TRANSLATION_INSTRUCTION)
+    : composed;
+  composed = composed.includes('{refine_instruction}')
+    ? composed.replace('{refine_instruction}', refine ? REFINE_INSTRUCTIONS[refine] : '')
     : composed;
   return renderTemplate(composed, { ...vars, title: redactPII(vars.title ?? '') });
 }

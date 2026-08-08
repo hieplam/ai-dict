@@ -94,7 +94,7 @@ export function buildPrompt(
 ): string; // domain/prompt-template.ts — 5th param, appended last
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/default-template.test.ts`, after the existing
 `describe('TRANSLATION_INSTRUCTION', ...)` block:
@@ -198,7 +198,7 @@ cd packages/app && bunx vitest run test/default-template.test.ts test/prompt-tem
 Expected: failures — `REFINE_INSTRUCTIONS` is not exported, `{refine_instruction}` not found in
 `PROMPT_ENVELOPE`, `buildPrompt`'s 5th argument has no effect yet.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/domain/types.ts`, add near the top-level type exports (a natural place is
 right before the `LookupRequest` interface, since `RefineKind` is used inside it):
@@ -332,7 +332,7 @@ cd packages/app && bunx vitest run test/default-template.test.ts test/prompt-tem
 
 Expected: all tests pass (existing + the new ones added in Step 1).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -364,7 +364,7 @@ const RefineKindEnum = z.enum(['simpler', 'examples', 'etymology', 'usage']); //
 // LookupRequestSchema gains: refine: RefineKindEnum.optional()
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/wire-schema.test.ts`, right after the existing
 `'lookup req accepts an optional forceLiteral flag and rejects a non-boolean'` test:
@@ -468,7 +468,7 @@ Expected: failures — `refine` is rejected by `LookupRequestSchema` (unrecogniz
 rejected depending on the arm's mode), the router still serves the cached answer for a `refine`
 request, and the outbound Gemini prompt carries no refine instruction text.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/wire.ts`, add the enum near the existing `ProviderEnum` declaration:
 
@@ -537,7 +537,7 @@ Expected: all tests pass. The `wire-schema.snapshot.json` file-snapshot test
 (`'JSON-schema snapshot is stable (spec §8.5)'`) will now FAIL on this run — that is expected,
 since the generated JSON schema legitimately changed shape. Proceed to Step 3 to regenerate it.
 
-- [ ] **Step 3: Regenerate the wire JSON-schema snapshot.**
+- [x] **Step 3: Regenerate the wire JSON-schema snapshot.**
 
 ```
 cd packages/app && bunx vitest run test/wire-schema.test.ts -u
@@ -553,7 +553,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts
 
 Expected: all pass, no further snapshot diff.
 
-- [ ] **Step 4: Gate + commit.**
+- [x] **Step 4: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -582,7 +582,7 @@ onRefine?: (kind: RefineKind) => void;
 refine?: RefineKind;
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/workflow.test.ts`, right after the existing `'ctx always carries
 sentence/url/title, even with only one provider configured (no picker)'` test:
@@ -634,7 +634,7 @@ cd packages/app && bunx vitest run test/workflow.test.ts
 
 Expected: failures — `ctx.onRefine` is `undefined`.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/ports.ts`, update the import list to add `RefineKind`:
 
@@ -782,7 +782,7 @@ cd packages/app && bunx vitest run test/workflow.test.ts
 
 Expected: all tests pass (existing + the 2 new ones).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -813,7 +813,7 @@ export const REFINE_CHIPS: RefineChip[]; // exported per CONTRACTS §4 — B13 a
 // CardState 'result' variant gains: refineChips?: boolean; refine?: RefineKind;
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/ui/lookup-card.test.ts`, as a new top-level `describe` right after the
 existing `describe('<lookup-card> idiom label + force-literal button (A8)', ...)` block closes:
@@ -910,7 +910,7 @@ cd packages/app && bunx vitest run test/ui/lookup-card.test.ts
 
 Expected: failures — `.refine-chip`/`.refine-back-btn`/`.refine-row` do not exist yet.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/ui/lookup-card.ts`, update the import at the top:
 
@@ -1043,7 +1043,7 @@ Expected: all tests pass (existing + the 5 new ones). Confirm the pre-existing t
 (e.g. the idiom/save/nudge describe blocks) still pass unmodified — this task must not change any
 existing rendering behavior for a `refineChips`-absent state.
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1069,7 +1069,7 @@ git commit -m "[A3FollowUpChips] feat: add REFINE_CHIPS + refine row rendering t
 restoreOriginal(): void; // new public method on InlineBottomSheetRenderer
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`, as new tests inside the
 existing top-level `describe('InlineBottomSheetRenderer', ...)` block, right after the existing `'a
@@ -1129,7 +1129,7 @@ cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts
 Expected: failures — `refineChips` is never set, `ctx.onRefine` is never wired, `restoreOriginal`
 does not exist.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, update the import list at the top:
 
@@ -1238,7 +1238,7 @@ cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts
 
 Expected: all tests pass (existing + the 5 new ones).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1262,7 +1262,7 @@ same precedent as `options.ts` in the C2 plan — "covered by e2e only"). This t
 proven by Task 7's e2e scenario 5. Still run the full gate below so a regression in existing
 behavior (save/status/nudge handling, all in the same file) is caught immediately.
 
-- [ ] **Step 1: Implement.**
+- [x] **Step 1: Implement.**
 
 Add a new module-level variable, right after the existing `let lastStatus: SavedWordStatus |
 undefined;` declaration (before the `saveReplyGuard` line):
@@ -1355,7 +1355,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Gate + commit.**
+- [x] **Step 2: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1374,7 +1374,7 @@ git commit -m "[A3FollowUpChips] feat: track the original save payload and handl
 
 - Create: `packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts`
 
-- [ ] **Step 1: Write the e2e spec.**
+- [x] **Step 1: Write the e2e spec.**
 
 Create `packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts`:
 
@@ -1600,7 +1600,7 @@ cd packages/extension-chrome && bunx playwright test a3-follow-up-chips
 
 Expected: 6 passed.
 
-- [ ] **Step 2: Full gate.**
+- [x] **Step 2: Full gate.**
 
 ```
 cd packages/app && bun run typecheck

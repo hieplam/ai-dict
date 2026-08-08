@@ -122,6 +122,15 @@ describe('runLookupWorkflow', () => {
     expect(h.renderer.lastCtx?.onSwitchProvider).toBeUndefined();
   });
 
+  it('ctx.onRefine is always present on a completed result (A3)', async () => {
+    const h = harness({ configuredProviders: ['gemini'] });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(typeof h.renderer.lastCtx?.onRefine).toBe('function');
+    expect(h.renderer.lastCtx?.refine).toBeUndefined(); // original result, not a refine re-run
+  });
+
   it('onSwitchProvider re-runs the SAME selection with req.provider override, bypassing cooldown', async () => {
     let t = 5000;
     const h = harness({ configuredProviders: ['gemini', 'openai'], now: () => t });
@@ -140,6 +149,29 @@ describe('runLookupWorkflow', () => {
     });
     // Never blocked → no cooldown RATE_LIMIT error.
     expect(h.renderer.lastError).toBeNull();
+  });
+
+  it('onRefine re-runs the SAME selection with req.refine set, resetting provider/forceLiteral, bypassing cooldown (A3)', async () => {
+    let t = 5000;
+    const h = harness({ configuredProviders: ['gemini'], now: () => t });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    const refine = h.renderer.lastCtx!.onRefine!;
+    // Still inside the cooldown window — a deliberate refine tap must NOT be blocked.
+    t = 5001;
+    refine('etymology');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+    expect(h.client.lastReq).toMatchObject({
+      word: 'bank',
+      context: 'river bank',
+      refine: 'etymology',
+    });
+    expect(h.client.lastReq?.provider).toBeUndefined();
+    expect(h.client.lastReq?.forceLiteral).toBeUndefined();
+    expect(h.renderer.lastError).toBeNull();
+    // The ctx built from the refine result marks which refine produced it.
+    expect(h.renderer.lastCtx?.refine).toBe('etymology');
   });
 
   it('a result with definedAs.isIdiom=true yields ctx.onForceLiteral even with only 1 provider configured', async () => {

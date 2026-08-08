@@ -6,6 +6,7 @@ import type {
   LookupError,
   PublicSettings,
   Provider,
+  RefineKind,
 } from './domain/types';
 import type { ErrorRecord } from './domain/error-report';
 
@@ -33,6 +34,19 @@ export interface ResultRenderContext {
    * when the result just rendered is an idiom (`result.definedAs?.isIdiom === true`).
    */
   onForceLiteral?: () => void;
+  /**
+   * A3: re-run the SAME selection once with the given refinement. Always present on a
+   * completed result (refine chips are always offered — no gating, unlike the picker/
+   * force-literal controls).
+   */
+  onRefine?: (kind: RefineKind) => void;
+  /**
+   * A3: set only when THIS result came from a refine re-run (mirrors the shape of
+   * `onForceLiteral`'s own gating). Undefined = this is the original, unrefined result. Read by
+   * InlineBottomSheetRenderer (to decide whether to snapshot originalState) and by content.ts
+   * (to decide whether to snapshot lastOriginalSavePayload — see the design spec's §2.5).
+   */
+  refine?: RefineKind;
   /**
    * B1: the sentence/page url/page title captured at lookup time — the only place
    * `SelectionEvent` and `LookupResult` are both in scope simultaneously is
