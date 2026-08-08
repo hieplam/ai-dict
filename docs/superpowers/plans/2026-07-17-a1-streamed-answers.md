@@ -104,7 +104,7 @@ interface LookupChunkMessage {
 function isLookupChunkMessage(msg: unknown): msg is LookupChunkMessage;
 ```
 
-- [ ] **Step 1: Write the failing test.** Create `packages/app/test/app/lookup-chunk-message.test.ts`:
+- [x] **Step 1: Write the failing test.** Create `packages/app/test/app/lookup-chunk-message.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -148,7 +148,7 @@ describe('lookup chunk message guard (A1)', () => {
 Run: `cd packages/app && bunx vitest run test/app/lookup-chunk-message.test.ts`
 Expected: failure — `../../src/app/lookup-chunk-message` does not exist.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/app/lookup-chunk-message.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/app/lookup-chunk-message.ts`:
 
 ```ts
 /**
@@ -239,7 +239,7 @@ Run: `cd packages/app && bunx vitest run test/app/lookup-chunk-message.test.ts &
 Expected: the new test file passes (4 tests); typecheck clean (no existing `LookupClient`/
 `ResultRenderer` implementer breaks, since both new members are optional).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check

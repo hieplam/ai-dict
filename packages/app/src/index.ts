@@ -47,6 +47,7 @@ export * from './app/anki-export';
 export * from './app/inbound';
 export * from './app/dom-selection-source';
 export * from './app/message-relay-lookup-client';
+export * from './app/lookup-chunk-message';
 export * from './app/page-highlighter'; // B3
 export * from './app/hover-recall-controller';
 export { buildGa4Request, GA4_ENDPOINT, type Ga4Config, type Ga4Request } from './app/ga4-payload';

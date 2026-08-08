@@ -61,11 +61,35 @@ export interface ResultRenderer {
   renderLoading(word?: string, anchor?: AnchorRect): void;
   renderResult(r: LookupResult, ctx?: ResultRenderContext): void;
   renderError(e: LookupError): void;
+  /**
+   * A1: an optional in-progress preview, called zero or more times between renderLoading and the
+   * terminal renderResult/renderError. Optional — mirrors ResultRenderContext's own
+   * onSwitchProvider/onForceLiteral precedent (both optional, lines 30/35 above) — so an
+   * implementer that never streams (or a test fake) needs no change to keep compiling.
+   */
+  renderPartial?(
+    word: string,
+    markdownSoFar: string,
+    definedAs?: { term: string; isIdiom: boolean },
+  ): void;
   close(): void;
 }
 
 export interface LookupClient {
-  lookup(req: LookupRequest, opts?: { signal?: AbortSignal }): Promise<LookupResult>;
+  lookup(
+    req: LookupRequest,
+    opts?: {
+      signal?: AbortSignal;
+      /**
+       * A1: called zero or more times with the accumulated, already-stripped-of-signal-lines
+       * markdown as a Gemini answer streams in. Only GeminiLookupClient ever invokes this
+       * (gemini-lookup-client.ts) — OpenAI/Anthropic clients never call it, which IS how "provider
+       * can't stream, falls back silently" is implemented (design spec §3): no capability probe,
+       * just whether the concrete client class ever calls the callback it was handed.
+       */
+      onChunk?: (markdownSoFar: string, definedAs?: { term: string; isIdiom: boolean }) => void;
+    },
+  ): Promise<LookupResult>;
 }
 
 export interface SettingsStore {
