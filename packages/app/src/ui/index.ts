@@ -4,5 +4,6 @@ export * from './bottom-sheet';
 export * from './hover-recall-popup';
 export * from './settings-form';
 export * from './side-panel-view';
+export * from './words-page-view';
 export * from './onboarding-view';
 export * from './register';

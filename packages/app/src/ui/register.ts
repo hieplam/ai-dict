@@ -4,6 +4,7 @@ import { BottomSheet } from './bottom-sheet';
 import { HoverRecallPopup } from './hover-recall-popup';
 import { SettingsForm } from './settings-form';
 import { SidePanelView } from './side-panel-view';
+import { WordsPageView } from './words-page-view';
 import { OnboardingView } from './onboarding-view';
 
 export function registerContentElements(): void {
@@ -19,6 +20,8 @@ export function registerContentElements(): void {
 export function registerSidePanel(): void {
   if (!customElements.get('side-panel-view'))
     customElements.define('side-panel-view', SidePanelView);
+  if (!customElements.get('words-page-view'))
+    customElements.define('words-page-view', WordsPageView);
 }
 
 export function registerSettingsForm(): void {

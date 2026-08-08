@@ -639,7 +639,7 @@ class WordsPageView extends HTMLElement {
 // 'delete-word' ({ word: string })
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/ui/words-page-view.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/ui/words-page-view.test.ts`:
 
 ```ts
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -829,7 +829,7 @@ describe('<words-page-view>', () => {
 Run: `cd packages/app && bunx vitest run test/ui/words-page-view.test.ts`
 Expected: failures — the module `../../src/ui/words-page-view` does not exist yet.
 
-- [ ] **Step 2: Add the two new icons.** In `packages/app/src/ui/styles/tokens.ts`, append after
+- [x] **Step 2: Add the two new icons.** In `packages/app/src/ui/styles/tokens.ts`, append after
       `ICON_STAR` (`tokens.ts:213-215`):
 
 ```ts
@@ -845,7 +845,7 @@ export const ICON_WORDS_LIST =
   '<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="16" y2="12"/><line x1="4" y1="17" x2="18" y2="17"/></svg>';
 ```
 
-- [ ] **Step 3: Implement the component.** Create `packages/app/src/ui/words-page-view.ts`:
+- [x] **Step 3: Implement the component.** Create `packages/app/src/ui/words-page-view.ts`:
 
 ```ts
 import type { SavedWordEntry, SavedWordStatus } from '../domain/types';
@@ -1112,7 +1112,7 @@ export class WordsPageView extends HTMLElement {
 }
 ```
 
-- [ ] **Step 4: Register and export.** In `packages/app/src/ui/register.ts`, import `WordsPageView`
+- [x] **Step 4: Register and export.** In `packages/app/src/ui/register.ts`, import `WordsPageView`
       and register it inside `registerSidePanel()`, as two anchored edits (current file is 27
       lines):
   - Insert the import after `register.ts:5` (`import { SidePanelView } from './side-panel-view';`):
@@ -1146,7 +1146,7 @@ bunx vitest run test/ui/words-page-view.test.ts
 
 Expected: typecheck clean; all 12 tests pass.
 
-- [ ] **Step 5: Commit** — gate, then commit:
+- [x] **Step 5: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

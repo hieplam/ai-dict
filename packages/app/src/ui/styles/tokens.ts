@@ -219,3 +219,14 @@ export const ICON_STAR =
 export const ICON_SPEAKER =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M4 9.5h3.2L11 6v12l-3.8-3.5H4z"/><path d="M15.2 9.2a4 4 0 0 1 0 5.6"/><path d="M17.7 6.8a7.6 7.6 0 0 1 0 10.4"/></svg>';
+
+// Back (return to lookup) — words page header, B6.
+export const ICON_BACK =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M15 5l-7 7 7 7"/></svg>';
+
+// Words list (My Words nav) — side-panel header, B6. Three lines of decreasing length, reads as
+// a compact list glyph distinct from the two-line/two-knob Settings icon.
+export const ICON_WORDS_LIST =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">' +
+  '<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="16" y2="12"/><line x1="4" y1="17" x2="18" y2="17"/></svg>';
