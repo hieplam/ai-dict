@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
-import { LookupCard, renderCardState, type SafeHtml } from '../../src/ui/lookup-card';
+import {
+  LookupCard,
+  renderCardState,
+  type SafeHtml,
+  type CardState,
+} from '../../src/ui/lookup-card';
 import { registerContentElements } from '../../src/ui/register';
 
 beforeAll(() => {
@@ -622,6 +627,96 @@ describe('<lookup-card> idiom label + force-literal button (A8)', () => {
     const el = mountCard();
     el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>money place</p>') };
     expect(el.querySelector('.defined-as')).toBeNull();
+  });
+});
+
+describe('<lookup-card> refine chips + back-to-original (A3)', () => {
+  // `& { refineChips?: boolean | undefined }` widens just this one field so the
+  // 'refineChips absent/false' test below can pass `refineChips: undefined` explicitly —
+  // exactOptionalPropertyTypes (tsconfig.base.json) makes bare Partial<T> reject an explicit
+  // `undefined` for a non-optional-source field even though the field itself is `?:`.
+  function resultState(
+    extra: Omit<Partial<Extract<CardState, { kind: 'result' }>>, 'refineChips'> & {
+      refineChips?: boolean | undefined;
+    } = {},
+  ): CardState {
+    return {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>money place</p>'),
+      refineChips: true,
+      ...extra,
+    } as CardState;
+  }
+
+  it('renders exactly 4 refine chips with the pinned copy, in order, none active', () => {
+    const el = mountCard();
+    el.state = resultState();
+    const chips = [...el.querySelectorAll<HTMLButtonElement>('.refine-chip')];
+    expect(chips.map((b) => b.textContent)).toEqual([
+      'Simpler',
+      'More examples',
+      'Etymology',
+      'Use it',
+    ]);
+    for (const chip of chips) {
+      expect(chip.getAttribute('aria-pressed')).toBe('false');
+      expect(chip.disabled).toBe(false);
+    }
+    expect(el.querySelector('.refine-back-btn')).toBeNull();
+  });
+
+  it('clicking a non-active chip fires a composed refine event with the chip id', () => {
+    const el = mountCard();
+    el.state = resultState();
+    let evt: CustomEvent<{ refine: string }> | null = null;
+    const handler = (e: Event): void => {
+      evt = e as CustomEvent<{ refine: string }>;
+    };
+    document.body.addEventListener('refine', handler);
+    el.querySelectorAll<HTMLButtonElement>('.refine-chip')[1]!.click(); // "More examples"
+    document.body.removeEventListener('refine', handler);
+    expect(evt).not.toBeNull();
+    expect(evt!.detail.refine).toBe('examples');
+    expect(evt!.composed).toBe(true);
+  });
+
+  it('the active refine chip is aria-pressed + disabled; a Back to original pill appears', () => {
+    const el = mountCard();
+    el.state = resultState({ refine: 'etymology' });
+    const chips = [...el.querySelectorAll<HTMLButtonElement>('.refine-chip')];
+    const etymology = chips.find((b) => b.textContent === 'Etymology')!;
+    expect(etymology.getAttribute('aria-pressed')).toBe('true');
+    expect(etymology.disabled).toBe(true);
+    for (const chip of chips) {
+      if (chip !== etymology) {
+        expect(chip.getAttribute('aria-pressed')).toBe('false');
+        expect(chip.disabled).toBe(false);
+      }
+    }
+    const back = el.querySelector<HTMLButtonElement>('.refine-back-btn')!;
+    expect(back.textContent).toBe('Back to original');
+  });
+
+  it('clicking Back to original fires a composed refine-back event with no detail', () => {
+    const el = mountCard();
+    el.state = resultState({ refine: 'simpler' });
+    let evt: CustomEvent | null = null;
+    const handler = (e: Event): void => {
+      evt = e as CustomEvent;
+    };
+    document.body.addEventListener('refine-back', handler);
+    el.querySelector<HTMLButtonElement>('.refine-back-btn')!.click();
+    document.body.removeEventListener('refine-back', handler);
+    expect(evt).not.toBeNull();
+    expect(evt!.composed).toBe(true);
+  });
+
+  it('a result with refineChips absent/false renders no .refine-row at all (side-panel omission)', () => {
+    const el = mountCard();
+    el.state = resultState({ refineChips: undefined });
+    expect(el.querySelector('.refine-row')).toBeNull();
   });
 });
 

@@ -813,7 +813,7 @@ export const REFINE_CHIPS: RefineChip[]; // exported per CONTRACTS §4 — B13 a
 // CardState 'result' variant gains: refineChips?: boolean; refine?: RefineKind;
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/ui/lookup-card.test.ts`, as a new top-level `describe` right after the
 existing `describe('<lookup-card> idiom label + force-literal button (A8)', ...)` block closes:
@@ -910,7 +910,7 @@ cd packages/app && bunx vitest run test/ui/lookup-card.test.ts
 
 Expected: failures — `.refine-chip`/`.refine-back-btn`/`.refine-row` do not exist yet.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/ui/lookup-card.ts`, update the import at the top:
 
@@ -1043,7 +1043,7 @@ Expected: all tests pass (existing + the 5 new ones). Confirm the pre-existing t
 (e.g. the idiom/save/nudge describe blocks) still pass unmodified — this task must not change any
 existing rendering behavior for a `refineChips`-absent state.
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

@@ -1,4 +1,4 @@
-import type { LookupError, Provider, SavedWordStatus } from '../index';
+import type { LookupError, Provider, SavedWordStatus, RefineKind } from '../index';
 import { adoptStyles } from './styles/adopt';
 import {
   BASE_VARS,
@@ -58,6 +58,12 @@ export type CardState =
        * LookupResult (LookupResult.fromCache is a required field); absent only for hand-built
        * test/legacy CardState literals that predate this field. */
       fromCache?: boolean;
+      /** A3: true only for the in-page card — InlineBottomSheetRenderer always sets it; the
+       * side panel never does, so the row is absent there by construction (design spec §2.6). */
+      refineChips?: boolean;
+      /** A3: which refine (if any) produced this rendered result; undefined = the original.
+       * Only meaningful when refineChips is true. */
+      refine?: RefineKind;
     }
   | {
       kind: 'streaming';
@@ -78,6 +84,20 @@ export const PROVIDER_LABELS: Record<Provider, string> = {
 function providerLabel(p: Provider): string {
   return PROVIDER_LABELS[p] ?? p;
 }
+
+export interface RefineChip {
+  id: RefineKind;
+  label: string;
+}
+
+/** A3: the fixed v1 refine chip row (roadmap scope fence: "Fixed 4 chips in v1, not
+ * configurable"). B13 (wave 2) appends a 5th 'related' entry — see the A3 design spec §2.8. */
+export const REFINE_CHIPS: RefineChip[] = [
+  { id: 'simpler', label: 'Simpler' },
+  { id: 'examples', label: 'More examples' },
+  { id: 'etymology', label: 'Etymology' },
+  { id: 'usage', label: 'Use it' },
+];
 
 // Icons (ICON_CLOSE, ICON_SHIELD, ICON_SETTINGS) are the canonical §5.10 set, imported from
 // tokens.ts above. Stroked with currentColor so they inherit the token colour of their button;
@@ -150,6 +170,7 @@ button[data-act="settings"] .lbl{line-height:1}
 ::slotted(.meta-row){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 ::slotted(.defined-as){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 8px;font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
 ::slotted(.save-row){display:flex;margin:6px 0 10px}
+::slotted(.refine-row){display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0 2px}
 ::slotted(.speak-btn){display:inline-flex;vertical-align:middle;margin:0 0 .35em 8px}
 ::slotted(.nudge-row){display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:7px 10px;border:1px solid var(--ad-accent);border-radius:var(--adp-radius-control);background:var(--ad-surface-raised)}`;
 
@@ -186,6 +207,15 @@ lookup-card .status-btn:hover{background:var(--ad-surface-raised);color:var(--ad
 lookup-card .status-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 lookup-card .status-btn[aria-pressed="true"]{border-color:var(--ad-accent);color:var(--ad-accent-ink)}
 @media (prefers-reduced-motion:reduce){lookup-card .status-btn{transition:none}}
+lookup-card .refine-chip{border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:4px 11px;font:inherit;font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-semi);cursor:pointer;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease),border-color var(--adp-dur-fast) var(--adp-ease)}
+lookup-card .refine-chip:hover:not(:disabled){background:var(--ad-surface-raised);color:var(--ad-ink)}
+lookup-card .refine-chip:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .refine-chip[aria-pressed="true"]{border-color:var(--ad-accent);color:var(--ad-accent-ink);cursor:default}
+lookup-card .refine-chip:disabled{opacity:.85}
+@media (prefers-reduced-motion:reduce){lookup-card .refine-chip{transition:none}}
+lookup-card .refine-back-btn{border:1px solid var(--ad-accent);background:transparent;color:var(--ad-accent-ink);border-radius:var(--adp-radius-control);padding:4px 11px;font:inherit;font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-semi);cursor:pointer}
+lookup-card .refine-back-btn:hover{background:var(--ad-surface-raised)}
+lookup-card .refine-back-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 lookup-card .speak-btn{display:inline-grid;place-items:center;width:26px;height:26px;border:0;background:transparent;color:var(--ad-ink-faint);border-radius:var(--adp-radius-control);cursor:pointer;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease)}
 lookup-card .speak-btn svg{width:16px;height:16px;pointer-events:none}
 lookup-card .speak-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
@@ -329,6 +359,7 @@ export function renderCardState(state: CardState): Node[] {
   const definedAsRow = state.definedAs ? renderDefinedAsRow(state.definedAs) : null;
   if (definedAsRow) nodes.push(definedAsRow);
   nodes.push(body);
+  if (state.refineChips === true) nodes.push(renderRefineRow(state));
   const meta = renderMetaRow(state);
   if (meta) nodes.push(meta);
   return nodes;
@@ -359,6 +390,53 @@ function renderDefinedAsRow(
     btn.addEventListener('click', () =>
       btn.dispatchEvent(new CustomEvent('force-literal', { bubbles: true, composed: true })),
     );
+    row.append(btn);
+  }
+  return row;
+}
+
+/**
+ * A3: the fixed 4-chip refine row plus, when a refinement is currently showing, a "Back to
+ * original" pill. The active chip (state.refine) is aria-pressed + disabled — no wasted
+ * duplicate network call for the same refinement already shown (mirrors renderMetaRow's
+ * disable-the-current-provider pattern below).
+ */
+function renderRefineRow(state: { refine?: RefineKind }): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'refine-row';
+  row.setAttribute('role', 'group');
+  row.setAttribute('aria-label', 'Refine this definition');
+  if (state.refine !== undefined) {
+    const backBtn = document.createElement('button');
+    backBtn.type = 'button';
+    backBtn.className = 'refine-back-btn';
+    backBtn.textContent = 'Back to original';
+    backBtn.setAttribute('aria-label', 'Restore the original definition');
+    backBtn.addEventListener('click', () =>
+      backBtn.dispatchEvent(new CustomEvent('refine-back', { bubbles: true, composed: true })),
+    );
+    row.append(backBtn);
+  }
+  for (const chip of REFINE_CHIPS) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'refine-chip';
+    btn.textContent = chip.label;
+    const isActive = state.refine === chip.id;
+    btn.setAttribute('aria-pressed', String(isActive));
+    if (isActive) {
+      btn.disabled = true;
+    } else {
+      btn.addEventListener('click', () =>
+        btn.dispatchEvent(
+          new CustomEvent('refine', {
+            detail: { refine: chip.id },
+            bubbles: true,
+            composed: true,
+          }),
+        ),
+      );
+    }
     row.append(btn);
   }
   return row;
