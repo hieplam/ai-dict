@@ -7,6 +7,7 @@ import {
   historyGet,
   historyDelete,
   historyImportEntry,
+  historyReindex,
 } from '../src/domain/history-policy';
 import type { Storage, HistoryEntry } from '../src';
 
@@ -192,5 +193,33 @@ describe('history-policy', () => {
     await historyImportEntry({ storage: s, cap: 1 }, entry('2'));
     const { entries } = await historyList({ storage: s }, {});
     expect(entries.map((e) => e.id)).toEqual(['2']);
+  });
+
+  it('historyReindex sorts a scrambled index newest-first by createdAt', async () => {
+    const s = memStorage();
+    // Insertion order (newest-inserted-first, via historyAppend's prepend) does NOT match
+    // chronological createdAt order: index is currently ['2000', '3000', '1000'].
+    await historyAppend({ storage: s }, entry('1000'));
+    await historyAppend({ storage: s }, entry('3000'));
+    await historyAppend({ storage: s }, entry('2000'));
+    await historyReindex({ storage: s });
+    const { entries } = await historyList({ storage: s }, {});
+    expect(entries.map((e) => e.id)).toEqual(['3000', '2000', '1000']);
+  });
+
+  it('historyReindex is a no-op on an empty index', async () => {
+    const s = memStorage();
+    await expect(historyReindex({ storage: s })).resolves.toBeUndefined();
+    expect((await historyList({ storage: s }, {})).entries).toEqual([]);
+  });
+
+  it('historyReindex is a no-op on an already-sorted index', async () => {
+    const s = memStorage();
+    await historyAppend({ storage: s }, entry('3000'));
+    await historyAppend({ storage: s }, entry('2000'));
+    await historyAppend({ storage: s }, entry('1000'));
+    await historyReindex({ storage: s });
+    const { entries } = await historyList({ storage: s }, {});
+    expect(entries.map((e) => e.id)).toEqual(['3000', '2000', '1000']);
   });
 });

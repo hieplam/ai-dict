@@ -96,6 +96,25 @@ export async function historyImportEntry(deps: HistoryDeps, entry: HistoryEntry)
   return true;
 }
 
+/**
+ * B9: restore the newest-first `history:index` invariant after a backup import may have prepended
+ * an older entry ahead of a newer local one (spec §3.2's stated goal: the index ends in the same
+ * order production traffic would have produced). Re-sorts the index by each entry's createdAt
+ * descending; ties keep their existing relative order (stable sort). No-op on an empty/single index.
+ */
+export async function historyReindex(deps: HistoryDeps): Promise<void> {
+  const idx = await readIndex(deps.storage);
+  if (idx.length < 2) return;
+  const withCreatedAt: { id: string; createdAt: number }[] = [];
+  for (const id of idx) {
+    const raw = await deps.storage.getItem(`history:${id}`);
+    if (!raw) continue; // skip ids whose stored value is missing
+    withCreatedAt.push({ id, createdAt: (JSON.parse(raw) as HistoryEntry).createdAt });
+  }
+  const sorted = [...withCreatedAt].sort((a, b) => b.createdAt - a.createdAt);
+  await deps.storage.setItem(INDEX_KEY, JSON.stringify(sorted.map((e) => e.id)));
+}
+
 export async function historyClear(deps: HistoryDeps): Promise<void> {
   for (const k of await deps.storage.keys('history:')) await deps.storage.removeItem(k);
 }

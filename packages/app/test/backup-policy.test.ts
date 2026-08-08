@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { importBackup } from '../src/domain/backup-policy';
 import { savedWordUpsert, savedWordsList } from '../src/domain/saved-words-policy';
-import { historyAppend, historyList } from '../src/domain/history-policy';
+import { historyAppend, historyList, historyListSince } from '../src/domain/history-policy';
 import type { Storage, SavedWordEntry, HistoryEntry } from '../src';
 
 function memStorage(): Storage {
@@ -111,6 +111,18 @@ describe('importBackup — merge mode', () => {
     expect(result.historyImported).toBe(2); // '2' and '3' are new; '1' already existed
     const { entries } = await historyList({ storage: s }, {});
     expect(entries.map((e) => e.id)).toEqual(['2', '3', '1']); // newest (3000) first
+  });
+
+  it('reorders history:index newest-first when a local entry is newer than an imported one', async () => {
+    // Bug repro: local entry 'X' (createdAt 5000) already exists; the import brings in an older
+    // entry '1' (createdAt 1000). historyAppend's unconditional prepend would land '1' ahead of
+    // 'X', breaking the newest-first invariant historyListSince relies on.
+    const s = memStorage();
+    await historyAppend({ storage: s }, historyEntry('X', 5000));
+    await importBackup({ storage: s }, [], [historyEntry('1', 1000)], 'merge');
+    const { entries } = await historyList({ storage: s }, {});
+    expect(entries.map((e) => e.id)).toEqual(['X', '1']);
+    expect((await historyListSince({ storage: s }, 4000)).map((e) => e.id)).toEqual(['X']);
   });
 });
 

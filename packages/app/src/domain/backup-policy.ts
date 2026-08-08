@@ -1,7 +1,7 @@
 import type { Storage } from '../ports';
 import type { SavedWordEntry, HistoryEntry } from './types';
 import { savedWordsClear, savedWordGet, savedWordImport } from './saved-words-policy';
-import { historyClear, historyImportEntry } from './history-policy';
+import { historyClear, historyImportEntry, historyReindex } from './history-policy';
 
 export interface BackupImportDeps {
   storage: Storage;
@@ -49,6 +49,11 @@ export async function importBackup(
   for (const entry of sorted) {
     if (await historyImportEntry(deps, entry)) historyImported++;
   }
+  // B9 fix: an imported entry's oldest-first append order only keeps the imported entries
+  // themselves in order relative to each other — it doesn't re-sort them against local entries
+  // already in the index. Re-sort the whole index by createdAt to restore the newest-first
+  // invariant (spec §3.2). Cheap and idempotent; unconditional so it's also a no-op safety net.
+  await historyReindex(deps);
 
   return { savedWordsImported, historyImported };
 }
