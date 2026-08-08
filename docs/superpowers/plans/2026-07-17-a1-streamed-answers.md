@@ -834,7 +834,7 @@ interface RouterDeps {
 }
 ```
 
-- [ ] **Step 1: Write the failing test.** Add, inside `router.test.ts`'s existing `describe`
+- [x] **Step 1: Write the failing test.** Add, inside `router.test.ts`'s existing `describe`
       block:
 
 ```ts
@@ -911,7 +911,7 @@ Expected: failures — `onLookupChunk` is never called (not wired yet), and the 
 no onChunk key" regression guard fails because the current unconditional wiring always attaches an
 `onChunk` key.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/router.ts`, add to `RouterDeps` (currently
+- [x] **Step 2: Implement.** In `packages/app/src/app/router.ts`, add to `RouterDeps` (currently
       lines 41-71), right after the existing `now?` field:
 
 ```ts
@@ -954,7 +954,7 @@ const result = await deps.client.lookup(req, {
 Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: all tests pass, including every pre-existing test in this file unmodified.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check

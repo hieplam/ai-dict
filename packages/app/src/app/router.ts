@@ -55,6 +55,17 @@ export interface RouterDeps {
    * SavedWordsDeps already use.
    */
   now?: () => number;
+  /**
+   * A1: called zero or more times per in-flight lookup as a streaming provider's answer arrives.
+   * Optional — a shell that never streams (or hasn't wired the SW->content push yet) omits it.
+   * Injected by the composition root (sw.ts): it owns HOW a chunk reaches the originating tab
+   * (chrome.tabs.sendMessage), which this pure router has no business knowing about.
+   */
+  onLookupChunk?: (
+    requestId: string,
+    markdownSoFar: string,
+    definedAs?: { term: string; isIdiom: boolean },
+  ) => void;
   // Open the extension's options page. Injected by the composition root because the act
   // itself (chrome.runtime.openOptionsPage) is platform code that has no place in the pure
   // router. Optional: a shell that never sends 'open-options' need not provide it.
@@ -136,7 +147,23 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       // added it to cancelled, and called controller.abort(). Check here before calling client.
       if (cancelled.has(requestId)) return SUPPRESS;
 
-      const result = await deps.client.lookup(req, { signal: controller.signal });
+      const result = await deps.client.lookup(req, {
+        signal: controller.signal,
+        // A1: the `onChunk` KEY ITSELF is only attached when the composition root wants push-forwarding
+        // (deps.onLookupChunk supplied) — NEVER an unconditional key with a guarded-no-op body.
+        // GeminiLookupClient dispatches to the streaming SSE endpoint purely on `opts?.onChunk`
+        // truthiness (gemini-lookup-client.ts) — an unconditionally-present key would force EVERY
+        // Gemini lookup onto the streaming endpoint regardless of whether anything downstream ever
+        // consumes the chunks, breaking the card's "no behavior change for the non-streaming path"
+        // fence for both Chrome (before sw.ts opts in, Task 8) and Safari (which never opts in).
+        ...(deps.onLookupChunk
+          ? {
+              onChunk: (md: string, definedAs?: { term: string; isIdiom: boolean }) => {
+                if (!cancelled.has(requestId)) deps.onLookupChunk?.(requestId, md, definedAs);
+              },
+            }
+          : {}),
+      });
       // Strip fallbackFrom before storage writes: it's a per-request runtime annotation
       // (which provider answered this lookup) and should not persist in cache or history.
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
