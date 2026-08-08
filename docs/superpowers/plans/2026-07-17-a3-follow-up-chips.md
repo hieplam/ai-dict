@@ -1069,7 +1069,7 @@ git commit -m "[A3FollowUpChips] feat: add REFINE_CHIPS + refine row rendering t
 restoreOriginal(): void; // new public method on InlineBottomSheetRenderer
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`, as new tests inside the
 existing top-level `describe('InlineBottomSheetRenderer', ...)` block, right after the existing `'a
@@ -1129,7 +1129,7 @@ cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts
 Expected: failures — `refineChips` is never set, `ctx.onRefine` is never wired, `restoreOriginal`
 does not exist.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/app/inline-bottom-sheet-renderer.ts`, update the import list at the top:
 
@@ -1238,7 +1238,7 @@ cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts
 
 Expected: all tests pass (existing + the 5 new ones).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

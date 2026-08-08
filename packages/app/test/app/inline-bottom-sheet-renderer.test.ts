@@ -296,6 +296,48 @@ describe('InlineBottomSheetRenderer', () => {
     new InlineBottomSheetRenderer(h).renderResult(result);
     expect(card(h).querySelector('.defined-as')).toBeNull();
   });
+
+  it('renderResult always sets refineChips:true so the card shows the 4-chip row (A3)', () => {
+    const h = host();
+    new InlineBottomSheetRenderer(h).renderResult(result);
+    expect(card(h).querySelectorAll('.refine-chip').length).toBe(4);
+  });
+
+  it("wiring ctx.onRefine — clicking a refine chip invokes the callback with the chip's kind (A3)", () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    const calls: string[] = [];
+    r.renderResult(result, { onRefine: (k) => calls.push(k) });
+    card(h).querySelectorAll<HTMLButtonElement>('.refine-chip')[2]!.click(); // "Etymology"
+    expect(calls).toEqual(['etymology']);
+  });
+
+  it('a second renderResult with ctx.refine set does not clobber the original snapshot; restoreOriginal() re-shows it (A3)', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result); // original
+    r.renderResult({ ...result, markdown: '**refined**' }, { refine: 'simpler' });
+    expect(card(h).innerHTML).toContain('<strong>refined</strong>');
+    r.restoreOriginal();
+    expect(card(h).innerHTML).toContain('<strong>def</strong>'); // back to the ORIGINAL markdown
+    expect(card(h).innerHTML).not.toContain('refined');
+  });
+
+  it('restoreOriginal() before any render is a no-op', () => {
+    const h = host();
+    expect(() => new InlineBottomSheetRenderer(h).restoreOriginal()).not.toThrow();
+    expect(h.querySelector('bottom-sheet')).toBeNull();
+  });
+
+  it('close() resets the original snapshot — a fresh render after close is the new original (A3)', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result);
+    r.close();
+    r.renderResult({ ...result, markdown: '**second**' });
+    r.restoreOriginal();
+    expect(card(h).innerHTML).toContain('<strong>second</strong>');
+  });
 });
 
 describe('InlineBottomSheetRenderer — save state (B1)', () => {
