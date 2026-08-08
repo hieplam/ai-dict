@@ -386,7 +386,7 @@ git commit -m "[B13RelatedWords] feat: widen RefineKind + add related fields to 
 export function parseRelated(markdown: string): { related?: string[]; body: string }; // domain/related-line.ts
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Create `packages/app/test/related-line.test.ts`:
 
@@ -526,7 +526,7 @@ cd packages/app && bunx vitest run test/app/gemini-lookup-client.test.ts
 
 Expected: failures — `result.related` is always undefined (not wired yet).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 Create `packages/app/src/domain/related-line.ts`:
 
@@ -611,7 +611,7 @@ cd packages/app && bunx vitest run test/related-line.test.ts test/app/gemini-loo
 
 Expected: all tests pass (existing + the ones added in Step 1).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

@@ -523,3 +523,47 @@ describe('B2 translation extraction via runHttpLookup', () => {
     expect(sent).toContain('TRANSLATION:');
   });
 });
+
+describe('B13 related words extraction via runHttpLookup', () => {
+  it('a DEFINED_AS + TRANSLATION + RELATED triple is parsed into result.related and all three lines are stripped from markdown', async () => {
+    const body = {
+      candidates: [
+        {
+          content: {
+            parts: [
+              {
+                text: 'DEFINED_AS: "bank" | literal\nTRANSLATION: "ngân hàng"\nRELATED: "shore, embankment, bluff"\n\n## bank\nA financial institution.',
+              },
+            ],
+          },
+        },
+      ],
+    };
+    const c = client(() => Promise.resolve(res({ ok: true, status: 200, body })));
+    const out = await c.lookup(req);
+    expect(out.definedAs).toEqual({ term: 'bank', isIdiom: false });
+    expect(out.translation).toBe('ngân hàng');
+    expect(out.related).toEqual(['shore', 'embankment', 'bluff']);
+    expect(out.markdown).toBe('## bank\nA financial institution.');
+  });
+
+  it('a response with no RELATED line leaves related undefined (back-compat)', async () => {
+    const c = client(() => Promise.resolve(res({ ok: true, status: 200, body: okBody })));
+    const out = await c.lookup(req);
+    expect(out.related).toBeUndefined();
+  });
+
+  it('req.refine="related" reaches the prompt as the related instruction', async () => {
+    let captured: { url: string; init: Parameters<FetchLike>[1] } | null = null;
+    const c = client((url, init) => {
+      captured = { url, init };
+      return Promise.resolve(res({ ok: true, status: 200, body: okBody }));
+    });
+    await c.lookup({ ...req, refine: 'related' });
+    const sent =
+      (JSON.parse(captured!.init.body) as { contents: { parts: { text: string }[] }[] }).contents[0]
+        ?.parts[0]?.text ?? '';
+    expect(sent).toContain('RELATED WORDS');
+    expect(sent).not.toContain('SIMPLER');
+  });
+});
