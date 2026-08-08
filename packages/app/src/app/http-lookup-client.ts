@@ -91,6 +91,7 @@ export async function runHttpLookup(
     },
     req.promptEnvelope,
     req.forceLiteral,
+    req.refine,
   );
   const body = spec.body(prompt, spec.model);
 

@@ -128,6 +128,20 @@ describe('buildRouter', () => {
     expect(d.client.lookup).toHaveBeenCalledTimes(1);
   });
 
+  it('refine override (req.refine) skips the cache read — the refined answer is fetched fresh (A3)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route(lookupMsg('a')); // populate cache with the default answer
+    d.client.lookup.mockClear();
+    const reply = await route({
+      type: 'lookup',
+      req: { ...req, refine: 'simpler' },
+      requestId: 'b',
+    });
+    expect(reply).toMatchObject({ ok: true, type: 'lookup', result: { fromCache: false } });
+    expect(d.client.lookup).toHaveBeenCalledTimes(1);
+  });
+
   it('fallbackFrom is never persisted, but provider IS (cache + history strip transient only)', async () => {
     const d = deps({
       client: {

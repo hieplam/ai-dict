@@ -364,7 +364,7 @@ const RefineKindEnum = z.enum(['simpler', 'examples', 'etymology', 'usage']); //
 // LookupRequestSchema gains: refine: RefineKindEnum.optional()
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/wire-schema.test.ts`, right after the existing
 `'lookup req accepts an optional forceLiteral flag and rejects a non-boolean'` test:
@@ -468,7 +468,7 @@ Expected: failures — `refine` is rejected by `LookupRequestSchema` (unrecogniz
 rejected depending on the arm's mode), the router still serves the cached answer for a `refine`
 request, and the outbound Gemini prompt carries no refine instruction text.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/wire.ts`, add the enum near the existing `ProviderEnum` declaration:
 
@@ -537,7 +537,7 @@ Expected: all tests pass. The `wire-schema.snapshot.json` file-snapshot test
 (`'JSON-schema snapshot is stable (spec §8.5)'`) will now FAIL on this run — that is expected,
 since the generated JSON schema legitimately changed shape. Proceed to Step 3 to regenerate it.
 
-- [ ] **Step 3: Regenerate the wire JSON-schema snapshot.**
+- [x] **Step 3: Regenerate the wire JSON-schema snapshot.**
 
 ```
 cd packages/app && bunx vitest run test/wire-schema.test.ts -u
@@ -553,7 +553,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts
 
 Expected: all pass, no further snapshot diff.
 
-- [ ] **Step 4: Gate + commit.**
+- [x] **Step 4: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

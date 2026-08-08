@@ -128,7 +128,14 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       // ignores provider, so a hit would echo back the previous provider's answer. Skip the read.
       // A8: the same reasoning applies to a forced-literal re-run (req.forceLiteral) — a hit
       // would echo back the smart idiom-aware answer instead of the literal one requested.
-      if (cacheEnabled && req.provider === undefined && req.forceLiteral !== true) {
+      // A3: and again for a refine re-run (req.refine) — a hit would echo back the ORIGINAL
+      // (unrefined) answer instead of the requested refinement.
+      if (
+        cacheEnabled &&
+        req.provider === undefined &&
+        req.forceLiteral !== true &&
+        req.refine === undefined
+      ) {
         const hit = await cacheGet({ storage: deps.kv }, keyReq);
         if (hit) {
           const nudge = await deps.queue.run(() =>

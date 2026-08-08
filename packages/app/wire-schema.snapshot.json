@@ -43,6 +43,15 @@
               },
               "forceLiteral": {
                 "type": "boolean"
+              },
+              "refine": {
+                "type": "string",
+                "enum": [
+                  "simpler",
+                  "examples",
+                  "etymology",
+                  "usage"
+                ]
               }
             },
             "required": [

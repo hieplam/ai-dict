@@ -433,6 +433,37 @@ describe('A8 idiom expansion via runHttpLookup', () => {
   });
 });
 
+describe('A3 follow-up chips via runHttpLookup', () => {
+  it('req.refine="etymology" reaches the prompt as the etymology instruction', async () => {
+    let captured: { url: string; init: Parameters<FetchLike>[1] } | null = null;
+    const c = client((url, init) => {
+      captured = { url, init };
+      return Promise.resolve(res({ ok: true, status: 200, body: okBody }));
+    });
+    await c.lookup({ ...req, refine: 'etymology' });
+    const sent =
+      (JSON.parse(captured!.init.body) as { contents: { parts: { text: string }[] }[] }).contents[0]
+        ?.parts[0]?.text ?? '';
+    expect(sent).toContain("word's ETYMOLOGY");
+    expect(sent).not.toContain('SIMPLER');
+  });
+
+  it('req.refine is absent by default — no refine instruction text reaches the prompt', async () => {
+    let captured: { url: string; init: Parameters<FetchLike>[1] } | null = null;
+    const c = client((url, init) => {
+      captured = { url, init };
+      return Promise.resolve(res({ ok: true, status: 200, body: okBody }));
+    });
+    await c.lookup(req);
+    const sent =
+      (JSON.parse(captured!.init.body) as { contents: { parts: { text: string }[] }[] }).contents[0]
+        ?.parts[0]?.text ?? '';
+    expect(sent).not.toContain('ETYMOLOGY');
+    expect(sent).not.toContain('SIMPLER');
+    expect(sent).not.toContain('MORE EXAMPLES');
+  });
+});
+
 describe('B2 translation extraction via runHttpLookup', () => {
   it('a DEFINED_AS + TRANSLATION pair is parsed into result.translation and both lines are stripped from markdown', async () => {
     const body = {
