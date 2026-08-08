@@ -1956,7 +1956,7 @@ git commit -m "feat: streamed answers — Chrome SW->content->panel chunk transp
 - Modify: `packages/extension-chrome/e2e/helpers.ts`
 - Create: `packages/extension-chrome/e2e/a1-streamed-answers.spec.ts`
 
-- [ ] **Step 1: Add a streaming mock helper.** In `packages/extension-chrome/e2e/helpers.ts`, add,
+- [x] **Step 1: Add a streaming mock helper.** In `packages/extension-chrome/e2e/helpers.ts`, add,
       near the existing `mockGemini` export:
 
 ```ts
@@ -1985,7 +1985,7 @@ export async function mockGeminiStream(
 (Match this file's existing import style — `BrowserContext` is already imported from
 `@playwright/test` at the top of `helpers.ts`; reuse it, do not re-import.)
 
-- [ ] **Step 2: Write the e2e spec.** Create
+- [x] **Step 2: Write the e2e spec.** Create
       `packages/extension-chrome/e2e/a1-streamed-answers.spec.ts`:
 
 ```ts
@@ -2066,7 +2066,7 @@ waiting on an outstanding request during teardown, replace the never-resolving r
 `lookup.cancel` fires from the workflow's own `inFlight?.abort()` before the first request would
 otherwise be awaited to completion; either form proves the same functional guarantee.)
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome

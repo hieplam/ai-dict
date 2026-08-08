@@ -102,6 +102,27 @@ export async function mockGemini(
   return calls;
 }
 
+export const GEMINI_STREAM_GLOB = '**/*:streamGenerateContent*';
+
+/**
+ * A1: fulfills Gemini's SSE streaming endpoint with `events` joined as `data: <event>\n\n` frames
+ * (each `event` a pre-serialized JSON string, e.g. the same shape mockGemini's OK body uses per
+ * chunk). Routes on the CONTEXT (not the page), same reasoning mockGemini already documents —
+ * the fetch originates in the service worker.
+ */
+export async function mockGeminiStream(
+  context: BrowserContext,
+  events: string[],
+): Promise<{ count: number }> {
+  const calls = { count: 0 };
+  await context.route(GEMINI_STREAM_GLOB, async (route) => {
+    calls.count++;
+    const body = events.map((e) => `data: ${e}\n\n`).join('');
+    await route.fulfill({ status: 200, contentType: 'text/event-stream', body });
+  });
+  return calls;
+}
+
 /**
  * Fake the OpenAI chat-completions endpoint and count hits. Routes on the CONTEXT for the
  * same reason as mockGemini: the fetch originates in the extension's service worker.
