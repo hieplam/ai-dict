@@ -978,7 +978,7 @@ git commit -m "feat: streamed answers — router onLookupChunk wiring (A1)" \
 - Modify: `packages/app/test/fakes/index.ts`
 - Modify: `packages/app/test/workflow.test.ts`
 
-- [ ] **Step 1: Extend the shared fake first (needed by the failing test) — TARGETED, ADDITIVE
+- [x] **Step 1: Extend the shared fake first (needed by the failing test) — TARGETED, ADDITIVE
       hunks only. Never paste a full class-body copy.**
 
   > **⚠ Shared-file warning:** `test/fakes/index.ts`'s `FakeResultRenderer` is also modified by
@@ -1022,7 +1022,7 @@ Neither hunk touches `renderLoading`, `renderResult`, `renderError`, or `close`'
 bodies — if A5 already widened `renderLoading`'s signature or added `loadingAnchor` here, this
 step leaves that untouched.
 
-- [ ] **Step 2: Write the failing test.** Add, inside `workflow.test.ts`'s existing `describe('runLookupWorkflow', ...)`
+- [x] **Step 2: Write the failing test.** Add, inside `workflow.test.ts`'s existing `describe('runLookupWorkflow', ...)`
       block:
 
 ```ts
@@ -1120,7 +1120,7 @@ them verbatim; do not redefine.)
 Run: `cd packages/app && bunx vitest run test/workflow.test.ts`
 Expected: failures — `renderer.partials` stays empty (not wired yet).
 
-- [ ] **Step 3: Implement.** In `packages/app/src/domain/workflow.ts`, replace the single line
+- [x] **Step 3: Implement.** In `packages/app/src/domain/workflow.ts`, replace the single line
       `const result = await deps.client.lookup(req, { signal: controller.signal });` (currently
       line 80) with:
 
@@ -1139,7 +1139,7 @@ const result = await deps.client.lookup(req, {
 Run: `cd packages/app && bunx vitest run test/workflow.test.ts`
 Expected: all tests pass, including every pre-existing test in this file unmodified.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check

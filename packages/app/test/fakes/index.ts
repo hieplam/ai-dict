@@ -50,6 +50,8 @@ export class FakeResultRenderer implements ResultRenderer {
   loadingWord: string | undefined;
   // A6: the anchor renderLoading was called with, so tests can assert workflow.ts forwards it.
   loadingAnchor: AnchorRect | undefined;
+  // A1: every renderPartial call, in order — [word, markdownSoFar, definedAs].
+  partials: [string, string, { term: string; isIdiom: boolean } | undefined][] = [];
   renderLoading(word?: string, anchor?: AnchorRect) {
     this.calls.push('loading');
     this.loadingWord = word;
@@ -64,6 +66,14 @@ export class FakeResultRenderer implements ResultRenderer {
     this.calls.push('error');
     this.lastError = e;
   }
+  renderPartial(
+    word: string,
+    markdownSoFar: string,
+    definedAs?: { term: string; isIdiom: boolean },
+  ) {
+    this.calls.push('partial');
+    this.partials.push([word, markdownSoFar, definedAs]);
+  }
   close() {
     this.calls.push('close');
   }
@@ -71,10 +81,22 @@ export class FakeResultRenderer implements ResultRenderer {
 
 export class FakeLookupClient implements LookupClient {
   constructor(
-    private impl: (req: LookupRequest, opts?: { signal?: AbortSignal }) => Promise<LookupResult>,
+    private impl: (
+      req: LookupRequest,
+      opts?: {
+        signal?: AbortSignal;
+        onChunk?: (markdownSoFar: string, definedAs?: { term: string; isIdiom: boolean }) => void;
+      },
+    ) => Promise<LookupResult>,
   ) {}
   lastReq: LookupRequest | null = null;
-  lookup(req: LookupRequest, opts?: { signal?: AbortSignal }) {
+  lookup(
+    req: LookupRequest,
+    opts?: {
+      signal?: AbortSignal;
+      onChunk?: (markdownSoFar: string, definedAs?: { term: string; isIdiom: boolean }) => void;
+    },
+  ) {
     this.lastReq = req;
     return this.impl(req, opts);
   }
