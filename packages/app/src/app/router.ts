@@ -16,6 +16,7 @@ import {
   savedWordsList,
   savedWordGet,
   evaluateNudge,
+  importBackup,
   FIX_KEY_PENDING_STORAGE_KEY,
   type WireMessage,
   type WireReply,
@@ -276,6 +277,17 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       }
       case 'saved.list':
         return handleSavedList();
+      case 'backup.import': {
+        const result = await deps.queue.run(() =>
+          importBackup({ storage: deps.kv }, msg.savedWords, msg.history, msg.mode),
+        );
+        return {
+          ok: true,
+          type: 'backup-imported',
+          savedWordsImported: result.savedWordsImported,
+          historyImported: result.historyImported,
+        };
+      }
       case 'saved.learningWords': {
         const entries = await savedWordsList({ storage: deps.kv });
         return {

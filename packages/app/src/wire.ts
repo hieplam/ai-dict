@@ -94,6 +94,40 @@ const SavedWordEntrySchema = z.strictObject({
   senses: z.array(SavedWordSenseSchema),
 });
 
+// B9: non-strict on purpose (NOT z.strictObject, unlike every other wire schema in this file) —
+// CONTRACTS §3/E2 promises "importers ignore unknown future fields." A backup file written by a
+// future extension version may carry additive fields this version's code has never heard of; a
+// strict schema would reject the ENTIRE entry (and thus the whole array) instead of simply not
+// preserving the field it doesn't recognise. See the design spec §3.5 for the full rationale —
+// do not "fix" this back to strict.
+const ImportSavedWordSenseSchema = z.object({
+  definition: z.string(),
+  translation: z.string(),
+  sentence: z.string(),
+  url: z.string(),
+  title: z.string(),
+});
+const ImportSavedWordEntrySchema = z.object({
+  word: z.string(),
+  status: z.enum(['learning', 'known']),
+  savedAt: z.number(),
+  senses: z.array(ImportSavedWordSenseSchema),
+});
+const ImportHistoryEntrySchema = z.object({
+  id: z.string(),
+  word: z.string(),
+  context: z.string(),
+  result: z.object({
+    markdown: z.string(),
+    word: z.string(),
+    target: z.string(),
+    model: z.string().min(1),
+    fromCache: z.boolean(),
+    fetchedAt: z.number(),
+  }),
+  createdAt: z.number(),
+});
+
 export const WireMessageSchema = z.discriminatedUnion('type', [
   z.object({ type: z.literal('lookup'), req: LookupRequestSchema, requestId: z.string() }),
   z.object({ type: z.literal('lookup.cancel'), requestId: z.string() }),
@@ -131,6 +165,15 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
   // saved-words-policy.ts:108-109). Read-only; the only caller today is the Anki/CSV/Markdown
   // export flow in settings-form.ts.
   z.strictObject({ type: z.literal('saved.list') }),
+  // B9: import a backup file's saved words + history into the local keyspaces. Settings import
+  // happens entirely client-side in the options page — never touches the wire — so this message
+  // never carries a settings payload, and (S1) never a key.
+  z.object({
+    type: z.literal('backup.import'),
+    mode: z.enum(['merge', 'replace']),
+    savedWords: z.array(ImportSavedWordEntrySchema),
+    history: z.array(ImportHistoryEntrySchema),
+  }),
   // B3: read every saved word whose status is 'learning' (known words excluded) — the
   // re-encounter highlighter's word list. Read-only; payload-free like settings.get.
   z.object({ type: z.literal('saved.learningWords') }),
@@ -169,6 +212,7 @@ const MessageTypeEnum = z.enum([
   'saved.delete',
   'saved.setStatus',
   'saved.list',
+  'backup.import',
   'saved.learningWords',
   'saved.get',
 ]);
@@ -195,6 +239,14 @@ export const WireReplySchema = z.union([
     ok: z.literal(true),
     type: z.literal('saved.list'),
     entries: z.array(SavedWordEntrySchema),
+  }),
+  // B9: reply to backup.import — how many saved words / history entries were actually written
+  // (a merge that only skips ties can legitimately report 0 for either count).
+  z.object({
+    ok: z.literal(true),
+    type: z.literal('backup-imported'),
+    savedWordsImported: z.number(),
+    historyImported: z.number(),
   }),
   // B3: reply to saved.learningWords — the flat list of learning-status words the
   // re-encounter highlighter matches against.
@@ -244,5 +296,7 @@ const _checks: [
   AssertEqual<z.infer<typeof PublicSettingsSchema>, PublicSettings>,
   AssertEqual<z.infer<typeof HistoryEntrySchema>, HistoryEntry>,
   AssertEqual<z.infer<typeof SavedWordEntrySchema>, SavedWordEntry>,
-] = [true, true, true, true, true];
+  AssertEqual<z.infer<typeof ImportSavedWordEntrySchema>, SavedWordEntry>,
+  AssertEqual<z.infer<typeof ImportHistoryEntrySchema>, HistoryEntry>,
+] = [true, true, true, true, true, true, true];
 void _checks;
