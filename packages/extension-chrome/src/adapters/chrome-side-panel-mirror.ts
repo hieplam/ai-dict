@@ -33,6 +33,14 @@ export class ChromeSidePanelMirror implements ResultRenderer {
   renderError(e: LookupError): void {
     this.post({ state: 'error', payload: e });
   }
+  /** A1: mirrors the in-page card's in-progress preview to the panel. */
+  renderPartial(
+    word: string,
+    markdown: string,
+    definedAs?: { term: string; isIdiom: boolean },
+  ): void {
+    this.post({ state: 'streaming', word, markdown, ...(definedAs ? { definedAs } : {}) });
+  }
   close(): void {
     this.post({ state: 'close' });
   }

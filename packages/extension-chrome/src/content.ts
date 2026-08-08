@@ -181,6 +181,12 @@ runLookupWorkflow({
       inline.renderLoading(word, anchor);
       mirror.renderLoading(word);
     },
+    renderPartial(word, markdown, definedAs) {
+      // A1: never touches lastSavePayload/lastSaved/lastStatus — a partial preview never
+      // populates the save context; only the terminal renderResult below does (design spec §4.8).
+      inline.renderPartial(word, markdown, definedAs);
+      mirror.renderPartial(word, markdown, definedAs);
+    },
     renderResult(r, ctx) {
       lastFocus = { state: 'result', payload: r };
       lastSavePayload = {

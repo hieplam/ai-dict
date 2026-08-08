@@ -14,6 +14,7 @@ import {
   classifyInbound,
   ErrorReporter,
   badgeStateFor,
+  type LookupChunkMessage,
 } from '@ai-dict/app';
 import { ChromeKvStore } from './adapters/chrome-kv-store';
 import { ChromeStorageStore } from './adapters/chrome-storage-store';
@@ -33,6 +34,11 @@ const DEFAULT_TARGET = 'vi';
 // empty when saveHistory is off). Not window-scoped — mirrors the existing broadcast model,
 // which already fans out to every open side panel.
 let lastSidePanelFocus: SidePanelFocus | null = null;
+
+// A1: requestId -> originating tab id, so a lookup.chunk push can be routed to the right page.
+// Populated just before router(...) is called for a 'lookup' message; deleted once that call's
+// continuation runs (mirrors the existing sendResponse/reporter.capture cleanup site below).
+const chunkTabs = new Map<string, number>();
 
 async function readFullSettings(): Promise<Settings> {
   const { settings } = (await chrome.storage.local.get('settings')) as { settings?: Settings };
@@ -118,6 +124,20 @@ const router = buildRouter({
   // here. This is the keyless reader's path from the in-page "Open Settings" button to setup.
   openOptions: () => chrome.runtime.openOptionsPage(),
   errlog: reporter,
+  // A1: push a chunk to the tab that originated the requestId, outside the wire protocol
+  // entirely — the exact same chrome.tabs.sendMessage mechanism the A4 command relay already
+  // uses below (chrome.commands.onCommand.addListener).
+  onLookupChunk: (requestId, markdown, definedAs) => {
+    const tabId = chunkTabs.get(requestId);
+    if (tabId === undefined) return;
+    const message: LookupChunkMessage = {
+      type: 'lookup.chunk',
+      requestId,
+      markdown,
+      ...(definedAs ? { definedAs } : {}),
+    };
+    void chrome.tabs.sendMessage(tabId, message).catch(() => undefined);
+  },
 });
 
 chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
@@ -150,6 +170,13 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
 
   const decision = classifyInbound(msg, sender.id, chrome.runtime.id);
+  if (
+    decision.action === 'route' &&
+    decision.msg.type === 'lookup' &&
+    sender.tab?.id !== undefined
+  ) {
+    chunkTabs.set(decision.msg.requestId, sender.tab.id);
+  }
   if (decision.action === 'ignore') return false;
   if (decision.action === 'reject') {
     sendResponse(decision.reply);
@@ -157,6 +184,7 @@ chrome.runtime.onMessage.addListener((msg, sender, sendResponse) => {
   }
   router(decision.msg)
     .then((reply) => {
+      if (decision.msg.type === 'lookup') chunkTabs.delete(decision.msg.requestId);
       if (reply !== SUPPRESS) sendResponse(reply);
       if (reply !== SUPPRESS && reply.ok === false) {
         const url = decision.msg.type === 'lookup' ? decision.msg.req.url : undefined;

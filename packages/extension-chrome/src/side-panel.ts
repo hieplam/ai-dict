@@ -315,6 +315,8 @@ interface MirrorMessage {
   sentence?: unknown;
   url?: unknown;
   title?: unknown;
+  markdown?: unknown;
+  definedAs?: unknown;
 }
 
 // Live mirror of the in-page lookup (posted by ChromeSidePanelMirror over runtime messaging).
@@ -344,6 +346,21 @@ chrome.runtime.onMessage.addListener((msg: unknown, sender) => {
     void refreshRecent();
   } else if (mirrorMsg.state === 'error') {
     view.focusState = { kind: 'error', error: mirrorMsg.payload as LookupError };
+  } else if (mirrorMsg.state === 'streaming') {
+    if (typeof mirrorMsg.word !== 'string' || typeof mirrorMsg.markdown !== 'string') return;
+    const definedAs =
+      mirrorMsg.definedAs !== null &&
+      typeof mirrorMsg.definedAs === 'object' &&
+      'term' in (mirrorMsg.definedAs as Record<string, unknown>)
+        ? (mirrorMsg.definedAs as { term: string; isIdiom: boolean })
+        : undefined;
+    view.focusState = {
+      kind: 'streaming',
+      word: mirrorMsg.word,
+      safeHtml: sanitizeMarkdown(mirrorMsg.markdown), // S4: sanitized at this render boundary,
+      // exactly like resultToFocus() already does above
+      ...(definedAs ? { definedAs } : {}),
+    };
   }
   // `state === 'close'` (the in-page card was dismissed) is intentionally ignored: the panel
   // is persistent and keeps showing the last lookup.

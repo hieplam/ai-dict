@@ -74,4 +74,18 @@ describe('ChromeSidePanelMirror', () => {
     expect(() => m.renderLoading()).not.toThrow();
     await Promise.resolve();
   });
+
+  it('renderPartial posts the streaming state to the side panel (A1)', async () => {
+    const sendMessage = vi.fn(() => Promise.resolve({}));
+    const m = new ChromeSidePanelMirror({ sendMessage });
+    m.renderPartial('bank', 'partial def', { term: 'bank', isIdiom: false });
+    await Promise.resolve();
+    expect(sendMessage).toHaveBeenCalledWith({
+      to: 'side-panel',
+      state: 'streaming',
+      word: 'bank',
+      markdown: 'partial def',
+      definedAs: { term: 'bank', isIdiom: false },
+    });
+  });
 });

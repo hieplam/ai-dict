@@ -1745,7 +1745,7 @@ are composition roots, covered by e2e only — same precedent C2's plan document
 This task's correctness there is proven by Task 9's e2e; `chrome-side-panel-mirror.ts` DOES have a
 dedicated unit test file and gets one here.
 
-- [ ] **Step 1: `chrome-side-panel-mirror.ts` — TDD the one piece with a unit test.** Add, inside
+- [x] **Step 1: `chrome-side-panel-mirror.ts` — TDD the one piece with a unit test.** Add, inside
       `chrome-side-panel-mirror.test.ts`'s existing `describe` block:
 
 ```ts
@@ -1822,7 +1822,7 @@ export class ChromeSidePanelMirror implements ResultRenderer {
 Run: `cd packages/extension-chrome && bunx vitest run src/adapters/chrome-side-panel-mirror.test.ts`
 Expected: all tests pass, including every pre-existing test in this file unmodified.
 
-- [ ] **Step 2: `sw.ts` — the requestId→tab push.** In `packages/extension-chrome/src/sw.ts`:
+- [x] **Step 2: `sw.ts` — the requestId→tab push.** In `packages/extension-chrome/src/sw.ts`:
 
 1. Add, right after the existing `let lastSidePanelFocus: SidePanelFocus | null = null;` (line 33):
 
@@ -1891,7 +1891,7 @@ if (
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 3: `content.ts` — fan `renderPartial` out to both surfaces.** In
+- [x] **Step 3: `content.ts` — fan `renderPartial` out to both surfaces.** In
       `packages/extension-chrome/src/content.ts`, add a key to the existing renderer object literal
       passed to `runLookupWorkflow({...})` (currently `content.ts:76-113`), right after the
       existing `renderLoading(word) { ... }` method:
@@ -1905,7 +1905,7 @@ Expected: clean.
     },
 ```
 
-- [ ] **Step 4: `side-panel.ts` — receive the streaming broadcast.** In
+- [x] **Step 4: `side-panel.ts` — receive the streaming broadcast.** In
       `packages/extension-chrome/src/side-panel.ts`, extend the existing
       `chrome.runtime.onMessage.addListener((msg, sender) => {...})` handler (currently lines
       237-275): widen its inline `msg` type annotation to add `markdown?: unknown` and
@@ -1933,7 +1933,7 @@ Expected: clean.
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 5: Commit** — gate, then commit:
+- [x] **Step 5: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check

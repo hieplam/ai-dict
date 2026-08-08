@@ -10,8 +10,8 @@ export interface RuntimeLike {
    * test never exercises streaming.
    */
   onMessage?: {
-    addListener(cb: (msg: unknown, sender: { id?: string }) => void): void;
-    removeListener(cb: (msg: unknown, sender: { id?: string }) => void): void;
+    addListener(cb: (msg: unknown, sender: { id?: string | undefined }) => void): void;
+    removeListener(cb: (msg: unknown, sender: { id?: string | undefined }) => void): void;
   };
 }
 
@@ -70,7 +70,7 @@ export class MessageRelayLookupClient implements LookupClient {
     // above's exact lifecycle (registered per call, torn down when the call settles).
     const onChunk = opts?.onChunk;
     const onRuntimeMessage = onChunk
-      ? (msg: unknown, sender: { id?: string }): void => {
+      ? (msg: unknown, sender: { id?: string | undefined }): void => {
           if (this.extensionId !== undefined && sender.id !== this.extensionId) return;
           if (isLookupChunkMessage(msg) && msg.requestId === requestId) {
             onChunk(msg.markdown, msg.definedAs);
