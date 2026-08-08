@@ -92,12 +92,45 @@ export async function mockGemini(
       return;
     }
     if (opts.delayMs) await new Promise((r) => setTimeout(r, opts.delayMs));
+    const status = opts.status ?? 200;
+    const body = opts.body ?? GEMINI_OK_BODY;
+    const isStream = route.request().url().includes(':streamGenerateContent');
+    if (isStream && status < 400) {
+      await route.fulfill({
+        status,
+        contentType: 'text/event-stream',
+        headers: opts.headers ?? {},
+        body: `data: ${body}\n\n`,
+      });
+      return;
+    }
     await route.fulfill({
-      status: opts.status ?? 200,
+      status,
       contentType: 'application/json',
       headers: opts.headers ?? {},
-      body: opts.body ?? GEMINI_OK_BODY,
+      body,
     });
+  });
+  return calls;
+}
+
+export const GEMINI_STREAM_GLOB = '**/*:streamGenerateContent*';
+
+/**
+ * A1: fulfills Gemini's SSE streaming endpoint with `events` joined as `data: <event>\n\n` frames
+ * (each `event` a pre-serialized JSON string, e.g. the same shape mockGemini's OK body uses per
+ * chunk). Routes on the CONTEXT (not the page), same reasoning mockGemini already documents —
+ * the fetch originates in the service worker.
+ */
+export async function mockGeminiStream(
+  context: BrowserContext,
+  events: string[],
+): Promise<{ count: number }> {
+  const calls = { count: 0 };
+  await context.route(GEMINI_STREAM_GLOB, async (route) => {
+    calls.count++;
+    const body = events.map((e) => `data: ${e}\n\n`).join('');
+    await route.fulfill({ status: 200, contentType: 'text/event-stream', body });
   });
   return calls;
 }

@@ -181,6 +181,12 @@ runLookupWorkflow({
       inline.renderLoading(word, anchor);
       mirror.renderLoading(word);
     },
+    renderPartial(word, markdown, definedAs) {
+      // A1: never touches lastSavePayload/lastSaved/lastStatus — a partial preview never
+      // populates the save context; only the terminal renderResult below does (design spec §4.8).
+      inline.renderPartial(word, markdown, definedAs);
+      mirror.renderPartial(word, markdown, definedAs);
+    },
     renderResult(r, ctx) {
       lastFocus = { state: 'result', payload: r };
       lastSavePayload = {
@@ -209,7 +215,10 @@ runLookupWorkflow({
     },
     close: dismissAll,
   },
-  client: new MessageRelayLookupClient(chrome.runtime),
+  // A1/S3: pass chrome.runtime.id as the expected sender so the client's lookup.chunk guard
+  // (message-relay-lookup-client.ts) actually rejects a push from any other extension instead
+  // of being unconditionally skipped (spec §4.7). Middle arg `undefined` keeps the default genId.
+  client: new MessageRelayLookupClient(chrome.runtime, undefined, chrome.runtime.id),
   settings: themedSettings,
 });
 

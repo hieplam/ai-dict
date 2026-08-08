@@ -43,6 +43,15 @@ async function captureLookup(
     const raw = route.request().postData() ?? '';
     sentPrompt = (JSON.parse(raw) as { contents: { parts: { text: string }[] }[] }).contents[0]
       .parts[0].text;
+    const isStream = route.request().url().includes(':streamGenerateContent');
+    if (isStream) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: `data: ${GEMINI_OK_BODY}\n\n`,
+      });
+      return;
+    }
     await route.fulfill({ status: 200, contentType: 'application/json', body: GEMINI_OK_BODY });
   });
   const page = await context.newPage();
@@ -143,6 +152,15 @@ test('a blank Card format still yields a valid lookup with constraints intact', 
     const raw = route.request().postData() ?? '';
     sentPrompt = (JSON.parse(raw) as { contents: { parts: { text: string }[] }[] }).contents[0]
       .parts[0].text;
+    const isStream = route.request().url().includes(':streamGenerateContent');
+    if (isStream) {
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: `data: ${GEMINI_OK_BODY}\n\n`,
+      });
+      return;
+    }
     await route.fulfill({ status: 200, contentType: 'application/json', body: GEMINI_OK_BODY });
   });
 

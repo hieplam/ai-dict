@@ -352,6 +352,44 @@ describe('GeminiLookupClient', () => {
     expect(err).toMatchObject({ code: 'NETWORK', httpStatus: 503, vendorStatus: 'UNAVAILABLE' });
     expect((err as { vendorMessage?: string }).vendorMessage).toContain('overloaded');
   });
+
+  it('with opts.onChunk, dispatches to the streaming endpoint (A1)', async () => {
+    const fetchImpl: FetchLike = vi.fn(() =>
+      Promise.resolve({
+        ok: true,
+        status: 200,
+        headers: { get: () => null },
+        json: () => Promise.reject(new Error('non-streaming path should not be used')),
+        body: new ReadableStream({
+          start(controller) {
+            const chunk =
+              'data: ' +
+              JSON.stringify({ candidates: [{ content: { parts: [{ text: '# def' }] } }] }) +
+              '\n\n';
+            controller.enqueue(new TextEncoder().encode(chunk));
+            controller.close();
+          },
+        }),
+      } as unknown as ReturnType<FetchLike> extends Promise<infer R> ? R : never),
+    );
+    const c = client(fetchImpl);
+    const result = await c.lookup(req, { onChunk: vi.fn() });
+    expect(result.markdown).toBe('# def');
+    expect(fetchImpl).toHaveBeenCalledWith(
+      expect.stringContaining(':streamGenerateContent?alt=sse'),
+      expect.anything(),
+    );
+  });
+
+  it('with no opts.onChunk, still uses the unchanged non-streaming endpoint (A1 regression guard)', async () => {
+    const fetchImpl = vi.fn(() => Promise.resolve(res({ ok: true, status: 200, body: okBody })));
+    const c = client(fetchImpl);
+    await c.lookup(req);
+    expect(fetchImpl).toHaveBeenCalledWith(
+      expect.not.stringContaining('streamGenerateContent'),
+      expect.anything(),
+    );
+  });
 });
 
 describe('A8 idiom expansion via runHttpLookup', () => {

@@ -59,6 +59,13 @@ export type CardState =
        * test/legacy CardState literals that predate this field. */
       fromCache?: boolean;
     }
+  | {
+      kind: 'streaming';
+      word: string;
+      safeHtml: SafeHtml;
+      /** A8: shown as soon as the header resolves; same shape as the 'result' variant's field. */
+      definedAs?: { term: string; isIdiom: boolean };
+    }
   | { kind: 'error'; error: LookupError };
 
 /** Display names for each provider — the ONLY user-facing provider wording on the card. */
@@ -297,6 +304,19 @@ export function renderCardState(state: CardState): Node[] {
       return [h, p, settingsCta('Fix key in Settings', { fixKey: true })];
     return [h, p];
   }
+  if (state.kind === 'streaming') {
+    const h = document.createElement('h2');
+    h.textContent = state.word;
+    const body = document.createElement('div');
+    body.innerHTML = state.safeHtml; // trusted: sanitized upstream (S4)
+    const nodes: Node[] = [h];
+    // A8: label only, no "Show literal word" button — a re-run mid-stream would start a second,
+    // overlapping fetch (design spec §4.8).
+    const definedAsRow = state.definedAs ? renderDefinedAsRow(state.definedAs, false) : null;
+    if (definedAsRow) nodes.push(definedAsRow);
+    nodes.push(body);
+    return nodes;
+  }
   const h = document.createElement('h2');
   h.textContent = state.word;
   const body = document.createElement('div');
@@ -320,21 +340,27 @@ export function renderCardState(state: CardState): Node[] {
  * label (the headword already says the word), so this returns null for `isIdiom: false` —
  * avoiding noise for the overwhelmingly common non-idiom case.
  */
-function renderDefinedAsRow(definedAs: { term: string; isIdiom: boolean }): HTMLElement | null {
+function renderDefinedAsRow(
+  definedAs: { term: string; isIdiom: boolean },
+  interactive = true,
+): HTMLElement | null {
   if (!definedAs.isIdiom) return null;
   const row = document.createElement('div');
   row.className = 'defined-as';
   const label = document.createElement('span');
   label.className = 'defined-as__label';
   label.textContent = `Defined as "${definedAs.term}" (idiom)`;
-  const btn = document.createElement('button');
-  btn.type = 'button';
-  btn.className = 'defined-as__literal-btn';
-  btn.textContent = 'Show literal word';
-  btn.addEventListener('click', () =>
-    btn.dispatchEvent(new CustomEvent('force-literal', { bubbles: true, composed: true })),
-  );
-  row.append(label, btn);
+  row.append(label);
+  if (interactive) {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'defined-as__literal-btn';
+    btn.textContent = 'Show literal word';
+    btn.addEventListener('click', () =>
+      btn.dispatchEvent(new CustomEvent('force-literal', { bubbles: true, composed: true })),
+    );
+    row.append(btn);
+  }
   return row;
 }
 
@@ -644,6 +670,25 @@ export class LookupCard extends HTMLElement {
     // overwriting it here (the MAIN-world upgrade can run after that write) would clobber
     // an already-rendered result back to "Looking up…".
     if (this.childNodes.length === 0) this.renderState();
+  }
+
+  static get observedAttributes(): string[] {
+    return ['data-streaming'];
+  }
+
+  /**
+   * A1: while streaming, the light-DOM content inside the shadow region's aria-live="polite"
+   * wrapper mutates far too often (throttled to ~80ms, inline-bottom-sheet-renderer.ts) for a
+   * screen reader to usefully announce every change — flip the live region to aria-live="off" for
+   * the duration and back to "polite" the instant a terminal state renders. data-streaming is a
+   * shared-DOM ATTRIBUTE (crosses the MV3 MAIN/isolated-world boundary, unlike a JS property —
+   * same fact data-ad-theme already relies on, see inline-bottom-sheet-renderer.ts's theme setter).
+   */
+  attributeChangedCallback(name: string, _old: string | null, next: string | null): void {
+    if (name !== 'data-streaming' || !this.shadowRoot) return;
+    this.shadowRoot
+      .querySelector('.region')
+      ?.setAttribute('aria-live', next !== null ? 'off' : 'polite');
   }
 
   private actionButton(

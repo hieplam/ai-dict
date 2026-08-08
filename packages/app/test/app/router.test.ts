@@ -30,7 +30,13 @@ const req = {
 };
 const lookupMsg = (requestId: string): WireMessage => ({ type: 'lookup', req, requestId });
 
-type LookupFn = (req: LookupRequest, opts?: { signal?: AbortSignal }) => Promise<LookupResult>;
+type LookupFn = (
+  req: LookupRequest,
+  opts?: {
+    signal?: AbortSignal;
+    onChunk?: (markdownSoFar: string, definedAs?: { term: string; isIdiom: boolean }) => void;
+  },
+) => Promise<LookupResult>;
 type LookupMock = ReturnType<typeof vi.fn<LookupFn>>;
 
 function makeLookupMock(impl: LookupFn = () => Promise.resolve(result)): LookupMock {
@@ -852,6 +858,73 @@ describe('buildRouter', () => {
     if (reply === SUPPRESS || !reply.ok || reply.type !== 'saved.list')
       throw new Error('unexpected');
     expect(reply.entries).toEqual([]);
+  });
+
+  it('forwards client.lookup onChunk calls to deps.onLookupChunk, keyed by requestId (A1)', async () => {
+    const onLookupChunk = vi.fn();
+    const d = deps({
+      client: {
+        lookup: makeLookupMock((_req, opts) => {
+          opts?.onChunk?.('partial one');
+          opts?.onChunk?.('partial one two');
+          return Promise.resolve(result);
+        }),
+      },
+    });
+    const router = buildRouter({ ...d, onLookupChunk });
+    await router(lookupMsg('r1'));
+    expect(onLookupChunk).toHaveBeenNthCalledWith(1, 'r1', 'partial one', undefined);
+    expect(onLookupChunk).toHaveBeenNthCalledWith(2, 'r1', 'partial one two', undefined);
+  });
+
+  it('never forwards a chunk for a requestId that lookup.cancel already marked cancelled (A1)', async () => {
+    const onLookupChunk = vi.fn();
+    let capturedOnChunk: ((md: string) => void) | undefined;
+    const d = deps({
+      client: {
+        lookup: makeLookupMock((_req, opts) => {
+          capturedOnChunk = opts?.onChunk;
+          return new Promise(() => {}); // never resolves; cancel fires while this is in flight
+        }),
+      },
+    });
+    const router = buildRouter({ ...d, onLookupChunk });
+    void router(lookupMsg('r2'));
+    await Promise.resolve(); // let handleLookup register the controller + reach client.lookup
+    void router({ type: 'lookup.cancel', requestId: 'r2' });
+    capturedOnChunk?.('should not be forwarded');
+    expect(onLookupChunk).not.toHaveBeenCalled();
+  });
+
+  it('A1 regression guard: when deps.onLookupChunk is undefined, client.lookup receives NO onChunk key at all', async () => {
+    let capturedOpts: Record<string, unknown> | undefined;
+    const d = deps({
+      client: {
+        lookup: makeLookupMock((_req, opts) => {
+          capturedOpts = opts;
+          return Promise.resolve(result);
+        }),
+      },
+    });
+    // No onLookupChunk in deps — this is the Safari-shell / pre-Task-8-Chrome shape.
+    const router = buildRouter(d);
+    await router(lookupMsg('r3'));
+    expect('onChunk' in (capturedOpts ?? {})).toBe(false);
+  });
+
+  it('when deps.onLookupChunk IS provided, client.lookup receives a function onChunk', async () => {
+    let capturedOpts: Record<string, unknown> | undefined;
+    const d = deps({
+      client: {
+        lookup: makeLookupMock((_req, opts) => {
+          capturedOpts = opts;
+          return Promise.resolve(result);
+        }),
+      },
+    });
+    const router = buildRouter({ ...d, onLookupChunk: vi.fn() });
+    await router(lookupMsg('r4'));
+    expect(typeof capturedOpts?.['onChunk']).toBe('function');
   });
 });
 

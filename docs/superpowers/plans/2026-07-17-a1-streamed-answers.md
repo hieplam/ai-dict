@@ -104,7 +104,7 @@ interface LookupChunkMessage {
 function isLookupChunkMessage(msg: unknown): msg is LookupChunkMessage;
 ```
 
-- [ ] **Step 1: Write the failing test.** Create `packages/app/test/app/lookup-chunk-message.test.ts`:
+- [x] **Step 1: Write the failing test.** Create `packages/app/test/app/lookup-chunk-message.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -148,7 +148,7 @@ describe('lookup chunk message guard (A1)', () => {
 Run: `cd packages/app && bunx vitest run test/app/lookup-chunk-message.test.ts`
 Expected: failure — `../../src/app/lookup-chunk-message` does not exist.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/app/lookup-chunk-message.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/app/lookup-chunk-message.ts`:
 
 ```ts
 /**
@@ -239,7 +239,7 @@ Run: `cd packages/app && bunx vitest run test/app/lookup-chunk-message.test.ts &
 Expected: the new test file passes (4 tests); typecheck clean (no existing `LookupClient`/
 `ResultRenderer` implementer breaks, since both new members are optional).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -283,7 +283,7 @@ export function runGeminiStreamingLookup(
 ): Promise<LookupResult>;
 ```
 
-- [ ] **Step 1: Write the failing tests.** First, extend `ResponseLike` usage: this test needs a
+- [x] **Step 1: Write the failing tests.** First, extend `ResponseLike` usage: this test needs a
       fake `Response`-shaped object exposing a real `ReadableStream<Uint8Array>` as `.body`, which
       `http-lookup-client.ts`'s existing `ResponseLike` (`.json()` only) does not model — this test
       file defines its own local fake shape, it does not modify `http-lookup-client.ts`. Create
@@ -447,7 +447,7 @@ Expected: failure — `../../src/app/gemini-streaming` does not exist. (Delete t
 helper above before implementing if the linter flags it as dead code — it is left from drafting
 and is not referenced by any test; remove it.)
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/app/gemini-streaming.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/app/gemini-streaming.ts`:
 
 ```ts
 import {
@@ -655,7 +655,7 @@ unused `client()` helper from the test file drafted in Step 1 if the linter flag
 Run: `cd packages/app && bunx vitest run test/app/gemini-streaming.test.ts`
 Expected: all 6 tests pass.
 
-- [ ] **Step 3: Wire `GeminiLookupClient` to dispatch to it.** Modify
+- [x] **Step 3: Wire `GeminiLookupClient` to dispatch to it.** Modify
       `packages/app/src/app/gemini-lookup-client.ts` in full:
 
 ```ts
@@ -736,7 +736,7 @@ export class GeminiLookupClient implements LookupClient {
 }
 ```
 
-- [ ] **Step 4: Extend `gemini-lookup-client.test.ts`.** Add, inside the existing top-level
+- [x] **Step 4: Extend `gemini-lookup-client.test.ts`.** Add, inside the existing top-level
       `describe` block (after the existing tests, do not remove or modify any of them — they are
       the regression guard proving the non-streaming path is unchanged):
 
@@ -795,7 +795,7 @@ Modify `packages/app/src/index.ts`: add, right after
 export * from './app/gemini-streaming';
 ```
 
-- [ ] **Step 5: Commit** — gate, then commit:
+- [x] **Step 5: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -834,7 +834,7 @@ interface RouterDeps {
 }
 ```
 
-- [ ] **Step 1: Write the failing test.** Add, inside `router.test.ts`'s existing `describe`
+- [x] **Step 1: Write the failing test.** Add, inside `router.test.ts`'s existing `describe`
       block:
 
 ```ts
@@ -911,7 +911,7 @@ Expected: failures — `onLookupChunk` is never called (not wired yet), and the 
 no onChunk key" regression guard fails because the current unconditional wiring always attaches an
 `onChunk` key.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/router.ts`, add to `RouterDeps` (currently
+- [x] **Step 2: Implement.** In `packages/app/src/app/router.ts`, add to `RouterDeps` (currently
       lines 41-71), right after the existing `now?` field:
 
 ```ts
@@ -954,7 +954,7 @@ const result = await deps.client.lookup(req, {
 Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: all tests pass, including every pre-existing test in this file unmodified.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -978,7 +978,7 @@ git commit -m "feat: streamed answers — router onLookupChunk wiring (A1)" \
 - Modify: `packages/app/test/fakes/index.ts`
 - Modify: `packages/app/test/workflow.test.ts`
 
-- [ ] **Step 1: Extend the shared fake first (needed by the failing test) — TARGETED, ADDITIVE
+- [x] **Step 1: Extend the shared fake first (needed by the failing test) — TARGETED, ADDITIVE
       hunks only. Never paste a full class-body copy.**
 
   > **⚠ Shared-file warning:** `test/fakes/index.ts`'s `FakeResultRenderer` is also modified by
@@ -1022,7 +1022,7 @@ Neither hunk touches `renderLoading`, `renderResult`, `renderError`, or `close`'
 bodies — if A5 already widened `renderLoading`'s signature or added `loadingAnchor` here, this
 step leaves that untouched.
 
-- [ ] **Step 2: Write the failing test.** Add, inside `workflow.test.ts`'s existing `describe('runLookupWorkflow', ...)`
+- [x] **Step 2: Write the failing test.** Add, inside `workflow.test.ts`'s existing `describe('runLookupWorkflow', ...)`
       block:
 
 ```ts
@@ -1120,7 +1120,7 @@ them verbatim; do not redefine.)
 Run: `cd packages/app && bunx vitest run test/workflow.test.ts`
 Expected: failures — `renderer.partials` stays empty (not wired yet).
 
-- [ ] **Step 3: Implement.** In `packages/app/src/domain/workflow.ts`, replace the single line
+- [x] **Step 3: Implement.** In `packages/app/src/domain/workflow.ts`, replace the single line
       `const result = await deps.client.lookup(req, { signal: controller.signal });` (currently
       line 80) with:
 
@@ -1139,7 +1139,7 @@ const result = await deps.client.lookup(req, {
 Run: `cd packages/app && bunx vitest run test/workflow.test.ts`
 Expected: all tests pass, including every pre-existing test in this file unmodified.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -1177,7 +1177,7 @@ type CardState =
   | { kind: 'error'; error: LookupError };
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add, inside `lookup-card.test.ts`'s existing top-level
+- [x] **Step 1: Write the failing tests.** Add, inside `lookup-card.test.ts`'s existing top-level
       `describe` block (check the file's existing helper for building a sanitized-looking
       `SafeHtml` test value and reuse it — do not hand-cast a raw string without going through
       that helper's pattern):
@@ -1233,7 +1233,7 @@ Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: failures — the `'streaming'` kind doesn't type-check/render, and the `data-streaming`
 attribute has no observed effect yet.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
 
 1. Extend the `CardState` union (currently lines 30-55) — insert a new member between the
    `'result'` and `'error'` variants:
@@ -1322,7 +1322,7 @@ if (state.kind === 'streaming') {
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all tests pass, including every pre-existing test in this file unmodified.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -1363,7 +1363,7 @@ class InlineBottomSheetRenderer implements ResultRenderer {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add, inside `inline-bottom-sheet-renderer.test.ts`'s
+- [x] **Step 1: Write the failing tests.** Add, inside `inline-bottom-sheet-renderer.test.ts`'s
       existing `describe` block:
 
 ```ts
@@ -1422,7 +1422,7 @@ describe('renderPartial (A1)', () => {
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: failures — `renderPartial` does not exist yet.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`:
 
 1. Extend the constructor and add the throttle field, right after the existing `lastState` field
    declaration (currently line 24):
@@ -1496,7 +1496,7 @@ this.card?.toggleAttribute('data-streaming', false);
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: all tests pass, including every pre-existing test in this file unmodified.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -1534,7 +1534,7 @@ class MessageRelayLookupClient {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add, inside `message-relay-lookup-client.test.ts`'s
+- [x] **Step 1: Write the failing tests.** Add, inside `message-relay-lookup-client.test.ts`'s
       existing `describe` block:
 
 ```ts
@@ -1608,7 +1608,7 @@ it('never registers a listener when opts.onChunk is not passed', async () => {
 Run: `cd packages/app && bunx vitest run test/app/message-relay-lookup-client.test.ts`
 Expected: failures — the 3-arg constructor and `onChunk` wiring don't exist yet.
 
-- [ ] **Step 2: Implement.** Replace `packages/app/src/app/message-relay-lookup-client.ts` in
+- [x] **Step 2: Implement.** Replace `packages/app/src/app/message-relay-lookup-client.ts` in
       full:
 
 ```ts
@@ -1714,7 +1714,7 @@ Expected: all tests pass, including every pre-existing test in this file unmodif
 construct `MessageRelayLookupClient` with only `{ sendMessage }`, which still satisfies
 `RuntimeLike` since `onMessage`/`extensionId` are both optional).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -1745,7 +1745,7 @@ are composition roots, covered by e2e only — same precedent C2's plan document
 This task's correctness there is proven by Task 9's e2e; `chrome-side-panel-mirror.ts` DOES have a
 dedicated unit test file and gets one here.
 
-- [ ] **Step 1: `chrome-side-panel-mirror.ts` — TDD the one piece with a unit test.** Add, inside
+- [x] **Step 1: `chrome-side-panel-mirror.ts` — TDD the one piece with a unit test.** Add, inside
       `chrome-side-panel-mirror.test.ts`'s existing `describe` block:
 
 ```ts
@@ -1822,7 +1822,7 @@ export class ChromeSidePanelMirror implements ResultRenderer {
 Run: `cd packages/extension-chrome && bunx vitest run src/adapters/chrome-side-panel-mirror.test.ts`
 Expected: all tests pass, including every pre-existing test in this file unmodified.
 
-- [ ] **Step 2: `sw.ts` — the requestId→tab push.** In `packages/extension-chrome/src/sw.ts`:
+- [x] **Step 2: `sw.ts` — the requestId→tab push.** In `packages/extension-chrome/src/sw.ts`:
 
 1. Add, right after the existing `let lastSidePanelFocus: SidePanelFocus | null = null;` (line 33):
 
@@ -1891,7 +1891,7 @@ if (
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 3: `content.ts` — fan `renderPartial` out to both surfaces.** In
+- [x] **Step 3: `content.ts` — fan `renderPartial` out to both surfaces.** In
       `packages/extension-chrome/src/content.ts`, add a key to the existing renderer object literal
       passed to `runLookupWorkflow({...})` (currently `content.ts:76-113`), right after the
       existing `renderLoading(word) { ... }` method:
@@ -1905,7 +1905,7 @@ Expected: clean.
     },
 ```
 
-- [ ] **Step 4: `side-panel.ts` — receive the streaming broadcast.** In
+- [x] **Step 4: `side-panel.ts` — receive the streaming broadcast.** In
       `packages/extension-chrome/src/side-panel.ts`, extend the existing
       `chrome.runtime.onMessage.addListener((msg, sender) => {...})` handler (currently lines
       237-275): widen its inline `msg` type annotation to add `markdown?: unknown` and
@@ -1933,7 +1933,7 @@ Expected: clean.
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 5: Commit** — gate, then commit:
+- [x] **Step 5: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1956,7 +1956,7 @@ git commit -m "feat: streamed answers — Chrome SW->content->panel chunk transp
 - Modify: `packages/extension-chrome/e2e/helpers.ts`
 - Create: `packages/extension-chrome/e2e/a1-streamed-answers.spec.ts`
 
-- [ ] **Step 1: Add a streaming mock helper.** In `packages/extension-chrome/e2e/helpers.ts`, add,
+- [x] **Step 1: Add a streaming mock helper.** In `packages/extension-chrome/e2e/helpers.ts`, add,
       near the existing `mockGemini` export:
 
 ```ts
@@ -1985,7 +1985,7 @@ export async function mockGeminiStream(
 (Match this file's existing import style — `BrowserContext` is already imported from
 `@playwright/test` at the top of `helpers.ts`; reuse it, do not re-import.)
 
-- [ ] **Step 2: Write the e2e spec.** Create
+- [x] **Step 2: Write the e2e spec.** Create
       `packages/extension-chrome/e2e/a1-streamed-answers.spec.ts`:
 
 ```ts
@@ -2066,7 +2066,7 @@ waiting on an outstanding request during teardown, replace the never-resolving r
 `lookup.cancel` fires from the workflow's own `inFlight?.abort()` before the first request would
 otherwise be awaited to completion; either form proves the same functional guarantee.)
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome

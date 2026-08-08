@@ -77,7 +77,15 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
     // single-word reading (one-shot).
     if (forceLiteral) req.forceLiteral = true;
     try {
-      const result = await deps.client.lookup(req, { signal: controller.signal });
+      const result = await deps.client.lookup(req, {
+        signal: controller.signal,
+        // A1: forward streaming previews to the renderer, guarded exactly like the terminal
+        // renderResult call three lines below — a chunk that resolves after a NEWER selection has
+        // already aborted this run must never repaint a stale card.
+        onChunk: (md, definedAs) => {
+          if (!controller.signal.aborted) deps.renderer.renderPartial?.(e.text, md, definedAs);
+        },
+      });
       // Offer the one-shot picker only when there's more than one provider to choose from.
       const showPicker = settings.configuredProviders.length >= 2;
       // A8: offer the "Show literal word" override only when THIS result is an idiom.

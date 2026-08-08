@@ -338,4 +338,94 @@ describe('runLookupWorkflow', () => {
     h.trigger.click(); // allowed: 2000-0 >= 2000
     await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
   });
+
+  it('forwards client.lookup onChunk calls to renderer.renderPartial with the selected word (A1)', async () => {
+    const renderer = new FakeResultRenderer();
+    const client = new FakeLookupClient((_req, opts) => {
+      opts?.onChunk?.('partial def', undefined);
+      return Promise.resolve({
+        markdown: 'full def',
+        word: 'bank',
+        target: 'vi',
+        model: 'gemini-2.5-flash',
+        fromCache: false,
+        fetchedAt: 1,
+      });
+    });
+    const selection = new FakeSelectionSource();
+    const trigger = new FakeTriggerUI();
+    const settings = new FakeSettingsStore({
+      targetLang: 'vi',
+      outputFormat: 'tpl',
+      promptEnvelope: '',
+      hasKey: true,
+      theme: 'sepia',
+      configuredProviders: ['gemini'],
+      highlightSavedWords: true,
+    });
+    runLookupWorkflow({ selection, trigger, renderer, client, settings });
+    selection.emit({
+      text: 'bank',
+      sentence: 'river bank',
+      url: '',
+      title: '',
+      anchor: { x: 0, y: 0, w: 0, h: 0 },
+    });
+    trigger.click();
+    await vi.waitFor(() => expect(renderer.calls).toContain('result'));
+    expect(renderer.partials).toEqual([['bank', 'partial def', undefined]]);
+  });
+
+  it('drops a chunk that resolves after a newer selection has aborted this run (A1)', async () => {
+    const renderer = new FakeResultRenderer();
+    let capturedOnChunk: ((md: string) => void) | undefined;
+    let t = 0;
+    const client = new FakeLookupClient((req, opts) => {
+      if (req.word === 'first') {
+        capturedOnChunk = opts?.onChunk;
+        return new Promise(() => {}); // never resolves; superseded before it would
+      }
+      return Promise.resolve({
+        markdown: 'second def',
+        word: 'second',
+        target: 'vi',
+        model: 'gemini-2.5-flash',
+        fromCache: false,
+        fetchedAt: 1,
+      });
+    });
+    const selection = new FakeSelectionSource();
+    const trigger = new FakeTriggerUI();
+    const settings = new FakeSettingsStore({
+      targetLang: 'vi',
+      outputFormat: 'tpl',
+      promptEnvelope: '',
+      hasKey: true,
+      theme: 'sepia',
+      configuredProviders: ['gemini'],
+      highlightSavedWords: true,
+    });
+    runLookupWorkflow({ selection, trigger, renderer, client, settings, now: () => t });
+    selection.emit({
+      text: 'first',
+      sentence: 's',
+      url: '',
+      title: '',
+      anchor: { x: 0, y: 0, w: 0, h: 0 },
+    });
+    trigger.click(); // lookup "first" at t=0
+    await Promise.resolve();
+    t = COOLDOWN_MS; // advance past the cooldown so "second" is a genuine new lookup, not blocked
+    selection.emit({
+      text: 'second',
+      sentence: 's',
+      url: '',
+      title: '',
+      anchor: { x: 0, y: 0, w: 0, h: 0 },
+    });
+    trigger.click(); // lookup "second" -> aborts "first"
+    await vi.waitFor(() => expect(renderer.calls).toContain('result'));
+    capturedOnChunk?.('stale, should not render');
+    expect(renderer.partials).toEqual([]);
+  });
 });
