@@ -13,6 +13,13 @@ export interface SelectionEvent {
   title: string;
 }
 
+/**
+ * A3: the fixed v1 refine chip kinds — one-shot re-runs of a lookup asking for a different cut
+ * of the same answer. B13 (a later, separate card) appends 'related' to this union — see the A3
+ * design spec §2.8 for the full extension-point contract. Do not add 'related' here.
+ */
+export type RefineKind = 'simpler' | 'examples' | 'etymology' | 'usage';
+
 export interface LookupRequest {
   word: string;
   context: string;
@@ -36,6 +43,13 @@ export interface LookupRequest {
    * above — a hit would echo back the smart idiom-aware answer instead.
    */
   forceLiteral?: boolean | undefined;
+  /**
+   * A3: one-shot request to answer with a specific refinement (simpler wording, more examples,
+   * etymology, or usage guidance) instead of the default answer. Re-runs the SAME selection
+   * once; does not persist. The router skips the cache read for the same reason as `provider`/
+   * `forceLiteral` above — a hit would echo back the original (unrefined) answer.
+   */
+  refine?: RefineKind | undefined;
 }
 
 export interface LookupResult {

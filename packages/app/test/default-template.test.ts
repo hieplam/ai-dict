@@ -5,6 +5,7 @@ import {
   IDIOM_AUTO_INSTRUCTION,
   IDIOM_FORCE_LITERAL_INSTRUCTION,
   TRANSLATION_INSTRUCTION,
+  REFINE_INSTRUCTIONS,
 } from '../src/domain/default-template';
 
 describe('PROMPT_ENVELOPE', () => {
@@ -64,5 +65,29 @@ describe('TRANSLATION_INSTRUCTION', () => {
     expect(TRANSLATION_INSTRUCTION).toContain('TRANSLATION:');
     expect(TRANSLATION_INSTRUCTION).toContain('{word}');
     expect(TRANSLATION_INSTRUCTION).toContain('{target_lang}');
+  });
+});
+
+describe('PROMPT_ENVELOPE (A3 refine slot)', () => {
+  it('carries the {refine_instruction} placeholder', () => {
+    expect(PROMPT_ENVELOPE).toContain('{refine_instruction}');
+  });
+});
+
+describe('REFINE_INSTRUCTIONS', () => {
+  it('has exactly the 4 v1 refine kinds, each a non-empty string', () => {
+    expect(Object.keys(REFINE_INSTRUCTIONS).sort()).toEqual([
+      'etymology',
+      'examples',
+      'simpler',
+      'usage',
+    ]);
+    for (const text of Object.values(REFINE_INSTRUCTIONS)) {
+      expect(text.length).toBeGreaterThan(0);
+    }
+  });
+  it('examples and usage each mention {word}', () => {
+    expect(REFINE_INSTRUCTIONS.examples).toContain('{word}');
+    expect(REFINE_INSTRUCTIONS.usage).toContain('{word}');
   });
 });

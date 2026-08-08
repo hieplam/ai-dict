@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { renderTemplate, buildPrompt } from '../src/domain/prompt-template';
-import { DEFAULT_OUTPUT_FORMAT } from '../src/domain/default-template';
+import { DEFAULT_OUTPUT_FORMAT, REFINE_INSTRUCTIONS } from '../src/domain/default-template';
+import type { RefineKind } from '../src/domain/types';
 
 describe('renderTemplate', () => {
   const vars = {
@@ -165,5 +166,42 @@ describe('buildPrompt translation instruction (B2)', () => {
     expect(out).toContain('TRANSLATION:');
     expect(out).toContain('bank');
     expect(out).toContain('Vietnamese');
+  });
+});
+
+describe('buildPrompt (A3 refine slot)', () => {
+  const vars = {
+    word: 'bank',
+    context: 'I sat on the grassy bank of the river.',
+    target_lang: 'Vietnamese',
+  };
+
+  it('with no refine argument, the prompt contains none of the REFINE_INSTRUCTIONS texts', () => {
+    const out = buildPrompt('FMT', vars);
+    for (const text of Object.values(REFINE_INSTRUCTIONS)) {
+      expect(out).not.toContain(text.replace(/\{word\}/g, 'bank'));
+    }
+  });
+
+  it('buildPrompt(..., undefined, undefined, "simpler") includes the simpler instruction and no other', () => {
+    const out = buildPrompt('FMT', vars, undefined, undefined, 'simpler');
+    expect(out).toContain(REFINE_INSTRUCTIONS.simpler);
+    expect(out).not.toContain(REFINE_INSTRUCTIONS.examples.replace(/\{word\}/g, 'bank'));
+    expect(out).not.toContain(REFINE_INSTRUCTIONS.etymology);
+    expect(out).not.toContain(REFINE_INSTRUCTIONS.usage.replace(/\{word\}/g, 'bank'));
+  });
+
+  it('each of the 4 refine kinds produces its own distinct instruction', () => {
+    for (const kind of Object.keys(REFINE_INSTRUCTIONS) as RefineKind[]) {
+      const out = buildPrompt('FMT', vars, undefined, undefined, kind);
+      expect(out).toContain(REFINE_INSTRUCTIONS[kind].replace(/\{word\}/g, 'bank'));
+    }
+  });
+
+  it('a custom envelope without {refine_instruction} is unaffected by a refine value', () => {
+    const envelope = 'ENV {word} >>{output_format}<<';
+    expect(buildPrompt('FMT', vars, envelope, undefined, 'simpler')).toBe(
+      buildPrompt('FMT', vars, envelope),
+    );
   });
 });

@@ -11,6 +11,8 @@
  * Domain-pure: zero imports (rule-domain-purity).
  */
 
+import type { RefineKind } from './types';
+
 export const PROMPT_ENVELOPE = `You are a bilingual dictionary for {target_lang} learners of English.
 Word/phrase: "{word}"
 Sentence context: "{context}"
@@ -19,6 +21,8 @@ Page title: "{title}"
 {idiom_instruction}
 
 {translation_instruction}
+
+{refine_instruction}
 
 Output Markdown with these sections, in this exact order:
 {output_format}
@@ -63,3 +67,16 @@ DEFINED_AS: "{word}" | literal`;
  */
 export const TRANSLATION_INSTRUCTION = `Immediately after the DEFINED_AS line, before any other output, also emit exactly this line:
 TRANSLATION: "<a natural, concise {target_lang} translation of the meaning of "{word}" in this context>"`;
+
+/**
+ * A3 — follow-up chips. One instruction per fixed v1 refine kind, substituted into
+ * PROMPT_ENVELOPE's {refine_instruction} slot by buildPrompt when LookupRequest.refine is set.
+ * Pinned copy — see the A3 design spec §2.2. `examples`/`usage` reference "{word}"; the other two
+ * do not need to.
+ */
+export const REFINE_INSTRUCTIONS: Record<RefineKind, string> = {
+  simpler: `The reader found the previous explanation too difficult. Rewrite the "Eng -> Eng" explanation using SIMPLER, plainer everyday language — short sentences, common words, no jargon — while keeping the meaning accurate for this sentence context.`,
+  examples: `The reader wants MORE EXAMPLES. In addition to the normal sections, add a new "**More examples**" section with 2-3 additional short example sentences that use "{word}" naturally in DIFFERENT contexts from the original sentence.`,
+  etymology: `The reader wants this word's ETYMOLOGY. In addition to the normal sections, add a new "**Etymology**" section explaining the word's origin, root language, and how its meaning evolved to today's usage.`,
+  usage: `The reader wants to know how to USE this word. In addition to the normal sections, add a new "**How to use it**" section covering common collocations, register (formal/informal), and one short natural example sentence using "{word}".`,
+};

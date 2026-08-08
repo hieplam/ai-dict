@@ -94,7 +94,7 @@ export function buildPrompt(
 ): string; // domain/prompt-template.ts — 5th param, appended last
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/default-template.test.ts`, after the existing
 `describe('TRANSLATION_INSTRUCTION', ...)` block:
@@ -198,7 +198,7 @@ cd packages/app && bunx vitest run test/default-template.test.ts test/prompt-tem
 Expected: failures — `REFINE_INSTRUCTIONS` is not exported, `{refine_instruction}` not found in
 `PROMPT_ENVELOPE`, `buildPrompt`'s 5th argument has no effect yet.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/domain/types.ts`, add near the top-level type exports (a natural place is
 right before the `LookupRequest` interface, since `RefineKind` is used inside it):
@@ -332,7 +332,7 @@ cd packages/app && bunx vitest run test/default-template.test.ts test/prompt-tem
 
 Expected: all tests pass (existing + the new ones added in Step 1).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
