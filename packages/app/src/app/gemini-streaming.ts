@@ -97,6 +97,7 @@ export async function runGeminiStreamingLookup(
     },
     req.promptEnvelope,
     req.forceLiteral,
+    req.refine,
   );
   const body = spec.body(prompt, spec.model);
 
