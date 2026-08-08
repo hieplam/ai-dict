@@ -6,6 +6,8 @@ import {
   historyClear,
   historyGet,
   historyDelete,
+  historyImportEntry,
+  historyReindex,
 } from '../src/domain/history-policy';
 import type { Storage, HistoryEntry } from '../src';
 
@@ -168,5 +170,56 @@ describe('history-policy', () => {
   it('historyListSince on empty history returns []', async () => {
     const s = memStorage();
     expect(await historyListSince({ storage: s }, 0)).toEqual([]);
+  });
+
+  it('historyImportEntry adds a new id and returns true', async () => {
+    const s = memStorage();
+    const added = await historyImportEntry({ storage: s }, entry('9'));
+    expect(added).toBe(true);
+    expect(await historyGet({ storage: s }, '9')).toEqual(entry('9'));
+  });
+
+  it('historyImportEntry skips an existing id and returns false, leaving it unchanged', async () => {
+    const s = memStorage();
+    await historyAppend({ storage: s }, entry('9'));
+    const added = await historyImportEntry({ storage: s }, { ...entry('9'), context: 'different' });
+    expect(added).toBe(false);
+    expect((await historyGet({ storage: s }, '9'))!.context).toBe(''); // original, unchanged
+  });
+
+  it('historyImportEntry respects the existing cap via historyAppend', async () => {
+    const s = memStorage();
+    await historyAppend({ storage: s, cap: 1 }, entry('1'));
+    await historyImportEntry({ storage: s, cap: 1 }, entry('2'));
+    const { entries } = await historyList({ storage: s }, {});
+    expect(entries.map((e) => e.id)).toEqual(['2']);
+  });
+
+  it('historyReindex sorts a scrambled index newest-first by createdAt', async () => {
+    const s = memStorage();
+    // Insertion order (newest-inserted-first, via historyAppend's prepend) does NOT match
+    // chronological createdAt order: index is currently ['2000', '3000', '1000'].
+    await historyAppend({ storage: s }, entry('1000'));
+    await historyAppend({ storage: s }, entry('3000'));
+    await historyAppend({ storage: s }, entry('2000'));
+    await historyReindex({ storage: s });
+    const { entries } = await historyList({ storage: s }, {});
+    expect(entries.map((e) => e.id)).toEqual(['3000', '2000', '1000']);
+  });
+
+  it('historyReindex is a no-op on an empty index', async () => {
+    const s = memStorage();
+    await expect(historyReindex({ storage: s })).resolves.toBeUndefined();
+    expect((await historyList({ storage: s }, {})).entries).toEqual([]);
+  });
+
+  it('historyReindex is a no-op on an already-sorted index', async () => {
+    const s = memStorage();
+    await historyAppend({ storage: s }, entry('3000'));
+    await historyAppend({ storage: s }, entry('2000'));
+    await historyAppend({ storage: s }, entry('1000'));
+    await historyReindex({ storage: s });
+    const { entries } = await historyList({ storage: s }, {});
+    expect(entries.map((e) => e.id)).toEqual(['3000', '2000', '1000']);
   });
 });

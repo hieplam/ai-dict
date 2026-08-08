@@ -243,6 +243,149 @@
         "properties": {
           "type": {
             "type": "string",
+            "const": "backup.import"
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "merge",
+              "replace"
+            ]
+          },
+          "savedWords": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "word": {
+                  "type": "string"
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "learning",
+                    "known"
+                  ]
+                },
+                "savedAt": {
+                  "type": "number"
+                },
+                "senses": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "definition": {
+                        "type": "string"
+                      },
+                      "translation": {
+                        "type": "string"
+                      },
+                      "sentence": {
+                        "type": "string"
+                      },
+                      "url": {
+                        "type": "string"
+                      },
+                      "title": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "definition",
+                      "translation",
+                      "sentence",
+                      "url",
+                      "title"
+                    ],
+                    "additionalProperties": false
+                  }
+                }
+              },
+              "required": [
+                "word",
+                "status",
+                "savedAt",
+                "senses"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "history": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "word": {
+                  "type": "string"
+                },
+                "context": {
+                  "type": "string"
+                },
+                "result": {
+                  "type": "object",
+                  "properties": {
+                    "markdown": {
+                      "type": "string"
+                    },
+                    "word": {
+                      "type": "string"
+                    },
+                    "target": {
+                      "type": "string"
+                    },
+                    "model": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "fromCache": {
+                      "type": "boolean"
+                    },
+                    "fetchedAt": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "markdown",
+                    "word",
+                    "target",
+                    "model",
+                    "fromCache",
+                    "fetchedAt"
+                  ],
+                  "additionalProperties": false
+                },
+                "createdAt": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "id",
+                "word",
+                "context",
+                "result",
+                "createdAt"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "type",
+          "mode",
+          "savedWords",
+          "history"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
             "const": "saved.learningWords"
           }
         },
@@ -814,6 +957,32 @@
           },
           "type": {
             "type": "string",
+            "const": "backup-imported"
+          },
+          "savedWordsImported": {
+            "type": "number"
+          },
+          "historyImported": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "savedWordsImported",
+          "historyImported"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
             "const": "savedWords"
           },
           "words": {
@@ -972,6 +1141,7 @@
               "saved.delete",
               "saved.setStatus",
               "saved.list",
+              "backup.import",
               "saved.learningWords",
               "saved.get"
             ]

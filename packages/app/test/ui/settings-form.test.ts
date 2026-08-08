@@ -1,6 +1,11 @@
 import { describe, it, expect, vi, beforeAll } from 'vitest';
 import { axeViolations } from './a11y';
-import { SettingsForm, ENV_KEY_NOTICE, type SettingsFormValue } from '../../src/ui/settings-form';
+import {
+  SettingsForm,
+  ENV_KEY_NOTICE,
+  type SettingsFormValue,
+  type BackupImportRequest,
+} from '../../src/ui/settings-form';
 import { registerSettingsForm } from '../../src/ui/register';
 import { DEFAULT_OUTPUT_FORMAT, PROMPT_ENVELOPE } from '../../src/domain/default-template';
 
@@ -822,7 +827,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
     }
   });
 
-  it('groups controls into Connection, Translation, Appearance, and Privacy & data sections', () => {
+  it('groups controls into Connection, Translation, Appearance, Privacy & data, Saved words, and Backup & restore sections', () => {
     const el = mountForm();
     const heads = [...el.shadowRoot!.querySelectorAll('.sec .sec-h')].map((h) => h.textContent);
     // 'Developer mode' is a hidden section (revealed only by the Konami code) sitting after Translation.
@@ -834,6 +839,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
       'Appearance',
       'Privacy & data',
       'Saved words',
+      'Backup & restore',
     ]);
   });
 
@@ -856,6 +862,10 @@ describe('<settings-form> fully themed (§5.8)', () => {
       '#export',
       '#key-help',
       '#status',
+      '#backup-export',
+      '#backup-import-merge',
+      '#backup-import-replace',
+      '#backup-file',
     ]) {
       expect(r.querySelector(sel), `${sel} must still exist`).not.toBeNull();
     }
@@ -1238,6 +1248,85 @@ describe('<settings-form> sticky save bar + dirty state (A16)', () => {
     el.value = val();
     el.shadowRoot!.querySelector('#tpl')!.dispatchEvent(new Event('input', { bubbles: true }));
     expect(await axeViolations(el)).toEqual([]);
+  });
+});
+
+describe('<settings-form> backup & restore (B9)', () => {
+  it('clicking Export backup dispatches a composed backup-export event', () => {
+    const el = mountForm();
+    let event: CustomEvent | undefined;
+    document.body.addEventListener('backup-export', (e) => {
+      event = e as CustomEvent;
+    });
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#backup-export')!.click();
+    expect(event).toBeDefined();
+    expect(event!.composed).toBe(true);
+  });
+
+  it('clicking Import (merge) opens the file picker with no confirm prompt', () => {
+    const el = mountForm();
+    const confirmSpy = vi.spyOn(window, 'confirm');
+    const clickSpy = vi.spyOn(HTMLInputElement.prototype, 'click');
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#backup-import-merge')!.click();
+    expect(confirmSpy).not.toHaveBeenCalled();
+    expect(clickSpy).toHaveBeenCalled();
+    confirmSpy.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it('choosing a file after Import (merge) dispatches backup-import with mode "merge"', () => {
+    const el = mountForm();
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#backup-import-merge')!.click();
+    const input = el.shadowRoot!.querySelector<HTMLInputElement>('#backup-file')!;
+    const file = new File(['{}'], 'backup.json', { type: 'application/json' });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    let captured: BackupImportRequest | undefined;
+    document.body.addEventListener('backup-import', (e) => {
+      captured = (e as CustomEvent<BackupImportRequest>).detail;
+    });
+    input.dispatchEvent(new Event('change'));
+    expect(captured?.mode).toBe('merge');
+    expect(captured?.file).toBe(file);
+  });
+
+  it('clicking Import (replace) prompts confirm(); a false answer never opens the file picker', () => {
+    const el = mountForm();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValueOnce(false);
+    const clickSpy = vi.spyOn(HTMLInputElement.prototype, 'click');
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#backup-import-replace')!.click();
+    expect(clickSpy).not.toHaveBeenCalled();
+    confirmSpy.mockRestore();
+    clickSpy.mockRestore();
+  });
+
+  it('clicking Import (replace) with a true confirm answer opens the picker and tags mode "replace"', () => {
+    const el = mountForm();
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValueOnce(true);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#backup-import-replace')!.click();
+    const input = el.shadowRoot!.querySelector<HTMLInputElement>('#backup-file')!;
+    const file = new File(['{}'], 'backup.json', { type: 'application/json' });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    let captured: BackupImportRequest | undefined;
+    document.body.addEventListener('backup-import', (e) => {
+      captured = (e as CustomEvent<BackupImportRequest>).detail;
+    });
+    input.dispatchEvent(new Event('change'));
+    expect(captured?.mode).toBe('replace');
+    confirmSpy.mockRestore();
+  });
+
+  it('the file input resets after change so choosing the same file twice fires backup-import twice', () => {
+    const el = mountForm();
+    const file = new File(['{}'], 'backup.json', { type: 'application/json' });
+    let count = 0;
+    document.body.addEventListener('backup-import', () => count++);
+    for (let i = 0; i < 2; i++) {
+      el.shadowRoot!.querySelector<HTMLButtonElement>('#backup-import-merge')!.click();
+      const input = el.shadowRoot!.querySelector<HTMLInputElement>('#backup-file')!;
+      Object.defineProperty(input, 'files', { value: [file], configurable: true });
+      input.dispatchEvent(new Event('change'));
+    }
+    expect(count).toBe(2);
   });
 });
 

@@ -836,7 +836,7 @@ git commit -m "[B9BackupRestore] feat: add buildBackupExport + parseBackupFile (
 { ok: true; type: 'backup-imported'; savedWordsImported: number; historyImported: number }
 ```
 
-- [ ] **Step 1: Write the failing wire-schema tests.** Append to
+- [x] **Step 1: Write the failing wire-schema tests.** Append to
       `packages/app/test/wire-schema.test.ts`, inside the existing `describe('wire-schema', ...)`
       block, just before its closing `});` (this file imports `WireMessageSchema, WireReplySchema,
 wireJsonSchema` from `'../src/wire'` at line 2 — no new import needed):
@@ -965,7 +965,7 @@ Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts`
 Expected: failures — the two new message types and reply variants don't parse (schemas don't
 exist yet).
 
-- [ ] **Step 2: Implement the wire schema.** In `packages/app/src/wire.ts`:
+- [x] **Step 2: Implement the wire schema.** In `packages/app/src/wire.ts`:
   1. Add the two non-strict Import\* schemas right after the existing strict
      `SavedWordEntrySchema` (currently ending at line 93):
 
@@ -1057,7 +1057,7 @@ z.object({
 Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts`
 Expected: all tests pass (existing + 7 new).
 
-- [ ] **Step 3: Write the failing router tests.** Append to `packages/app/test/app/router.test.ts`,
+- [x] **Step 3: Write the failing router tests.** Append to `packages/app/test/app/router.test.ts`,
       inside the `describe('buildRouter', ...)` block:
 
 ```ts
@@ -1140,7 +1140,7 @@ it('backup.import replace clears a pre-existing saved word not present in the im
 Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: failures — `saved.list`/`backup.import` cases don't exist in the router's switch yet.
 
-- [ ] **Step 4: Implement the router cases.** In `packages/app/src/app/router.ts`:
+- [x] **Step 4: Implement the router cases.** In `packages/app/src/app/router.ts`:
   1. Add `savedWordsList,` and `importBackup,` to the import block at the top of the file
      (`router.ts:1-24`). Verified by reading the file: `savedWordsList` is **not** already
      imported — `router.ts:13` is `savedWordUpsert,`, not `savedWordsList,`. Insert both names
@@ -1218,7 +1218,7 @@ export * from './app/backup';
 Run: `cd packages/app && bunx vitest run test/app/router.test.ts`
 Expected: all tests pass (existing + 3 new).
 
-- [ ] **Step 5: Full-package check.**
+- [x] **Step 5: Full-package check.**
 
 ```
 cd packages/app && bun run typecheck && bunx vitest run
@@ -1226,7 +1226,7 @@ cd packages/app && bun run typecheck && bunx vitest run
 
 Expected: clean typecheck; full `@ai-dict/app` suite green.
 
-- [ ] **Step 6: Commit** — gate, then commit:
+- [x] **Step 6: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

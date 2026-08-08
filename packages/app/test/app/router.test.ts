@@ -795,6 +795,64 @@ describe('buildRouter', () => {
       vendorMessage: 'The model is overloaded.',
     });
   });
+
+  it('backup.import merge adds a new saved word and a new history entry', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    const reply = await route({
+      type: 'backup.import',
+      mode: 'merge',
+      savedWords: [
+        {
+          word: 'imported',
+          status: 'learning',
+          savedAt: 1,
+          senses: [{ definition: 'd', translation: '', sentence: 's', url: 'u', title: 't' }],
+        },
+      ],
+      history: [
+        {
+          id: 'h1',
+          word: 'imported',
+          context: '',
+          createdAt: 1,
+          result: {
+            markdown: '',
+            word: 'imported',
+            target: 'vi',
+            model: 'gemini-2.5-flash',
+            fromCache: false,
+            fetchedAt: 1,
+          },
+        },
+      ],
+    });
+    expect(reply).toEqual({
+      ok: true,
+      type: 'backup-imported',
+      savedWordsImported: 1,
+      historyImported: 1,
+    });
+  });
+
+  it('backup.import replace clears a pre-existing saved word not present in the import', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'stale',
+      definition: 'd',
+      translation: '',
+      sentence: 's',
+      url: 'u',
+      title: 't',
+    });
+    await route({ type: 'backup.import', mode: 'replace', savedWords: [], history: [] });
+    const reply = await route({ type: 'saved.list' });
+    if (reply === SUPPRESS || !reply.ok || reply.type !== 'saved.list')
+      throw new Error('unexpected');
+    expect(reply.entries).toEqual([]);
+  });
 });
 
 describe('errlog routing', () => {
