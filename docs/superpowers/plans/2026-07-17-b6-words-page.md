@@ -87,7 +87,7 @@ export function filterAndSortSavedWords(
 ): SavedWordEntry[];
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/words-page-policy.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/words-page-policy.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -255,7 +255,7 @@ describe('words-page-policy', () => {
 Run: `cd packages/app && bunx vitest run test/words-page-policy.test.ts`
 Expected: failures — the module `../src/domain/words-page-policy` does not exist yet.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/words-page-policy.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/words-page-policy.ts`:
 
 ```ts
 import type { SavedWordEntry, SavedWordStatus } from './types';
@@ -370,7 +370,7 @@ other domain exports (after `export * from './domain/saved-words-policy';`).
 Run: `cd packages/app && bunx vitest run test/words-page-policy.test.ts`
 Expected: all tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
