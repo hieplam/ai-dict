@@ -131,12 +131,15 @@ describe('checkRepo — integration on this repository', () => {
     expect(violations).toEqual([]);
   });
 
-  it('the real tree has exactly 16 raw-HTML sink sites (15 annotated + 1 sanctioned-path)', () => {
+  it('the real tree has exactly 21 raw-HTML sink sites (20 annotated + 1 sanctioned-path)', () => {
     // Cross-check against the count Task 3's audit verified via two independent enumeration
     // methods (see the campaign report) — proves this scanner is inspecting every real sink,
     // not silently seeing fewer sites than exist. A10 (TTS pronunciation) added one new
     // annotated sink — `btn.innerHTML = ICON_SPEAKER;` in lookup-card.ts's renderSpeakButton —
-    // raising the count from 15 to 16.
+    // raising the count from 15 to 16. B6 (words page) added five more annotated sinks — one
+    // `words.innerHTML = ICON_WORDS_LIST;` in side-panel-view.ts's header nav, plus four in the
+    // new words-page-view.ts (back icon, two static <select> option lists, delete icon) — raising
+    // the count from 16 to 21 and adding words-page-view.ts to the enumerated file list.
     const repoRoot = new URL('../..', import.meta.url).pathname;
     const SINK_RE = /\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML\(/g;
     const files = [
@@ -145,13 +148,14 @@ describe('checkRepo — integration on this repository', () => {
       'packages/app/src/ui/onboarding-view.ts',
       'packages/app/src/ui/settings-form.ts',
       'packages/app/src/ui/side-panel-view.ts',
+      'packages/app/src/ui/words-page-view.ts',
     ];
     let total = 0;
     for (const f of files) {
       const src = readFileSync(join(repoRoot, f), 'utf8');
       total += (src.match(SINK_RE) ?? []).length;
     }
-    expect(total).toBe(16);
+    expect(total).toBe(21);
   });
 
   it('a deliberately-planted unannotated innerHTML violation is caught (proves the RED path works)', () => {
