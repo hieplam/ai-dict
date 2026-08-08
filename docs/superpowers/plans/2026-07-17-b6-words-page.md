@@ -1171,7 +1171,7 @@ git commit -m "[B6WordsPage] feat: words-page-view custom element (B6)"
 **Interfaces:** dispatches a new composed `open-words` event (no detail) from a `.words-nav`
 button.
 
-- [ ] **Step 1: Write the failing test.** In `packages/app/test/ui/side-panel-view.test.ts`, inside
+- [x] **Step 1: Write the failing test.** In `packages/app/test/ui/side-panel-view.test.ts`, inside
       the existing `describe('<side-panel-view>', ...)` block, add a new test (placed near the
       other header-button test, if one exists, otherwise anywhere inside the block before its
       closing `});`):
@@ -1192,7 +1192,7 @@ Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: failure — `.words-nav` does not exist yet (`querySelector` returns `null`, so
 `.click()` throws).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
 
 1. Add `ICON_WORDS_LIST` to the existing token import (`side-panel-view.ts:3`):
 
@@ -1256,7 +1256,7 @@ header.append(brand, words, settings);
 Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: all tests pass (existing + the new one).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

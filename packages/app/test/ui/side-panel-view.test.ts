@@ -256,4 +256,14 @@ describe('<side-panel-view>', () => {
     };
     expect(await axeViolations(el)).toEqual([]);
   });
+
+  it('the My Words button dispatches a composed open-words event', () => {
+    const el = mount();
+    let fired = false;
+    document.body.addEventListener('open-words', () => {
+      fired = true;
+    });
+    el.shadowRoot!.querySelector<HTMLButtonElement>('.words-nav')!.click();
+    expect(fired).toBe(true);
+  });
 });
