@@ -1,6 +1,13 @@
 import type { HistoryEntry } from '../domain/types';
 import { adoptStyles } from './styles/adopt';
-import { BASE_VARS, THEME_CSS, BRAND_MARK_SVG, ICON_SHIELD, ICON_TRASH } from './styles/tokens';
+import {
+  BASE_VARS,
+  THEME_CSS,
+  BRAND_MARK_SVG,
+  ICON_SHIELD,
+  ICON_TRASH,
+  ICON_WORDS_LIST,
+} from './styles/tokens';
 import { renderCardState, ICON_SETTINGS, type CardState } from './lookup-card';
 
 /**
@@ -37,10 +44,11 @@ ${THEME_CSS}
 .accent{height:3px;flex:none;background:linear-gradient(90deg,var(--ad-accent),var(--ad-warm) 92%)}
 header{display:flex;align-items:center;gap:8px;padding:13px 18px 11px;flex:none}
 .brand{display:inline-flex;align-items:center;gap:8px;font-size:var(--adp-text-sm);font-weight:var(--adp-weight-bold);letter-spacing:var(--adp-tracking-label);color:var(--ad-accent-ink)}
-.settings{display:inline-grid;place-items:center;width:var(--adp-action-size);height:var(--adp-action-size);margin-left:auto;border:0;background:transparent;color:var(--ad-ink-faint);border-radius:var(--adp-radius-control);cursor:pointer;font:inherit;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease)}
-.settings:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
-.settings:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
-.settings svg{width:15px;height:15px;pointer-events:none}
+.words-nav{margin-left:auto}
+.settings,.words-nav{display:inline-grid;place-items:center;width:var(--adp-action-size);height:var(--adp-action-size);border:0;background:transparent;color:var(--ad-ink-faint);border-radius:var(--adp-radius-control);cursor:pointer;font:inherit;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease)}
+.settings:hover,.words-nav:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
+.settings:focus-visible,.words-nav:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+.settings svg,.words-nav svg{width:15px;height:15px;pointer-events:none}
 .mark{width:22px;height:22px;flex:none}
 main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 18px}
 .focus{padding:6px 0 10px}
@@ -127,6 +135,15 @@ export class SidePanelView extends HTMLElement {
     const brand = document.createElement('span');
     brand.className = 'brand';
     brand.innerHTML = `${BRAND_MARK_SVG}<span>AI Dictionary</span>`; // s4: static-template — fixed brand mark + literal label, no model content
+    // Entry point into the persistent "My Words" list page (B6).
+    const words = document.createElement('button');
+    words.type = 'button';
+    words.className = 'words-nav';
+    words.setAttribute('aria-label', 'My Words');
+    words.innerHTML = ICON_WORDS_LIST; // s4: static-template — decorative aria-hidden SVG; name from aria-label
+    words.addEventListener('click', () =>
+      this.dispatchEvent(new CustomEvent('open-words', { bubbles: true, composed: true })),
+    );
     // Persistent path to the options page; same `open-settings` contract as the lookup card,
     // caught by the panel's composition root (a trusted page, it calls openOptionsPage itself).
     const settings = document.createElement('button');
@@ -137,7 +154,7 @@ export class SidePanelView extends HTMLElement {
     settings.addEventListener('click', () =>
       this.dispatchEvent(new CustomEvent('open-settings', { bubbles: true, composed: true })),
     );
-    header.append(brand, settings);
+    header.append(brand, words, settings);
 
     const main = document.createElement('main');
 

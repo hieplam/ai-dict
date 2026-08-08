@@ -87,7 +87,7 @@ export function filterAndSortSavedWords(
 ): SavedWordEntry[];
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/words-page-policy.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/words-page-policy.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -255,7 +255,7 @@ describe('words-page-policy', () => {
 Run: `cd packages/app && bunx vitest run test/words-page-policy.test.ts`
 Expected: failures — the module `../src/domain/words-page-policy` does not exist yet.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/words-page-policy.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/words-page-policy.ts`:
 
 ```ts
 import type { SavedWordEntry, SavedWordStatus } from './types';
@@ -370,7 +370,7 @@ other domain exports (after `export * from './domain/saved-words-policy';`).
 Run: `cd packages/app && bunx vitest run test/words-page-policy.test.ts`
 Expected: all tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -639,7 +639,7 @@ class WordsPageView extends HTMLElement {
 // 'delete-word' ({ word: string })
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/ui/words-page-view.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/ui/words-page-view.test.ts`:
 
 ```ts
 import { describe, it, expect, beforeAll } from 'vitest';
@@ -829,7 +829,7 @@ describe('<words-page-view>', () => {
 Run: `cd packages/app && bunx vitest run test/ui/words-page-view.test.ts`
 Expected: failures — the module `../../src/ui/words-page-view` does not exist yet.
 
-- [ ] **Step 2: Add the two new icons.** In `packages/app/src/ui/styles/tokens.ts`, append after
+- [x] **Step 2: Add the two new icons.** In `packages/app/src/ui/styles/tokens.ts`, append after
       `ICON_STAR` (`tokens.ts:213-215`):
 
 ```ts
@@ -845,7 +845,7 @@ export const ICON_WORDS_LIST =
   '<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="16" y2="12"/><line x1="4" y1="17" x2="18" y2="17"/></svg>';
 ```
 
-- [ ] **Step 3: Implement the component.** Create `packages/app/src/ui/words-page-view.ts`:
+- [x] **Step 3: Implement the component.** Create `packages/app/src/ui/words-page-view.ts`:
 
 ```ts
 import type { SavedWordEntry, SavedWordStatus } from '../domain/types';
@@ -1112,7 +1112,7 @@ export class WordsPageView extends HTMLElement {
 }
 ```
 
-- [ ] **Step 4: Register and export.** In `packages/app/src/ui/register.ts`, import `WordsPageView`
+- [x] **Step 4: Register and export.** In `packages/app/src/ui/register.ts`, import `WordsPageView`
       and register it inside `registerSidePanel()`, as two anchored edits (current file is 27
       lines):
   - Insert the import after `register.ts:5` (`import { SidePanelView } from './side-panel-view';`):
@@ -1146,7 +1146,7 @@ bunx vitest run test/ui/words-page-view.test.ts
 
 Expected: typecheck clean; all 12 tests pass.
 
-- [ ] **Step 5: Commit** — gate, then commit:
+- [x] **Step 5: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1171,7 +1171,7 @@ git commit -m "[B6WordsPage] feat: words-page-view custom element (B6)"
 **Interfaces:** dispatches a new composed `open-words` event (no detail) from a `.words-nav`
 button.
 
-- [ ] **Step 1: Write the failing test.** In `packages/app/test/ui/side-panel-view.test.ts`, inside
+- [x] **Step 1: Write the failing test.** In `packages/app/test/ui/side-panel-view.test.ts`, inside
       the existing `describe('<side-panel-view>', ...)` block, add a new test (placed near the
       other header-button test, if one exists, otherwise anywhere inside the block before its
       closing `});`):
@@ -1192,7 +1192,7 @@ Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: failure — `.words-nav` does not exist yet (`querySelector` returns `null`, so
 `.click()` throws).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
 
 1. Add `ICON_WORDS_LIST` to the existing token import (`side-panel-view.ts:3`):
 
@@ -1256,7 +1256,7 @@ header.append(brand, words, settings);
 Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: all tests pass (existing + the new one).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1284,7 +1284,7 @@ followed). Task 6's e2e proves this task's correctness; still run the typecheck/
 a regression in this file's EXISTING behavior (Recent, save/status/delete, nudge) is caught
 immediately.
 
-- [ ] **Step 1: Update the HTML.** In `packages/extension-chrome/src/side-panel.html`:
+- [x] **Step 1: Update the HTML.** In `packages/extension-chrome/src/side-panel.html`:
 
 ```html
 <!doctype html>
@@ -1301,7 +1301,7 @@ immediately.
 </html>
 ```
 
-- [ ] **Step 2: Wire the composition root.** In `packages/extension-chrome/src/side-panel.ts`:
+- [x] **Step 2: Wire the composition root.** In `packages/extension-chrome/src/side-panel.ts`:
 
 1. Extend the `@ai-dict/app` import (currently `side-panel.ts:1-13`):
 
@@ -1396,7 +1396,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1417,7 +1417,7 @@ git commit -m "[B6WordsPage] feat: wire the words page into the Chrome side pane
 
 - Create: `packages/extension-chrome/e2e/b6-words-page.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b6-words-page.spec.ts`:
+- [x] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b6-words-page.spec.ts`:
 
 ```ts
 import { test, expect } from './fixtures';
@@ -1578,7 +1578,7 @@ cd packages/extension-chrome && bunx playwright test b6-words-page
 
 Expected: 3 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
