@@ -82,6 +82,20 @@ export async function historyDelete(deps: HistoryDeps, id: string): Promise<void
   await deps.storage.setItem(INDEX_KEY, JSON.stringify(idx));
 }
 
+/**
+ * B9: import one backup history entry — add it only if its id isn't already present locally
+ * (history entries are immutable per-lookup snapshots; there is nothing to "merge" per id, only
+ * add-if-missing — see the design spec §3.2). Reuses historyAppend unmodified so the existing
+ * cap and newest-first index invariant both keep working exactly as they do for live traffic.
+ * Returns whether the entry was newly added (false = skipped, id already present).
+ */
+export async function historyImportEntry(deps: HistoryDeps, entry: HistoryEntry): Promise<boolean> {
+  const existing = await historyGet(deps, entry.id);
+  if (existing) return false;
+  await historyAppend(deps, entry);
+  return true;
+}
+
 export async function historyClear(deps: HistoryDeps): Promise<void> {
   for (const k of await deps.storage.keys('history:')) await deps.storage.removeItem(k);
 }

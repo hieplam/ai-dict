@@ -6,6 +6,7 @@ import {
   historyClear,
   historyGet,
   historyDelete,
+  historyImportEntry,
 } from '../src/domain/history-policy';
 import type { Storage, HistoryEntry } from '../src';
 
@@ -168,5 +169,28 @@ describe('history-policy', () => {
   it('historyListSince on empty history returns []', async () => {
     const s = memStorage();
     expect(await historyListSince({ storage: s }, 0)).toEqual([]);
+  });
+
+  it('historyImportEntry adds a new id and returns true', async () => {
+    const s = memStorage();
+    const added = await historyImportEntry({ storage: s }, entry('9'));
+    expect(added).toBe(true);
+    expect(await historyGet({ storage: s }, '9')).toEqual(entry('9'));
+  });
+
+  it('historyImportEntry skips an existing id and returns false, leaving it unchanged', async () => {
+    const s = memStorage();
+    await historyAppend({ storage: s }, entry('9'));
+    const added = await historyImportEntry({ storage: s }, { ...entry('9'), context: 'different' });
+    expect(added).toBe(false);
+    expect((await historyGet({ storage: s }, '9'))!.context).toBe(''); // original, unchanged
+  });
+
+  it('historyImportEntry respects the existing cap via historyAppend', async () => {
+    const s = memStorage();
+    await historyAppend({ storage: s, cap: 1 }, entry('1'));
+    await historyImportEntry({ storage: s, cap: 1 }, entry('2'));
+    const { entries } = await historyList({ storage: s }, {});
+    expect(entries.map((e) => e.id)).toEqual(['2']);
   });
 });
