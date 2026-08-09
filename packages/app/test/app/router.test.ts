@@ -1136,3 +1136,38 @@ describe('B7 repeat-offender nudge', () => {
     expect(d.client.lookup).not.toHaveBeenCalled();
   });
 });
+
+describe('quiet-site messages (A13)', () => {
+  it('quiet.list on an empty store returns an empty domains array', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    const reply = await route({ type: 'quiet.list' });
+    expect(reply).toEqual({ ok: true, type: 'quiet', domains: [] });
+  });
+
+  it('quiet.add then quiet.list round-trips the domain', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({ type: 'quiet.add', domain: 'example.com' });
+    const reply = await route({ type: 'quiet.list' });
+    expect(reply).toEqual({ ok: true, type: 'quiet', domains: ['example.com'] });
+  });
+
+  it('quiet.add twice for the same domain does not duplicate it in the returned list', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({ type: 'quiet.add', domain: 'example.com' });
+    const reply = await route({ type: 'quiet.add', domain: 'example.com' });
+    expect(reply).toEqual({ ok: true, type: 'quiet', domains: ['example.com'] });
+  });
+
+  it('quiet.remove drops a present domain and is a no-op on an absent one', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({ type: 'quiet.add', domain: 'example.com' });
+    const removed = await route({ type: 'quiet.remove', domain: 'example.com' });
+    expect(removed).toEqual({ ok: true, type: 'quiet', domains: [] });
+    const noop = await route({ type: 'quiet.remove', domain: 'example.com' });
+    expect(noop).toEqual({ ok: true, type: 'quiet', domains: [] });
+  });
+});

@@ -320,7 +320,7 @@ git commit -m "[A13QuietMode] feat: add quiet-site-policy domain module (A13)"
 { ok: true; type: 'quiet'; domains: string[] }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/wire-schema.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/wire-schema.test.ts`,
       inside the existing `describe('wire-schema', ...)` block, just before its closing `});`:
 
 ```ts
@@ -394,7 +394,7 @@ Expected: the 4 new router tests fail too — `buildRouter`'s exhaustive switch 
 case, so the returned promise resolves to `undefined` (no matching `case`, no `default`), which
 fails every `toEqual` assertion above.
 
-- [ ] **Step 2: Implement wire.ts.** In `packages/app/src/wire.ts`, add three new arms to
+- [x] **Step 2: Implement wire.ts.** In `packages/app/src/wire.ts`, add three new arms to
       `WireMessageSchema` (current file, appended after the `errlog.set-consent` arm, lines
       136-140):
 
@@ -456,7 +456,7 @@ sites are not part of `Settings`/`PublicSettings` (design spec §2.2), so there 
 for a schema to drift against; the new reply's `domains: string[]` has no matching domain type to
 assert equality with, exactly like `WireReplySchema`'s existing `errlog` arm has none either.
 
-- [ ] **Step 3: Implement router.ts.** In `packages/app/src/app/router.ts`, add three imports
+- [x] **Step 3: Implement router.ts.** In `packages/app/src/app/router.ts`, add three imports
       alongside the existing `saved*`/`evaluateNudge` imports (current file, lines 13-16):
 
 ```ts
@@ -503,7 +503,7 @@ Expected: all tests pass (existing + 2 new wire-schema + 4 new router tests).
 Run: `cd packages/app && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

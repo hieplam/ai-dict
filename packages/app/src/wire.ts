@@ -213,6 +213,12 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
     type: z.literal('errlog.set-consent'),
     state: z.enum(['granted', 'declined', 'disabled']),
   }),
+  // A13: read/add/remove entries in the independent `quiet:*` keyspace (per-site quiet mode).
+  // `quiet.add`/`quiet.remove` both reply with the full, updated list so the caller (card or
+  // settings page) never needs a second round trip.
+  z.object({ type: z.literal('quiet.list') }),
+  z.object({ type: z.literal('quiet.add'), domain: z.string().min(1) }),
+  z.object({ type: z.literal('quiet.remove'), domain: z.string().min(1) }),
 ]);
 
 const MessageTypeEnum = z.enum([
@@ -235,6 +241,9 @@ const MessageTypeEnum = z.enum([
   'backup.import',
   'saved.learningWords',
   'saved.get',
+  'quiet.list',
+  'quiet.add',
+  'quiet.remove',
 ]);
 
 export const WireReplySchema = z.union([
@@ -290,6 +299,7 @@ export const WireReplySchema = z.union([
     pending: z.boolean(),
     count: z.number(),
   }),
+  z.object({ ok: z.literal(true), type: z.literal('quiet'), domains: z.array(z.string()) }),
   z.object({
     ok: z.literal(false),
     type: MessageTypeEnum,

@@ -17,6 +17,9 @@ import {
   savedWordsList,
   savedWordGet,
   evaluateNudge,
+  quietSiteAdd,
+  quietSiteRemove,
+  quietSiteList,
   importBackup,
   FIX_KEY_PENDING_STORAGE_KEY,
   type WireMessage,
@@ -361,6 +364,18 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       case 'errlog.set-consent':
         await deps.errlog?.setConsent(msg.state);
         return { ok: true, type: 'ack' };
+      case 'quiet.list':
+        return { ok: true, type: 'quiet', domains: await quietSiteList({ storage: deps.kv }) };
+      case 'quiet.add': {
+        const domains = await deps.queue.run(() => quietSiteAdd({ storage: deps.kv }, msg.domain));
+        return { ok: true, type: 'quiet', domains };
+      }
+      case 'quiet.remove': {
+        const domains = await deps.queue.run(() =>
+          quietSiteRemove({ storage: deps.kv }, msg.domain),
+        );
+        return { ok: true, type: 'quiet', domains };
+      }
     }
   };
 }
