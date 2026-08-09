@@ -1,4 +1,5 @@
 import type { HistoryEntry } from '../domain/types';
+import type { WeeklyDigest } from '../domain/weekly-digest';
 import { adoptStyles } from './styles/adopt';
 import {
   BASE_VARS,
@@ -160,6 +161,11 @@ main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padd
 .recent-del svg{width:14px;height:14px;pointer-events:none}
 .recent-word{font-size:14px;font-weight:var(--adp-weight-semi);color:var(--ad-ink)}
 .recent-context{display:block;margin-top:1px;font-size:var(--adp-text-xs);line-height:1.4;color:var(--ad-ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.digest[hidden]{display:none}
+.digest-head{margin:0;padding:14px 0 8px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-bold);letter-spacing:.06em;text-transform:uppercase;color:var(--ad-ink-soft)}
+.digest-list{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:4px}
+.digest-row{font-size:14px;line-height:1.5;color:var(--ad-ink)}
+.digest-empty{margin:0 0 10px;font-size:var(--adp-text-sm);line-height:1.5;color:var(--ad-ink-soft)}
 footer{display:flex;align-items:center;gap:6px;flex:none;margin:0 18px;padding:11px 0 14px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 footer svg{width:13px;height:13px;flex:none}
 @keyframes spin{to{transform:rotate(360deg)}}
@@ -182,13 +188,17 @@ function renderEmpty(): Node[] {
 export class SidePanelView extends HTMLElement {
   private _focus: PanelFocusState = { kind: 'empty' };
   private _recent: HistoryEntry[] = [];
+  private _digest: WeeklyDigest | undefined = undefined;
   private focusEl!: HTMLElement;
   private recentEl!: HTMLElement;
   private recentList!: HTMLUListElement;
+  private digestEl!: HTMLElement;
 
   connectedCallback(): void {
     if (this.shadowRoot) {
       this.renderFocus();
+      this.renderRecent();
+      this.renderDigest();
       return;
     }
     const root = this.attachShadow({ mode: 'open' });
@@ -254,7 +264,14 @@ export class SidePanelView extends HTMLElement {
     this.recentList.className = 'recent-list';
     this.recentEl.append(recentHead, this.recentList);
 
-    main.append(this.focusEl, this.recentEl);
+    // The weekly digest (B10). Hidden until `digest` is explicitly set — avoids a flash of
+    // empty content before the panel's async history.list/saved.list round trip resolves.
+    this.digestEl = document.createElement('section');
+    this.digestEl.className = 'digest';
+    this.digestEl.setAttribute('aria-label', 'This week');
+    this.digestEl.hidden = true;
+
+    main.append(this.focusEl, this.recentEl, this.digestEl);
 
     const footer = document.createElement('footer');
     footer.innerHTML = `${ICON_SHIELD}<span>Stays on your device</span>`; // s4: static-template — fixed shield icon + literal copy, no model content
@@ -262,6 +279,7 @@ export class SidePanelView extends HTMLElement {
     root.append(accent, header, main, footer);
     this.renderFocus();
     this.renderRecent();
+    this.renderDigest();
   }
 
   /** The single focus region: empty teaching state, or a loading / result / error lookup. */
@@ -280,6 +298,17 @@ export class SidePanelView extends HTMLElement {
   }
   get recent(): HistoryEntry[] {
     return this._recent;
+  }
+
+  /** The weekly digest (B10), computed once per panel-open. `undefined` = not loaded yet
+   * (section stays hidden); once set, it stays visible for the rest of the session — including
+   * a zero-stat empty state — never re-hidden. */
+  set digest(d: WeeklyDigest | undefined) {
+    this._digest = d;
+    if (this.shadowRoot) this.renderDigest();
+  }
+  get digest(): WeeklyDigest | undefined {
+    return this._digest;
   }
 
   private renderFocus(): void {
@@ -307,6 +336,41 @@ export class SidePanelView extends HTMLElement {
   private renderRecent(): void {
     this.recentEl.hidden = this._recent.length === 0;
     this.recentList.replaceChildren(...this._recent.map((e) => this.recentRow(e)));
+  }
+
+  private renderDigest(): void {
+    this.digestEl.hidden = this._digest === undefined;
+    const d = this._digest;
+    if (d === undefined) return;
+    const head = document.createElement('h2');
+    head.className = 'digest-head';
+    head.textContent = 'This week';
+    const nodes: Node[] = [head];
+    if (d.lookups === 0) {
+      const p = document.createElement('p');
+      p.className = 'digest-empty';
+      p.textContent = 'Nothing yet this week — look something up and check back.';
+      nodes.push(p);
+    } else {
+      const rows = [
+        `${d.lookups} lookup${d.lookups === 1 ? '' : 's'} this week`,
+        `${d.saves} saved`,
+        `${d.repeatWords} repeat lookup${d.repeatWords === 1 ? '' : 's'}`,
+      ];
+      if (d.topSites.length > 0) {
+        rows.push(`Mostly from ${d.topSites.map((s) => s.domain).join(', ')}`);
+      }
+      const list = document.createElement('ul');
+      list.className = 'digest-list';
+      for (const text of rows) {
+        const li = document.createElement('li');
+        li.className = 'digest-row';
+        li.textContent = text;
+        list.append(li);
+      }
+      nodes.push(list);
+    }
+    this.digestEl.replaceChildren(...nodes);
   }
 
   private recentRow(e: HistoryEntry): HTMLLIElement {

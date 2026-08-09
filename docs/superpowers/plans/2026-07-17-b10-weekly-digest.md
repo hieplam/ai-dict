@@ -804,7 +804,7 @@ set digest(d: WeeklyDigest | undefined): void;
 get digest(): WeeklyDigest | undefined;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/side-panel-view.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/side-panel-view.test.ts`,
       inside the existing `describe('<side-panel-view>', ...)` block, right before its closing
       `});` (after the existing `'has no axe violations (no-key setup invite)'` test, which ends at
       line 258):
@@ -887,7 +887,7 @@ Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: failures — `.digest` doesn't exist in the shadow DOM, and `el.digest = ...` is a type
 error (`SidePanelView` has no `digest` setter yet).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
 
 1. Add the import, alongside the existing `HistoryEntry` import (line 1):
 
@@ -1047,7 +1047,7 @@ re-render the digest so a detach/reattach doesn't lose it:
 Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: all tests pass (existing + 6 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -1075,7 +1075,7 @@ history). Task 6's e2e spec proves this task's correctness; still run the typech
 so a regression in existing behavior (recent list, save toggle, etc. — all in the same file) is
 caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
 
 1. Extend the `@ai-dict/app` import (currently lines 1-13) to add `HISTORY_CAP` and
    `computeWeeklyDigest`:
@@ -1142,7 +1142,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1164,7 +1164,7 @@ git commit -m "feat: weekly digest — fetch + compute the digest once on panel 
 
 - Create: `packages/extension-chrome/e2e/b10-weekly-digest.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b10-weekly-digest.spec.ts`:
+- [x] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b10-weekly-digest.spec.ts`:
 
 ```ts
 import { test, expect } from './fixtures';
@@ -1277,7 +1277,7 @@ cd packages/extension-chrome && bunx playwright test b10-weekly-digest
 
 Expected: 2 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome

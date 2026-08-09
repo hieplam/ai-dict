@@ -127,6 +127,34 @@ describe('wire-schema', () => {
       WireMessageSchema.safeParse({ type: 'history.list', limit: 10, cursor: 'abc' }).success,
     ).toBe(true);
   });
+  it('a history reply entry accepts optional url/title (B10), and still parses without them (back-compat)', () => {
+    const base = {
+      id: 'h1',
+      word: 'bank',
+      context: 'river bank',
+      createdAt: 1,
+      result: {
+        markdown: '#',
+        word: 'bank',
+        target: 'vi',
+        model: 'gemini-2.5-flash',
+        fromCache: false,
+        fetchedAt: 1,
+      },
+    };
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'history',
+        entries: [{ ...base, url: 'https://nautil.us', title: 'Nautilus' }],
+      }).success,
+    ).toBe(true);
+    // Back-compat: an entry recorded before B10 has no url/title at all.
+    expect(WireReplySchema.safeParse({ ok: true, type: 'history', entries: [base] }).success).toBe(
+      true,
+    );
+  });
+
   it('accepts history.clear message', () => {
     expect(WireMessageSchema.safeParse({ type: 'history.clear' }).success).toBe(true);
   });
@@ -867,6 +895,37 @@ describe('saved.save / saved.delete wire messages (B1)', () => {
     expect(WireMessageSchema.safeParse({ type: 'saved.setStatus', word: 'bank' }).success).toBe(
       false,
     );
+  });
+
+  it('accepts a valid saved.list message (B10)', () => {
+    expect(WireMessageSchema.safeParse({ type: 'saved.list' }).success).toBe(true);
+  });
+
+  it('a saved.list reply carries an array of the ratified entry shape (B10)', () => {
+    const entry = {
+      word: 'bank',
+      status: 'learning',
+      savedAt: 1,
+      senses: [{ definition: 'd', translation: 't', sentence: 's', url: 'u', title: 'ti' }],
+    };
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'saved.list', entries: [entry] }).success,
+    ).toBe(true);
+    expect(WireReplySchema.safeParse({ ok: true, type: 'saved.list', entries: [] }).success).toBe(
+      true,
+    );
+  });
+
+  it('a saved.list reply rejects a malformed entry inside the array (B10)', () => {
+    const bad = {
+      word: 'bank',
+      status: 'archived', // not 'learning' | 'known'
+      savedAt: 1,
+      senses: [],
+    };
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'saved.list', entries: [bad] }).success,
+    ).toBe(false);
   });
 });
 

@@ -864,6 +864,12 @@
                 },
                 "createdAt": {
                   "type": "number"
+                },
+                "url": {
+                  "type": "string"
+                },
+                "title": {
+                  "type": "string"
                 }
               },
               "required": [

@@ -89,6 +89,9 @@ const HistoryEntrySchema = z.strictObject({
   context: z.string(),
   result: LookupResultSchema,
   createdAt: z.number(),
+  // B10: see HistoryEntry's doc comment (domain/types.ts) — absent on pre-B10 entries.
+  url: z.string().optional(),
+  title: z.string().optional(),
 });
 
 const SavedWordSenseSchema = z.strictObject({

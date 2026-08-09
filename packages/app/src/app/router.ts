@@ -191,6 +191,11 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
           context: req.context,
           result: storableResult,
           createdAt: result.fetchedAt,
+          // B10: carried straight from the request so the weekly digest can compute "top
+          // source sites" without a second round trip — req.url/req.title are the same
+          // fields domain/workflow.ts already builds from the page's selection event.
+          url: req.url,
+          title: req.title,
         };
         await deps.queue.run(() => historyAppend({ storage: deps.kv }, entry));
       }

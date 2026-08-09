@@ -3,6 +3,11 @@ import type { HistoryEntry } from './types';
 
 const INDEX_KEY = 'history:index';
 const DEFAULT_CAP = 500;
+/** Public name for DEFAULT_CAP — the side panel's weekly digest (B10) fetches every currently
+ * stored entry via `history.list` with `limit: HISTORY_CAP`; since the store can never hold more
+ * than this many entries (historyAppend evicts past it), that single call always returns
+ * everything. Mirrors ERROR_BUFFER_CAP's naming (error-report.ts). */
+export const HISTORY_CAP = DEFAULT_CAP;
 
 export interface HistoryDeps {
   storage: Storage;
