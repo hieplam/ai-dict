@@ -111,6 +111,8 @@ const SavedWordEntrySchema = z.strictObject({
   status: z.enum(['learning', 'known']),
   savedAt: z.number(),
   senses: z.array(SavedWordSenseSchema),
+  // B12: additive tag(s) assigned by "Organize my words" — see types.ts's doc comment.
+  tags: z.array(z.string()).optional(),
 });
 
 // B9: non-strict on purpose (NOT z.strictObject, unlike every other wire schema in this file) —
@@ -131,6 +133,9 @@ const ImportSavedWordEntrySchema = z.object({
   status: z.enum(['learning', 'known']),
   savedAt: z.number(),
   senses: z.array(ImportSavedWordSenseSchema),
+  // B12: additive tag(s) — see SavedWordEntrySchema's comment; kept in sync so the
+  // AssertEqual<z.infer<typeof ImportSavedWordEntrySchema>, SavedWordEntry> drift guard holds.
+  tags: z.array(z.string()).optional(),
 });
 const ImportHistoryEntrySchema = z.object({
   id: z.string(),

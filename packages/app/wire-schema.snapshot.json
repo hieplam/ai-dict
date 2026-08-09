@@ -343,6 +343,12 @@
                     ],
                     "additionalProperties": false
                   }
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
                 }
               },
               "required": [
@@ -974,6 +980,12 @@
                   ],
                   "additionalProperties": false
                 }
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             },
             "required": [
@@ -1082,6 +1094,12 @@
                       "title"
                     ],
                     "additionalProperties": false
+                  }
+                },
+                "tags": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
                   }
                 }
               },
@@ -1217,6 +1235,12 @@
                         "title"
                       ],
                       "additionalProperties": false
+                    }
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
                     }
                   }
                 },

@@ -927,6 +927,35 @@ describe('saved.save / saved.delete wire messages (B1)', () => {
       WireReplySchema.safeParse({ ok: true, type: 'saved.list', entries: [bad] }).success,
     ).toBe(false);
   });
+
+  it('[B12] SavedWordEntrySchema accepts an entry with a tags array', () => {
+    const ok = WireReplySchema.safeParse({
+      ok: true,
+      type: 'saved',
+      entry: {
+        word: 'bank',
+        status: 'learning',
+        savedAt: 1_700_000_000_000,
+        senses: [{ definition: 'd', translation: '', sentence: 's', url: '', title: '' }],
+        tags: ['Finance'],
+      },
+    });
+    expect(ok.success).toBe(true);
+  });
+
+  it('[B12] SavedWordEntrySchema still accepts an entry with no tags field (back-compat)', () => {
+    const ok = WireReplySchema.safeParse({
+      ok: true,
+      type: 'saved',
+      entry: {
+        word: 'bank',
+        status: 'learning',
+        savedAt: 1_700_000_000_000,
+        senses: [{ definition: 'd', translation: '', sentence: 's', url: '', title: '' }],
+      },
+    });
+    expect(ok.success).toBe(true);
+  });
 });
 
 describe('saved.setRelated wire message (B13)', () => {

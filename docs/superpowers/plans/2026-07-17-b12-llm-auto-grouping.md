@@ -92,7 +92,7 @@ export interface SavedWordEntry {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/wire-schema.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/wire-schema.test.ts`,
       inside the existing `describe('saved.save / saved.delete wire messages (B1)', ...)` block
       (starts at `:412`, not the top `describe('wire-schema', ...)` block — this file has 3
       top-level `describe` blocks; the B1 one is the topical home for `SavedWordEntry`-shaped
@@ -133,7 +133,7 @@ Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts`
 Expected: the first new test **fails** (`ok.success` is `false` — `z.strictObject` rejects the
 extra `tags` key today); the second new test already passes (no regression risk to prove yet).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/domain/types.ts`, add `tags?: string[];` to `SavedWordEntry` (`:246-251`),
 with a doc comment recording the E1-lock precedent:
@@ -199,7 +199,7 @@ Also run the full existing suite to confirm the drift-guard
 type-checks: `cd packages/app && bun run typecheck` (clean — both sides gained the identical
 optional field).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
