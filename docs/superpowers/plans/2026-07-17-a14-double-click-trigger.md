@@ -261,7 +261,7 @@ function isGuardedTarget(target: EventTarget | null): boolean;
 
 **Interfaces consumed:** `SelectionEvent.viaDoubleClick?` (Task 1).
 
-- [ ] **Step 1: Write the failing tests.** In `packages/app/test/app/dom-selection-source.test.ts`,
+- [x] **Step 1: Write the failing tests.** In `packages/app/test/app/dom-selection-source.test.ts`,
       append a new `describe` block after the existing `describe('DomSelectionSource (event
 wiring)', ...)` block (i.e. right before `describe('defaultReader ...', ...)`):
 
@@ -360,7 +360,7 @@ key is missing from the actual call. The other four (`detail: 1`/`detail: 3`, th
 elements, and `touchend`) all assert `cb` was called with plain `ev` — which is already true today
 with no flag logic at all — so those four pass trivially before Step 2, and stay green after it.
 
-- [ ] **Step 2: Implement.** Replace the entire contents of
+- [x] **Step 2: Implement.** Replace the entire contents of
       `packages/app/src/app/dom-selection-source.ts` with:
 
 ```ts
@@ -451,7 +451,7 @@ cd packages/app && bunx vitest run test/app/dom-selection-source.test.ts
 Expected: all tests pass (existing 7 + 6 new = 13 blocks — the guarded-element block expands to
 4 runtime cases via `it.each`, so `vitest run` reports 16 individual test results).
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
