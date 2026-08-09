@@ -530,7 +530,7 @@ set quiet(q: boolean): void;
 get quiet(): boolean;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to
+- [x] **Step 1: Write the failing tests.** Append to
       `packages/extension-chrome/src/adapters/chrome-floating-trigger.test.ts`, as a new
       `describe` block right after the existing `describe('ChromeFloatingTrigger ...', ...)`
       block's closing `});` (end of file):
@@ -578,7 +578,7 @@ Expected: the first new test fails — assigning `trigger.quiet = true` sets an 
 property (no `quiet` setter exists yet), so `show()` still mounts unconditionally and
 `host.querySelector('lookup-trigger')` is NOT null, failing the `toBeNull()` assertion.
 
-- [ ] **Step 2: Implement.** In
+- [x] **Step 2: Implement.** In
       `packages/extension-chrome/src/adapters/chrome-floating-trigger.ts`, add a new `quiet`
       settable property, mirroring `theme`'s existing shape (current file, lines 20-27):
 
@@ -645,7 +645,7 @@ Expected: all 12 tests pass (existing 9 + 3 new).
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check

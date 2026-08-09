@@ -126,3 +126,38 @@ describe('ChromeFloatingTrigger (TriggerUI via <lookup-trigger>)', () => {
     expect(performance.getEntriesByName(TRIGGER_SHOWN_MARK)).toHaveLength(before + 2);
   });
 });
+
+describe('ChromeFloatingTrigger quiet mode (A13)', () => {
+  it('show() with quiet=true never mounts the trigger element, but activate() still fires onClick', () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const trigger = new ChromeFloatingTrigger(host);
+    trigger.quiet = true;
+    const onClick = vi.fn();
+    trigger.show({ x: 10, y: 20, w: 5, h: 5 }, onClick);
+    expect(host.querySelector('lookup-trigger')).toBeNull();
+    expect(trigger.activate()).toBe(true);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('a mid-session quiet flip does not retroactively hide an already-visible bubble; the NEXT show() after hide() honors it', () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const trigger = new ChromeFloatingTrigger(host);
+    trigger.show({ x: 0, y: 0, w: 1, h: 1 }, vi.fn());
+    expect(host.querySelector('lookup-trigger')).not.toBeNull();
+    trigger.quiet = true; // flips mid-session, after the bubble is already mounted
+    expect(host.querySelector('lookup-trigger')).not.toBeNull(); // not retroactively hidden
+    trigger.hide();
+    trigger.show({ x: 0, y: 0, w: 1, h: 1 }, vi.fn());
+    expect(host.querySelector('lookup-trigger')).toBeNull(); // the NEXT show() honors it
+  });
+
+  it('quiet defaults to false — show() mounts normally when quiet was never set', () => {
+    const host = document.createElement('div');
+    document.body.append(host);
+    const trigger = new ChromeFloatingTrigger(host);
+    trigger.show({ x: 0, y: 0, w: 1, h: 1 }, vi.fn());
+    expect(host.querySelector('lookup-trigger')).not.toBeNull();
+  });
+});

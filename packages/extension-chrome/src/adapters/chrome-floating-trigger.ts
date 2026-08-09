@@ -28,20 +28,41 @@ export class ChromeFloatingTrigger implements TriggerUI {
     return this._theme;
   }
 
+  private _quiet = false;
+
+  /** A13: true when the current page's registrable domain is in the quiet-sites list. Read once
+   * per show() call — a site muted while an earlier bubble is already visible does not
+   * retroactively hide that bubble; the mute takes effect starting with the next selection
+   * (mirrors theme's own "settings arrive after the bubble is already up" precedent above). */
+  set quiet(q: boolean) {
+    this._quiet = q;
+  }
+  get quiet(): boolean {
+    return this._quiet;
+  }
+
   show(anchor: AnchorRect, onClick: () => void): void {
     this.onClick = onClick;
     if (!this.el) {
       this.el = document.createElement('lookup-trigger');
       this.el.setAttribute('data-ad-theme', this._theme);
       this.el.addEventListener('lookup-click', this.handler);
-      this.host.append(this.el);
-      // Capture phase so pages that stopPropagation can't trap the dismissal.
-      for (const t of DISMISS_EVENTS) document.addEventListener(t, this.onOutsidePress, true);
+      // A13: on a muted site, the element is still created and wired (so A4's activate() can
+      // still click it) but never mounted to the page — no DOM node, no paint. This is
+      // "visually silent" literally, not display:none, and needs no CSS/attribute at all.
+      if (!this._quiet) {
+        this.host.append(this.el);
+        // Capture phase so pages that stopPropagation can't trap the dismissal.
+        for (const t of DISMISS_EVENTS) document.addEventListener(t, this.onOutsidePress, true);
+      }
     }
-    this.el.style.position = 'fixed';
-    this.el.style.left = `${anchor.x}px`;
-    this.el.style.top = `${anchor.y + anchor.h}px`;
-    requestAnimationFrame(() => performance.mark(TRIGGER_SHOWN_MARK));
+    if (!this._quiet) {
+      this.el.style.position = 'fixed';
+      this.el.style.left = `${anchor.x}px`;
+      this.el.style.top = `${anchor.y + anchor.h}px`;
+      // A13: a muted site's un-mounted bubble must never be marked "shown" (design spec §2.4).
+      requestAnimationFrame(() => performance.mark(TRIGGER_SHOWN_MARK));
+    }
   }
 
   /**
