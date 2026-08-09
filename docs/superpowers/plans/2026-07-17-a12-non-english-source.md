@@ -80,7 +80,7 @@ export function primarySubtag(tag: string): string;
 export function detectSourceLangCode(pageLang: string | undefined): SourceLangCode | undefined;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/source-lang.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/source-lang.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -125,7 +125,7 @@ describe('detectSourceLangCode', () => {
 Run: `cd packages/app && bunx vitest run test/source-lang.test.ts`
 Expected: fails — `../src/domain/source-lang` does not exist.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/source-lang.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/source-lang.ts`:
 
 ```ts
 /**
@@ -200,7 +200,7 @@ export * from './domain/legacy-templates';
 Run: `cd packages/app && bunx vitest run test/source-lang.test.ts`
 Expected: all 8 tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck

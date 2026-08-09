@@ -2,6 +2,7 @@ export * from './domain/types';
 export * from './ports';
 export * from './domain/default-template';
 export * from './domain/prompt-template';
+export * from './domain/source-lang';
 export * from './domain/legacy-templates';
 export * from './domain/pii';
 export * from './domain/key-hygiene';
