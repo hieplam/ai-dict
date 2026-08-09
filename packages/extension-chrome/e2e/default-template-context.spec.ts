@@ -23,6 +23,7 @@ import {
   openTrigger,
   storageDump,
   GEMINI_OK_BODY,
+  sseFrame,
 } from './helpers';
 import { DEFAULT_OUTPUT_FORMAT } from '../../app/src/domain/default-template';
 
@@ -48,7 +49,7 @@ async function captureLookup(
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
-        body: `data: ${GEMINI_OK_BODY}\n\n`,
+        body: sseFrame(GEMINI_OK_BODY),
       });
       return;
     }
@@ -157,7 +158,7 @@ test('a blank Card format still yields a valid lookup with constraints intact', 
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
-        body: `data: ${GEMINI_OK_BODY}\n\n`,
+        body: sseFrame(GEMINI_OK_BODY),
       });
       return;
     }

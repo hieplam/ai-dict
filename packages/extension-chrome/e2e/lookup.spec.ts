@@ -16,6 +16,7 @@ import {
   openTrigger,
   mockGemini,
   GEMINI_GLOB,
+  sseFrame,
 } from './helpers';
 
 const CACHE_KEY = 'fbf304968493913a'; // fnv1a64Hex('bank|The bank by the river is steep.|vi')
@@ -131,7 +132,7 @@ test('context disambiguation: the same word "bank" in two different sentences re
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
-        body: `data: ${json}\n\n`,
+        body: sseFrame(json),
       });
       return;
     }

@@ -7,6 +7,7 @@ import {
   selectWordInCard,
   openTrigger,
   GEMINI_GLOB,
+  sseFrame,
 } from './helpers';
 
 /** Route Gemini with a different canned definition per requested word, matched on the exact
@@ -45,7 +46,7 @@ async function mockChainedGemini(context: BrowserContext) {
       await route.fulfill({
         status: 200,
         contentType: 'text/event-stream',
-        body: `data: ${json}\n\n`,
+        body: sseFrame(json),
       });
       return;
     }
