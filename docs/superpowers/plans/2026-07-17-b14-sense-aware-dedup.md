@@ -1042,7 +1042,7 @@ change here is CSS-only (no new exported function, no new `CardState` field), so
 unit test either — Task 6's e2e visually/structurally exercises both files together. Run the
 typecheck/lint gate below so a regression elsewhere in either file is still caught immediately.
 
-- [ ] **Step 1: Implement the CSS.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 1: Implement the CSS.** In `packages/app/src/ui/lookup-card.ts`:
   1. In the shadow `CSS` template literal, add a new line right after the existing
      `::slotted(.nudge-row){...}` rule (`lookup-card.ts:139`, currently the last line before the
      closing backtick):
@@ -1154,7 +1154,7 @@ lookup-card .merge-prompt-dismiss:hover{background:var(--ad-surface);color:var(-
 lookup-card .merge-prompt-dismiss:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}`;
 ```
 
-- [ ] **Step 2: Implement `content.ts`.** In `packages/extension-chrome/src/content.ts`:
+- [x] **Step 2: Implement `content.ts`.** In `packages/extension-chrome/src/content.ts`:
   1. Add `buildMergePrompt` to the existing `@ai-dict/app` import list (`content.ts:1-11`):
 
 ```ts
@@ -1236,7 +1236,7 @@ cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typech
 
 Expected: clean (no type errors) in both packages.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
