@@ -1,4 +1,5 @@
-import type { LookupError, Provider, SavedWordStatus, RefineKind } from '../index';
+import type { LookupError, Provider, SavedWordStatus, RefineKind, SourceLangCode } from '../index';
+import { SOURCE_LANG_CODES } from '../index';
 import { adoptStyles } from './styles/adopt';
 import {
   BASE_VARS,
@@ -81,6 +82,13 @@ export type CardState =
        * card. Only meaningful when canPin !== undefined. Renders the pin control as an inert
        * "Pinned" badge and strips the word-level controls entirely (see renderCardState). */
       pinned?: boolean;
+      /** A12: the effective source-language code for this result (bare code, e.g. 'fr'); absent
+       * means auto-detect found nothing and no override was chosen — the row shows "Auto-detect". */
+      sourceLang?: string;
+      /** A12: true only for the in-page card — InlineBottomSheetRenderer always sets it; the side
+       * panel never does, so the "Source: … / Change" row (a one-shot override control) is absent
+       * there by construction (design spec §2.5: in-page card only). Mirrors `refineChips`. */
+      sourceLangRow?: boolean;
     }
   | {
       kind: 'streaming';
@@ -101,6 +109,32 @@ export const PROVIDER_LABELS: Record<Provider, string> = {
 function providerLabel(p: Provider): string {
   return PROVIDER_LABELS[p] ?? p;
 }
+
+/** A12: display names for the fixed source-language picker. UI-only — the wire/prompt only ever
+ * carries the bare code (see domain/source-lang.ts's doc comment for why). Keyed by
+ * SourceLangCode so a missing entry is a compile error. */
+export const SOURCE_LANG_LABELS: Record<SourceLangCode, string> = {
+  fr: 'French',
+  es: 'Spanish',
+  de: 'German',
+  it: 'Italian',
+  pt: 'Portuguese',
+  nl: 'Dutch',
+  ja: 'Japanese',
+  zh: 'Chinese',
+  ko: 'Korean',
+  ru: 'Russian',
+  vi: 'Vietnamese',
+  ar: 'Arabic',
+  hi: 'Hindi',
+  pl: 'Polish',
+  tr: 'Turkish',
+  sv: 'Swedish',
+  el: 'Greek',
+  th: 'Thai',
+  id: 'Indonesian',
+  en: 'English',
+};
 
 export interface RefineChip {
   id: RefineKind;
@@ -187,6 +221,7 @@ button[data-act="settings"] .lbl{line-height:1}
    descendants). */
 ::slotted(.meta-row){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 ::slotted(.defined-as){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 8px;font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
+::slotted(.src-lang-row){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 8px;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 ::slotted(.back-row){display:flex;margin:2px 0 8px}
 ::slotted(.save-row){display:flex;margin:6px 0 10px}
 ::slotted(.pin-row){display:flex;justify-content:flex-end;margin:0 0 6px}
@@ -215,6 +250,15 @@ lookup-card .defined-as__label{font-style:italic}
 lookup-card .defined-as__literal-btn{border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:2px 10px;font:inherit;font-size:var(--adp-text-2xs);cursor:pointer}
 lookup-card .defined-as__literal-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
 lookup-card .defined-as__literal-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .src-lang-row__change{border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:2px 10px;font:inherit;font-size:var(--adp-text-2xs);cursor:pointer}
+lookup-card .src-lang-row__change:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
+lookup-card .src-lang-row__change:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .src-lang-menu{display:flex;flex-wrap:wrap;gap:5px;width:100%;margin-top:2px}
+lookup-card .src-lang-menu[hidden]{display:none}
+lookup-card .src-lang-menu [role=option]{border:1px solid var(--ad-line);background:var(--ad-surface);color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:2px 10px;font:inherit;font-size:var(--adp-text-2xs);cursor:pointer}
+lookup-card .src-lang-menu [role=option]:hover:not([disabled]){background:var(--ad-surface-raised);color:var(--ad-ink)}
+lookup-card .src-lang-menu [role=option]:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .src-lang-menu [role=option][disabled]{opacity:.55;cursor:default}
 lookup-card .back-btn{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:5px 10px 5px 6px;font:inherit;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);cursor:pointer;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease)}
 lookup-card .back-btn svg{width:15px;height:15px;pointer-events:none}
 lookup-card .back-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
@@ -404,6 +448,11 @@ export function renderCardState(state: CardState): Node[] {
   }
   const definedAsRow = interactive && state.definedAs ? renderDefinedAsRow(state.definedAs) : null;
   if (definedAsRow) nodes.push(definedAsRow);
+  // A12: the source-language override row is in-page-card-only (design spec §2.5) — gated on the
+  // in-page-set `sourceLangRow` flag exactly like A3's refine chips, so it never leaks into the
+  // side panel (which reuses renderCardState but never sets the flag). `interactive` also strips
+  // it from a pinned card, whose detached session can no longer honor the one-shot re-run.
+  if (interactive && state.sourceLangRow === true) nodes.push(renderSourceLangRow(state));
   nodes.push(body);
   if (interactive && state.refineChips === true) nodes.push(renderRefineRow(state));
   const meta = renderMetaRow(state);
@@ -462,6 +511,75 @@ function renderDefinedAsRow(
     );
     row.append(btn);
   }
+  return row;
+}
+
+/**
+ * A12: the "Source: <language> / Change" row — always rendered for a result. Structurally
+ * identical to renderMetaRow's provider-switch button + listbox: a disclosure button toggles a
+ * role="listbox" menu of Auto-detect + every SOURCE_LANG_CODES entry, current selection disabled,
+ * others dispatch a composed override-source-lang event.
+ */
+function renderSourceLangRow(state: { sourceLang?: string }): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'src-lang-row';
+  const current = state.sourceLang as SourceLangCode | undefined;
+
+  const label = document.createElement('span');
+  label.className = 'src-lang-row__label';
+  label.textContent = `Source: ${current ? (SOURCE_LANG_LABELS[current] ?? current) : 'Auto-detect'}`;
+  row.append(label);
+
+  const changeBtn = document.createElement('button');
+  changeBtn.type = 'button';
+  changeBtn.className = 'src-lang-row__change';
+  changeBtn.setAttribute('aria-haspopup', 'listbox');
+  changeBtn.setAttribute('aria-expanded', 'false');
+  changeBtn.setAttribute('aria-label', 'Change source language');
+  changeBtn.textContent = 'Change';
+
+  const menu = document.createElement('span');
+  menu.className = 'src-lang-menu';
+  menu.setAttribute('role', 'listbox');
+  menu.hidden = true;
+
+  const options: { code: string; label: string }[] = [
+    { code: 'auto', label: 'Auto-detect' },
+    ...SOURCE_LANG_CODES.map((code) => ({ code, label: SOURCE_LANG_LABELS[code] })),
+  ];
+  for (const opt of options) {
+    const optBtn = document.createElement('button');
+    optBtn.type = 'button';
+    optBtn.setAttribute('role', 'option');
+    optBtn.dataset['code'] = opt.code;
+    optBtn.textContent = opt.label;
+    const isCurrent = opt.code === (current ?? 'auto');
+    optBtn.setAttribute('aria-selected', String(isCurrent));
+    if (isCurrent) {
+      optBtn.disabled = true;
+    } else {
+      optBtn.addEventListener('click', () => {
+        menu.hidden = true;
+        changeBtn.setAttribute('aria-expanded', 'false');
+        optBtn.dispatchEvent(
+          new CustomEvent('override-source-lang', {
+            detail: { code: opt.code },
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      });
+    }
+    menu.append(optBtn);
+  }
+
+  changeBtn.addEventListener('click', () => {
+    const willOpen = menu.hidden;
+    menu.hidden = !willOpen;
+    changeBtn.setAttribute('aria-expanded', String(willOpen));
+  });
+
+  row.append(changeBtn, menu);
   return row;
 }
 

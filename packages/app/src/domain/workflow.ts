@@ -16,6 +16,7 @@ import type {
 } from './types';
 import { isLookupError } from './types';
 import { mapError } from './error-mapper';
+import { detectSourceLangCode, type SourceLangCode } from './source-lang';
 
 // A human spamming Define fires a burst of sequential lookups that trip the provider's
 // per-minute quota (Gemini 429 / RESOURCE_EXHAUSTED). Gate lookups to at most one per this
@@ -57,6 +58,22 @@ interface StackFrame {
   result: LookupResult;
   providers: Provider[];
   refine?: RefineKind;
+  /**
+   * A12: the effective source-language code used to produce this frame — from auto-detection
+   * (source-lang.ts's detectSourceLangCode against e.pageLang) or a manual override. Absent
+   * means "could not be determined" (the neutral auto-phrase fallback was used). Feeds
+   * buildCtx's ctx.sourceLang.
+   */
+  sourceLang?: string;
+  /**
+   * A12: the override VALUE passed to this frame's runLookup call, if any — 'auto' for an
+   * explicit reset-to-detection pick, a SourceLangCode for a specific manual pick, or undefined
+   * when this frame came from ordinary auto-detection (no manual override at all). Threaded
+   * forward by onSwitchProvider/onForceLiteral below so a manual source-language pick survives a
+   * sibling re-run — unlike providerOverride/forceLiteral, which those two callbacks drop from
+   * each other (existing sibling-drop precedent, unchanged by this card).
+   */
+  sourceLangOverride?: SourceLangCode | 'auto';
 }
 
 export function runLookupWorkflow(deps: WorkflowDeps): () => void {
@@ -79,7 +96,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
    * builder produced before A2, plus the A2 onBack key when a parent frame exists below this one.
    */
   function buildCtx(frame: StackFrame): ResultRenderContext {
-    const { event: e, result, providers, refine } = frame;
+    const { event: e, result, providers, refine, sourceLang, sourceLangOverride } = frame;
     // Offer the one-shot picker only when there's more than one provider to choose from.
     const showPicker = providers.length >= 2;
     // A8: offer the "Show literal word" override only when THIS result is an idiom.
@@ -102,14 +119,30 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
         );
       },
       ...(refine !== undefined ? { refine } : {}),
+      // A12: always offered, regardless of provider count/idiom-ness (unlike the picker/
+      // force-literal below, which only appear conditionally) — the card always shows the row.
+      onOverrideSourceLang: (code: string) => {
+        // Deliberate override bypasses the Define-spam cooldown — same reasoning as
+        // onSwitchProvider/onForceLiteral below. Drops BOTH providerOverride and forceLiteral (a
+        // fresh source-language pick is its own independent one-shot), matching the existing
+        // sibling-drop precedent those two already follow with each other. A2: replaces the
+        // current frame in place (same depth), not a new recursion level.
+        const picked: SourceLangCode | 'auto' = code === 'auto' ? 'auto' : (code as SourceLangCode);
+        void runLookup(e, undefined, undefined, undefined, 'replace-top', picked).catch((err) =>
+          deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
+        );
+      },
+      ...(sourceLang !== undefined ? { sourceLang } : {}),
       ...(showPicker
         ? {
             providers,
             onSwitchProvider: (p: Provider) => {
               // Deliberate switch bypasses the Define-spam cooldown — it's not spam. A2: it
               // replaces the current frame in place (same depth), not a new recursion level.
-              void runLookup(e, p, undefined, undefined, 'replace-top').catch((err) =>
-                deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
+              // A12: threads the current source-language override forward — a manual pick
+              // survives a provider switch (unlike forceLiteral, which is dropped here).
+              void runLookup(e, p, undefined, undefined, 'replace-top', sourceLangOverride).catch(
+                (err) => deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
               );
             },
           }
@@ -118,10 +151,17 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
         ? {
             onForceLiteral: () => {
               // Deliberate override bypasses the Define-spam cooldown — same reasoning as
-              // onSwitchProvider above. A2: also replaces the current frame in place.
-              void runLookup(e, undefined, true, undefined, 'replace-top').catch((err) =>
-                deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
-              );
+              // onSwitchProvider above. A2: also replaces the current frame in place. A12:
+              // threads the current source-language override forward — a manual pick survives a
+              // force-literal re-run (unlike providerOverride, which is dropped here).
+              void runLookup(
+                e,
+                undefined,
+                true,
+                undefined,
+                'replace-top',
+                sourceLangOverride,
+              ).catch((err) => deps.renderer.renderError(mapError({ kind: 'thrown', error: err })));
             },
           }
         : {}),
@@ -146,6 +186,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
     forceLiteral?: boolean,
     refine?: RefineKind,
     stackOp: 'push' | 'replace-top' | 'reset' = 'reset',
+    sourceLangOverride?: SourceLangCode | 'auto',
   ): Promise<void> {
     inFlight?.abort();
     const controller = new AbortController();
@@ -179,6 +220,19 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
     // A3: a refine chip tap re-runs THIS selection once, asking for a specific refinement
     // (one-shot).
     if (refine) req.refine = refine;
+    // A12: a manual override always wins (including an explicit 'auto' reset back to
+    // detection); otherwise auto-detect from the page/element lang captured on the selection
+    // event. sourceLangOverride !== undefined means "the reader deliberately picked something",
+    // which sets req.sourceLangOverride so the router skips its cache read (Task 2's guard) even
+    // when the pick happens to be the same code the page already auto-detected.
+    const effectiveSourceLang: SourceLangCode | undefined =
+      sourceLangOverride !== undefined
+        ? sourceLangOverride === 'auto'
+          ? undefined
+          : sourceLangOverride
+        : detectSourceLangCode(e.pageLang);
+    if (effectiveSourceLang !== undefined) req.sourceLang = effectiveSourceLang;
+    if (sourceLangOverride !== undefined) req.sourceLangOverride = true;
     try {
       const result = await deps.client.lookup(req, {
         signal: controller.signal,
@@ -196,6 +250,8 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
         result,
         providers: settings.configuredProviders,
         ...(refine !== undefined ? { refine } : {}),
+        ...(effectiveSourceLang !== undefined ? { sourceLang: effectiveSourceLang } : {}),
+        ...(sourceLangOverride !== undefined ? { sourceLangOverride } : {}),
       };
       // A2 abort-race guard: a superseded run (a newer selection called inFlight.abort()) whose
       // lookup still resolves successfully — the relay client only fires a `lookup.cancel` and does

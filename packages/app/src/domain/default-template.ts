@@ -13,7 +13,7 @@
 
 import type { RefineKind } from './types';
 
-export const PROMPT_ENVELOPE = `You are a bilingual dictionary for {target_lang} learners of English.
+export const PROMPT_ENVELOPE = `You are a bilingual dictionary for {target_lang} learners of {source_lang}.
 Word/phrase: "{word}"
 Sentence context: "{context}"
 Page title: "{title}"
@@ -67,6 +67,17 @@ DEFINED_AS: "{word}" | literal`;
  */
 export const TRANSLATION_INSTRUCTION = `Immediately after the DEFINED_AS line, before any other output, also emit exactly this line:
 TRANSLATION: "<a natural, concise {target_lang} translation of the meaning of "{word}" in this context>"`;
+
+/**
+ * A12 — non-English source pages. Fallback text for {source_lang} when detection found nothing
+ * confident (no recognized page/element `lang` attribute) and the reader has not manually
+ * overridden it. Replaces the previous hard-coded 'English' default
+ * (prompt-template.ts's old `vars.source_lang ?? 'English'`) with an instruction that lets the
+ * model infer the source language from the sentence itself, rather than presupposing English for
+ * every page whose language could not be determined.
+ */
+export const AUTO_SOURCE_LANG_PHRASE =
+  'an unspecified language — infer the source language of the word/sentence from context; do not assume English';
 
 /**
  * A3 — follow-up chips. One instruction per fixed v1 refine kind, substituted into

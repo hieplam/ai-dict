@@ -5,7 +5,7 @@ allowsSchemaChange: true
 # A12 Non-English Source Pages Implementation Plan
 
 > **For agentic workers:** implement task-by-task, TDD (red → green → commit) per task. Steps use
-> checkbox (`- [ ]`) syntax for tracking.
+> checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** the prompt's source-language assumption is no longer hard-coded to "English" for every
 lookup. The card detects the selected word's source language from the page/element `lang`
@@ -80,7 +80,7 @@ export function primarySubtag(tag: string): string;
 export function detectSourceLangCode(pageLang: string | undefined): SourceLangCode | undefined;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/source-lang.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/source-lang.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -125,7 +125,7 @@ describe('detectSourceLangCode', () => {
 Run: `cd packages/app && bunx vitest run test/source-lang.test.ts`
 Expected: fails — `../src/domain/source-lang` does not exist.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/source-lang.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/source-lang.ts`:
 
 ```ts
 /**
@@ -200,7 +200,7 @@ export * from './domain/legacy-templates';
 Run: `cd packages/app && bunx vitest run test/source-lang.test.ts`
 Expected: all 8 tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck
@@ -244,7 +244,7 @@ export interface LookupRequest {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 In `packages/app/test/wire-schema.test.ts`, add (anywhere inside the `describe('wire-schema', ...)`
 block):
@@ -316,7 +316,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts test/app/router.test
 Expected: the two new `router.test.ts` cases and the new `wire-schema.test.ts` case fail (schema
 rejects the extra fields / router has no `sourceLangOverride` guard yet).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/domain/types.ts`, extend `SelectionEvent` (currently 8-14):
 
@@ -409,7 +409,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts test/app/router.test
 
 Expected: all pass, including the 3 new cases.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck
@@ -442,7 +442,7 @@ git commit -m "feat: add sourceLang/sourceLangOverride request fields + cache-sk
 export const AUTO_SOURCE_LANG_PHRASE: string;
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 In `packages/app/test/default-template.test.ts`, add a new `describe` block (after the existing
 `PROMPT_ENVELOPE (B2 translation slot)` block):
@@ -514,7 +514,7 @@ Run: `cd packages/app && bunx vitest run test/default-template.test.ts test/prom
 Expected: the new/changed cases fail (`AUTO_SOURCE_LANG_PHRASE` doesn't exist yet; `PROMPT_ENVELOPE`
 still says "of English").
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/domain/default-template.ts`, change line 14's persona sentence:
 
@@ -617,7 +617,7 @@ const prompt = buildPrompt(
 Run: `cd packages/app && bunx vitest run test/default-template.test.ts test/prompt-template.test.ts`
 Expected: all pass, including the new/changed cases.
 
-- [ ] **Step 3: Run the full unit suite to catch any other test asserting the old wording:**
+- [x] **Step 3: Run the full unit suite to catch any other test asserting the old wording:**
 
 ```
 cd packages/app && bun run test
@@ -627,7 +627,7 @@ Expected: all pass (no other test in the repo asserts the literal `"learners of 
 verified by `grep -rn "learners of English" packages` returning only `legacy-templates.ts`, which
 this task does not touch).
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck
@@ -658,7 +658,7 @@ git commit -m "feat: resolve {source_lang} in the persona line instead of hard-c
 // SelectionEvent (domain/types.ts) already carries the new `pageLang?: string` field from Task 2.
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add to the existing `describe('defaultReader ...)` block
+- [x] **Step 1: Write the failing tests.** Add to the existing `describe('defaultReader ...)` block
       in `packages/app/test/app/dom-selection-source.test.ts` (after the existing "whitespace-only"
       test):
 
@@ -745,7 +745,7 @@ test — nearest-ancestor beating `document.documentElement.lang='en'` — would
 `undefined` today, so this is a true red: the assertion `toBe('ja')` fails since nothing populates it
 yet).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/dom-selection-source.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/app/dom-selection-source.ts`:
 
 ```ts
 import type { SelectionSource, SelectionEvent, AnchorRect } from '../index';
@@ -836,7 +836,7 @@ card's change; apply this card's diff around them instead of overwriting them.
 Run: `cd packages/app && bunx vitest run test/app/dom-selection-source.test.ts`
 Expected: all tests pass (existing + 3 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck
@@ -867,7 +867,7 @@ sourceLang?: string;
 onOverrideSourceLang?: (code: string) => void;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add to `packages/app/test/workflow.test.ts`, inside the
+- [x] **Step 1: Write the failing tests.** Add to `packages/app/test/workflow.test.ts`, inside the
       `describe('runLookupWorkflow', ...)` block (after the existing `'a literal result (no
 definedAs)...'` test, before the error-mapping tests):
 
@@ -1056,7 +1056,7 @@ Run: `cd packages/app && bunx vitest run test/workflow.test.ts`
 Expected: the 8 new cases fail (`ResultRenderContext` has no `sourceLang`/`onOverrideSourceLang` yet;
 `req` never carries `sourceLang`).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/ports.ts`, extend `ResultRenderContext` (currently 26-48) — add after the
 existing `onForceLiteral` field:
@@ -1245,7 +1245,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
 Run: `cd packages/app && bunx vitest run test/workflow.test.ts`
 Expected: all pass (existing + 8 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck
@@ -1275,7 +1275,7 @@ export const SOURCE_LANG_LABELS: Record<SourceLangCode, string>;
 // dispatches: new CustomEvent('override-source-lang', { detail: { code: string }, bubbles: true, composed: true })
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add to `packages/app/test/ui/lookup-card.test.ts` (find
+- [x] **Step 1: Write the failing tests.** Add to `packages/app/test/ui/lookup-card.test.ts` (find
       the existing `describe`/`renderCardState` test block and add nearby; adapt the mount/state
       helper already used by the surrounding tests in this file — e.g. if the file exposes a
       `resultState(overrides)` helper or builds state objects inline, follow that file's own existing
@@ -1339,7 +1339,7 @@ describe('renderCardState — source language row (A12)', () => {
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: fails — no `.src-lang-row` is rendered yet.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
 
 Update the top import to also pull in the new domain pieces:
 
@@ -1499,7 +1499,7 @@ return nodes;
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all pass, including the 4 new cases.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck
@@ -1521,7 +1521,7 @@ git commit -m "feat: add the card's Source language row + override picker (A12)"
 - Modify: `packages/app/src/app/inline-bottom-sheet-renderer.ts`
 - Modify: `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`
 
-- [ ] **Step 1: Write the failing tests.** Add to `packages/app/test/app/inline-bottom-sheet-
+- [x] **Step 1: Write the failing tests.** Add to `packages/app/test/app/inline-bottom-sheet-
 renderer.test.ts`, inside the main `describe('InlineBottomSheetRenderer', ...)` block (near
       the existing `switch-provider`/`force-literal` tests):
 
@@ -1558,7 +1558,7 @@ Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.t
 Expected: the 3 new cases fail (no `.src-lang-row` appears — `ctx.sourceLang`/`onOverrideSourceLang`
 are not yet forwarded).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`:
 
 Add the new private field, alongside `onSwitch`/`onForceLiteral`:
 
@@ -1609,7 +1609,7 @@ rides through those re-renders automatically with no further change.)
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: all pass, including the 3 new cases.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck
@@ -1630,7 +1630,7 @@ git commit -m "feat: wire the card's source-language override into the in-page r
 
 - Create: `packages/extension-chrome/e2e/a12-non-english-source.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/a12-non-english-source.spec.ts`:
+- [x] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/a12-non-english-source.spec.ts`:
 
 ```ts
 /**
@@ -1802,7 +1802,7 @@ cd packages/extension-chrome && bunx playwright test a12-non-english-source
 
 Expected: all 4 tests pass.
 
-- [ ] **Step 2: Regression-check the shared prompt-builder surface.**
+- [x] **Step 2: Regression-check the shared prompt-builder surface.**
 
 ```
 cd packages/extension-chrome && bunx playwright test default-template-context advanced-prompt idiom-expansion
@@ -1812,7 +1812,7 @@ Expected: all pass unchanged — proves the `{source_lang}` placeholder swap and
 `AUTO_SOURCE_LANG_PHRASE` fallback did not regress the existing card-format/envelope-split, advanced-
 override, or A8 idiom pipelines.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
@@ -1829,7 +1829,7 @@ git commit -m "feat: e2e coverage for source-language detection, display, and ov
 
 ### Task 9: Final gates + PR
 
-- [ ] **Step 1: Run every gate.**
+- [x] **Step 1: Run every gate.**
 
 ```
 cd packages/app && bun run typecheck
@@ -1847,7 +1847,7 @@ unit test from Tasks 1-7); lint/format clean; the Chrome build succeeds with the
 new A12 e2e spec plus the regression guards for the shared prompt-builder/provider-picker surface
 (which this card's `workflow.ts` changes sit right next to) all pass.
 
-- [ ] **Step 2: Open the PR.**
+- [x] **Step 2: Open the PR.**
 
 Branch: `feat/a12-non-english-source`. Title: `feat: non-English source pages (A12)`.
 Regular merge (no squash — owner ruling 2026-07-16). No `## JIRA ticket` section

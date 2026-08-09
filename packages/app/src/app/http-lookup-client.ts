@@ -87,6 +87,9 @@ export async function runHttpLookup(
       word: req.word,
       context: req.context,
       target_lang: req.target,
+      // A12: bare BCP-47 primary subtag (e.g. 'fr'); absent means "could not be determined" —
+      // buildPrompt then falls back to AUTO_SOURCE_LANG_PHRASE instead of assuming English.
+      ...(req.sourceLang !== undefined ? { source_lang: req.sourceLang } : {}),
       url: req.url,
       title: req.title,
     },

@@ -38,6 +38,10 @@ const LookupRequestSchema = z.strictObject({
   provider: ProviderEnum.optional(),
   // A8: one-shot "Show literal word" override; absent on normal lookups.
   forceLiteral: z.boolean().optional(),
+  // A12: bare BCP-47 primary subtag (e.g. 'fr'); absent = could not be determined.
+  sourceLang: z.string().optional(),
+  // A12: true only for a manual, one-shot override — see domain/types.ts's doc comment.
+  sourceLangOverride: z.boolean().optional(),
   // A3: one-shot refine request; absent on normal lookups. See domain/types.ts's doc comment.
   refine: RefineKindEnum.optional(),
 });

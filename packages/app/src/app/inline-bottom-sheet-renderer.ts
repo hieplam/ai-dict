@@ -45,6 +45,10 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.onRefine?.((e as CustomEvent<{ refine: RefineKind }>).detail.refine);
   private readonly onCardBack = (): void => this.onBack?.();
   private readonly onCardPin = (): void => this.pinCurrent();
+  // A12: same named-handler pattern as the other onCard* fields, for the card's one
+  // `override-source-lang` listener.
+  private readonly onCardSourceLangOverride = (e: Event): void =>
+    this.onSourceLangOverride?.((e as CustomEvent<{ code: string }>).detail.code);
   // Set on every renderResult from the render context; the card's one `switch-provider`
   // listener (attached in ensureCard) reads whatever the latest result installed.
   private onSwitch: ((p: Provider) => void) | undefined;
@@ -54,6 +58,8 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   private onRefine: ((k: RefineKind) => void) | undefined;
   // A2: same pattern for the card's one `lookup-back` listener.
   private onBack: (() => void) | undefined;
+  // A12: same pattern as onSwitch/onForceLiteral, for the card's one `override-source-lang` listener.
+  private onSourceLangOverride: ((code: string) => void) | undefined;
   // A3: the last render where ctx.refine was undefined (a genuine original result), so
   // restoreOriginal() can revert a refined body without a new lookup. null before any render, or
   // after close(). See the design spec's §2.4(b).
@@ -150,6 +156,9 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // One-shot idiom-literal override (A8): the card fires `force-literal` when the reader taps
     // "Show literal word"; delegate to the handler the workflow installed via the render context.
     card.addEventListener('force-literal', this.onCardForceLiteral);
+    // One-shot source-language override (A12): the card fires `override-source-lang` when the
+    // reader picks a language (or Auto-detect); delegate to the handler the workflow installed.
+    card.addEventListener('override-source-lang', this.onCardSourceLangOverride);
     // A3: the card fires `refine` when a chip is tapped; delegate to the handler the workflow
     // installed via the render context (mirrors switch-provider/force-literal above).
     // `refine-back` is deliberately NOT listened here — content.ts owns it directly (see the
@@ -322,6 +331,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.onForceLiteral = ctx?.onForceLiteral;
     this.onRefine = ctx?.onRefine;
     this.onBack = ctx?.onBack;
+    this.onSourceLangOverride = ctx?.onOverrideSourceLang;
     this.card?.toggleAttribute('data-streaming', false);
     // A1: a terminal renderResult always ends the current streaming session — the throttle clock
     // must not carry over and spuriously drop a NEW session's very first renderPartial repaint
@@ -340,6 +350,10 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
       ...(r.fallbackFrom !== undefined ? { fallbackFrom: r.fallbackFrom } : {}),
       ...(r.definedAs !== undefined ? { definedAs: r.definedAs } : {}),
       ...(ctx?.providers !== undefined ? { providers: ctx.providers } : {}),
+      ...(ctx?.sourceLang !== undefined ? { sourceLang: ctx.sourceLang } : {}),
+      // A12: always true for the in-page card — the side panel never sets it (design spec §2.5),
+      // so the source-language override row renders here only. Mirrors `refineChips` below.
+      sourceLangRow: true,
       saved: ctx?.saved === true,
       // B7: r.nudge is a transient per-reply annotation (never persisted — see router.ts);
       // always explicit true/false, same style as `saved` above.
@@ -497,6 +511,9 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // whatever lookup is live now (design spec §2.2; see the onCard* fields' comment).
     card.removeEventListener('switch-provider', this.onCardSwitch);
     card.removeEventListener('force-literal', this.onCardForceLiteral);
+    // A12: fully decouple the detached card from the live session's source-language override
+    // handler too — same reasoning as the other onCard* removals above (design spec §2.2).
+    card.removeEventListener('override-source-lang', this.onCardSourceLangOverride);
     card.removeEventListener('refine', this.onCardRefine);
     card.removeEventListener('lookup-back', this.onCardBack);
     card.removeEventListener('pin', this.onCardPin);

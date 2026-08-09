@@ -35,6 +35,20 @@ export interface ResultRenderContext {
    */
   onForceLiteral?: () => void;
   /**
+   * A12: the effective source-language code (bare BCP-47 subtag, e.g. 'fr') used for this
+   * result — from auto-detection or a manual override. Absent means "could not be determined"
+   * (the auto-phrase fallback was used). Always present on the ctx object when set (unlike
+   * `providers`, which is conditional on >=2 configured); the card's Source row shows
+   * "Auto-detect" when this is absent.
+   */
+  sourceLang?: string;
+  /**
+   * A12: re-run the SAME selection once with a manually picked source language (or 'auto' to
+   * reset detection). Always present — unlike onSwitchProvider/onForceLiteral, this control is
+   * offered unconditionally on every result.
+   */
+  onOverrideSourceLang?: (code: string) => void;
+  /**
    * A3: re-run the SAME selection once with the given refinement. Always present on a
    * completed result (refine chips are always offered — no gating, unlike the picker/
    * force-literal controls).

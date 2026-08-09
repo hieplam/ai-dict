@@ -26,6 +26,13 @@ export interface SelectionEvent {
    * on a non-guarded element, rather than a manual drag-select or the touchend path. Absent for
    * every other selection. */
   viaDoubleClick?: boolean;
+  /**
+   * A12: the raw `lang` attribute value captured at selection time (nearest-ancestor
+   * `[lang]`, falling back to `document.documentElement.lang`) — see
+   * app/dom-selection-source.ts's readPageLang. Unparsed; domain/source-lang.ts's
+   * detectSourceLangCode does the recognition step. Absent when neither source declared one.
+   */
+  pageLang?: string;
 }
 
 /**
@@ -59,6 +66,22 @@ export interface LookupRequest {
    * above — a hit would echo back the smart idiom-aware answer instead.
    */
   forceLiteral?: boolean | undefined;
+  /**
+   * A12: the source language of the word/sentence, as a bare BCP-47 primary subtag (e.g. 'fr'),
+   * exactly like `target` already carries {target_lang} as a bare code. Set from
+   * domain/source-lang.ts's detectSourceLangCode when recognized, or from a manual card
+   * override; absent means "could not be determined" — buildPrompt then falls back to the
+   * neutral AUTO_SOURCE_LANG_PHRASE instruction instead of assuming English.
+   */
+  sourceLang?: string | undefined;
+  /**
+   * A12: true only when `sourceLang` above came from a manual, one-shot card override (including
+   * an explicit re-pick of "Auto-detect") rather than ordinary auto-detection. The router skips
+   * the cache read when this is true — mirrors `provider`/`forceLiteral`'s existing skip-cache
+   * reasoning (a cache hit would echo back an answer produced under the OLD source-language
+   * assumption, silently ignoring the override).
+   */
+  sourceLangOverride?: boolean | undefined;
   /**
    * A3: one-shot request to answer with a specific refinement (simpler wording, more examples,
    * etymology, or usage guidance) instead of the default answer. Re-runs the SAME selection

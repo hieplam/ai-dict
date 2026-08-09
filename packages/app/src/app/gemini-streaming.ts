@@ -110,6 +110,11 @@ export async function runGeminiStreamingLookup(
       word: req.word,
       context: req.context,
       target_lang: req.target,
+      // A12: bare BCP-47 primary subtag (e.g. 'fr'); absent means "could not be determined" —
+      // buildPrompt then falls back to AUTO_SOURCE_LANG_PHRASE instead of assuming English.
+      // Mirrors http-lookup-client.ts — Gemini's default streaming path builds its prompt here,
+      // so source_lang must be threaded in both places or the streamed lookup silently drops it.
+      ...(req.sourceLang !== undefined ? { source_lang: req.sourceLang } : {}),
       url: req.url,
       title: req.title,
     },

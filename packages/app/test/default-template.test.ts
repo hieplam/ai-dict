@@ -6,6 +6,7 @@ import {
   IDIOM_FORCE_LITERAL_INSTRUCTION,
   TRANSLATION_INSTRUCTION,
   REFINE_INSTRUCTIONS,
+  AUTO_SOURCE_LANG_PHRASE,
 } from '../src/domain/default-template';
 
 describe('PROMPT_ENVELOPE', () => {
@@ -65,6 +66,20 @@ describe('TRANSLATION_INSTRUCTION', () => {
     expect(TRANSLATION_INSTRUCTION).toContain('TRANSLATION:');
     expect(TRANSLATION_INSTRUCTION).toContain('{word}');
     expect(TRANSLATION_INSTRUCTION).toContain('{target_lang}');
+  });
+});
+
+describe('PROMPT_ENVELOPE (A12 source-language slot)', () => {
+  it('carries the {source_lang} placeholder, not a hard-coded "English"', () => {
+    expect(PROMPT_ENVELOPE).toContain('{source_lang}');
+    expect(PROMPT_ENVELOPE).not.toContain('of English');
+  });
+});
+
+describe('AUTO_SOURCE_LANG_PHRASE', () => {
+  it('instructs inference from context rather than assuming English', () => {
+    expect(AUTO_SOURCE_LANG_PHRASE.toLowerCase()).toContain('infer');
+    expect(AUTO_SOURCE_LANG_PHRASE).not.toBe('English');
   });
 });
 

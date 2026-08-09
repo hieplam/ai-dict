@@ -134,11 +134,14 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       // would echo back the smart idiom-aware answer instead of the literal one requested.
       // A3: and again for a refine re-run (req.refine) — a hit would echo back the ORIGINAL
       // (unrefined) answer instead of the requested refinement.
+      // A12: same reasoning for a manual source-language override (req.sourceLangOverride) — a
+      // hit would echo back an answer produced under the OLD source-language assumption.
       if (
         cacheEnabled &&
         req.provider === undefined &&
         req.forceLiteral !== true &&
-        req.refine === undefined
+        req.refine === undefined &&
+        req.sourceLangOverride !== true
       ) {
         const hit = await cacheGet({ storage: deps.kv }, keyReq);
         if (hit) {

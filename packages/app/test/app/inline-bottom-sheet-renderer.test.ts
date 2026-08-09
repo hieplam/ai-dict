@@ -297,6 +297,30 @@ describe('InlineBottomSheetRenderer', () => {
     expect(card(h).querySelector('.defined-as')).toBeNull();
   });
 
+  it('[A12] renderResult forwards ctx.sourceLang into the card light DOM', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { sourceLang: 'fr', onOverrideSourceLang: () => {} });
+    expect(card(h).querySelector('.src-lang-row')?.textContent).toContain('Source: French');
+  });
+
+  it('[A12] renderResult shows "Auto-detect" when ctx.sourceLang is absent', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { onOverrideSourceLang: () => {} });
+    expect(card(h).querySelector('.src-lang-row')?.textContent).toContain('Source: Auto-detect');
+  });
+
+  it("[A12] clicking the card's source-language option invokes ctx.onOverrideSourceLang", () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    const picks: string[] = [];
+    r.renderResult(result, { sourceLang: 'fr', onOverrideSourceLang: (code) => picks.push(code) });
+    card(h).querySelector<HTMLButtonElement>('.src-lang-row__change')!.click();
+    card(h).querySelector<HTMLButtonElement>('[data-code="ja"]')!.click();
+    expect(picks).toEqual(['ja']);
+  });
+
   it('renderResult always sets refineChips:true so the card shows the 5-chip row (4 from A3 + related from B13)', () => {
     const h = host();
     new InlineBottomSheetRenderer(h).renderResult(result);
