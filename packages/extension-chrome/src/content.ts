@@ -4,6 +4,7 @@ import {
   DomSelectionSource,
   MessageRelayLookupClient,
   buildConsentFooter,
+  buildMergePrompt,
   createSaveReplyGuard,
   classifyInbound,
   acceptAny,
@@ -328,6 +329,35 @@ document.addEventListener('toggle-save', () => {
       if (willSave && reply?.ok && reply.type === 'saved') {
         lastStatus = reply.entry.status;
         inline.setStatus(lastStatus);
+      } else if (willSave && reply?.ok && reply.type === 'saved.conflict') {
+        // B14: the headword is already saved under a different sentence/url. Nothing was
+        // written server-side — revert the optimistic star and ask before appending a new sense.
+        lastSaved = false;
+        inline.setSaved(false);
+        const payload = lastSavePayload;
+        const prompt = buildMergePrompt({
+          word: reply.word,
+          senseCount: reply.senseCount,
+          onChoice: (add) => {
+            prompt.remove();
+            if (!add) return; // decline = no write (B14 fence) — nothing was ever persisted
+            lastSaved = true;
+            inline.setSaved(true);
+            const token2 = saveReplyGuard.next();
+            void chrome.runtime
+              .sendMessage({ type: 'saved.save' as const, ...payload, confirmNewSense: true })
+              .then((raw2: unknown) => {
+                if (!saveReplyGuard.isCurrent(token2)) return;
+                const reply2 = raw2 as WireReply | undefined;
+                if (reply2?.ok && reply2.type === 'saved') {
+                  lastStatus = reply2.entry.status;
+                  inline.setStatus(lastStatus);
+                }
+              })
+              .catch(() => undefined);
+          },
+        });
+        inline.appendToCard(prompt);
       }
       if (reply?.ok) refreshHighlights(); // B3: save/unsave changed the learning-word set
     })

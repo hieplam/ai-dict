@@ -168,6 +168,11 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
     sentence: z.string(),
     url: z.string(),
     title: z.string(),
+    // B14: explicit confirmation to append this context as a NEW sense on an already-saved
+    // headword, after a prior saved.save reply signalled `type: 'saved.conflict'`. Absent/false
+    // on every normal first-attempt save (including a brand-new word, or an exact sentence+url
+    // repeat, which the router treats as a no-op, not a conflict).
+    confirmNewSense: z.boolean().optional(),
   }),
   z.object({ type: z.literal('saved.delete'), word: z.string() }),
   // B5: manually set an existing saved word's status ('learning' default | 'known' manual).
@@ -268,6 +273,16 @@ export const WireReplySchema = z.union([
   }),
   z.object({ ok: z.literal(true), type: z.literal('ack') }),
   z.object({ ok: z.literal(true), type: z.literal('saved'), entry: SavedWordEntrySchema }),
+  // B14: returned instead of `saved` when `word` already has a saved entry with a DIFFERENT
+  // sentence+url than the incoming payload and confirmNewSense wasn't set — NO write happened.
+  // The caller must re-send saved.save with confirmNewSense:true to append, or do nothing
+  // (decline = no write, roadmap B14 fence).
+  z.object({
+    ok: z.literal(true),
+    type: z.literal('saved.conflict'),
+    word: z.string(),
+    senseCount: z.number(),
+  }),
   // B8: reply type is 'saved.list' (bound to the message's own name), not a second synonym for
   // 'saved' — 'saved' already means "one entry" (saved.save/setStatus replies); see design spec §2.
   z.object({

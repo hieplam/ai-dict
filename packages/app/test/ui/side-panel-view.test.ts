@@ -291,6 +291,21 @@ describe('<side-panel-view>', () => {
     el.shadowRoot!.querySelector<HTMLButtonElement>('.words-nav')!.click();
     expect(fired).toBe(true);
   });
+
+  it('B14: appendToFocus appends a node into the focus region when a result is showing; false on the empty state', () => {
+    const el = mount();
+    const extra = document.createElement('div');
+    extra.textContent = 'merge prompt';
+    expect(el.appendToFocus(extra)).toBe(false); // still on the empty teaching state
+    el.focusState = {
+      kind: 'result',
+      safeHtml: safe('<p>ok</p>'),
+      word: 'bank',
+      target: 'vi',
+    };
+    expect(el.appendToFocus(extra)).toBe(true);
+    expect(el.shadowRoot!.querySelector('.focus')!.contains(extra)).toBe(true);
+  });
 });
 
 describe('<side-panel-view> Back button CSS parity (A2)', () => {

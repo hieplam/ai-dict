@@ -99,7 +99,7 @@ export function savedWordUpsert(
 { ok: true, type: 'saved.conflict', word: string, senseCount: number }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Replace the entire contents of
+- [x] **Step 1: Write the failing tests.** Replace the entire contents of
       `packages/app/test/saved-words-policy.test.ts`:
 
 ```ts
@@ -328,7 +328,7 @@ Expected: failures — `savedWordUpsert` still returns a bare entry (not `{kind,
 `upsertOk`'s `result.kind !== 'saved'` check throws on every call, and the two new conflict-shaped
 assertions fail outright.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/domain/saved-words-policy.ts`, replace the whole
+- [x] **Step 2: Implement.** In `packages/app/src/domain/saved-words-policy.ts`, replace the whole
       file:
 
 ```ts
@@ -493,7 +493,7 @@ export async function savedWordsClear(deps: SavedWordsDeps): Promise<void> {
 Run: `cd packages/app && bunx vitest run test/saved-words-policy.test.ts`
 Expected: all tests pass (15 total).
 
-- [ ] **Step 3: Write the failing wire tests.** In `packages/app/test/wire-schema.test.ts`, inside the
+- [x] **Step 3: Write the failing wire tests.** In `packages/app/test/wire-schema.test.ts`, inside the
       existing `describe('saved.save / saved.delete wire messages (B1)', ...)` block
       (`wire-schema.test.ts:412-497`), add these tests right after the existing
       `'accepts a valid saved.save message'` test (after line 425, before
@@ -555,7 +555,7 @@ Expected: 4 new failures (the schema doesn't know `confirmNewSense` or `saved.co
 discriminated union match entirely, and `saved.conflict` has no matching arm in `WireReplySchema`
 yet); the JSON-schema snapshot test also now needs regeneration once the schema changes (Step 5).
 
-- [ ] **Step 4: Implement.** In `packages/app/src/wire.ts`:
+- [x] **Step 4: Implement.** In `packages/app/src/wire.ts`:
   1. Add `confirmNewSense` to the `saved.save` arm (`wire.ts:111-119`):
 
 ```ts
@@ -601,7 +601,7 @@ Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts -t "B14"`
 Expected: the 4 new B14 tests pass. The snapshot test (`'JSON-schema snapshot is stable'`) now
 fails — expected, fixed in Step 5.
 
-- [ ] **Step 5: Regenerate the JSON-schema snapshot.**
+- [x] **Step 5: Regenerate the JSON-schema snapshot.**
 
 ```
 cd packages/app && bunx vitest run test/wire-schema.test.ts -u
@@ -616,7 +616,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts
 
 Expected: all tests pass, including the snapshot test (no `-u` needed this second run).
 
-- [ ] **Step 6: Update the router.** In `packages/app/src/app/router.ts`, replace the `saved.save`
+- [x] **Step 6: Update the router.** In `packages/app/src/app/router.ts`, replace the `saved.save`
       case (`router.ts:242-257`):
 
 ```ts
@@ -641,7 +641,7 @@ Expected: all tests pass, including the snapshot test (no `-u` needed this secon
       }
 ```
 
-- [ ] **Step 7: Write the failing router tests.** In `packages/app/test/app/router.test.ts`,
+- [x] **Step 7: Write the failing router tests.** In `packages/app/test/app/router.test.ts`,
       replace the existing test
       `'a second saved.save for the same word (different casing) preserves savedAt, replaces senses'`
       (`router.test.ts:474-500`) with:
@@ -743,7 +743,7 @@ Expected (after Step 6): all tests in `router.test.ts` pass, including the 3 new
 `'saved.save persists a new entry'`, `'saved.delete removes the entry'`, and
 `'history.clear and cache.clear never touch saved:*'` tests unchanged from before.
 
-- [ ] **Step 8: Commit** — gate, then commit:
+- [x] **Step 8: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -776,7 +776,7 @@ export function buildMergePrompt(opts: {
 }): HTMLElement;
 ```
 
-- [ ] **Step 1: Write the failing test.** Create `packages/app/test/ui/merge-prompt.test.ts`:
+- [x] **Step 1: Write the failing test.** Create `packages/app/test/ui/merge-prompt.test.ts`:
 
 ```ts
 import { describe, it, expect, vi } from 'vitest';
@@ -817,7 +817,7 @@ describe('buildMergePrompt', () => {
 Run: `cd packages/app && bunx vitest run test/ui/merge-prompt.test.ts`
 Expected: failure — `src/ui/merge-prompt.ts` does not exist yet (module not found).
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/ui/merge-prompt.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/ui/merge-prompt.ts`:
 
 ```ts
 /**
@@ -875,7 +875,7 @@ export { buildMergePrompt } from './ui/merge-prompt';
 Run: `cd packages/app && bunx vitest run test/ui/merge-prompt.test.ts`
 Expected: all 3 tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -905,7 +905,7 @@ class SidePanelView extends HTMLElement {
 }
 ```
 
-- [ ] **Step 1: Write the failing test.** Append to
+- [x] **Step 1: Write the failing test.** Append to
       `packages/app/test/ui/side-panel-view.test.ts`, inside the existing
       `describe('<side-panel-view>', ...)` block, just before its closing `});`:
 
@@ -929,7 +929,7 @@ it('B14: appendToFocus appends a node into the focus region when a result is sho
 Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: failure — `appendToFocus` is not a function on `SidePanelView`.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
   1. Add the CSS rules right after the existing
      `.focus .save-btn[aria-pressed="true"] svg{...}` line and its reduced-motion block
      (`side-panel-view.ts:67-68`):
@@ -1014,7 +1014,7 @@ Expected: failure — `appendToFocus` is not a function on `SidePanelView`.
 Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: all tests pass (existing + the new B14 test).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -1042,7 +1042,7 @@ change here is CSS-only (no new exported function, no new `CardState` field), so
 unit test either — Task 6's e2e visually/structurally exercises both files together. Run the
 typecheck/lint gate below so a regression elsewhere in either file is still caught immediately.
 
-- [ ] **Step 1: Implement the CSS.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 1: Implement the CSS.** In `packages/app/src/ui/lookup-card.ts`:
   1. In the shadow `CSS` template literal, add a new line right after the existing
      `::slotted(.nudge-row){...}` rule (`lookup-card.ts:139`, currently the last line before the
      closing backtick):
@@ -1154,7 +1154,7 @@ lookup-card .merge-prompt-dismiss:hover{background:var(--ad-surface);color:var(-
 lookup-card .merge-prompt-dismiss:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}`;
 ```
 
-- [ ] **Step 2: Implement `content.ts`.** In `packages/extension-chrome/src/content.ts`:
+- [x] **Step 2: Implement `content.ts`.** In `packages/extension-chrome/src/content.ts`:
   1. Add `buildMergePrompt` to the existing `@ai-dict/app` import list (`content.ts:1-11`):
 
 ```ts
@@ -1236,7 +1236,7 @@ cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typech
 
 Expected: clean (no type errors) in both packages.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1260,7 +1260,7 @@ git commit -m "feat: card-side merge-prompt CSS + toggle-save conflict wiring (B
 Same "composition root, e2e-only" note as Task 4 applies here — no dedicated unit test file exists
 for `side-panel.ts`.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
   1. Add `buildMergePrompt` to the existing `@ai-dict/app` import list (`side-panel.ts:1-13`):
 
 ```ts
@@ -1339,7 +1339,7 @@ view.addEventListener('toggle-save', () => {
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1360,7 +1360,7 @@ git commit -m "feat: panel-side merge-prompt wiring (B14)"
 
 - Create: `packages/extension-chrome/e2e/b14-sense-aware-dedup.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b14-sense-aware-dedup.spec.ts`:
+- [x] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b14-sense-aware-dedup.spec.ts`:
 
 ```ts
 import { test, expect } from './fixtures';
@@ -1484,7 +1484,7 @@ cd packages/extension-chrome && bunx playwright test b14-sense-aware-dedup
 
 Expected: 3 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome

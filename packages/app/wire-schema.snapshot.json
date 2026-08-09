@@ -186,6 +186,9 @@
           },
           "title": {
             "type": "string"
+          },
+          "confirmNewSense": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -980,6 +983,32 @@
           "ok",
           "type",
           "entry"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
+            "const": "saved.conflict"
+          },
+          "word": {
+            "type": "string"
+          },
+          "senseCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "word",
+          "senseCount"
         ],
         "additionalProperties": false
       },

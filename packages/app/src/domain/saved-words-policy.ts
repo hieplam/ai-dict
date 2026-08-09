@@ -32,16 +32,30 @@ async function readIndex(s: Storage): Promise<string[]> {
 }
 
 /**
+ * B14: the outcome of a savedWordUpsert call. `'saved'` means a write happened (or an
+ * exact-duplicate sense made a write unnecessary — either way the caller's payload is now
+ * reflected in `entry`). `'conflict'` means the word is already saved under a DIFFERENT
+ * sentence/url and NOTHING was written — the caller must re-call with `confirmNewSense: true`
+ * to append, or do nothing (decline = no write, roadmap B14 fence).
+ */
+export type SavedWordUpsertResult =
+  | { kind: 'saved'; entry: SavedWordEntry }
+  | { kind: 'conflict'; senseCount: number };
+
+/**
  * Create or update the saved entry for `input.word`. A brand-new word gets
- * `status: 'learning'` and `savedAt: now()`; an existing entry (same normalized key) PRESERVES
- * its stored `status`/`savedAt` (so a re-save never silently undoes B5's future status work) but
- * REPLACES its single `senses[0]` with the fresh context (last-write-wins — B14's job is turning
- * this into a real multi-sense merge).
+ * `status: 'learning'` and `savedAt: now()`. An existing entry (same normalized key):
+ *  - an EXACT sentence+url repeat of an already-stored sense is a silent no-op (idempotent,
+ *    returns the unchanged entry, no write, no confirmation needed);
+ *  - a genuinely different sentence/url needs `opts.confirmNewSense: true` to append — without
+ *    it, this returns `{kind:'conflict', senseCount}` and writes nothing (B14: sense-aware
+ *    dedup — see the design spec for the full merge-prompt UX this return shape drives).
  */
 export async function savedWordUpsert(
   deps: SavedWordsDeps,
   input: SavedWordInput,
-): Promise<SavedWordEntry> {
+  opts: { confirmNewSense?: boolean } = {},
+): Promise<SavedWordUpsertResult> {
   const key = normalizeWordKey(input.word);
   const now = deps.now ?? Date.now;
   const existingRaw = await deps.storage.getItem(`saved:${key}`);
@@ -53,18 +67,36 @@ export async function savedWordUpsert(
     url: input.url,
     title: input.title,
   };
+
+  if (existing) {
+    const isDuplicate = existing.senses.some(
+      (s) => s.sentence === sense.sentence && s.url === sense.url,
+    );
+    if (isDuplicate) return { kind: 'saved', entry: existing };
+
+    if (opts.confirmNewSense !== true) {
+      return { kind: 'conflict', senseCount: existing.senses.length };
+    }
+
+    const entry: SavedWordEntry = {
+      ...existing,
+      word: input.word, // latest casing wins for display — same rule every prior write already used
+      senses: [...existing.senses, sense],
+    };
+    await deps.storage.setItem(`saved:${key}`, JSON.stringify(entry));
+    return { kind: 'saved', entry };
+  }
+
   const entry: SavedWordEntry = {
     word: input.word,
-    status: existing?.status ?? 'learning',
-    savedAt: existing?.savedAt ?? now(),
+    status: 'learning',
+    savedAt: now(),
     senses: [sense],
   };
   await deps.storage.setItem(`saved:${key}`, JSON.stringify(entry));
-  if (!existing) {
-    const idx = [key, ...(await readIndex(deps.storage))];
-    await deps.storage.setItem(INDEX_KEY, JSON.stringify(idx));
-  }
-  return entry;
+  const idx = [key, ...(await readIndex(deps.storage))];
+  await deps.storage.setItem(INDEX_KEY, JSON.stringify(idx));
+  return { kind: 'saved', entry };
 }
 
 /** Idempotent: removing an unknown word is a no-op, matching historyDelete's contract. */

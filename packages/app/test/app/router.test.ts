@@ -522,7 +522,33 @@ describe('buildRouter', () => {
     });
   });
 
-  it('a second saved.save for the same word (different casing) preserves savedAt, replaces senses', async () => {
+  it('B14: a second saved.save for the same word with a DIFFERENT sentence replies saved.conflict and writes nothing', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'Bank',
+      definition: 'first def',
+      translation: '',
+      sentence: 's1',
+      url: 'u1',
+      title: 't1',
+    });
+    const before = await d.kv.getItem('saved:bank');
+    const reply = await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'second def',
+      translation: '',
+      sentence: 's2',
+      url: 'u2',
+      title: 't2',
+    });
+    expect(reply).toMatchObject({ ok: true, type: 'saved.conflict', word: 'bank', senseCount: 1 });
+    expect(await d.kv.getItem('saved:bank')).toBe(before); // byte-identical — no write happened
+  });
+
+  it('B14: confirmNewSense:true appends a second sense, preserving savedAt', async () => {
     const d = deps();
     const route = buildRouter(d);
     const first = await route({
@@ -535,7 +561,7 @@ describe('buildRouter', () => {
       title: 't1',
     });
     const firstSavedAt = (first as { entry: { savedAt: number } }).entry.savedAt;
-    const second = await route({
+    const reply = await route({
       type: 'saved.save',
       word: 'bank',
       definition: 'second def',
@@ -543,11 +569,40 @@ describe('buildRouter', () => {
       sentence: 's2',
       url: 'u2',
       title: 't2',
+      confirmNewSense: true,
     });
-    const entry = (second as { entry: { savedAt: number; senses: unknown[] } }).entry;
+    const entry = (reply as { entry: { savedAt: number; senses: unknown[] } }).entry;
     expect(entry.savedAt).toBe(firstSavedAt);
-    expect(entry.senses).toHaveLength(1);
-    expect((entry.senses[0] as { definition: string }).definition).toBe('second def');
+    expect(entry.senses).toHaveLength(2);
+    expect((entry.senses[1] as { definition: string }).definition).toBe('second def');
+  });
+
+  it('B14: a saved.save with the EXACT same sentence+url as an existing sense is a silent no-op (still replies saved)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'first def',
+      translation: '',
+      sentence: 's1',
+      url: 'u1',
+      title: 't1',
+    });
+    const reply = await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'second def', // different definition text, but SAME sentence+url — a duplicate
+      translation: '',
+      sentence: 's1',
+      url: 'u1',
+      title: 't1',
+    });
+    expect(reply).toMatchObject({
+      ok: true,
+      type: 'saved',
+      entry: { senses: [{ definition: 'first def' }] }, // unchanged — the "second def" write never happened
+    });
   });
 
   it('saved.delete removes the entry; idempotent on an unknown word', async () => {

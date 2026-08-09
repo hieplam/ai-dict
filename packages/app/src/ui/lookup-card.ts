@@ -227,7 +227,8 @@ button[data-act="settings"] .lbl{line-height:1}
 ::slotted(.pin-row){display:flex;justify-content:flex-end;margin:0 0 6px}
 ::slotted(.refine-row){display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0 2px}
 ::slotted(.speak-btn){display:inline-flex;vertical-align:middle;margin:0 0 .35em 8px}
-::slotted(.nudge-row){display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:7px 10px;border:1px solid var(--ad-accent);border-radius:var(--adp-radius-control);background:var(--ad-surface-raised)}`;
+::slotted(.nudge-row){display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:7px 10px;border:1px solid var(--ad-accent);border-radius:var(--adp-radius-control);background:var(--ad-surface-raised)}
+::slotted(.merge-prompt){display:flex;flex-direction:column;gap:8px;margin:0 0 10px;padding:10px 12px;border:1px solid var(--ad-line-strong);border-radius:var(--adp-radius-control);background:var(--ad-surface-raised)}`;
 
 // Descendants of the slotted .meta-row cannot be reached by ::slotted() (it only matches the
 // top-level assigned node), so their box decorations are injected ONCE into the document, scoped
@@ -304,7 +305,15 @@ lookup-card .pin-btn:hover:not(:disabled){background:var(--ad-surface-raised);co
 lookup-card .pin-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 lookup-card .pin-btn[aria-pressed='true']{border-color:var(--ad-accent);color:var(--ad-accent-ink)}
 lookup-card .pin-btn:disabled{opacity:.55;cursor:not-allowed}
-@media (prefers-reduced-motion:reduce){lookup-card .pin-btn{transition:none}}`;
+@media (prefers-reduced-motion:reduce){lookup-card .pin-btn{transition:none}}
+lookup-card .merge-prompt-text{margin:0;font-size:var(--adp-text-xs);color:var(--ad-ink)}
+lookup-card .merge-prompt-actions{display:flex;gap:8px}
+lookup-card .merge-prompt-add{flex:none;border:1px solid var(--ad-accent);background:var(--ad-accent);color:var(--ad-on-accent);border-radius:var(--adp-radius-control);padding:5px 12px;font:inherit;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);cursor:pointer}
+lookup-card .merge-prompt-add:hover{filter:brightness(1.06)}
+lookup-card .merge-prompt-add:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .merge-prompt-dismiss{flex:none;border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:5px 12px;font:inherit;font-size:var(--adp-text-xs);cursor:pointer}
+lookup-card .merge-prompt-dismiss:hover{background:var(--ad-surface);color:var(--ad-ink)}
+lookup-card .merge-prompt-dismiss:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}`;
 
 // Inject the document-scoped card styles once: the @keyframes spin (so Firefox/Safari, which
 // follow CSS Scoping Level 1 strictly, can resolve the animation on the light-DOM spinner) and

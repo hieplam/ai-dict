@@ -80,6 +80,63 @@ main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padd
 .focus .save-btn[aria-pressed="true"]{border-color:var(--ad-accent);color:var(--ad-accent-ink)}
 .focus .save-btn[aria-pressed="true"] svg{fill:var(--ad-accent);stroke:var(--ad-accent)}
 @media (prefers-reduced-motion:reduce){.focus .save-btn{transition:none}}
+.focus .merge-prompt {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--ad-line-strong);
+  border-radius: var(--adp-radius-control);
+  background: var(--ad-surface-raised);
+}
+.focus .merge-prompt-text {
+  margin: 0;
+  font-size: var(--adp-text-xs);
+  color: var(--ad-ink);
+}
+.focus .merge-prompt-actions {
+  display: flex;
+  gap: 8px;
+}
+.focus .merge-prompt-add {
+  flex: none;
+  border: 1px solid var(--ad-accent);
+  background: var(--ad-accent);
+  color: var(--ad-on-accent);
+  border-radius: var(--adp-radius-control);
+  padding: 5px 12px;
+  font: inherit;
+  font-size: var(--adp-text-xs);
+  font-weight: var(--adp-weight-semi);
+  cursor: pointer;
+}
+.focus .merge-prompt-add:hover {
+  filter: brightness(1.06);
+}
+.focus .merge-prompt-add:focus-visible {
+  outline: 2px solid var(--ad-accent);
+  outline-offset: 2px;
+}
+.focus .merge-prompt-dismiss {
+  flex: none;
+  border: 1px solid var(--ad-line);
+  background: transparent;
+  color: var(--ad-ink-soft);
+  border-radius: var(--adp-radius-control);
+  padding: 5px 12px;
+  font: inherit;
+  font-size: var(--adp-text-xs);
+  cursor: pointer;
+}
+.focus .merge-prompt-dismiss:hover {
+  background: var(--ad-surface-raised);
+  color: var(--ad-ink);
+}
+.focus .merge-prompt-dismiss:focus-visible {
+  outline: 2px solid var(--ad-accent);
+  outline-offset: 2px;
+}
 .empty{display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px;padding:48px 12px 40px;color:var(--ad-ink-soft)}
 .empty .mark{width:40px;height:40px;opacity:.9}
 .empty-title{margin:0;font-size:var(--adp-text-lg);font-weight:var(--adp-weight-semi);color:var(--ad-ink)}
@@ -218,6 +275,18 @@ export class SidePanelView extends HTMLElement {
     // card's own aria-live="off" fix (lookup-card.ts) exists to prevent — mirror it here so a
     // loading→result swap still announces once, but per-chunk streaming states stay silent.
     this.focusEl.setAttribute('aria-live', this._focus.kind === 'streaming' ? 'off' : 'polite');
+  }
+
+  /**
+   * B14: append an extra light-DOM node (the sense-merge prompt) into the panel's focus region
+   * without a full re-render. Mirrors InlineBottomSheetRenderer.appendToCard's contract exactly
+   * — false when the focus region isn't currently showing a result (nothing sensible to append
+   * to; also guards against appending before connectedCallback has built focusEl).
+   */
+  appendToFocus(node: Node): boolean {
+    if (this._focus.kind !== 'result') return false;
+    this.focusEl.append(node);
+    return true;
   }
 
   private renderRecent(): void {
