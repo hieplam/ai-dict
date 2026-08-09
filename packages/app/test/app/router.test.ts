@@ -699,6 +699,39 @@ describe('buildRouter', () => {
     expect(reply).toMatchObject({ ok: true, type: 'saved', entry: { status: 'known' } });
   });
 
+  it('saved.list on an empty store replies with an empty array (B10)', async () => {
+    const route = buildRouter(deps());
+    const reply = await route({ type: 'saved.list' });
+    expect(reply).toMatchObject({ ok: true, type: 'saved.list', entries: [] });
+  });
+
+  it('saved.list returns every saved word (B10)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'saved.save',
+      word: 'bank',
+      definition: 'd1',
+      translation: '',
+      sentence: 's1',
+      url: 'u1',
+      title: 't1',
+    });
+    await route({
+      type: 'saved.save',
+      word: 'ledger',
+      definition: 'd2',
+      translation: '',
+      sentence: 's2',
+      url: 'u2',
+      title: 't2',
+    });
+    const reply = await route({ type: 'saved.list' });
+    expect(reply).toMatchObject({ ok: true, type: 'saved.list' });
+    const words = (reply as { entries: { word: string }[] }).entries.map((e) => e.word).sort();
+    expect(words).toEqual(['bank', 'ledger']);
+  });
+
   it('saved.setRelated patches an already-saved entry and returns it (B13)', async () => {
     const d = deps();
     const route = buildRouter(d);

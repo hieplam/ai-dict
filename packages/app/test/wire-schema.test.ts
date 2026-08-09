@@ -896,6 +896,37 @@ describe('saved.save / saved.delete wire messages (B1)', () => {
       false,
     );
   });
+
+  it('accepts a valid saved.list message (B10)', () => {
+    expect(WireMessageSchema.safeParse({ type: 'saved.list' }).success).toBe(true);
+  });
+
+  it('a saved.list reply carries an array of the ratified entry shape (B10)', () => {
+    const entry = {
+      word: 'bank',
+      status: 'learning',
+      savedAt: 1,
+      senses: [{ definition: 'd', translation: 't', sentence: 's', url: 'u', title: 'ti' }],
+    };
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'saved.list', entries: [entry] }).success,
+    ).toBe(true);
+    expect(WireReplySchema.safeParse({ ok: true, type: 'saved.list', entries: [] }).success).toBe(
+      true,
+    );
+  });
+
+  it('a saved.list reply rejects a malformed entry inside the array (B10)', () => {
+    const bad = {
+      word: 'bank',
+      status: 'archived', // not 'learning' | 'known'
+      savedAt: 1,
+      senses: [],
+    };
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'saved.list', entries: [bad] }).success,
+    ).toBe(false);
+  });
 });
 
 describe('saved.setRelated wire message (B13)', () => {
