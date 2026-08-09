@@ -492,6 +492,21 @@ describe('runLookupWorkflow', () => {
       expect(h.renderer.calls).toEqual([]);
     });
 
+    it('settings-read failure on a viaDoubleClick selection falls back to showing the trigger (never a silent no-op)', async () => {
+      const h = harness({ doubleClickLookup: true });
+      h.settings.get = () => Promise.reject(new Error('storage unavailable'));
+      h.selection.emit(dblSel);
+      // Design spec §5: fail toward the existing behavior — show the button rather than
+      // silently doing nothing when settings.get() rejects.
+      await vi.waitFor(() => expect(h.trigger.shown).not.toBeNull());
+      expect(h.renderer.calls).toEqual([]);
+      // Recovering the store makes the fallback trigger fully functional — clicking it runs a
+      // normal lookup, confirming the failure degraded gracefully rather than dead-ending.
+      h.settings.get = () => Promise.resolve(h.settings.value);
+      h.trigger.click();
+      await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    });
+
     it('the double-click auto-fire path is still cooldown-gated (same RATE_LIMIT as a rapid double-click)', async () => {
       let t = 0;
       const h = harness({ doubleClickLookup: true, now: () => t });

@@ -890,7 +890,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
     }
   });
 
-  it('groups controls into Connection, Translation, Trigger, Appearance, Privacy & data, Saved words, Backup & restore, and Quiet sites sections', () => {
+  it('groups controls into Connection, Translation, Appearance, Trigger, Privacy & data, Saved words, Backup & restore, and Quiet sites sections', () => {
     const el = mountForm();
     const heads = [...el.shadowRoot!.querySelectorAll('.sec .sec-h')].map((h) => h.textContent);
     // 'Developer mode' is a hidden section (revealed only by the Konami code) sitting after Translation.
