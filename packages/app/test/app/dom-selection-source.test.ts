@@ -206,6 +206,81 @@ describe('defaultReader (DOM selection glue via window.getSelection)', () => {
     document.body.innerHTML = '';
   });
 
+  it('captures document.documentElement.lang as pageLang when no ancestor overrides it (A12)', () => {
+    document.documentElement.lang = 'fr';
+    document.body.innerHTML = '<p id="lang-test">Le petit chat noir.</p>';
+    const p = document.getElementById('lang-test')!;
+    const textNode = p.firstChild!;
+    const sel = window.getSelection()!;
+    const range = document.createRange();
+    range.setStart(textNode, 3);
+    range.setEnd(textNode, 8); // 'petit'
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const src = new DomSelectionSource(document);
+    const cb = vi.fn();
+    const teardown = src.onSelection(cb);
+    document.dispatchEvent(new Event('mouseup'));
+    const event = cb.mock.calls[0]?.[0] as SelectionEvent;
+    expect(event.pageLang).toBe('fr');
+
+    sel.removeAllRanges();
+    teardown();
+    document.body.innerHTML = '';
+    document.documentElement.lang = '';
+  });
+
+  it('a nearest-ancestor [lang] wins over document.documentElement.lang (A12)', () => {
+    document.documentElement.lang = 'en';
+    document.body.innerHTML = '<div lang="ja"><p id="lang-test2">日本語のテキスト</p></div>';
+    const p = document.getElementById('lang-test2')!;
+    const textNode = p.firstChild!;
+    const sel = window.getSelection()!;
+    const range = document.createRange();
+    range.setStart(textNode, 0);
+    range.setEnd(textNode, 3);
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const src = new DomSelectionSource(document);
+    const cb = vi.fn();
+    const teardown = src.onSelection(cb);
+    document.dispatchEvent(new Event('mouseup'));
+    const event = cb.mock.calls[0]?.[0] as SelectionEvent;
+    expect(event.pageLang).toBe('ja');
+
+    sel.removeAllRanges();
+    teardown();
+    document.body.innerHTML = '';
+    document.documentElement.lang = '';
+  });
+
+  it('pageLang is absent (key omitted) when no lang attribute exists anywhere (A12)', () => {
+    document.documentElement.lang = '';
+    document.body.innerHTML = '<p id="lang-test3">plain text</p>';
+    const p = document.getElementById('lang-test3')!;
+    const textNode = p.firstChild!;
+    const sel = window.getSelection()!;
+    const range = document.createRange();
+    range.setStart(textNode, 0);
+    range.setEnd(textNode, 5);
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const src = new DomSelectionSource(document);
+    const cb = vi.fn();
+    const teardown = src.onSelection(cb);
+    document.dispatchEvent(new Event('mouseup'));
+    const event = cb.mock.calls[0]?.[0] as SelectionEvent;
+    expect(event.pageLang).toBeUndefined();
+    expect('pageLang' in event).toBe(false); // exactOptionalPropertyTypes: key must be OMITTED
+
+    sel.removeAllRanges();
+    teardown();
+    document.body.innerHTML = '';
+  });
+
   it('stamps insideResult: true when the selection starts inside a .lookup-answer element (A2)', () => {
     document.body.innerHTML =
       '<div class="lookup-answer"><p id="ans">A financial institution near a river.</p></div>';

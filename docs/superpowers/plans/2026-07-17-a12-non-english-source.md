@@ -658,7 +658,7 @@ git commit -m "[A12NonEnglishSource] feat: resolve {source_lang} in the persona 
 // SelectionEvent (domain/types.ts) already carries the new `pageLang?: string` field from Task 2.
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add to the existing `describe('defaultReader ...)` block
+- [x] **Step 1: Write the failing tests.** Add to the existing `describe('defaultReader ...)` block
       in `packages/app/test/app/dom-selection-source.test.ts` (after the existing "whitespace-only"
       test):
 
@@ -745,7 +745,7 @@ test — nearest-ancestor beating `document.documentElement.lang='en'` — would
 `undefined` today, so this is a true red: the assertion `toBe('ja')` fails since nothing populates it
 yet).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/dom-selection-source.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/app/dom-selection-source.ts`:
 
 ```ts
 import type { SelectionSource, SelectionEvent, AnchorRect } from '../index';
@@ -836,7 +836,7 @@ card's change; apply this card's diff around them instead of overwriting them.
 Run: `cd packages/app && bunx vitest run test/app/dom-selection-source.test.ts`
 Expected: all tests pass (existing + 3 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck

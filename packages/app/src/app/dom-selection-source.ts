@@ -28,6 +28,20 @@ export function extractSentence(full: string, selStart: number, selEnd: number):
   return full.slice(start, end).trim();
 }
 
+/**
+ * A12: the nearest-ancestor `lang` attribute wins over the page-level default — embedded
+ * foreign-language quotes/passages are common on otherwise-English pages (W3C i18n convention:
+ * mark the passage, not just <html>). Falls back to document.documentElement.lang when no
+ * ancestor declares one. Returns the raw tag, unparsed; domain/source-lang.ts's
+ * detectSourceLangCode does the recognition step.
+ */
+function readPageLang(range: Range): string | undefined {
+  const node = range.commonAncestorContainer;
+  const el = node.nodeType === Node.ELEMENT_NODE ? (node as Element) : node.parentElement;
+  const lang = el?.closest('[lang]')?.getAttribute('lang') || document.documentElement.lang;
+  return lang || undefined;
+}
+
 // Default DOM reader: window selection → SelectionEvent. Thin + covered by e2e; unit tests inject a fake.
 function defaultReader(): SelectionEvent | null {
   const sel = window.getSelection();
@@ -38,6 +52,7 @@ function defaultReader(): SelectionEvent | null {
   const full = range.startContainer.textContent ?? text;
   const r = range.getBoundingClientRect();
   const anchor: AnchorRect = { x: r.x, y: r.y, w: r.width, h: r.height };
+  const pageLang = readPageLang(range);
   // A2: a selection whose start lands inside the currently-rendered definition body (marked
   // `.lookup-answer` by lookup-card.ts's renderCardState) is an in-definition "recursive lookup"
   // attempt, not an ordinary page selection — runLookupWorkflow uses this to decide whether to
@@ -55,6 +70,7 @@ function defaultReader(): SelectionEvent | null {
     url: location.href,
     title: document.title,
     ...(insideResult ? { insideResult: true } : {}),
+    ...(pageLang !== undefined ? { pageLang } : {}),
   };
 }
 
