@@ -915,4 +915,44 @@ describe('InlineBottomSheetRenderer — pin cards (A7)', () => {
     expect(h.querySelectorAll('bottom-sheet').length).toBe(0);
     expect(h.querySelectorAll('floating-pin').length).toBe(1); // pinned card untouched
   });
+
+  it('a pinned card is decoupled — its internal events never reach the LIVE session handlers', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { saved: false });
+    card(h).querySelector<HTMLButtonElement>('.pin-btn')!.click();
+    const pinnedLc = h.querySelector('floating-pin > lookup-card')!;
+
+    // A fresh live session installs its own one-shot handlers.
+    const liveCalls: string[] = [];
+    r.renderResult(
+      { ...result, word: 'other' },
+      {
+        saved: false,
+        providers: ['gemini', 'openai'],
+        onSwitchProvider: () => liveCalls.push('switch'),
+        onForceLiteral: () => liveCalls.push('literal'),
+        onRefine: () => liveCalls.push('refine'),
+        onBack: () => liveCalls.push('back'),
+      },
+    );
+
+    // A page script dispatching the internal events at the DETACHED pinned card must be inert.
+    pinnedLc.dispatchEvent(
+      new CustomEvent('switch-provider', {
+        detail: { provider: 'openai' },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+    pinnedLc.dispatchEvent(new CustomEvent('force-literal', { bubbles: true, composed: true }));
+    pinnedLc.dispatchEvent(
+      new CustomEvent('refine', { detail: { refine: 'simpler' }, bubbles: true, composed: true }),
+    );
+    pinnedLc.dispatchEvent(new CustomEvent('lookup-back', { bubbles: true, composed: true }));
+    pinnedLc.dispatchEvent(new CustomEvent('pin', { bubbles: true, composed: true }));
+
+    expect(liveCalls).toEqual([]); // no live-session handler fired
+    expect(h.querySelectorAll('floating-pin').length).toBe(1); // `pin` did not force a 2nd pin
+  });
 });

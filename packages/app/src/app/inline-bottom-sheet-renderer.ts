@@ -32,6 +32,19 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   private readonly pinned: Set<FloatingPin> = new Set();
   // A7: named handler so pinCurrent() can selectively remove it when detaching a card.
   private readonly onLiveClose = (): void => this.close();
+  // A7: named handlers for every session-routed card event, so pinCurrent() can removeEventListener
+  // ALL of them when detaching a card — a pinned card must be fully decoupled from the live
+  // session's singleton handlers (design spec §2.2), not merely have its buttons hidden. A stray
+  // switch-provider/force-literal/refine/lookup-back/pin dispatched at the detached card (it is a
+  // plain MAIN-world <lookup-card>, reachable by any page script) would otherwise act on whatever
+  // lookup is live now — the exact wrong-entry hazard §2.2 exists to prevent.
+  private readonly onCardSwitch = (e: Event): void =>
+    this.onSwitch?.((e as CustomEvent<{ provider: Provider }>).detail.provider);
+  private readonly onCardForceLiteral = (): void => this.onForceLiteral?.();
+  private readonly onCardRefine = (e: Event): void =>
+    this.onRefine?.((e as CustomEvent<{ refine: RefineKind }>).detail.refine);
+  private readonly onCardBack = (): void => this.onBack?.();
+  private readonly onCardPin = (): void => this.pinCurrent();
   // Set on every renderResult from the render context; the card's one `switch-provider`
   // listener (attached in ensureCard) reads whatever the latest result installed.
   private onSwitch: ((p: Provider) => void) | undefined;
@@ -131,26 +144,23 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     sheet.addEventListener('dismiss', () => this.close());
     card.addEventListener('close', this.onLiveClose);
     // One-shot provider picker: the card fires `switch-provider` when the reader picks a
-    // provider; delegate to the handler the workflow installed via the render context.
-    card.addEventListener('switch-provider', (e) =>
-      this.onSwitch?.((e as CustomEvent<{ provider: Provider }>).detail.provider),
-    );
+    // provider; delegate to the handler the workflow installed via the render context. Named
+    // handler (onCardSwitch) so pinCurrent() can remove it on detach — see the onCard* fields.
+    card.addEventListener('switch-provider', this.onCardSwitch);
     // One-shot idiom-literal override (A8): the card fires `force-literal` when the reader taps
     // "Show literal word"; delegate to the handler the workflow installed via the render context.
-    card.addEventListener('force-literal', () => this.onForceLiteral?.());
+    card.addEventListener('force-literal', this.onCardForceLiteral);
     // A3: the card fires `refine` when a chip is tapped; delegate to the handler the workflow
     // installed via the render context (mirrors switch-provider/force-literal above).
     // `refine-back` is deliberately NOT listened here — content.ts owns it directly (see the
     // design spec's §2.5 for why).
-    card.addEventListener('refine', (e) =>
-      this.onRefine?.((e as CustomEvent<{ refine: RefineKind }>).detail.refine),
-    );
+    card.addEventListener('refine', this.onCardRefine);
     // A2: the card fires `lookup-back` when the reader taps "Back"; delegate to the handler the
     // workflow installed via the render context (pops the recursive-lookup chain, no network).
-    card.addEventListener('lookup-back', () => this.onBack?.());
+    card.addEventListener('lookup-back', this.onCardBack);
     // A7: the card fires `pin` when the reader clicks the pin control; detach it into an
     // independent floating shell.
-    card.addEventListener('pin', () => this.pinCurrent());
+    card.addEventListener('pin', this.onCardPin);
     this.host.append(sheet); // connection upgrades both elements + builds their shadow roots
     this.sheet = sheet;
     this.card = card;
@@ -482,6 +492,14 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     card.replaceChildren(...renderCardState(frozen));
 
     card.removeEventListener('close', this.onLiveClose);
+    // A7: fully decouple the detached card from the live session — remove every session-routed
+    // listener, not just close, so a stray event dispatched at the pinned card can never act on
+    // whatever lookup is live now (design spec §2.2; see the onCard* fields' comment).
+    card.removeEventListener('switch-provider', this.onCardSwitch);
+    card.removeEventListener('force-literal', this.onCardForceLiteral);
+    card.removeEventListener('refine', this.onCardRefine);
+    card.removeEventListener('lookup-back', this.onCardBack);
+    card.removeEventListener('pin', this.onCardPin);
     const pin = document.createElement('floating-pin') as FloatingPin;
     pin.setAttribute('data-ad-theme', this._theme);
     pin.append(card); // moves the existing (already re-rendered) element — no re-creation
