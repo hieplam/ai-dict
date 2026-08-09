@@ -768,3 +768,129 @@ describe('InlineBottomSheetRenderer — gloss mode (A5)', () => {
     expect(gloss(h)).not.toBeNull();
   });
 });
+
+describe('InlineBottomSheetRenderer — pin cards (A7)', () => {
+  // pinCurrent() creates a real <floating-pin> and calls placeFloatingPin() on it — production
+  // always registers the element at startup via content.ts's call to registerContentElements();
+  // this suite's earlier describe block never needed a registered custom element because it only
+  // ever reads light-DOM content on <bottom-sheet>/<lookup-card>, which upgrade lazily.
+  beforeAll(() => {
+    registerContentElements();
+  });
+
+  afterEach(() => {
+    document.body.replaceChildren();
+  });
+
+  function pinnedCard(h: HTMLElement): HTMLElement | null {
+    return h.querySelector('floating-pin > lookup-card');
+  }
+
+  it('renderResult sets an enabled pin button when fewer than 3 are pinned', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { saved: false });
+    const btn = card(h).querySelector<HTMLButtonElement>('.pin-btn')!;
+    expect(btn.disabled).toBe(false);
+  });
+
+  it('clicking Pin removes the bottom-sheet wrapper and creates a floating-pin containing the moved card (same headword)', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { saved: false });
+    card(h).querySelector<HTMLButtonElement>('.pin-btn')!.click();
+
+    expect(h.querySelectorAll('bottom-sheet').length).toBe(0);
+    expect(h.querySelectorAll('floating-pin').length).toBe(1);
+    const pinned = pinnedCard(h)!;
+    expect(pinned.querySelector('h2')!.textContent).toBe('bank');
+  });
+
+  it("the pinned copy's pin button renders as an inert Pinned badge", () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { saved: false });
+    card(h).querySelector<HTMLButtonElement>('.pin-btn')!.click();
+
+    const btn = pinnedCard(h)!.querySelector<HTMLButtonElement>('.pin-btn')!;
+    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('the pinned copy has no .save-btn/.nudge-row, and a provider badge with no .prov-switch even when providers were switchable', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(
+      { ...result, provider: 'gemini', nudge: true },
+      { saved: true, providers: ['gemini', 'openai'] },
+    );
+    card(h).querySelector<HTMLButtonElement>('.pin-btn')!.click();
+
+    const pinned = pinnedCard(h)!;
+    expect(pinned.querySelector('.save-btn')).toBeNull();
+    expect(pinned.querySelector('.nudge-row')).toBeNull();
+    expect(pinned.querySelector('.prov-badge')).not.toBeNull();
+    expect(pinned.querySelector('.prov-switch')).toBeNull();
+  });
+
+  it('a fresh renderLoading after pinning creates a brand-new live bottom-sheet while the pinned floating-pin is untouched', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { saved: false });
+    card(h).querySelector<HTMLButtonElement>('.pin-btn')!.click();
+
+    r.renderLoading('resilient');
+    expect(h.querySelectorAll('bottom-sheet').length).toBe(1);
+    expect(h.querySelectorAll('floating-pin').length).toBe(1);
+    expect(pinnedCard(h)!.querySelector('h2')!.textContent).toBe('bank');
+  });
+
+  it('dispatching close on a pinned copy removes only that floating-pin (others, and the live slot, are unaffected)', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult({ ...result, word: 'first' }, { saved: false });
+    card(h).querySelector<HTMLButtonElement>('.pin-btn')!.click();
+    r.renderResult({ ...result, word: 'second' }, { saved: false });
+    card(h).querySelector<HTMLButtonElement>('.pin-btn')!.click();
+    r.renderLoading('third'); // fresh live slot, unrelated to either pin
+
+    const pins = [...h.querySelectorAll('floating-pin')];
+    expect(pins.length).toBe(2);
+    // The Close button lives in <lookup-card>'s SHADOW DOM (built by actionButton(), called from
+    // connectedCallback) — light-DOM querySelector cannot pierce it.
+    const closeBtn = pins[0]!
+      .querySelector('lookup-card')!
+      .shadowRoot!.querySelector<HTMLButtonElement>('button[aria-label="Close"]')!;
+    closeBtn.dispatchEvent(new Event('click', { bubbles: true, composed: true }));
+
+    expect(h.querySelectorAll('floating-pin').length).toBe(1);
+    expect(h.querySelectorAll('bottom-sheet').length).toBe(1); // the live "third" slot untouched
+  });
+
+  it('pinning 3 cards then rendering a 4th result yields a disabled pin button and exactly 3 floating-pin elements', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    for (const w of ['one', 'two', 'three']) {
+      r.renderResult({ ...result, word: w }, { saved: false });
+      card(h).querySelector<HTMLButtonElement>('.pin-btn')!.click();
+    }
+    r.renderResult({ ...result, word: 'four' }, { saved: false });
+
+    expect(h.querySelectorAll('floating-pin').length).toBe(3);
+    const btn = card(h).querySelector<HTMLButtonElement>('.pin-btn')!;
+    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute('aria-label')).toContain('max 3');
+  });
+
+  it('a theme assignment after pinning re-stamps data-ad-theme on every pinned host and its card', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { saved: false });
+    card(h).querySelector<HTMLButtonElement>('.pin-btn')!.click();
+
+    r.theme = 'dark';
+    const pin = h.querySelector('floating-pin')!;
+    expect(pin.getAttribute('data-ad-theme')).toBe('dark');
+    expect(pin.querySelector('lookup-card')!.getAttribute('data-ad-theme')).toBe('dark');
+  });
+});
