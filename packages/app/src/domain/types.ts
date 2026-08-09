@@ -345,4 +345,15 @@ export interface SavedWordEntry {
   status: SavedWordStatus;
   savedAt: number;
   senses: SavedWordSense[];
+  /**
+   * B12: topic tag(s) assigned by "Organize my words," entry-level (not per-sense — a word's
+   * topic doesn't vary by which sentence it was met in). ADDITIVE field under the E1 lock
+   * (docs/ROADMAP.md §8 Decision Log, B1/B2 entry: future additive fields stay lead-decidable;
+   * restructuring/removing a ratified field is a new escalation). Absent or `[]` means "never
+   * organized." v1 writes at most one tag per word per Organize run (`[tag]`). Declared
+   * `string[] | undefined` (not just `string[]`) to match `exactOptionalPropertyTypes`
+   * (tsconfig.base.json) and the wire schema's z.array().optional() inferred shape — same
+   * pattern this file already uses for SavedWordSense.related above.
+   */
+  tags?: string[] | undefined;
 }

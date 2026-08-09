@@ -14,8 +14,12 @@ import {
   savedWordDelete,
   savedWordSetStatus,
   savedWordSetRelated,
+  savedWordSetTags,
   savedWordsList,
   savedWordGet,
+  buildOrganizePrompt,
+  parseOrganizeResponse,
+  selectWordsToOrganize,
   evaluateNudge,
   quietSiteAdd,
   quietSiteRemove,
@@ -262,6 +266,57 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
     }
   }
 
+  /**
+   * B12: cluster every saved word (capped at MAX_WORDS_TO_ORGANIZE, newest-saved-first) into
+   * topic tags via ONE model call. Mirrors handleConnectionTest's own pattern — calls
+   * deps.client.lookup() directly, bypassing handleLookup's cache/history/nudge writes entirely
+   * (this is not a "lookup," it must never pollute Recent or the cache). Only entries the model
+   * actually placed into a group get their tags written; a parse failure writes nothing.
+   */
+  async function handleOrganize(): Promise<RouterReply> {
+    const all = await savedWordsList({ storage: deps.kv });
+    if (all.length === 0) {
+      return { ok: true, type: 'organized', groups: [], organizedCount: 0, skippedCount: 0 };
+    }
+    const { selected, skippedCount } = selectWordsToOrganize(all);
+    try {
+      const s = await deps.settings.get();
+      const result = await deps.client.lookup({
+        word: 'organize',
+        context: '',
+        url: '',
+        title: '',
+        target: s.targetLang,
+        outputFormat: '',
+        promptEnvelope: buildOrganizePrompt(selected),
+      });
+      const groups = parseOrganizeResponse(
+        result.markdown,
+        selected.map((e) => e.word),
+      );
+      if (!groups) {
+        return { ok: false, type: 'saved.organize', error: mapError({ kind: 'parse' }) };
+      }
+      const tagByWord = new Map<string, string>();
+      for (const g of groups) for (const w of g.words) tagByWord.set(w.toLowerCase(), g.tag);
+      await deps.queue.run(async () => {
+        for (const entry of selected) {
+          const tag = tagByWord.get(entry.word.toLowerCase());
+          if (tag !== undefined) await savedWordSetTags({ storage: deps.kv }, entry.word, [tag]);
+        }
+      });
+      return {
+        ok: true,
+        type: 'organized',
+        groups,
+        organizedCount: selected.length,
+        skippedCount,
+      };
+    } catch (err) {
+      return { ok: false, type: 'saved.organize', error: toLookupError(err) };
+    }
+  }
+
   async function handleSavedList(): Promise<RouterReply> {
     const entries = await savedWordsList({ storage: deps.kv });
     return { ok: true, type: 'saved.list', entries };
@@ -321,6 +376,14 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       case 'saved.setStatus': {
         const entry = await deps.queue.run(() =>
           savedWordSetStatus({ storage: deps.kv }, msg.word, msg.status),
+        );
+        return entry ? { ok: true, type: 'saved', entry } : { ok: true, type: 'ack' };
+      }
+      case 'saved.organize':
+        return handleOrganize();
+      case 'saved.setTags': {
+        const entry = await deps.queue.run(() =>
+          savedWordSetTags({ storage: deps.kv }, msg.word, msg.tags),
         );
         return entry ? { ok: true, type: 'saved', entry } : { ok: true, type: 'ack' };
       }

@@ -92,7 +92,7 @@ export interface SavedWordEntry {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/wire-schema.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/wire-schema.test.ts`,
       inside the existing `describe('saved.save / saved.delete wire messages (B1)', ...)` block
       (starts at `:412`, not the top `describe('wire-schema', ...)` block — this file has 3
       top-level `describe` blocks; the B1 one is the topical home for `SavedWordEntry`-shaped
@@ -133,7 +133,7 @@ Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts`
 Expected: the first new test **fails** (`ok.success` is `false` — `z.strictObject` rejects the
 extra `tags` key today); the second new test already passes (no regression risk to prove yet).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/domain/types.ts`, add `tags?: string[];` to `SavedWordEntry` (`:246-251`),
 with a doc comment recording the E1-lock precedent:
@@ -199,7 +199,7 @@ Also run the full existing suite to confirm the drift-guard
 type-checks: `cd packages/app && bun run typecheck` (clean — both sides gained the identical
 optional field).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -232,7 +232,7 @@ export async function savedWordSetTags(
 ): Promise<SavedWordEntry | null>;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/saved-words-policy.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/saved-words-policy.test.ts`,
       inside the existing `describe('saved-words-policy', ...)` block, just before its closing
       `});` (after the existing `'savedWordSetStatus on an unsaved word is a no-op...'` test).
       First add `savedWordSetTags` to the top import list (alongside `savedWordSetStatus`):
@@ -289,7 +289,7 @@ it('savedWordSetTags on an unsaved word is a no-op returning null (no throw) (B1
 Run: `cd packages/app && bunx vitest run test/saved-words-policy.test.ts`
 Expected: failures — `savedWordSetTags` is not exported / not a function.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/domain/saved-words-policy.ts`, add, right after
+- [x] **Step 2: Implement.** In `packages/app/src/domain/saved-words-policy.ts`, add, right after
       `savedWordSetStatus` (`:86-98`):
 
 ```ts
@@ -317,7 +317,7 @@ export async function savedWordSetTags(
 Run: `cd packages/app && bunx vitest run test/saved-words-policy.test.ts`
 Expected: all tests pass (existing + 4 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -361,7 +361,7 @@ export function parseOrganizeResponse(
 ): TagGroup[] | null;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/auto-group-policy.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/auto-group-policy.test.ts`:
 
 ````ts
 import { describe, it, expect } from 'vitest';
@@ -512,7 +512,7 @@ describe('auto-group-policy', () => {
 Run: `cd packages/app && bunx vitest run test/auto-group-policy.test.ts`
 Expected: failures — the module `../src/domain/auto-group-policy` does not exist yet.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/auto-group-policy.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/auto-group-policy.ts`:
 
 ````ts
 /**
@@ -662,7 +662,7 @@ export * from './domain/auto-group-policy';
 Run: `cd packages/app && bunx vitest run test/auto-group-policy.test.ts`
 Expected: all tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -697,7 +697,7 @@ git commit -m "feat: auto-group-policy prompt builder + response parser (B12)" \
 // saved.setTags reuses the existing 'saved' reply arm (entry now carries tags).
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add `savedWordUpsert` to the existing import list from
+- [x] **Step 1: Write the failing tests.** Add `savedWordUpsert` to the existing import list from
       `'../../src'` at the top of `packages/app/test/app/router.test.ts` (it currently imports
       `historyList, historyAppend, type LookupResult, type WireMessage, type LookupRequest, type
 PublicSettings` — add `savedWordUpsert` alongside them). Then append, inside the existing
@@ -792,7 +792,7 @@ errors) and `buildRouter` has no matching cases (runtime: `msg.type` falls throu
 switch, which today is a compile error the moment the test file references the new message
 literals — this is expected and resolves once Step 2 lands both halves together).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/wire.ts`, add two new `WireMessageSchema` arms right after the existing
 `saved.setStatus` arm (`:123-127`):
@@ -973,7 +973,7 @@ cd packages/app && bunx vitest run test/app/router.test.ts test/wire-schema.test
 
 Expected: all pass (existing + 5 new router tests; snapshot stable).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -1008,7 +1008,7 @@ export type OrganizeState =
 // New composed events: 'organize-click' (no detail), 'rename-tag' ({tag,newTag}), 'remove-tag' ({tag})
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/side-panel-view.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/side-panel-view.test.ts`,
       inside the existing `describe('<side-panel-view>', ...)` block, just before its closing
       `});`:
 
@@ -1129,7 +1129,7 @@ describe('B12 — organize section', () => {
 Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: failures — `.organize` section doesn't exist, `organize` is not a settable property.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
 
 1. Add the import (alongside the existing `HistoryEntry` import at `:1`):
 
@@ -1454,7 +1454,7 @@ verbatim — same footer construction, just the one extra section threaded throu
 Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: all tests pass (existing + 9 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
@@ -1481,7 +1481,7 @@ same precedent the C2 design spec records for `options.ts`). This task's correct
 Task 7's e2e; still run the typecheck/lint gate below so a regression in existing behavior (save/
 status toggles, Recent, etc. — all in the same file) is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`, add three new
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`, add three new
       listeners right after the existing `toggle-status` listener (`:202-211`):
 
 ```ts
@@ -1560,7 +1560,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1582,7 +1582,7 @@ git commit -m "feat: side-panel.ts confirm/wire/tag-edit wiring (B12)" \
 
 - Create: `packages/extension-chrome/e2e/b12-llm-auto-grouping.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create
+- [x] **Step 1: Write the spec.** Create
       `packages/extension-chrome/e2e/b12-llm-auto-grouping.spec.ts`:
 
 ```ts
@@ -1798,7 +1798,7 @@ cd packages/extension-chrome && bunx playwright test b12-llm-auto-grouping
 
 Expected: 5 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome

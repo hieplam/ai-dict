@@ -1,5 +1,6 @@
 import type { HistoryEntry } from '../domain/types';
 import type { WeeklyDigest } from '../domain/weekly-digest';
+import type { TagGroup } from '../domain/auto-group-policy';
 import { adoptStyles } from './styles/adopt';
 import {
   BASE_VARS,
@@ -19,6 +20,13 @@ import { renderCardState, ICON_SETTINGS, type CardState } from './lookup-card';
  * which defaults to `{kind:'loading'}`).
  */
 export type PanelFocusState = CardState | { kind: 'empty' };
+
+/** B12: what the "Saved words" section currently shows. */
+export type OrganizeState =
+  | { kind: 'idle' }
+  | { kind: 'busy' }
+  | { kind: 'result'; groups: TagGroup[]; organizedCount: number; skippedCount: number }
+  | { kind: 'error'; message: string };
 
 // ICON_SHIELD / ICON_TRASH are the canonical §5.10 set imported from tokens.ts (centralized so
 // the glyphs can never drift); ICON_SETTINGS is re-exported through lookup-card.
@@ -161,6 +169,148 @@ main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padd
 .recent-del svg{width:14px;height:14px;pointer-events:none}
 .recent-word{font-size:14px;font-weight:var(--adp-weight-semi);color:var(--ad-ink)}
 .recent-context{display:block;margin-top:1px;font-size:var(--adp-text-xs);line-height:1.4;color:var(--ad-ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.organize {
+  margin-top: 6px;
+}
+.organize-head {
+  margin: 0;
+  padding: 14px 0 8px;
+  border-top: 1px solid var(--ad-line);
+  font-size: var(--adp-text-2xs);
+  font-weight: var(--adp-weight-bold);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ad-ink-soft);
+}
+.organize-hint {
+  margin: 0 0 10px;
+  font-size: var(--adp-text-sm);
+  line-height: 1.5;
+  color: var(--ad-ink-soft);
+}
+.organize-summary {
+  margin: 0 0 8px;
+  font-size: var(--adp-text-sm);
+  color: var(--ad-ink-soft);
+}
+.organize-btn {
+  display: block;
+  width: 100%;
+  margin: 0 0 4px;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: var(--adp-radius-control);
+  background: var(--ad-accent);
+  color: var(--ad-on-accent);
+  font: inherit;
+  font-size: 14px;
+  font-weight: var(--adp-weight-semi);
+  cursor: pointer;
+}
+.organize-btn:hover {
+  filter: brightness(1.06);
+}
+.organize-btn:focus-visible {
+  outline: 2px solid var(--ad-accent);
+  outline-offset: 2px;
+}
+.organize-busy {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin: 4px 0 12px;
+  color: var(--ad-ink-soft);
+  font-size: 14px;
+}
+.organize-busy::before {
+  content: '';
+  display: block;
+  width: 15px;
+  height: 15px;
+  flex: none;
+  border: 2px solid var(--ad-line);
+  border-top-color: var(--ad-accent);
+  border-radius: 50%;
+  animation: spin 0.77s linear infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .organize-busy::before {
+    animation: none;
+  }
+}
+.tag-groups {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.tag-group {
+  border: 1px solid var(--ad-line);
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+.tag-group-head {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.tag-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--ad-ink);
+  font: inherit;
+  font-weight: var(--adp-weight-semi);
+  font-size: 14px;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+.tag-input:hover,
+.tag-input:focus {
+  border-color: var(--ad-line-strong);
+  background: var(--ad-surface-sunken);
+}
+.tag-input:focus-visible {
+  outline: 2px solid var(--ad-accent);
+  outline-offset: 1px;
+}
+.tag-del {
+  display: inline-grid;
+  place-items: center;
+  width: var(--adp-action-size);
+  height: var(--adp-action-size);
+  flex: none;
+  border: 0;
+  background: transparent;
+  color: var(--ad-ink-faint);
+  border-radius: var(--adp-radius-control);
+  cursor: pointer;
+}
+.tag-del:hover {
+  background: var(--ad-surface-raised);
+  color: var(--ad-error);
+}
+.tag-del:focus-visible {
+  outline: 2px solid var(--ad-accent);
+  outline-offset: 2px;
+}
+.tag-del svg {
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+.tag-words {
+  margin: 6px 0 0;
+  font-size: var(--adp-text-xs);
+  line-height: 1.5;
+  color: var(--ad-ink-soft);
+}
+.organize-error-msg {
+  margin: 0 0 10px;
+}
 .digest[hidden]{display:none}
 .digest-head{margin:0;padding:14px 0 8px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-bold);letter-spacing:.06em;text-transform:uppercase;color:var(--ad-ink-soft)}
 .digest-list{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:4px}
@@ -189,16 +339,19 @@ export class SidePanelView extends HTMLElement {
   private _focus: PanelFocusState = { kind: 'empty' };
   private _recent: HistoryEntry[] = [];
   private _digest: WeeklyDigest | undefined = undefined;
+  private _organize: OrganizeState = { kind: 'idle' };
   private focusEl!: HTMLElement;
   private recentEl!: HTMLElement;
   private recentList!: HTMLUListElement;
   private digestEl!: HTMLElement;
+  private organizeEl!: HTMLElement;
 
   connectedCallback(): void {
     if (this.shadowRoot) {
       this.renderFocus();
       this.renderRecent();
       this.renderDigest();
+      this.renderOrganize();
       return;
     }
     const root = this.attachShadow({ mode: 'open' });
@@ -271,7 +424,13 @@ export class SidePanelView extends HTMLElement {
     this.digestEl.setAttribute('aria-label', 'This week');
     this.digestEl.hidden = true;
 
-    main.append(this.focusEl, this.recentEl, this.digestEl);
+    // B12: "Saved words" — the Organize entry point + its results, always visible (unlike
+    // .recent, which hides when empty — Organize is a stable CTA, not a dynamic list).
+    this.organizeEl = document.createElement('section');
+    this.organizeEl.className = 'organize';
+    this.organizeEl.setAttribute('aria-label', 'Saved words organizer');
+
+    main.append(this.focusEl, this.recentEl, this.digestEl, this.organizeEl);
 
     const footer = document.createElement('footer');
     footer.innerHTML = `${ICON_SHIELD}<span>Stays on your device</span>`; // s4: static-template — fixed shield icon + literal copy, no model content
@@ -280,6 +439,7 @@ export class SidePanelView extends HTMLElement {
     this.renderFocus();
     this.renderRecent();
     this.renderDigest();
+    this.renderOrganize();
   }
 
   /** The single focus region: empty teaching state, or a loading / result / error lookup. */
@@ -309,6 +469,15 @@ export class SidePanelView extends HTMLElement {
   }
   get digest(): WeeklyDigest | undefined {
     return this._digest;
+  }
+
+  /** B12: the "Saved words" organizer's current state. */
+  set organize(s: OrganizeState) {
+    this._organize = s;
+    if (this.shadowRoot) this.renderOrganize();
+  }
+  get organize(): OrganizeState {
+    return this._organize;
   }
 
   private renderFocus(): void {
@@ -409,6 +578,103 @@ export class SidePanelView extends HTMLElement {
       ),
     );
     li.append(b, del);
+    return li;
+  }
+
+  private renderOrganize(): void {
+    const o = this._organize;
+    const nodes: Node[] = [];
+    const head = document.createElement('h2');
+    head.className = 'organize-head';
+    head.textContent = 'Saved words';
+    nodes.push(head);
+
+    if (o.kind === 'idle') {
+      const hint = document.createElement('p');
+      hint.className = 'organize-hint';
+      hint.textContent =
+        'Group your saved words into topic tags with AI. Sends up to 200 of your most recently saved words to your provider.';
+      nodes.push(hint, this.organizeButton('Organize my words'));
+    } else if (o.kind === 'busy') {
+      const row = document.createElement('div');
+      row.className = 'organize-busy';
+      row.textContent = 'Organizing…';
+      nodes.push(row);
+    } else if (o.kind === 'result') {
+      const summary = document.createElement('p');
+      summary.className = 'organize-summary';
+      summary.textContent =
+        o.organizedCount === 0
+          ? 'No saved words yet — save a few, then come back to organize them.'
+          : o.skippedCount > 0
+            ? `Organized ${o.organizedCount} of ${o.organizedCount + o.skippedCount} saved words (most recent first).`
+            : `Organized ${o.organizedCount} saved word${o.organizedCount === 1 ? '' : 's'}.`;
+      nodes.push(summary);
+      if (o.groups.length > 0) {
+        const list = document.createElement('ul');
+        list.className = 'tag-groups';
+        for (const g of o.groups) list.append(this.tagGroupRow(g));
+        nodes.push(list);
+      }
+      nodes.push(this.organizeButton('Organize again'));
+    } else {
+      const err = document.createElement('p');
+      err.className = 'err organize-error-msg';
+      err.textContent = o.message;
+      nodes.push(err, this.organizeButton('Try again'));
+    }
+    this.organizeEl.replaceChildren(...nodes);
+  }
+
+  private organizeButton(label: string): HTMLButtonElement {
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'organize-btn';
+    btn.textContent = label;
+    btn.addEventListener('click', () =>
+      this.dispatchEvent(new CustomEvent('organize-click', { bubbles: true, composed: true })),
+    );
+    return btn;
+  }
+
+  private tagGroupRow(g: TagGroup): HTMLLIElement {
+    const li = document.createElement('li');
+    li.className = 'tag-group';
+    const headRow = document.createElement('div');
+    headRow.className = 'tag-group-head';
+    const input = document.createElement('input');
+    input.className = 'tag-input';
+    input.value = g.tag;
+    input.setAttribute('aria-label', `Rename tag ${g.tag}`);
+    input.addEventListener('change', () => {
+      const newTag = input.value.trim();
+      if (newTag.length === 0 || newTag === g.tag) {
+        input.value = g.tag;
+        return;
+      }
+      this.dispatchEvent(
+        new CustomEvent('rename-tag', {
+          detail: { tag: g.tag, newTag },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+    });
+    const del = document.createElement('button');
+    del.type = 'button';
+    del.className = 'tag-del';
+    del.setAttribute('aria-label', `Remove tag ${g.tag}`);
+    del.innerHTML = ICON_TRASH; // s4: static-template — decorative aria-hidden SVG; name comes from aria-label
+    del.addEventListener('click', () =>
+      this.dispatchEvent(
+        new CustomEvent('remove-tag', { detail: { tag: g.tag }, bubbles: true, composed: true }),
+      ),
+    );
+    headRow.append(input, del);
+    const words = document.createElement('p');
+    words.className = 'tag-words';
+    words.textContent = g.words.join(', ');
+    li.append(headRow, words);
     return li;
   }
 }
