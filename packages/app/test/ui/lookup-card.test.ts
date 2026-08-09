@@ -1342,7 +1342,17 @@ describe('renderCardState — source language row (A12)', () => {
     safeHtml: safe('<p>def</p>'),
     word: 'bank',
     target: 'vi',
+    // A12: in-page card only — the InlineBottomSheetRenderer sets this; the side panel never does.
+    sourceLangRow: true as const,
   };
+
+  it('is absent when sourceLangRow is not set (in-page-only gate, §2.5 — no side-panel leak)', () => {
+    const nodes = renderCardState({ ...base, sourceLangRow: false });
+    const row = nodes.find(
+      (n): n is HTMLElement => n instanceof HTMLElement && n.className === 'src-lang-row',
+    );
+    expect(row).toBeUndefined();
+  });
 
   it('shows "Source: French" when sourceLang is a recognized code', () => {
     const nodes = renderCardState({ ...base, sourceLang: 'fr' });

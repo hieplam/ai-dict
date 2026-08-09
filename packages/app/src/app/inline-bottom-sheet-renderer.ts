@@ -351,6 +351,9 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
       ...(r.definedAs !== undefined ? { definedAs: r.definedAs } : {}),
       ...(ctx?.providers !== undefined ? { providers: ctx.providers } : {}),
       ...(ctx?.sourceLang !== undefined ? { sourceLang: ctx.sourceLang } : {}),
+      // A12: always true for the in-page card — the side panel never sets it (design spec §2.5),
+      // so the source-language override row renders here only. Mirrors `refineChips` below.
+      sourceLangRow: true,
       saved: ctx?.saved === true,
       // B7: r.nudge is a transient per-reply annotation (never persisted — see router.ts);
       // always explicit true/false, same style as `saved` above.

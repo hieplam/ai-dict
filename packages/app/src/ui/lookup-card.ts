@@ -85,6 +85,10 @@ export type CardState =
       /** A12: the effective source-language code for this result (bare code, e.g. 'fr'); absent
        * means auto-detect found nothing and no override was chosen — the row shows "Auto-detect". */
       sourceLang?: string;
+      /** A12: true only for the in-page card — InlineBottomSheetRenderer always sets it; the side
+       * panel never does, so the "Source: … / Change" row (a one-shot override control) is absent
+       * there by construction (design spec §2.5: in-page card only). Mirrors `refineChips`. */
+      sourceLangRow?: boolean;
     }
   | {
       kind: 'streaming';
@@ -444,7 +448,11 @@ export function renderCardState(state: CardState): Node[] {
   }
   const definedAsRow = interactive && state.definedAs ? renderDefinedAsRow(state.definedAs) : null;
   if (definedAsRow) nodes.push(definedAsRow);
-  nodes.push(renderSourceLangRow(state)); // A12: always shown for a result
+  // A12: the source-language override row is in-page-card-only (design spec §2.5) — gated on the
+  // in-page-set `sourceLangRow` flag exactly like A3's refine chips, so it never leaks into the
+  // side panel (which reuses renderCardState but never sets the flag). `interactive` also strips
+  // it from a pinned card, whose detached session can no longer honor the one-shot re-run.
+  if (interactive && state.sourceLangRow === true) nodes.push(renderSourceLangRow(state));
   nodes.push(body);
   if (interactive && state.refineChips === true) nodes.push(renderRefineRow(state));
   const meta = renderMetaRow(state);
