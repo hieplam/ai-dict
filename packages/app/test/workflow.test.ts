@@ -233,6 +233,185 @@ describe('runLookupWorkflow', () => {
     expect(h.renderer.lastCtx?.sentence).toBe('river bank');
   });
 
+  it('[A12] a recognized e.pageLang yields req.sourceLang and ctx.sourceLang, no sourceLangOverride', async () => {
+    const h = harness({});
+    h.selection.emit({ ...sel, pageLang: 'fr' });
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(h.client.lastReq).toMatchObject({ sourceLang: 'fr' });
+    expect(h.client.lastReq?.sourceLangOverride).toBeUndefined();
+    expect(h.renderer.lastCtx?.sourceLang).toBe('fr');
+  });
+
+  it('[A12] an unrecognized/absent e.pageLang leaves req.sourceLang and ctx.sourceLang unset', async () => {
+    const h = harness({});
+    h.selection.emit(sel); // no pageLang
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(h.client.lastReq?.sourceLang).toBeUndefined();
+    expect(h.renderer.lastCtx?.sourceLang).toBeUndefined();
+  });
+
+  it('[A12] ctx.onOverrideSourceLang always exists (unconditional, unlike the provider picker)', async () => {
+    const h = harness({});
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(typeof h.renderer.lastCtx?.onOverrideSourceLang).toBe('function');
+  });
+
+  it('[A12] onOverrideSourceLang re-runs with req.sourceLang + sourceLangOverride:true, bypassing cooldown', async () => {
+    let t = 5000;
+    const h = harness({ now: () => t });
+    h.selection.emit({ ...sel, pageLang: 'fr' });
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    const override = h.renderer.lastCtx!.onOverrideSourceLang!;
+    t = 5001; // still inside the cooldown window — a deliberate override must NOT be blocked
+    override('ja');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+    expect(h.client.lastReq).toMatchObject({ sourceLang: 'ja', sourceLangOverride: true });
+    expect(h.renderer.lastError).toBeNull();
+  });
+
+  it('[A12] overriding with "auto" clears req.sourceLang but still sets sourceLangOverride:true', async () => {
+    let t = 5000;
+    const h = harness({ now: () => t });
+    h.selection.emit({ ...sel, pageLang: 'fr' });
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    const override = h.renderer.lastCtx!.onOverrideSourceLang!;
+    t = 5001;
+    override('auto');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+    expect(h.client.lastReq?.sourceLang).toBeUndefined();
+    expect(h.client.lastReq?.sourceLangOverride).toBe(true);
+  });
+
+  it('[A12] onSwitchProvider drops a current forceLiteral (sibling-drop precedent) but threads sourceLangOverride', async () => {
+    let t = 5000;
+    const idiomResult: LookupResult = {
+      ...okResult,
+      definedAs: { term: 'kick the bucket', isIdiom: true },
+    };
+    const h = harness({
+      configuredProviders: ['gemini', 'openai'],
+      now: () => t,
+      impl: () => Promise.resolve(idiomResult),
+    });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+
+    // Set a manual source-language override first.
+    t += 1;
+    h.renderer.lastCtx!.onOverrideSourceLang!('fr');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+
+    // Force literal from that ctx — forceLiteral becomes true, sourceLangOverride stays threaded.
+    t += 1;
+    h.renderer.lastCtx!.onForceLiteral!();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(3));
+    expect(h.client.lastReq?.forceLiteral).toBe(true);
+
+    // Now switch provider from THIS ctx (forceLiteral currently true) — it must be dropped, not
+    // threaded, while the source-language override survives.
+    t += 1;
+    h.renderer.lastCtx!.onSwitchProvider!('openai');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(4));
+    expect(h.client.lastReq?.provider).toBe('openai');
+    expect(h.client.lastReq?.forceLiteral).toBeUndefined();
+    expect(h.client.lastReq?.sourceLang).toBe('fr');
+    expect(h.client.lastReq?.sourceLangOverride).toBe(true);
+    expect(h.renderer.lastError).toBeNull();
+  });
+
+  it('[A12] onForceLiteral drops a current providerOverride (sibling-drop precedent) but threads sourceLangOverride', async () => {
+    let t = 5000;
+    const idiomResult: LookupResult = {
+      ...okResult,
+      definedAs: { term: 'kick the bucket', isIdiom: true },
+    };
+    const h = harness({
+      configuredProviders: ['gemini', 'openai'],
+      now: () => t,
+      impl: () => Promise.resolve(idiomResult),
+    });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+
+    // Set a manual source-language override first.
+    t += 1;
+    h.renderer.lastCtx!.onOverrideSourceLang!('fr');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+
+    // Switch provider from that ctx — provider becomes 'openai', sourceLangOverride stays threaded.
+    t += 1;
+    h.renderer.lastCtx!.onSwitchProvider!('openai');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(3));
+    expect(h.client.lastReq?.provider).toBe('openai');
+
+    // Now force literal from THIS ctx (provider currently 'openai') — it must be dropped, not
+    // threaded, while the source-language override survives.
+    t += 1;
+    h.renderer.lastCtx!.onForceLiteral!();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(4));
+    expect(h.client.lastReq?.forceLiteral).toBe(true);
+    expect(h.client.lastReq?.provider).toBeUndefined();
+    expect(h.client.lastReq?.sourceLang).toBe('fr');
+    expect(h.client.lastReq?.sourceLangOverride).toBe(true);
+    expect(h.renderer.lastError).toBeNull();
+  });
+
+  it('[A12] onOverrideSourceLang always drops BOTH providerOverride and forceLiteral, whichever is currently set', async () => {
+    let t = 5000;
+    const idiomResult: LookupResult = {
+      ...okResult,
+      definedAs: { term: 'kick the bucket', isIdiom: true },
+    };
+    const h = harness({
+      configuredProviders: ['gemini', 'openai'],
+      now: () => t,
+      impl: () => Promise.resolve(idiomResult),
+    });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+
+    // Switch provider — provider becomes 'openai'.
+    t += 1;
+    h.renderer.lastCtx!.onSwitchProvider!('openai');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+    expect(h.client.lastReq?.provider).toBe('openai');
+
+    // Override source lang from THIS ctx — providerOverride must NOT carry through.
+    t += 1;
+    h.renderer.lastCtx!.onOverrideSourceLang!('ja');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(3));
+    expect(h.client.lastReq?.provider).toBeUndefined();
+    expect(h.client.lastReq?.forceLiteral).toBeUndefined();
+    expect(h.client.lastReq?.sourceLang).toBe('ja');
+    expect(h.client.lastReq?.sourceLangOverride).toBe(true);
+
+    // Force literal from THIS ctx — forceLiteral becomes true (provider stays dropped).
+    t += 1;
+    h.renderer.lastCtx!.onForceLiteral!();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(4));
+    expect(h.client.lastReq?.forceLiteral).toBe(true);
+    expect(h.client.lastReq?.provider).toBeUndefined();
+
+    // Override source lang again from THIS ctx — forceLiteral must NOT carry through either.
+    t += 1;
+    h.renderer.lastCtx!.onOverrideSourceLang!('auto');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(5));
+    expect(h.client.lastReq?.forceLiteral).toBeUndefined();
+    expect(h.client.lastReq?.provider).toBeUndefined();
+    expect(h.client.lastReq?.sourceLang).toBeUndefined();
+    expect(h.client.lastReq?.sourceLangOverride).toBe(true);
+    expect(h.renderer.lastError).toBeNull();
+  });
+
   it('maps a rejected lookup (LookupError-shaped) to renderError', async () => {
     const err = Object.assign(new Error('rate'), {
       code: 'RATE_LIMIT',

@@ -867,7 +867,7 @@ sourceLang?: string;
 onOverrideSourceLang?: (code: string) => void;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add to `packages/app/test/workflow.test.ts`, inside the
+- [x] **Step 1: Write the failing tests.** Add to `packages/app/test/workflow.test.ts`, inside the
       `describe('runLookupWorkflow', ...)` block (after the existing `'a literal result (no
 definedAs)...'` test, before the error-mapping tests):
 
@@ -1056,7 +1056,7 @@ Run: `cd packages/app && bunx vitest run test/workflow.test.ts`
 Expected: the 8 new cases fail (`ResultRenderContext` has no `sourceLang`/`onOverrideSourceLang` yet;
 `req` never carries `sourceLang`).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/ports.ts`, extend `ResultRenderContext` (currently 26-48) — add after the
 existing `onForceLiteral` field:
@@ -1245,7 +1245,7 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
 Run: `cd packages/app && bunx vitest run test/workflow.test.ts`
 Expected: all pass (existing + 8 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck
