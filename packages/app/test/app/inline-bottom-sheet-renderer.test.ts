@@ -893,4 +893,26 @@ describe('InlineBottomSheetRenderer — pin cards (A7)', () => {
     expect(pin.getAttribute('data-ad-theme')).toBe('dark');
     expect(pin.querySelector('lookup-card')!.getAttribute('data-ad-theme')).toBe('dark');
   });
+
+  it('pinning resets the live-slot session so a later gloss-mode lookup still shows the compact bubble', () => {
+    // A7 re-grounding guard: pinCurrent() resets cardOpen=false (mirroring close()), so the live
+    // slot behaves as a fresh session after a pin. Without that reset, renderLoading's gloss gate
+    // (`if (!this.cardOpen && ...)`) would stay shut and a gloss-mode reader who pinned once would
+    // be stuck getting full cards on every later lookup. Here: pin a card (gloss off, so it opens a
+    // full card and sets cardOpen=true), then turn gloss mode on and look up a NEW word — it must
+    // mount the compact bubble, not a full card, and must not disturb the pinned card.
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { saved: false });
+    card(h).querySelector<HTMLButtonElement>('.pin-btn')!.click();
+    expect(h.querySelectorAll('floating-pin').length).toBe(1);
+
+    r.glossMode = true;
+    r.renderLoading('river', { x: 10, y: 20, w: 30, h: 40 });
+    r.renderResult({ ...result, word: 'river', translation: 'sông' });
+
+    expect(h.querySelector('lookup-gloss')).not.toBeNull();
+    expect(h.querySelectorAll('bottom-sheet').length).toBe(0);
+    expect(h.querySelectorAll('floating-pin').length).toBe(1); // pinned card untouched
+  });
 });
