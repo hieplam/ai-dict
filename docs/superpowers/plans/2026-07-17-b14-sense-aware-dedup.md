@@ -1260,7 +1260,7 @@ git commit -m "feat: card-side merge-prompt CSS + toggle-save conflict wiring (B
 Same "composition root, e2e-only" note as Task 4 applies here — no dedicated unit test file exists
 for `side-panel.ts`.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
   1. Add `buildMergePrompt` to the existing `@ai-dict/app` import list (`side-panel.ts:1-13`):
 
 ```ts
@@ -1339,7 +1339,7 @@ view.addEventListener('toggle-save', () => {
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check

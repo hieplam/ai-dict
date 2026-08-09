@@ -2,6 +2,7 @@ import {
   registerSidePanel,
   sanitizeMarkdown,
   mapError,
+  buildMergePrompt,
   createSaveReplyGuard,
   classifyInbound,
   acceptAny,
@@ -215,6 +216,35 @@ view.addEventListener('toggle-save', () => {
       if (willSave && reply?.ok && reply.type === 'saved') {
         lastStatus = reply.entry.status;
         setStatus(lastStatus);
+      } else if (willSave && reply?.ok && reply.type === 'saved.conflict') {
+        // B14: mirrors content.ts's own conflict branch — the panel is its own independent
+        // composition root (same reasoning as trackSaveContext's B1-era comment above).
+        lastSaved = false;
+        setSaved(false);
+        const payload = lastSavePayload;
+        const prompt = buildMergePrompt({
+          word: reply.word,
+          senseCount: reply.senseCount,
+          onChoice: (add) => {
+            prompt.remove();
+            if (!add) return; // decline = no write (B14 fence)
+            lastSaved = true;
+            setSaved(true);
+            const token2 = saveReplyGuard.next();
+            void chrome.runtime
+              .sendMessage({ type: 'saved.save' as const, ...payload, confirmNewSense: true })
+              .then((raw2: unknown) => {
+                if (!saveReplyGuard.isCurrent(token2)) return;
+                const reply2 = raw2 as WireReply | undefined;
+                if (reply2?.ok && reply2.type === 'saved') {
+                  lastStatus = reply2.entry.status;
+                  setStatus(lastStatus);
+                }
+              })
+              .catch(() => undefined);
+          },
+        });
+        view.appendToFocus(prompt);
       }
     })
     .catch(() => undefined);
