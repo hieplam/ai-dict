@@ -1335,3 +1335,56 @@ describe('<lookup-card> — pin control (A7)', () => {
     expect(el.querySelector('.defined-as')).toBeNull();
   });
 });
+
+describe('renderCardState — source language row (A12)', () => {
+  const base = {
+    kind: 'result' as const,
+    safeHtml: safe('<p>def</p>'),
+    word: 'bank',
+    target: 'vi',
+  };
+
+  it('shows "Source: French" when sourceLang is a recognized code', () => {
+    const nodes = renderCardState({ ...base, sourceLang: 'fr' });
+    const row = nodes.find(
+      (n): n is HTMLElement => n instanceof HTMLElement && n.className === 'src-lang-row',
+    )!;
+    expect(row.textContent).toContain('Source: French');
+  });
+
+  it('shows "Source: Auto-detect" when sourceLang is absent', () => {
+    const nodes = renderCardState({ ...base });
+    const row = nodes.find(
+      (n): n is HTMLElement => n instanceof HTMLElement && n.className === 'src-lang-row',
+    )!;
+    expect(row.textContent).toContain('Source: Auto-detect');
+  });
+
+  it('clicking a non-current option dispatches override-source-lang with the picked code', () => {
+    const nodes = renderCardState({ ...base, sourceLang: 'fr' });
+    const row = nodes.find(
+      (n): n is HTMLElement => n instanceof HTMLElement && n.className === 'src-lang-row',
+    )!;
+    document.body.append(row);
+    let captured: string | undefined;
+    document.body.addEventListener('override-source-lang', (e) => {
+      captured = (e as CustomEvent<{ code: string }>).detail.code;
+    });
+    row.querySelector<HTMLButtonElement>('.src-lang-row__change')!.click();
+    row.querySelector<HTMLButtonElement>('[data-code="ja"]')!.click();
+    expect(captured).toBe('ja');
+    row.remove();
+  });
+
+  it('the current selection is disabled and cannot be clicked', () => {
+    const nodes = renderCardState({ ...base, sourceLang: 'fr' });
+    const row = nodes.find(
+      (n): n is HTMLElement => n instanceof HTMLElement && n.className === 'src-lang-row',
+    )!;
+    document.body.append(row);
+    row.querySelector<HTMLButtonElement>('.src-lang-row__change')!.click();
+    const current = row.querySelector<HTMLButtonElement>('[data-code="fr"]')!;
+    expect(current.disabled).toBe(true);
+    row.remove();
+  });
+});

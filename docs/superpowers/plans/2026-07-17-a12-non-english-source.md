@@ -1275,7 +1275,7 @@ export const SOURCE_LANG_LABELS: Record<SourceLangCode, string>;
 // dispatches: new CustomEvent('override-source-lang', { detail: { code: string }, bubbles: true, composed: true })
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add to `packages/app/test/ui/lookup-card.test.ts` (find
+- [x] **Step 1: Write the failing tests.** Add to `packages/app/test/ui/lookup-card.test.ts` (find
       the existing `describe`/`renderCardState` test block and add nearby; adapt the mount/state
       helper already used by the surrounding tests in this file — e.g. if the file exposes a
       `resultState(overrides)` helper or builds state objects inline, follow that file's own existing
@@ -1339,7 +1339,7 @@ describe('renderCardState — source language row (A12)', () => {
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: fails — no `.src-lang-row` is rendered yet.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/lookup-card.ts`:
 
 Update the top import to also pull in the new domain pieces:
 
@@ -1499,7 +1499,7 @@ return nodes;
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all pass, including the 4 new cases.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck
