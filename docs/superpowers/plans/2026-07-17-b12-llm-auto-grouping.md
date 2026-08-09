@@ -1582,7 +1582,7 @@ git commit -m "feat: side-panel.ts confirm/wire/tag-edit wiring (B12)" \
 
 - Create: `packages/extension-chrome/e2e/b12-llm-auto-grouping.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create
+- [x] **Step 1: Write the spec.** Create
       `packages/extension-chrome/e2e/b12-llm-auto-grouping.spec.ts`:
 
 ```ts
@@ -1798,7 +1798,7 @@ cd packages/extension-chrome && bunx playwright test b12-llm-auto-grouping
 
 Expected: 5 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
