@@ -327,6 +327,7 @@ export class SettingsForm extends HTMLElement {
   // still echo the stored key back on save so toggling this state never
   // silently wipes what the user had entered.
   private _keyFromEnv = false;
+  private _glossModeAvailable = false;
   private _errorReporting = false;
   private _provider: Provider = 'gemini';
   // One stash per provider; the visible #key field shows only the selected
@@ -483,6 +484,7 @@ export class SettingsForm extends HTMLElement {
     }
     // Enforce the lock last so it wins over any value just hydrated above.
     this.syncKeyField();
+    this.syncGlossRow();
     this.q<HTMLInputElement>('#error-reporting').checked = this._errorReporting;
     this.renderHealthRows();
   }
@@ -583,7 +585,14 @@ export class SettingsForm extends HTMLElement {
    * this true; Safari's never does, so the row stays hidden there.
    */
   set glossModeAvailable(v: boolean) {
-    this.q<HTMLElement>('#gloss-mode-row').hidden = !v;
+    this._glossModeAvailable = v;
+    if (this.shadowRoot) this.syncGlossRow();
+  }
+  get glossModeAvailable(): boolean {
+    return this._glossModeAvailable;
+  }
+  private syncGlossRow(): void {
+    this.q<HTMLElement>('#gloss-mode-row').hidden = !this._glossModeAvailable;
   }
 
   /** C9: the current keyboard-shortcut assignment state, supplied by the composition root (the

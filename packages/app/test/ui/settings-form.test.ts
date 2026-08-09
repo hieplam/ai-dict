@@ -294,6 +294,16 @@ describe('<settings-form>', () => {
     );
     expect(captured?.glossMode).toBe(true);
   });
+
+  it('glossModeAvailable set BEFORE the element is connected does not throw and un-hides the row on connect (A5 regression)', () => {
+    const el = document.createElement('settings-form') as SettingsForm;
+    expect(() => {
+      (el as unknown as { glossModeAvailable: boolean }).glossModeAvailable = true;
+    }).not.toThrow();
+    document.body.append(el); // connectedCallback builds the shadow + must apply the pending flag
+    const row = el.shadowRoot!.querySelector<HTMLElement>('#gloss-mode-row')!;
+    expect(row.hidden).toBe(false);
+  });
 });
 
 describe('<settings-form> restore default prompt', () => {
