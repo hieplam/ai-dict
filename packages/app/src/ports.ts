@@ -59,6 +59,16 @@ export interface ResultRenderContext {
   title?: string;
   /** Whether this word is currently starred/saved — drives the star's filled/outline state. */
   saved?: boolean;
+  /**
+   * A2: pop the current recursive-lookup frame and re-render its parent (the previous result in
+   * the chain) — a pure local re-render, no network call. Present only when a parent frame
+   * exists (this result was reached via an in-definition selection); absent at the root of a
+   * chain. Installed by `runLookupWorkflow`; consumed by the in-page card only — the side panel
+   * mirror never receives it (`side-panel.ts`'s `resultToFocus` takes no `ResultRenderContext`
+   * at all, matching how the provider picker and A8's "Show literal word" are also
+   * in-page-card-only, never mirrored to the panel).
+   */
+  onBack?: () => void;
 }
 
 export interface ResultRenderer {

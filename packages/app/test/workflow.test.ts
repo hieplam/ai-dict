@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { runLookupWorkflow, COOLDOWN_MS } from '../src/domain/workflow';
+import { runLookupWorkflow, COOLDOWN_MS, RECURSIVE_LOOKUP_DEPTH_CAP } from '../src/domain/workflow';
 import {
   FakeSelectionSource,
   FakeTriggerUI,
@@ -459,5 +459,128 @@ describe('runLookupWorkflow', () => {
     await vi.waitFor(() => expect(renderer.calls).toContain('result'));
     capturedOnChunk?.('stale, should not render');
     expect(renderer.partials).toEqual([]);
+  });
+});
+
+describe('runLookupWorkflow — recursive lookup (A2)', () => {
+  const insideSel = (word: string, sentence: string): SelectionEvent => ({
+    text: word,
+    sentence,
+    anchor: { x: 0, y: 0, w: 1, h: 1 },
+    url: 'u',
+    title: 't',
+    insideResult: true,
+  });
+
+  it('a fresh (non-recursive) selection renders with ctx.onBack undefined (root of a chain)', async () => {
+    const h = harness({});
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(h.renderer.lastCtx?.onBack).toBeUndefined();
+  });
+
+  it('a selection inside the result pushes the chain: ctx.onBack pops to the parent with NO new client.lookup call', async () => {
+    let t = 0;
+    let calls = 0;
+    const results: LookupResult[] = [
+      { ...okResult, word: 'bank' },
+      { ...okResult, word: 'institution' },
+    ];
+    const h = harness({ now: () => t, impl: () => Promise.resolve(results[calls++]!) });
+    h.selection.emit(sel); // outer: "bank"
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(1));
+    const parentResult = h.renderer.lastResult;
+
+    t = COOLDOWN_MS; // A2: recursion is still gated by the cooldown (design spec §3)
+    h.selection.emit(insideSel('institution', 'A financial institution.'));
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+    expect(h.renderer.lastResult?.word).toBe('institution');
+    expect(typeof h.renderer.lastCtx?.onBack).toBe('function');
+    expect(calls).toBe(2); // exactly 2 real lookups so far
+
+    h.renderer.lastCtx!.onBack!();
+    expect(h.renderer.lastResult).toEqual(parentResult); // back to "bank", verbatim
+    expect(h.renderer.lastCtx?.onBack).toBeUndefined(); // back at the root — nothing further up
+    expect(calls).toBe(2); // Back made ZERO additional client.lookup calls
+  });
+
+  it('a recursive push is still subject to the cooldown gate (no bypass, per design spec §3)', async () => {
+    let t = 0;
+    const h = harness({ now: () => t });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+
+    t = COOLDOWN_MS - 1; // still inside the window
+    h.selection.emit(insideSel('bank', 'sentence'));
+    h.trigger.click();
+    expect(h.renderer.lastError?.code).toBe('RATE_LIMIT');
+    expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(1); // blocked, not fired
+  });
+
+  it('depth cap: after RECURSIVE_LOOKUP_DEPTH_CAP chained pushes, a further in-result selection shows NO trigger', async () => {
+    let t = 0;
+    let calls = 0;
+    const h = harness({
+      now: () => t,
+      impl: () => Promise.resolve({ ...okResult, word: `w${calls++}` }),
+    });
+    h.selection.emit(sel); // depth 1
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(1));
+
+    for (let i = 0; i < RECURSIVE_LOOKUP_DEPTH_CAP - 1; i++) {
+      t += COOLDOWN_MS;
+      h.selection.emit(insideSel(`w${i}`, 'sentence'));
+      expect(h.trigger.shown).not.toBeNull(); // trigger offered below the cap
+      h.trigger.click();
+      await vi.waitFor(() =>
+        expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(i + 2),
+      );
+    }
+    // Now at depth RECURSIVE_LOOKUP_DEPTH_CAP: one more in-result selection offers nothing.
+    t += COOLDOWN_MS;
+    h.selection.emit(insideSel('deeper', 'sentence'));
+    expect(h.trigger.shown).toBeNull();
+  });
+
+  it('an ordinary selection after a chain resets it: the next result has ctx.onBack undefined again', async () => {
+    let t = 0;
+    let calls = 0;
+    const h = harness({
+      now: () => t,
+      impl: () => Promise.resolve({ ...okResult, word: `w${calls++}` }),
+    });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(1));
+
+    t = COOLDOWN_MS;
+    h.selection.emit(insideSel('w0', 'sentence'));
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+    expect(typeof h.renderer.lastCtx?.onBack).toBe('function'); // depth 2, has a parent
+
+    t = 2 * COOLDOWN_MS; // an ordinary (non-recursive) selection elsewhere
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(3));
+    expect(h.renderer.lastCtx?.onBack).toBeUndefined(); // fresh chain, no parent
+  });
+
+  it('onSwitchProvider replaces the top frame in place — canGoBack unaffected at the root', async () => {
+    let t = 5000;
+    const h = harness({ configuredProviders: ['gemini', 'openai'], now: () => t });
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    expect(h.renderer.lastCtx?.onBack).toBeUndefined();
+    t = 5001;
+    h.renderer.lastCtx!.onSwitchProvider!('openai');
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+    expect(h.renderer.lastCtx?.onBack).toBeUndefined(); // still the root — a switch is not a push
   });
 });
