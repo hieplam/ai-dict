@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.11.1](https://github.com/hieplam/ai-dict/compare/v1.11.0...v1.11.1) (2026-08-09)
+
+
+### Bug Fixes
+
+* **format:** prettier-format manifest.json left misformatted by PR [#188](https://github.com/hieplam/ai-dict/issues/188) ([6b9223d](https://github.com/hieplam/ai-dict/commit/6b9223d010c730a0e37cb7ebd2a6c38bf97a0dd0))
+* **format:** restore format-check green on master (manifest.json from PR [#188](https://github.com/hieplam/ai-dict/issues/188)) ([bf80e84](https://github.com/hieplam/ai-dict/commit/bf80e84ebd8c2621e9ecaa381db50b9d5d1c9470))
+
 ## [1.11.0](https://github.com/hieplam/ai-dict/compare/v1.10.0...v1.11.0) (2026-08-09)
 
 
