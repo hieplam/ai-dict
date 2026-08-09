@@ -281,6 +281,30 @@ describe('wire-schema', () => {
     ).toBe(false);
   });
 
+  // A5: glossMode is an optional PublicSettings field — a settings reply omitting it, and one
+  // carrying it, must both parse (mirrors how `theme`/optional fields are exercised above).
+  it('[A5] settings reply accepts an optional glossMode: boolean', () => {
+    const base = {
+      targetLang: 'vi',
+      outputFormat: 't',
+      promptEnvelope: '',
+      hasKey: true,
+      theme: 'sepia' as const,
+      configuredProviders: [],
+      highlightSavedWords: true,
+    };
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'settings',
+        settings: { ...base, glossMode: true },
+      }).success,
+    ).toBe(true);
+    expect(WireReplySchema.safeParse({ ok: true, type: 'settings', settings: base }).success).toBe(
+      true,
+    );
+  });
+
   it('lookup req accepts an optional provider override and rejects unknown providers', () => {
     const base = {
       word: 'w',
