@@ -361,7 +361,7 @@ export function parseOrganizeResponse(
 ): TagGroup[] | null;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/auto-group-policy.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/auto-group-policy.test.ts`:
 
 ````ts
 import { describe, it, expect } from 'vitest';
@@ -512,7 +512,7 @@ describe('auto-group-policy', () => {
 Run: `cd packages/app && bunx vitest run test/auto-group-policy.test.ts`
 Expected: failures — the module `../src/domain/auto-group-policy` does not exist yet.
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/auto-group-policy.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/auto-group-policy.ts`:
 
 ````ts
 /**
@@ -662,7 +662,7 @@ export * from './domain/auto-group-policy';
 Run: `cd packages/app && bunx vitest run test/auto-group-policy.test.ts`
 Expected: all tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
