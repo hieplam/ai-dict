@@ -5,7 +5,7 @@ allowsSchemaChange: true
 # A12 Non-English Source Pages Implementation Plan
 
 > **For agentic workers:** implement task-by-task, TDD (red → green → commit) per task. Steps use
-> checkbox (`- [ ]`) syntax for tracking.
+> checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** the prompt's source-language assumption is no longer hard-coded to "English" for every
 lookup. The card detects the selected word's source language from the page/element `lang`
@@ -1630,7 +1630,7 @@ git commit -m "feat: wire the card's source-language override into the in-page r
 
 - Create: `packages/extension-chrome/e2e/a12-non-english-source.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/a12-non-english-source.spec.ts`:
+- [x] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/a12-non-english-source.spec.ts`:
 
 ```ts
 /**
@@ -1802,7 +1802,7 @@ cd packages/extension-chrome && bunx playwright test a12-non-english-source
 
 Expected: all 4 tests pass.
 
-- [ ] **Step 2: Regression-check the shared prompt-builder surface.**
+- [x] **Step 2: Regression-check the shared prompt-builder surface.**
 
 ```
 cd packages/extension-chrome && bunx playwright test default-template-context advanced-prompt idiom-expansion
@@ -1812,7 +1812,7 @@ Expected: all pass unchanged — proves the `{source_lang}` placeholder swap and
 `AUTO_SOURCE_LANG_PHRASE` fallback did not regress the existing card-format/envelope-split, advanced-
 override, or A8 idiom pipelines.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
@@ -1829,7 +1829,7 @@ git commit -m "feat: e2e coverage for source-language detection, display, and ov
 
 ### Task 9: Final gates + PR
 
-- [ ] **Step 1: Run every gate.**
+- [x] **Step 1: Run every gate.**
 
 ```
 cd packages/app && bun run typecheck
@@ -1847,7 +1847,7 @@ unit test from Tasks 1-7); lint/format clean; the Chrome build succeeds with the
 new A12 e2e spec plus the regression guards for the shared prompt-builder/provider-picker surface
 (which this card's `workflow.ts` changes sit right next to) all pass.
 
-- [ ] **Step 2: Open the PR.**
+- [x] **Step 2: Open the PR.**
 
 Branch: `feat/a12-non-english-source`. Title: `feat: non-English source pages (A12)`.
 Regular merge (no squash — owner ruling 2026-07-16). No `## JIRA ticket` section
