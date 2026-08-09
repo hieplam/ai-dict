@@ -230,3 +230,10 @@ export const ICON_BACK =
 export const ICON_WORDS_LIST =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">' +
   '<line x1="4" y1="7" x2="20" y2="7"/><line x1="4" y1="12" x2="16" y2="12"/><line x1="4" y1="17" x2="18" y2="17"/></svg>';
+
+// Mute (bell with a slash) — card bar "Mute this site" action, A13.
+export const ICON_MUTE =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M8.5 8.2a3.5 3.5 0 017 0v3.6l2 3.4H6.5l2-3.4V8.2z"/>' +
+  '<path d="M10.3 18.4a1.9 1.9 0 003.4 0"/>' +
+  '<line x1="4" y1="4" x2="20" y2="20"/></svg>';

@@ -640,6 +640,25 @@ describe('wire-schema', () => {
     });
     expect(result.success).toBe(true);
   });
+
+  it('accepts quiet.list, quiet.add, quiet.remove; rejects an empty domain (A13)', () => {
+    expect(WireMessageSchema.safeParse({ type: 'quiet.list' }).success).toBe(true);
+    expect(WireMessageSchema.safeParse({ type: 'quiet.add', domain: 'example.com' }).success).toBe(
+      true,
+    );
+    expect(
+      WireMessageSchema.safeParse({ type: 'quiet.remove', domain: 'example.com' }).success,
+    ).toBe(true);
+    expect(WireMessageSchema.safeParse({ type: 'quiet.add', domain: '' }).success).toBe(false);
+    expect(WireMessageSchema.safeParse({ type: 'quiet.remove', domain: '' }).success).toBe(false);
+  });
+
+  it('accepts a quiet reply with an empty or populated domains array (A13)', () => {
+    expect(WireReplySchema.safeParse({ ok: true, type: 'quiet', domains: [] }).success).toBe(true);
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'quiet', domains: ['example.com'] }).success,
+    ).toBe(true);
+  });
 });
 
 describe('LookupResultSchema.related (B13)', () => {

@@ -890,7 +890,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
     }
   });
 
-  it('groups controls into Connection, Translation, Appearance, Privacy & data, Saved words, and Backup & restore sections', () => {
+  it('groups controls into Connection, Translation, Appearance, Privacy & data, Saved words, Backup & restore, and Quiet sites sections', () => {
     const el = mountForm();
     const heads = [...el.shadowRoot!.querySelectorAll('.sec .sec-h')].map((h) => h.textContent);
     // 'Developer mode' is a hidden section (revealed only by the Konami code) sitting after Translation.
@@ -903,6 +903,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
       'Privacy & data',
       'Saved words',
       'Backup & restore',
+      'Quiet sites',
     ]);
   });
 
@@ -1436,5 +1437,60 @@ describe('<settings-form> try it now CTA (C3)', () => {
     (form.shadowRoot!.getElementById('tryit-open') as HTMLButtonElement).click();
     document.body.removeEventListener('tryit-open', handler);
     expect(handler).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('<settings-form> quiet sites (A13)', () => {
+  it('quietSites renders one <li> per domain with a Remove button', () => {
+    const el = mountForm();
+    el.quietSites = ['example.com'];
+    const items = el.shadowRoot!.querySelectorAll('#quiet-list li');
+    expect(items.length).toBe(1);
+    expect(items[0]!.textContent).toContain('example.com');
+    expect(el.shadowRoot!.querySelector<HTMLButtonElement>('#quiet-list li button')).not.toBeNull();
+  });
+
+  it('an empty quietSites list renders the empty-state message', async () => {
+    const el = mountForm();
+    el.quietSites = [];
+    const ul = el.shadowRoot!.querySelector('#quiet-list')!;
+    expect(ul.querySelector('.quiet-empty')).not.toBeNull();
+    // The empty-state message is a valid <li> (not a <p> child of <ul>); it carries no Remove
+    // button, so there are zero *removable domain rows*.
+    expect(ul.querySelectorAll('li button').length).toBe(0);
+    expect(await axeViolations(el)).toEqual([]);
+  });
+
+  it('typing a domain and clicking Add dispatches a composed add-quiet-site event with the trimmed domain, then clears the input', () => {
+    const el = mountForm();
+    const input = el.shadowRoot!.querySelector<HTMLInputElement>('#quiet-domain')!;
+    input.value = '  example.com  ';
+    const handler = vi.fn();
+    el.addEventListener('add-quiet-site', handler);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#quiet-add')!.click();
+    expect(handler).toHaveBeenCalledTimes(1);
+    const event = handler.mock.calls[0]![0] as CustomEvent<{ domain: string }>;
+    expect(event.detail).toEqual({ domain: 'example.com' });
+    expect(input.value).toBe('');
+  });
+
+  it('clicking Add with an empty input is a no-op (no event)', () => {
+    const el = mountForm();
+    const handler = vi.fn();
+    el.addEventListener('add-quiet-site', handler);
+    el.shadowRoot!.querySelector<HTMLButtonElement>('#quiet-add')!.click();
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it("clicking a row's Remove button dispatches remove-quiet-site with that row's domain", () => {
+    const el = mountForm();
+    el.quietSites = ['example.com', 'other.com'];
+    const handler = vi.fn();
+    el.addEventListener('remove-quiet-site', handler);
+    const rows = el.shadowRoot!.querySelectorAll<HTMLButtonElement>('#quiet-list li button');
+    rows[1]!.click(); // other.com's row
+    expect(handler).toHaveBeenCalledTimes(1);
+    const event = handler.mock.calls[0]![0] as CustomEvent<{ domain: string }>;
+    expect(event.detail).toEqual({ domain: 'other.com' });
   });
 });

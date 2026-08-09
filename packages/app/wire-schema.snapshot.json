@@ -521,6 +521,55 @@
           "state"
         ],
         "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "quiet.list"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "quiet.add"
+          },
+          "domain": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "type",
+          "domain"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "quiet.remove"
+          },
+          "domain": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "type",
+          "domain"
+        ],
+        "additionalProperties": false
       }
     ]
   },
@@ -1188,6 +1237,31 @@
         "properties": {
           "ok": {
             "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
+            "const": "quiet"
+          },
+          "domains": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "domains"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
             "const": false
           },
           "type": {
@@ -1211,7 +1285,10 @@
               "saved.list",
               "backup.import",
               "saved.learningWords",
-              "saved.get"
+              "saved.get",
+              "quiet.list",
+              "quiet.add",
+              "quiet.remove"
             ]
           },
           "error": {

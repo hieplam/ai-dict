@@ -172,6 +172,35 @@ function mountSettings(initial: Settings, status?: string, opts?: { showTryIt?: 
       () => form.setStatus('Could not update error reporting', 'error'),
     );
   });
+  // A13: fetch + wire the quiet-sites list (independent of the settings save flow, design spec
+  // §2.2/§3.9).
+  void send({ type: 'quiet.list' }).then((r) => {
+    if (r.ok && r.type === 'quiet') form.quietSites = r.domains;
+  });
+  form.addEventListener('add-quiet-site', (e) => {
+    const { domain } = (e as CustomEvent<{ domain: string }>).detail;
+    void send({ type: 'quiet.add', domain }).then(
+      (r) => {
+        if (r.ok && r.type === 'quiet') {
+          form.quietSites = r.domains;
+          form.setStatus(`Muted ${domain}`);
+        } else form.setStatus('Could not mute that site', 'error');
+      },
+      () => form.setStatus('Could not mute that site', 'error'),
+    );
+  });
+  form.addEventListener('remove-quiet-site', (e) => {
+    const { domain } = (e as CustomEvent<{ domain: string }>).detail;
+    void send({ type: 'quiet.remove', domain }).then(
+      (r) => {
+        if (r.ok && r.type === 'quiet') {
+          form.quietSites = r.domains;
+          form.setStatus(`Unmuted ${domain}`);
+        } else form.setStatus('Could not unmute that site', 'error');
+      },
+      () => form.setStatus('Could not unmute that site', 'error'),
+    );
+  });
   if (status) form.setStatus(status);
   if (opts?.showTryIt) {
     form.tryIt = true;

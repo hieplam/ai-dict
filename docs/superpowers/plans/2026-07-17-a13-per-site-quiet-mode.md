@@ -86,7 +86,7 @@ export function quietSiteList(deps: QuietSiteDeps): Promise<string[]>;
 export function isQuietSite(domains: string[], hostname: string): boolean;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/quiet-site-policy.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/quiet-site-policy.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -201,7 +201,7 @@ Run: `cd packages/app && bunx vitest run test/quiet-site-policy.test.ts`
 Expected: failure — `Cannot find module '../src/domain/quiet-site-policy'` (the file doesn't exist
 yet).
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/quiet-site-policy.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/quiet-site-policy.ts`:
 
 ```ts
 import type { Storage } from '../ports';
@@ -287,7 +287,7 @@ Expected: all 12 tests pass.
 Run: `cd packages/app && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -320,7 +320,7 @@ git commit -m "[A13QuietMode] feat: add quiet-site-policy domain module (A13)"
 { ok: true; type: 'quiet'; domains: string[] }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/wire-schema.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/wire-schema.test.ts`,
       inside the existing `describe('wire-schema', ...)` block, just before its closing `});`:
 
 ```ts
@@ -394,7 +394,7 @@ Expected: the 4 new router tests fail too — `buildRouter`'s exhaustive switch 
 case, so the returned promise resolves to `undefined` (no matching `case`, no `default`), which
 fails every `toEqual` assertion above.
 
-- [ ] **Step 2: Implement wire.ts.** In `packages/app/src/wire.ts`, add three new arms to
+- [x] **Step 2: Implement wire.ts.** In `packages/app/src/wire.ts`, add three new arms to
       `WireMessageSchema` (current file, appended after the `errlog.set-consent` arm, lines
       136-140):
 
@@ -456,7 +456,7 @@ sites are not part of `Settings`/`PublicSettings` (design spec §2.2), so there 
 for a schema to drift against; the new reply's `domains: string[]` has no matching domain type to
 assert equality with, exactly like `WireReplySchema`'s existing `errlog` arm has none either.
 
-- [ ] **Step 3: Implement router.ts.** In `packages/app/src/app/router.ts`, add three imports
+- [x] **Step 3: Implement router.ts.** In `packages/app/src/app/router.ts`, add three imports
       alongside the existing `saved*`/`evaluateNudge` imports (current file, lines 13-16):
 
 ```ts
@@ -503,7 +503,7 @@ Expected: all tests pass (existing + 2 new wire-schema + 4 new router tests).
 Run: `cd packages/app && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -530,7 +530,7 @@ set quiet(q: boolean): void;
 get quiet(): boolean;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to
+- [x] **Step 1: Write the failing tests.** Append to
       `packages/extension-chrome/src/adapters/chrome-floating-trigger.test.ts`, as a new
       `describe` block right after the existing `describe('ChromeFloatingTrigger ...', ...)`
       block's closing `});` (end of file):
@@ -578,7 +578,7 @@ Expected: the first new test fails — assigning `trigger.quiet = true` sets an 
 property (no `quiet` setter exists yet), so `show()` still mounts unconditionally and
 `host.querySelector('lookup-trigger')` is NOT null, failing the `toBeNull()` assertion.
 
-- [ ] **Step 2: Implement.** In
+- [x] **Step 2: Implement.** In
       `packages/extension-chrome/src/adapters/chrome-floating-trigger.ts`, add a new `quiet`
       settable property, mirroring `theme`'s existing shape (current file, lines 20-27):
 
@@ -645,7 +645,7 @@ Expected: all 12 tests pass (existing 9 + 3 new).
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -669,7 +669,7 @@ by e2e only (same precedent as B5's/C2's `content.ts`/`options.ts` edits). This 
 correctness is proven by Task 8's e2e; still run the typecheck gate below so a regression in
 existing behavior (save/status/nudge listeners, all in the same file) is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/content.ts`, add two names to the
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/content.ts`, add two names to the
       existing `@ai-dict/app` import (current file, lines 1-11):
 
 ```ts
@@ -752,7 +752,7 @@ included only to make the insertion point unambiguous; do not duplicate it.)
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -788,7 +788,7 @@ export const ICON_MUTE: string;
 type Act = 'settings' | 'close' | 'side-panel' | 'mute-site';
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/lookup-card.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/lookup-card.test.ts`,
       as a new `describe` block at the end of the file (after the current last `describe('<lookup-card> — pin control (A7)', ...)` block's closing `});`):
 
 ```ts
@@ -826,7 +826,7 @@ describe('<lookup-card> mute-site header action (A13)', () => {
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all 3 new tests fail — no `button[data-act="mute-site"]` exists yet.
 
-- [ ] **Step 2: Add the icon.** In `packages/app/src/ui/styles/tokens.ts`, append after the
+- [x] **Step 2: Add the icon.** In `packages/app/src/ui/styles/tokens.ts`, append after the
       existing `ICON_PIN` export (current end of file):
 
 ```ts
@@ -838,7 +838,7 @@ export const ICON_MUTE =
   '<line x1="4" y1="4" x2="20" y2="20"/></svg>';
 ```
 
-- [ ] **Step 3: Implement the card action.** In `packages/app/src/ui/lookup-card.ts`, add
+- [x] **Step 3: Implement the card action.** In `packages/app/src/ui/lookup-card.ts`, add
       `ICON_MUTE` to the existing `tokens.ts` import list (current file, lines 3-13):
 
 ```ts
@@ -928,7 +928,7 @@ Expected: all tests pass (existing suite + 3 new).
 Run: `cd packages/app && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -958,7 +958,7 @@ get quietSites(): string[];
 // 'remove-quiet-site' detail: { domain: string }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
       as a new `describe` block at the end of the file:
 
 ```ts
@@ -1019,7 +1019,7 @@ Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: all 5 new tests fail — `#quiet-list`/`#quiet-domain`/`#quiet-add` don't exist yet and
 `quietSites` isn't a settable property.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`, add a new "Quiet sites"
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`, add a new "Quiet sites"
       section to `MARKUP`, right after the existing "Privacy & data" `</section>` and before the
       `<div class="savebar">` (current file, between lines 212 and 213):
 
@@ -1190,7 +1190,7 @@ Expected: all tests pass (existing suite + 5 new).
 Run: `cd packages/app && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1213,7 +1213,7 @@ No dedicated unit test exists for `options.ts` (composition root, e2e-covered on
 precedent as Task 4 and as C2's `options.ts` edit). This task's correctness is proven by Task 8's
 e2e; still run the typecheck gate below.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, inside `mountSettings`
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, inside `mountSettings`
       (current file, lines 84-111), fetch the quiet-sites list once on mount and wire the two new
       form events, right after the existing `error-reporting-change` listener block and before the
       trailing `if (status) form.setStatus(status);`:
@@ -1284,7 +1284,7 @@ helpers/functions in this file — unchanged.
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1303,7 +1303,7 @@ git commit -m "[A13QuietMode] feat: wire quiet-sites list into the settings comp
 
 - Create: `packages/extension-chrome/e2e/a13-per-site-quiet-mode.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create
+- [x] **Step 1: Write the spec.** Create
       `packages/extension-chrome/e2e/a13-per-site-quiet-mode.spec.ts`:
 
 ```ts
@@ -1445,7 +1445,7 @@ cd packages/extension-chrome && bunx playwright test a13-per-site-quiet-mode
 
 Expected: 4 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome

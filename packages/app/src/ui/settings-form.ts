@@ -164,6 +164,11 @@ details.advanced>summary:focus-visible{outline:2px solid var(--ad-accent);outlin
 .health-row .health-fix{padding:4px 0}
 .health-hint{margin:8px 0 0;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
 .health-url{font-family:var(--adp-font-mono);background:var(--ad-surface-sunken);padding:2px 6px;border-radius:4px;user-select:all}
+#quiet-help{margin:7px 0 12px;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
+.quiet-list{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.quiet-list li:not(.quiet-empty){display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;background:var(--ad-surface-sunken);border:1px solid var(--ad-line);border-radius:8px;font-size:var(--adp-text-sm);color:var(--ad-ink)}
+.quiet-list button{padding:5px 11px;font-size:var(--adp-text-xs)}
+.quiet-empty{margin:0;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
 [hidden]{display:none}`;
 
 const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary</span></span></header>
@@ -309,6 +314,17 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
       </div>
       <input type="file" id="backup-file" accept="application/json" hidden />
     </section>
+    <section class="sec" aria-labelledby="sec-quiet">
+      <h2 class="sec-h" id="sec-quiet">Quiet sites</h2>
+      <p id="quiet-help">
+        The Define button never appears on these sites. The keyboard shortcut still works there.
+      </p>
+      <div class="keyrow">
+        <input id="quiet-domain" type="text" autocomplete="off" placeholder="example.com" />
+        <button type="button" id="quiet-add">Add</button>
+      </div>
+      <ul id="quiet-list" class="quiet-list"></ul>
+    </section>
     <div class="savebar">
       <button type="submit" id="save" class="primary">Save settings</button>
       <span class="muted">Changes apply after saving</span>
@@ -352,6 +368,11 @@ export class SettingsForm extends HTMLElement {
   // C6: armed by enterFixKeyMode(), consumed by exactly the next Save.
   private _autoRetestArmed = false;
   private _shortcuts: ShortcutStatusRow[] = [];
+  // A13: the current quiet-sites list, fetched by the composition root over `quiet.list` and
+  // re-set after every add/remove reply. Deliberately absent from SettingsFormValue/collect() —
+  // quiet sites persist via their own quiet.add/quiet.remove wire round trip, not the settings
+  // save flow (design spec §2.2/§2.3), mirroring errorReporting's own exclusion.
+  private _quietSites: string[] = [];
 
   connectedCallback(): void {
     if (this.shadowRoot) return;
@@ -463,6 +484,19 @@ export class SettingsForm extends HTMLElement {
     this.q<HTMLButtonElement>('#reset-tpl').addEventListener('click', () =>
       this.restoreDefaultTemplate(),
     );
+    this.q<HTMLButtonElement>('#quiet-add').addEventListener('click', () => {
+      const input = this.q<HTMLInputElement>('#quiet-domain');
+      const domain = input.value.trim();
+      if (domain.length === 0) return;
+      this.dispatchEvent(
+        new CustomEvent<{ domain: string }>('add-quiet-site', {
+          detail: { domain },
+          bubbles: true,
+          composed: true,
+        }),
+      );
+      input.value = '';
+    });
     // Any edit to the envelope textarea promotes its content to a real override, and (once
     // unlocked) live-refreshes the Developer-mode preview.
     this.q<HTMLTextAreaElement>('#envelope').addEventListener('input', () => {
@@ -487,6 +521,11 @@ export class SettingsForm extends HTMLElement {
     this.syncGlossRow();
     this.q<HTMLInputElement>('#error-reporting').checked = this._errorReporting;
     this.renderHealthRows();
+    // Deliberately NOT rendered here (unlike renderHealthRows): rendering the empty state puts a
+    // <p class="quiet-empty"> inside the <ul>, which is a real list-structure a11y violation
+    // (axe "list": <ul>/<ol> must only directly contain <li>/<script>/<template>). Mirrors
+    // renderShortcutRows(), which is likewise driven only by its setter — #quiet-list stays a
+    // genuinely empty, violation-free <ul> until the composition root supplies quietSites.
   }
 
   disconnectedCallback(): void {
@@ -576,6 +615,14 @@ export class SettingsForm extends HTMLElement {
   }
   get errorReporting(): boolean {
     return this._errorReporting;
+  }
+
+  set quietSites(list: string[]) {
+    this._quietSites = list;
+    if (this.shadowRoot) this.renderQuietList();
+  }
+  get quietSites(): string[] {
+    return this._quietSites;
   }
 
   /**
@@ -806,6 +853,38 @@ export class SettingsForm extends HTMLElement {
     tpl.value = DEFAULT_OUTPUT_FORMAT;
     this.markDirty();
     this.setStatus('Card format restored — Save settings to apply.');
+  }
+
+  private renderQuietList(): void {
+    const ul = this.q<HTMLUListElement>('#quiet-list');
+    ul.replaceChildren();
+    if (this._quietSites.length === 0) {
+      const empty = document.createElement('li');
+      empty.className = 'quiet-empty';
+      empty.textContent = 'No muted sites yet.';
+      ul.append(empty);
+      return;
+    }
+    for (const domain of this._quietSites) {
+      const li = document.createElement('li');
+      const label = document.createElement('span');
+      label.textContent = domain;
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.textContent = 'Remove';
+      remove.setAttribute('aria-label', `Unmute ${domain}`);
+      remove.addEventListener('click', () => {
+        this.dispatchEvent(
+          new CustomEvent<{ domain: string }>('remove-quiet-site', {
+            detail: { domain },
+            bubbles: true,
+            composed: true,
+          }),
+        );
+      });
+      li.append(label, remove);
+      ul.append(li);
+    }
   }
 
   /**
