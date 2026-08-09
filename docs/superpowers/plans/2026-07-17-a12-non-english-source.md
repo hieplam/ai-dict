@@ -1521,7 +1521,7 @@ git commit -m "[A12NonEnglishSource] feat: add the card's Source language row + 
 - Modify: `packages/app/src/app/inline-bottom-sheet-renderer.ts`
 - Modify: `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`
 
-- [ ] **Step 1: Write the failing tests.** Add to `packages/app/test/app/inline-bottom-sheet-
+- [x] **Step 1: Write the failing tests.** Add to `packages/app/test/app/inline-bottom-sheet-
 renderer.test.ts`, inside the main `describe('InlineBottomSheetRenderer', ...)` block (near
       the existing `switch-provider`/`force-literal` tests):
 
@@ -1558,7 +1558,7 @@ Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.t
 Expected: the 3 new cases fail (no `.src-lang-row` appears — `ctx.sourceLang`/`onOverrideSourceLang`
 are not yet forwarded).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/app/inline-bottom-sheet-renderer.ts`:
 
 Add the new private field, alongside `onSwitch`/`onForceLiteral`:
 
@@ -1609,7 +1609,7 @@ rides through those re-renders automatically with no further change.)
 Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.test.ts`
 Expected: all pass, including the 3 new cases.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck
