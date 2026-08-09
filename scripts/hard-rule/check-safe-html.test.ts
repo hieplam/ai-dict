@@ -131,7 +131,7 @@ describe('checkRepo — integration on this repository', () => {
     expect(violations).toEqual([]);
   });
 
-  it('the real tree has exactly 24 raw-HTML sink sites (23 annotated + 1 sanctioned-path)', () => {
+  it('the real tree has exactly 24 raw-HTML sink sites (21 annotated + 3 sanctioned-path)', () => {
     // Cross-check against the count Task 3's audit verified via two independent enumeration
     // methods (see the campaign report) — proves this scanner is inspecting every real sink,
     // not silently seeing fewer sites than exist. A10 (TTS pronunciation) added one new

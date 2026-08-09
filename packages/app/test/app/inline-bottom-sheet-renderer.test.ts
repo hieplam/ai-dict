@@ -726,4 +726,45 @@ describe('InlineBottomSheetRenderer — gloss mode (A5)', () => {
     expect(gloss(h)).not.toBeNull();
     expect(h.querySelector('bottom-sheet')).toBeNull();
   });
+
+  it('outside-press dismiss during loading suppresses a late translation-bearing result (no bubble, no modal)', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    const outside = document.createElement('div');
+    document.body.append(outside);
+    outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }));
+    expect(gloss(h)).toBeNull();
+    r.renderResult({ ...result, translation: 'ngân hàng' }); // late result for the dismissed lookup
+    expect(gloss(h)).toBeNull();
+    expect(h.querySelector('bottom-sheet')).toBeNull();
+  });
+
+  it('outside-press dismiss during loading suppresses a late TRANSLATION-ABSENT result (no unsolicited full modal)', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    const outside = document.createElement('div');
+    document.body.append(outside);
+    outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }));
+    r.renderResult(result); // no translation
+    expect(h.querySelector('bottom-sheet')).toBeNull();
+    expect(gloss(h)).toBeNull();
+  });
+
+  it('a fresh renderLoading after a dismiss clears the dismissed state (next lookup renders normally)', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    const outside = document.createElement('div');
+    document.body.append(outside);
+    outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }));
+    r.renderResult({ ...result, translation: 'ngân hàng' }); // suppressed
+    r.renderLoading('bank', anchor); // NEW lookup
+    r.renderResult({ ...result, translation: 'ngân hàng' });
+    expect(gloss(h)).not.toBeNull();
+  });
 });

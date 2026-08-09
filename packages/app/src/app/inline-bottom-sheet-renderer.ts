@@ -59,8 +59,18 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   // mini bubble (spec §2.4). Reset only in close(). For every install with glossMode OFF (default),
   // this becomes true on the first render and stays true — zero behavior change for that path.
   private cardOpen = false;
+  // A5 (skinner fix): true once the reader outside-press-dismisses the LOADING gloss bubble
+  // while a lookup is still in flight. Suppresses that lookup's late terminal renderResult/
+  // renderError so it can neither re-mount the bubble nor pop the full modal unsolicited. Only
+  // ever set by onOutsidePress, which only fires for a mounted gloss bubble — the non-gloss full
+  // card path can never observe this flag, so this fix is fully contained to A5's interaction.
+  // Cleared by the next renderLoading (a fresh lookup) and by close().
+  private dismissed = false;
   private readonly onOutsidePress = (e: Event): void => {
-    if (this.glossEl && !e.composedPath().includes(this.glossEl)) this.removeGloss();
+    if (this.glossEl && !e.composedPath().includes(this.glossEl)) {
+      this.dismissed = true;
+      this.removeGloss();
+    }
   };
 
   constructor(
@@ -193,6 +203,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
    */
   private positionGloss(anchor: AnchorRect): void {
     const el = this.ensureGloss();
+    el.setAttribute('data-ad-theme', this._theme);
     el.style.position = 'fixed';
     el.style.left = `${anchor.x}px`;
     el.style.top = `${anchor.y + anchor.h}px`;
@@ -219,6 +230,8 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   }
 
   renderLoading(word?: string, anchor?: AnchorRect): void {
+    // A5 (skinner fix): a fresh lookup always clears a prior outside-press dismiss.
+    this.dismissed = false;
     // A6: cache the selection anchor so every later render of this same open card (setState →
     // positionNear) reuses it; null when no anchor was passed (spec §2.4 fallback).
     this.lastAnchor = anchor ?? null;
@@ -274,6 +287,8 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   }
 
   renderResult(r: LookupResult, ctx?: ResultRenderContext): void {
+    // A5 (skinner fix): a late terminal render for a dismissed lookup shows nothing.
+    if (this.dismissed) return;
     // `sanitize` already returns `SafeHtml` (the trust boundary lives in sanitizeMarkdown, S4).
     // No cast needed here — the DI param type `(md: string) => SafeHtml` guarantees it.
     this.onSwitch = ctx?.onSwitchProvider;
@@ -334,6 +349,8 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   }
 
   renderError(e: LookupError): void {
+    // A5 (skinner fix): a late terminal render for a dismissed lookup shows nothing.
+    if (this.dismissed) return;
     // A5: errors are never compact (spec §2.3) — setup/recovery CTAs never get squeezed into a bubble.
     this.removeGloss();
     this.cardOpen = true;
@@ -415,6 +432,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     globalThis.speechSynthesis?.cancel();
     this.removeGloss();
     this.cardOpen = false;
+    this.dismissed = false;
     this.sheet?.remove();
     this.sheet = null;
     this.card = null;

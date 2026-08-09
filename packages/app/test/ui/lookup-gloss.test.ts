@@ -56,4 +56,13 @@ describe('<lookup-gloss>', () => {
     expect(fired).toBe(1);
     document.body.removeChild(el);
   });
+
+  it('forwards the host aria-label onto the inner shadow button (A5 a11y)', () => {
+    const el = document.createElement('lookup-gloss') as LookupGloss;
+    document.body.append(el);
+    el.setAttribute('aria-label', 'Define result for "bank" — tap for full card');
+    const btn = el.shadowRoot!.querySelector('button')!;
+    expect(btn.getAttribute('aria-label')).toBe('Define result for "bank" — tap for full card');
+    document.body.removeChild(el);
+  });
 });

@@ -42,6 +42,19 @@ button:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.gloss-spinner{animation:none}}`;
 
 export class LookupGloss extends HTMLElement {
+  private btn: HTMLButtonElement | null = null;
+
+  static get observedAttributes(): string[] {
+    return ['aria-label'];
+  }
+
+  attributeChangedCallback(name: string, _old: string | null, value: string | null): void {
+    if (name === 'aria-label' && this.btn) {
+      if (value === null) this.btn.removeAttribute('aria-label');
+      else this.btn.setAttribute('aria-label', value);
+    }
+  }
+
   connectedCallback(): void {
     if (this.shadowRoot) return;
     const root = this.attachShadow({ mode: 'open' });
@@ -53,5 +66,8 @@ export class LookupGloss extends HTMLElement {
       this.dispatchEvent(new CustomEvent('expand', { bubbles: true, composed: true })),
     );
     root.append(btn);
+    this.btn = btn;
+    const label = this.getAttribute('aria-label');
+    if (label !== null) btn.setAttribute('aria-label', label);
   }
 }
