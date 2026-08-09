@@ -74,6 +74,7 @@ const themedSettings: SettingsStore = {
     settings.get().then((s) => {
       trigger.theme = s.theme;
       inline.theme = s.theme;
+      inline.glossMode = s.glossMode === true;
       hoverPopup.theme = s.theme; // B4: same per-fetch theme stamp as the trigger/card
       return s;
     }),
