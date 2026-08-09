@@ -11,6 +11,7 @@ import {
   buildReviewDeck,
   HISTORY_CAP,
   computeWeeklyDigest,
+  computeSiteLookupStats,
   type PanelFocusState,
   type SidePanelView,
   type WordsPageView,
@@ -190,6 +191,34 @@ async function loadDigest(): Promise<void> {
   }
 }
 
+/**
+ * B15: per-domain lookup/save tally shown in the panel's "Sites" section. Computed from the
+ * FULL stored history/saved-word log, not just the last-50 slice `refreshRecent` shows to
+ * Recent — `history.list` with no `limit` returns every entry (history-policy's own default),
+ * the exact same call shape "Export history" already uses (options.ts), so a site's true
+ * lifetime lookup count is never undercounted by Recent's display cap. Both `history.list` and
+ * `saved.list` are read-only; no new tracking surface (design spec §2.3).
+ */
+async function refreshSiteStats(): Promise<void> {
+  try {
+    const [historyRaw, savedRaw] = await Promise.all([
+      chrome.runtime.sendMessage<{ type: 'history.list' }, unknown>({ type: 'history.list' }),
+      chrome.runtime.sendMessage<{ type: 'saved.list' }, unknown>({ type: 'saved.list' }),
+    ]);
+    const historyReply = historyRaw as WireReply | undefined;
+    const savedReply = savedRaw as WireReply | undefined;
+    const history =
+      historyReply && historyReply.ok && historyReply.type === 'history'
+        ? historyReply.entries
+        : [];
+    const saved =
+      savedReply && savedReply.ok && savedReply.type === 'saved.list' ? savedReply.entries : [];
+    view.siteStats = computeSiteLookupStats(history, saved);
+  } catch {
+    // Site stats are a convenience view; a failed query just leaves the section as-is.
+  }
+}
+
 // Re-show a past lookup in the focus region when its row is clicked. HistoryEntry has no
 // url/title (that gap is exactly why B2 exists) — sentence comes from the stored context.
 view.addEventListener('select', (e) => {
@@ -210,7 +239,7 @@ view.addEventListener('delete', (e) => {
     try {
       await chrome.runtime.sendMessage({ type: 'history.delete', id });
     } finally {
-      await refreshRecent();
+      await Promise.all([refreshRecent(), refreshSiteStats()]); // B15: also refresh the tally
     }
   })();
 });
@@ -278,13 +307,15 @@ view.addEventListener('toggle-save', () => {
                   setStatus(lastStatus);
                 }
               })
-              .catch(() => undefined);
+              .catch(() => undefined)
+              .finally(() => void refreshSiteStats()); // B15: the merge-confirmed new sense also changes the saves tally
           },
         });
         view.appendToFocus(prompt);
       }
     })
-    .catch(() => undefined);
+    .catch(() => undefined)
+    .finally(() => void refreshSiteStats()); // B15: a save/unsave changes the saves tally
 });
 
 // B5: mirrors content.ts's own toggle-status listener.
@@ -526,8 +557,9 @@ chrome.runtime.onMessage.addListener((msg: unknown, sender) => {
       url: typeof mirrorMsg.url === 'string' ? mirrorMsg.url : undefined,
       title: typeof mirrorMsg.title === 'string' ? mirrorMsg.title : undefined,
     });
-    // The router just appended this lookup to history; pull it into Recent.
+    // The router just appended this lookup to history; pull it into Recent + the site tally.
     void refreshRecent();
+    void refreshSiteStats(); // B15: a fresh lookup changes the lookup tally
   } else if (mirrorMsg.state === 'error') {
     view.focusState = { kind: 'error', error: mirrorMsg.payload as LookupError };
   } else if (mirrorMsg.state === 'streaming') {
@@ -586,5 +618,6 @@ async function recoverFocus(): Promise<void> {
 // state until the first lookup mirrors in or a recent row is clicked — unless no key is set,
 // in which case initFromSettings swaps it for the setup invite (and stamps the theme).
 void refreshRecent();
+void refreshSiteStats(); // B15
 void initFromSettings().then(() => recoverFocus());
 void loadDigest();

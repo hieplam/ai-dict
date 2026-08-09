@@ -536,3 +536,44 @@ describe('<side-panel-view> Back button CSS parity (A2)', () => {
     expect(el.shadowRoot!.querySelector('.back-btn')).not.toBeNull();
   });
 });
+
+describe('<side-panel-view> Sites section (B15)', () => {
+  it('hides the Sites section entirely when there is no data', () => {
+    const el = mount();
+    el.siteStats = [];
+    const sites = el.shadowRoot!.querySelector('.sites') as HTMLElement;
+    expect(sites.hidden).toBe(true);
+  });
+
+  it('lists site rows in the given order with lookup/save counts', () => {
+    const el = mount();
+    el.siteStats = [
+      { site: 'example.com', lookups: 2, saves: 1 },
+      { site: 'reddit.com', lookups: 1, saves: 0 },
+    ];
+    const sites = el.shadowRoot!.querySelector('.sites') as HTMLElement;
+    expect(sites.hidden).toBe(false);
+    const rows = sites.querySelectorAll('.site-row');
+    expect(rows.length).toBe(2);
+    expect(rows[0]!.querySelector('.site-name')!.textContent).toBe('example.com');
+    expect(rows[0]!.querySelector('.site-counts')!.textContent).toBe('2 lookups · 1 saved');
+    expect(rows[1]!.querySelector('.site-name')!.textContent).toBe('reddit.com');
+    expect(rows[1]!.querySelector('.site-counts')!.textContent).toBe('1 lookup');
+  });
+
+  it('the Sites section has no interactive elements in v1 (read-only list)', () => {
+    const el = mount();
+    el.siteStats = [{ site: 'example.com', lookups: 1, saves: 0 }];
+    const sites = el.shadowRoot!.querySelector('.sites') as HTMLElement;
+    expect(sites.querySelectorAll('button, a').length).toBe(0);
+  });
+
+  it('has no axe violations (Sites section populated)', async () => {
+    const el = mount();
+    el.siteStats = [
+      { site: 'example.com', lookups: 2, saves: 1 },
+      { site: 'reddit.com', lookups: 1, saves: 0 },
+    ];
+    expect(await axeViolations(el)).toEqual([]);
+  });
+});
