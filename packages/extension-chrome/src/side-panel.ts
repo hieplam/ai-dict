@@ -326,10 +326,15 @@ wordsView.addEventListener('delete-word', (e) => {
 });
 
 // B11: the review surface is a third permanently-mounted top-level element (side-panel.html),
-// shown/hidden via style.display exactly like the B6 Words page above — NOT an #app/replaceChildren
-// swap (a `<div id="app">` swap would fight the same `:host{display:flex}` cascade the B6
-// open-words comment documents). Its close/mark-known listeners are registered once here, like
-// wordsView's.
+// shown/hidden via style.display exactly like the B6 Words page above. The B11 spec §2.7 pinned
+// an alternative — a shared `<div id="app">` + `replaceChildren` swap (mirroring options.ts) —
+// but that predates B6, which shipped `<words-page-view>` as a second permanently-mounted
+// top-level element toggled via style.display. Adopting the swap now would either introduce a
+// SECOND, competing navigation mechanism in this one file or force restructuring B6's working
+// nav, so we extend B6's established style.display pattern instead. The spec's CORE decision — a
+// separate top-level element, NOT a SidePanelView focusState mode — is preserved either way (see
+// the §2.7 supersession note in the design spec). Its close/mark-known listeners are registered
+// once here, like wordsView's.
 reviewView.addEventListener('close', () => {
   reviewView.style.display = 'none';
   view.style.display = '';

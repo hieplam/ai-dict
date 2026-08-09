@@ -190,6 +190,25 @@ benefit over a clean full-panel swap (§2.7).
 
 ### 2.7 Full-panel takeover mechanism — a NEW top-level custom element, not a mode flag on `SidePanelView`
 
+> **Supersession note (B11 implementation, 2026-08-09).** The MECHANISM pinned below — a shared
+> `<div id="app">` + `replaceChildren` swap — was superseded during implementation. This spec was
+> authored when `side-panel.html` held only `<side-panel-view>`; card B6 has since shipped
+> `<words-page-view>` as a **second permanently-mounted top-level element toggled via inline
+> `style.display`** (see `side-panel.ts`'s `open-words`/`back` listeners). Introducing an
+> `#app`/`replaceChildren` swap alongside that would mean either a second, competing navigation
+> mechanism in one composition root or restructuring B6's working nav. So the shipped code makes
+> `<review-flip-view>` a **third permanently-mounted top-level element** (`<review-flip-view
+style="display: none">`) toggled via `style.display`, matching B6 exactly. **The CORE decision
+> of this section is unchanged and still holds: review is a SEPARATE top-level element, NOT a
+> `SidePanelView` focusState mode** — every rejected-alternative argument below (against a
+> `PanelFocusState` `kind: 'review'`) applies identically to the shipped mechanism. Only the
+> show/hide primitive differs (`style.display` toggle instead of `replaceChildren`), and inline
+> `style.display` on the host correctly overrides the shadow-scoped `:host{display:flex}` rule —
+> inline styles outrank any same-origin, non-`!important` stylesheet rule regardless of
+> specificity — so it does NOT fall into the `[hidden]`-attribute pitfall this section warns
+> about (that pitfall is specific to the `hidden` _attribute_ vs. the UA stylesheet, not to inline
+> `style.display`). Plan Task 5 / §9 carry the same note.
+
 **Pinned — a brand-new custom element, `<review-flip-view>` (new file
 `packages/app/src/ui/review-flip-view.ts`), and the composition root
 (`packages/extension-chrome/src/side-panel.ts`) swaps it in for `<side-panel-view>` inside a shared
@@ -730,7 +749,7 @@ above exactly. No `pr-assets/*` branch is created for this card.
 | `packages/app/src/ui/register.ts`                              | + `registerReviewFlip()`                                                                                         |
 | `packages/app/src/ui/index.ts`                                 | + `export * from './review-flip-view'`                                                                           |
 | `packages/app/src/ui/side-panel-view.ts`                       | + `.review-btn` header button, `open-review` event, CSS                                                          |
-| `packages/extension-chrome/src/side-panel.html`                | + wrapping `<div id="app">`                                                                                      |
+| `packages/extension-chrome/src/side-panel.html`                | + third permanently-mounted `<review-flip-view style="display:none">` (see §2.7 supersession note; NOT `#app`)   |
 | `packages/extension-chrome/src/side-panel.ts`                  | + `registerReviewFlip()` call, `openReview()`/`ensureReviewView()`, `open-review`/`close`/`mark-known` wiring    |
 | `packages/app/test/review-deck-policy.test.ts`                 | **new**                                                                                                          |
 | `packages/app/test/wire-schema.test.ts`                        | + tests (§6.2) — conditional on §2.1                                                                             |
