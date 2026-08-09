@@ -1481,7 +1481,7 @@ same precedent the C2 design spec records for `options.ts`). This task's correct
 Task 7's e2e; still run the typecheck/lint gate below so a regression in existing behavior (save/
 status toggles, Recent, etc. — all in the same file) is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`, add three new
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`, add three new
       listeners right after the existing `toggle-status` listener (`:202-211`):
 
 ```ts
@@ -1560,7 +1560,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check

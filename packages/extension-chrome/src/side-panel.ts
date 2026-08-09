@@ -298,6 +298,69 @@ view.addEventListener('toggle-status', () => {
     .catch(() => undefined);
 });
 
+// B12: "Organize my words" — gated by an explicit token-cost confirm() (constraint 4), then
+// exactly one saved.organize round trip. The panel is a trusted extension page, so it can
+// call window.confirm and send the wire message directly, same style as toggle-save above.
+view.addEventListener('organize-click', () => {
+  const ok = window.confirm(
+    'Organize your saved words with AI? This sends up to 200 of your most recently saved ' +
+      'words to your AI provider and uses your API quota.',
+  );
+  if (!ok) return;
+  view.organize = { kind: 'busy' };
+  void chrome.runtime
+    .sendMessage({ type: 'saved.organize' })
+    .then((raw: unknown) => {
+      const reply = raw as WireReply | undefined;
+      if (reply?.ok && reply.type === 'organized') {
+        view.organize = {
+          kind: 'result',
+          groups: reply.groups,
+          organizedCount: reply.organizedCount,
+          skippedCount: reply.skippedCount,
+        };
+      } else {
+        const message =
+          reply && !reply.ok ? reply.error.message : 'Could not reach the extension. Try again.';
+        view.organize = { kind: 'error', message };
+      }
+    })
+    .catch(() => {
+      view.organize = { kind: 'error', message: 'Could not reach the extension. Try again.' };
+    });
+});
+
+// B12: rename a tag across every word currently carrying it. Zero model calls — plain
+// saved.setTags writes, one per affected word. Updates the local view immediately so the
+// renamed label reflects without waiting on every write to resolve.
+view.addEventListener('rename-tag', (e) => {
+  const { tag, newTag } = (e as CustomEvent<{ tag: string; newTag: string }>).detail;
+  if (view.organize.kind !== 'result') return;
+  const groups = view.organize.groups.map((g) => (g.tag === tag ? { ...g, tag: newTag } : g));
+  const words = groups.find((g) => g.tag === newTag)?.words ?? [];
+  view.organize = { ...view.organize, groups };
+  for (const word of words) {
+    void chrome.runtime
+      .sendMessage({ type: 'saved.setTags', word, tags: [newTag] })
+      .catch(() => undefined);
+  }
+});
+
+// B12: remove a tag from every word currently carrying it (the words themselves are never
+// deleted — only their tag). Zero model calls.
+view.addEventListener('remove-tag', (e) => {
+  const { tag } = (e as CustomEvent<{ tag: string }>).detail;
+  if (view.organize.kind !== 'result') return;
+  const removed = view.organize.groups.find((g) => g.tag === tag);
+  const groups = view.organize.groups.filter((g) => g.tag !== tag);
+  view.organize = { ...view.organize, groups };
+  for (const word of removed?.words ?? []) {
+    void chrome.runtime
+      .sendMessage({ type: 'saved.setTags', word, tags: [] })
+      .catch(() => undefined);
+  }
+});
+
 // B7: the panel's own focus region bubbles the same composed dismiss-nudge event the in-page
 // card does. No wire message needed — see dismissNudge()'s doc comment above.
 view.addEventListener('dismiss-nudge', () => dismissNudge());
