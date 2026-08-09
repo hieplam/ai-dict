@@ -249,6 +249,38 @@ export async function selectWord(page: Page, id: string, word: string): Promise<
   );
 }
 
+/**
+ * A2: make a deterministic selection over `word` inside the currently-open lookup-card's
+ * definition body (`.lookup-answer`), then dispatch mouseup — drives a recursive in-definition
+ * lookup exactly like `selectWord` drives an ordinary page selection.
+ */
+export async function selectWordInCard(page: Page, word: string): Promise<void> {
+  await page.evaluate((word) => {
+    const root = document.querySelector('lookup-card .lookup-answer');
+    if (!root) throw new Error('no .lookup-answer found — is a result card open?');
+    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    let node: Text | null = null;
+    let idx = -1;
+    while (walker.nextNode()) {
+      const n = walker.currentNode as Text;
+      const i = (n.textContent ?? '').indexOf(word);
+      if (i >= 0) {
+        node = n;
+        idx = i;
+        break;
+      }
+    }
+    if (!node) throw new Error(`"${word}" not found inside .lookup-answer`);
+    const range = document.createRange();
+    range.setStart(node, idx);
+    range.setEnd(node, idx + word.length);
+    const sel = window.getSelection()!;
+    sel.removeAllRanges();
+    sel.addRange(range);
+    document.dispatchEvent(new MouseEvent('mouseup', { bubbles: true }));
+  }, word);
+}
+
 /** Move the real mouse to the center of `word`'s first occurrence inside `#${id}`, then nudge it
  * by 1px so a throttled/rAF-gated first tick is never lost. Two calls (not one) so the
  * controller's mousemove handler always sees at least one event after settling on the target
