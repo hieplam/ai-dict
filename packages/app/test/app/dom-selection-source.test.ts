@@ -125,4 +125,53 @@ describe('defaultReader (DOM selection glue via window.getSelection)', () => {
     teardown();
     document.body.innerHTML = '';
   });
+
+  it('stamps insideResult: true when the selection starts inside a .lookup-answer element (A2)', () => {
+    document.body.innerHTML =
+      '<div class="lookup-answer"><p id="ans">A financial institution near a river.</p></div>';
+    const p = document.getElementById('ans')!;
+    const textNode = p.firstChild!;
+    const sel = window.getSelection()!;
+    const range = document.createRange();
+    range.setStart(textNode, 2); // 'financial'
+    range.setEnd(textNode, 12);
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const src = new DomSelectionSource(document);
+    const cb = vi.fn();
+    const teardown = src.onSelection(cb);
+    document.dispatchEvent(new Event('mouseup'));
+    expect(cb).toHaveBeenCalledTimes(1);
+    const event = cb.mock.calls[0]?.[0] as SelectionEvent;
+    expect(event.insideResult).toBe(true);
+
+    sel.removeAllRanges();
+    teardown();
+    document.body.innerHTML = '';
+  });
+
+  it('omits insideResult entirely for an ordinary page selection (no .lookup-answer ancestor) (A2)', () => {
+    document.body.innerHTML = '<p id="plain">The bank by the river.</p>';
+    const p = document.getElementById('plain')!;
+    const textNode = p.firstChild!;
+    const sel = window.getSelection()!;
+    const range = document.createRange();
+    range.setStart(textNode, 4); // 'bank'
+    range.setEnd(textNode, 8);
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    const src = new DomSelectionSource(document);
+    const cb = vi.fn();
+    const teardown = src.onSelection(cb);
+    document.dispatchEvent(new Event('mouseup'));
+    expect(cb).toHaveBeenCalledTimes(1);
+    const event = cb.mock.calls[0]?.[0] as SelectionEvent;
+    expect('insideResult' in event).toBe(false); // EOP-safe: key omitted, not set to undefined
+
+    sel.removeAllRanges();
+    teardown();
+    document.body.innerHTML = '';
+  });
 });

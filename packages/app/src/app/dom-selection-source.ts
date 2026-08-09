@@ -26,12 +26,23 @@ function defaultReader(): SelectionEvent | null {
   const full = range.startContainer.textContent ?? text;
   const r = range.getBoundingClientRect();
   const anchor: AnchorRect = { x: r.x, y: r.y, w: r.width, h: r.height };
+  // A2: a selection whose start lands inside the currently-rendered definition body (marked
+  // `.lookup-answer` by lookup-card.ts's renderCardState) is an in-definition "recursive lookup"
+  // attempt, not an ordinary page selection — runLookupWorkflow uses this to decide whether to
+  // extend the lookup chain (push) or start a fresh one (reset). See domain/workflow.ts and the
+  // design spec §2/§7.2 for the full rationale.
+  const startEl =
+    range.startContainer instanceof Element
+      ? range.startContainer
+      : range.startContainer.parentElement;
+  const insideResult = startEl?.closest('.lookup-answer') != null;
   return {
     text,
     sentence: extractSentence(full, range.startOffset, range.endOffset),
     anchor,
     url: location.href,
     title: document.title,
+    ...(insideResult ? { insideResult: true } : {}),
   };
 }
 
