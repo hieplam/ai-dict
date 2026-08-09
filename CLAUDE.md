@@ -6,6 +6,9 @@
   retired; historical `pr-assets/*` branches remain valid for old PRs.)
 - Always start work even trivial work with git worktree. Default worktree path is `.claude/worktrees`.
 - Run `bun run lint` and `bun run format:check` before committing — the `.githooks/pre-commit` hook and CI also gate this.
+- Every commit message, branch name, and PR title/body follows **Conventional Commits** — see
+  `docs/git-conventions.md`. No `[CardName]`/ticket-style bracket prefixes, no `## JIRA ticket`
+  section (this repo has no ticket tracker); a bracket prefix breaks release-please's parser.
 
 # Verification loop (verification-loop campaign, card V5)
 
@@ -25,6 +28,7 @@ tells an LLM (or a person) which command to run and why it exists.
 | — `check-safe-html.mjs`     | (same)                                                                                                       | `rule-sanitize-model-output` (S4): every raw-HTML sink is sanitized or carries an `s4:` review annotation                                                                                                                                    | commit + CI |
 | — `check-token-law.mjs`     | (same)                                                                                                       | Paperlight token law: components read only `--ad-*`/`--adp-*`, never a hard-coded hex/oklch value                                                                                                                                            | commit + CI |
 | ESLint                      | `bun run lint` (runs `eslint .` after the scanners)                                                          | IDE-parity lint, incl. `@typescript-eslint/only-throw-error` (`rule-typed-errors`' throw form) and `import-x/no-restricted-paths` (dep-direction, IDE-time mirror of the scanner)                                                            | commit + CI |
+| Commit-message lint         | `.githooks/commit-msg` (local); `bun scripts/check-conventional-commit.mjs --range <base>..<head>` (CI)      | Every commit subject is a Conventional Commit (`docs/git-conventions.md`) — no bracket-ticket prefix, so release-please's parser can classify it for versioning/CHANGELOG                                                                    | commit + CI |
 | Typecheck                   | `bun run typecheck`                                                                                          | `tsc --noEmit` clean across `app`, `extension-chrome`, `extension-safari`                                                                                                                                                                    | CI          |
 | Format                      | `bun run format:check`                                                                                       | Prettier formatting matches `.prettierrc`                                                                                                                                                                                                    | commit + CI |
 | Unit suite                  | `bun run --filter @ai-dict/app test`                                                                         | `@ai-dict/app` domain/app-layer correctness (703 tests)                                                                                                                                                                                      | CI          |
@@ -37,7 +41,8 @@ tells an LLM (or a person) which command to run and why it exists.
 | gitleaks                    | `gitleaks/gitleaks-action` (GitHub Action)                                                                   | No committed secrets — advisory-shaped scan, blocking on PR and nightly                                                                                                                                                                      | CI          |
 
 Pre-commit (`.githooks/pre-commit`) runs only `format:check` + `lint` (scanners + eslint) —
-fast, local, matches the two CI jobs of the same name. Everything else in the table is CI-only.
+fast, local, matches the two CI jobs of the same name. `.githooks/commit-msg` separately gates
+the commit message itself (Conventional Commits). Everything else in the table is CI-only.
 
 ## Hard/soft boundary
 
@@ -76,6 +81,8 @@ must page someone within a day.
 - `docs/testing/e2e-case-inventory.md` — the e2e coverage floor (≥80%) and the zero-flake wall
   (3 consecutive green full-suite runs) behind the E2E suite gate.
 - `docs/superpowers/specs/` (verification-loop campaign) — the "why" behind each gate above.
+- `docs/git-conventions.md` — commit message / branch / PR title+body shape (Conventional
+  Commits, no ticket-tracker section); read before writing a plan's `## PR` instructions.
 
 **This repo is PRIVATE.** When embedding image/video evidence in a PR or issue, the asset URL MUST be a **same-origin `github.com` URL** so the authorized viewer's session cookies authenticate the request:
 

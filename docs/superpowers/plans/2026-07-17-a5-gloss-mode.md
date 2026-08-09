@@ -48,9 +48,9 @@ Chrome shell only — this card ships no Safari behavior).
 
 - Implementer: dispatch each task below to the `hunter` subagent — never a generic implementer.
 - Start in a fresh git worktree under `.claude/worktrees/A5GlossMode` on branch
-  `feature/A5GlossMode` (repo convention: "Always start work even trivial work with git
+  `feat/a5-gloss-mode` (repo convention: "Always start work even trivial work with git
   worktree" — `CLAUDE.md`).
-- Commit subject for every task: `[A5GlossMode] feat: <imperative summary> (A5)`. **No
+- Commit subject for every task: `feat: <imperative summary> (A5)`. **No
   Co-Authored-By trailer, no attribution/Claude footer** (global git conventions — non-negotiable).
 - `bun run lint` and `bun run format:check` green before every commit.
 - Every task must leave `cd packages/app && bun run typecheck` green; from Task 1 on, also
@@ -88,8 +88,8 @@ Chrome shell only — this card ships no Safari behavior).
   group: A6, A13, A14, A15, B3, B4), and `packages/app/src/ui/settings-form.ts` (settings-form
   group: A9, A13, B6, C9). Serialize against any of those cards if they are in flight
   concurrently.
-- This repo carries no `.github/PULL_REQUEST_TEMPLATE` and no Jira tracker (confirmed absent —
-  `REPO-FACTS.md` §13); Task 8's PR needs no Jira link. Its required body element is the written
+- This repo has no ticket tracker (`docs/git-conventions.md`) — Task 8's PR carries no
+  `## JIRA ticket` section. Its required body element is the written
   **"Testing performed"** section (owner ruling 2026-07-16 — no screenshots/video for this PR).
   Merge: **regular merge commit only — squash is prohibited.**
 
@@ -363,7 +363,7 @@ Commit:
 
 ```
 git add packages/app/src/domain/types.ts packages/app/src/wire.ts packages/app/test/wire-schema.test.ts packages/extension-chrome/src/adapters/chrome-storage-store.ts packages/extension-chrome/src/adapters/chrome-storage-store.test.ts packages/extension-safari/src/adapters/safari-storage-store.ts packages/extension-safari/src/adapters/safari-storage-store.test.ts packages/extension-safari/src/adapters/message-relay-settings-store.ts
-git commit -m "[A5GlossMode] feat: add optional glossMode field to PublicSettings + wire schema + storage adapters (A5)"
+git commit -m "feat: add optional glossMode field to PublicSettings + wire schema + storage adapters (A5)"
 ```
 
 ---
@@ -582,7 +582,7 @@ Commit:
 
 ```
 git add packages/app/src/ports.ts packages/app/src/domain/workflow.ts packages/app/test/fakes/index.ts packages/app/test/workflow.test.ts
-git commit -m "[A5GlossMode] feat: thread the selection anchor through ResultRenderContext + renderLoading (A5)"
+git commit -m "feat: thread the selection anchor through ResultRenderContext + renderLoading (A5)"
 ```
 
 ---
@@ -793,7 +793,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/lookup-gloss.ts packages/app/test/ui/lookup-gloss.test.ts packages/app/src/ui/register.ts packages/app/src/ui/index.ts
-git commit -m "[A5GlossMode] feat: add the lookup-gloss compact bubble component (A5)"
+git commit -m "feat: add the lookup-gloss compact bubble component (A5)"
 ```
 
 ---
@@ -1320,7 +1320,7 @@ Commit:
 
 ```
 git add packages/app/src/app/inline-bottom-sheet-renderer.ts packages/app/test/app/inline-bottom-sheet-renderer.test.ts
-git commit -m "[A5GlossMode] feat: gloss-mode lifecycle + cardOpen state machine in InlineBottomSheetRenderer (A5)"
+git commit -m "feat: gloss-mode lifecycle + cardOpen state machine in InlineBottomSheetRenderer (A5)"
 ```
 
 ---
@@ -1510,7 +1510,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/settings-form.ts packages/app/test/ui/settings-form.test.ts
-git commit -m "[A5GlossMode] feat: add the Compact gloss checkbox to settings-form (A5)"
+git commit -m "feat: add the Compact gloss checkbox to settings-form (A5)"
 ```
 
 ---
@@ -1671,7 +1671,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/src/content.ts packages/extension-chrome/src/options.ts packages/extension-safari/src/options.ts
-git commit -m "[A5GlossMode] feat: wire glossMode + anchor through the Chrome composition root; Safari compile parity (A5)"
+git commit -m "feat: wire glossMode + anchor through the Chrome composition root; Safari compile parity (A5)"
 ```
 
 ---
@@ -1863,7 +1863,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/e2e/helpers.ts packages/extension-chrome/e2e/a5-gloss-mode.spec.ts
-git commit -m "[A5GlossMode] feat: e2e coverage for gloss mode on/off, translation-absent fallback, NO_KEY, and settings persistence (A5)"
+git commit -m "feat: e2e coverage for gloss mode on/off, translation-absent fallback, NO_KEY, and settings persistence (A5)"
 ```
 
 ---
@@ -1896,7 +1896,7 @@ Expected: typecheck clean on all three packages; the full Vitest suite green (69
 
 * [ ] **Step 2: Open the PR.**
 
-  Push the branch and open a PR titled `[A5GlossMode] Gloss mode`, target `master`, **regular
+  Push the branch and open a PR titled `feat: gloss mode (A5)`, target `master`, **regular
   merge (squash prohibited — owner ruling 2026-07-16)**. Body:
 
 ```markdown
@@ -1916,10 +1916,6 @@ scope fence).
 - Errors and loading states with no anchor always render the full card — gloss mode never
   hides a setup/recovery CTA.
 - Safari gets compile-time field parity only; no gloss rendering ships there this card.
-
-## JIRA ticket
-
-N/A — this repo has no Jira tracker (confirmed absent).
 
 ## Testing performed
 

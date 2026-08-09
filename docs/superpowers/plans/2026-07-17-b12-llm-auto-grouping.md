@@ -32,7 +32,7 @@ existing full-prompt-envelope override:
 
 - Implementer: dispatch each implementation/fix task to the `hunter` subagent — never a generic
   implementer.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/B12LlmAutoGrouping`.
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/b12-llm-auto-grouping`.
 - **Do not touch `packages/app/src/domain/prompt-template.ts`, `default-template.ts`,
   `defined-as.ts`, or `translation-line.ts`.** The design spec's §2/§6.9/§6.10 establish that the
   existing `LookupRequest.promptEnvelope` full-override mechanism already does everything this
@@ -68,7 +68,7 @@ existing full-prompt-envelope override:
 - E2e must never fetch the live landing page — this card's e2e uses only the existing
   `http://test.fixture/` local fixture and mocked provider routes.
 - Commit subject convention for every task in this plan (per `CONTRACTS.md` §2 / repo
-  git-conventions): `[B12LlmAutoGrouping] feat: <task summary> (B12)`.
+  git-conventions): `feat: <task summary> (B12)`.
 
 ---
 
@@ -209,7 +209,7 @@ Commit:
 
 ```
 git add packages/app/src/domain/types.ts packages/app/src/wire.ts packages/app/test/wire-schema.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[B12LlmAutoGrouping] feat: additive tags field on SavedWordEntry (B12)" \
+git commit -m "feat: additive tags field on SavedWordEntry (B12)" \
   -m $'Tribe-Card: b12-llm-auto-grouping\nTribe-Task: 1/7'
 ```
 
@@ -327,7 +327,7 @@ Commit:
 
 ```
 git add packages/app/src/domain/saved-words-policy.ts packages/app/test/saved-words-policy.test.ts
-git commit -m "[B12LlmAutoGrouping] feat: savedWordSetTags domain function (B12)" \
+git commit -m "feat: savedWordSetTags domain function (B12)" \
   -m $'Tribe-Card: b12-llm-auto-grouping\nTribe-Task: 2/7'
 ```
 
@@ -672,7 +672,7 @@ Commit:
 
 ```
 git add packages/app/src/domain/auto-group-policy.ts packages/app/test/auto-group-policy.test.ts packages/app/src/index.ts
-git commit -m "[B12LlmAutoGrouping] feat: auto-group-policy prompt builder + response parser (B12)" \
+git commit -m "feat: auto-group-policy prompt builder + response parser (B12)" \
   -m $'Tribe-Card: b12-llm-auto-grouping\nTribe-Task: 3/7'
 ```
 
@@ -983,7 +983,7 @@ Commit:
 
 ```
 git add packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/test/app/router.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[B12LlmAutoGrouping] feat: saved.organize/saved.setTags wire messages + router (B12)" \
+git commit -m "feat: saved.organize/saved.setTags wire messages + router (B12)" \
   -m $'Tribe-Card: b12-llm-auto-grouping\nTribe-Task: 4/7'
 ```
 
@@ -1464,7 +1464,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/side-panel-view.ts packages/app/test/ui/side-panel-view.test.ts
-git commit -m "[B12LlmAutoGrouping] feat: Saved words organize section in the side panel (B12)" \
+git commit -m "feat: Saved words organize section in the side panel (B12)" \
   -m $'Tribe-Card: b12-llm-auto-grouping\nTribe-Task: 5/7'
 ```
 
@@ -1570,7 +1570,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/src/side-panel.ts
-git commit -m "[B12LlmAutoGrouping] feat: side-panel.ts confirm/wire/tag-edit wiring (B12)" \
+git commit -m "feat: side-panel.ts confirm/wire/tag-edit wiring (B12)" \
   -m $'Tribe-Card: b12-llm-auto-grouping\nTribe-Task: 6/7'
 ```
 
@@ -1809,7 +1809,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/e2e/b12-llm-auto-grouping.spec.ts
-git commit -m "[B12LlmAutoGrouping] feat: e2e coverage for organize/rename/remove/error paths (B12)" \
+git commit -m "feat: e2e coverage for organize/rename/remove/error paths (B12)" \
   -m $'Tribe-Card: b12-llm-auto-grouping\nTribe-Task: 7/7'
 ```
 
@@ -1836,8 +1836,9 @@ key cleared; the new `b12-llm-auto-grouping.spec.ts` (5 tests), plus `saved-word
 
 ## PR
 
-Regular merge (no squash — owner ruling 2026-07-16). Title: `[B12LlmAutoGrouping] LLM
-auto-grouping for saved words`. JIRA ticket: n/a — this repo is not Jira-tracked. Include a **"Testing performed"** section per this worktree's evidence policy (design
+Regular merge (no squash — owner ruling 2026-07-16). Title: `feat: LLM
+auto-grouping for saved words (B12)`. No `## JIRA ticket` section (`docs/git-conventions.md` —
+this repo has no ticket tracker). Include a **"Testing performed"** section per this worktree's evidence policy (design
 spec §8) instead of screenshots/video — list the suites above with pass counts. Note in the PR
 body that `CONTRACTS.md` §5's hot-file prediction omitted `side-panel-view.ts`/`side-panel.ts` for
 B12 (design spec §11) — flag for the orchestrator serializing against A2/B6/B10/B11.

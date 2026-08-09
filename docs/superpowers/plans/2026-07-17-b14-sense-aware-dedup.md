@@ -27,8 +27,8 @@ including the two rejected merge-prompt/wire designs:
 
 - Implementer: dispatch each implementation/fix task to the `hunter` subagent — never a generic
   implementer.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/B14SenseAwareDedup`.
-- Commit subject: `[B14SenseAwareDedup] feat: <imperative summary> (B14)` — no Co-Authored-By
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/b14-sense-aware-dedup`.
+- Commit subject: `feat: <imperative summary> (B14)` — no Co-Authored-By
   trailer, no attribution footer.
 - **Do not touch `packages/app/src/domain/types.ts`.** `SavedWordEntry`/`SavedWordSense`/
   `SavedWordStatus` are the E1-ratified shape and stay byte-for-byte unchanged — this card only
@@ -52,7 +52,7 @@ run typecheck` green from Task 4 on.
   `c3-111`, `c3-117`, `c3-211`), and the one new file (`merge-prompt.ts`) is a plain addition inside
   the already-onboarded `c3-117 ui-components` boundary — no new component, no new port, so no C3
   change-unit is needed for this card.
-- PR: title `[B14SenseAwareDedup] Sense-aware dedup on re-save`; body carries a written **"Testing
+- PR: title `feat: sense-aware dedup on re-save (B14)`; body carries a written **"Testing
   performed"** section (no screenshots/video — owner ruling 2026-07-16). Merge: regular merge
   commit only — squash prohibited.
 
@@ -753,7 +753,7 @@ Commit:
 
 ```
 git add packages/app/src/domain/saved-words-policy.ts packages/app/test/saved-words-policy.test.ts packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[B14SenseAwareDedup] feat: sense-aware dedup — upsert conflict result + wire/router (B14)"
+git commit -m "feat: sense-aware dedup — upsert conflict result + wire/router (B14)"
 ```
 
 ---
@@ -885,7 +885,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/merge-prompt.ts packages/app/test/ui/merge-prompt.test.ts packages/app/src/index.ts
-git commit -m "[B14SenseAwareDedup] feat: buildMergePrompt UI helper (B14)"
+git commit -m "feat: buildMergePrompt UI helper (B14)"
 ```
 
 ---
@@ -1024,7 +1024,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/side-panel-view.ts packages/app/test/ui/side-panel-view.test.ts
-git commit -m "[B14SenseAwareDedup] feat: SidePanelView.appendToFocus + merge-prompt CSS (B14)"
+git commit -m "feat: SidePanelView.appendToFocus + merge-prompt CSS (B14)"
 ```
 
 ---
@@ -1246,7 +1246,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/lookup-card.ts packages/extension-chrome/src/content.ts
-git commit -m "[B14SenseAwareDedup] feat: card-side merge-prompt CSS + toggle-save conflict wiring (B14)"
+git commit -m "feat: card-side merge-prompt CSS + toggle-save conflict wiring (B14)"
 ```
 
 ---
@@ -1349,7 +1349,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/src/side-panel.ts
-git commit -m "[B14SenseAwareDedup] feat: panel-side merge-prompt wiring (B14)"
+git commit -m "feat: panel-side merge-prompt wiring (B14)"
 ```
 
 ---
@@ -1495,7 +1495,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/e2e/b14-sense-aware-dedup.spec.ts
-git commit -m "[B14SenseAwareDedup] feat: e2e coverage for the sense-aware dedup merge-prompt flow (B14)"
+git commit -m "feat: e2e coverage for the sense-aware dedup merge-prompt flow (B14)"
 ```
 
 ---
@@ -1522,8 +1522,8 @@ the env key cleared; the new `b14-sense-aware-dedup.spec.ts` (3 tests) and `save
 
 ## PR
 
-Regular merge (no squash). `## JIRA ticket` section reads `n/a — this repo is not Jira-tracked`.
-Include a **"Testing performed"** section per this worktree's evidence policy (design spec §6.7)
+Regular merge (no squash). No `## JIRA ticket` section (`docs/git-conventions.md` — this repo has
+no ticket tracker). Include a **"Testing performed"** section per this worktree's evidence policy (design spec §6.7)
 instead of screenshots/video — list the suites above with pass counts:
 
 - `packages/app` unit: full `bun run test` count (existing + new B14 cases across
