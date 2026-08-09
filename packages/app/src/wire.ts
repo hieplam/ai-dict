@@ -73,6 +73,8 @@ const PublicSettingsSchema = z.strictObject({
   configuredProviders: z.array(ProviderEnum),
   // A5: opt-in "Compact gloss" render mode. See PublicSettings' doc comment (domain/types.ts).
   glossMode: z.boolean().optional(),
+  // A14: opt-in double-click-to-define. See PublicSettings' doc comment (domain/types.ts).
+  doubleClickLookup: z.boolean().optional(),
   // B3: paint saved learning-status words on pages. See PublicSettings' doc comment (domain/types.ts).
   highlightSavedWords: z.boolean(),
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]

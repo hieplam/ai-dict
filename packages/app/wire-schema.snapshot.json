@@ -725,6 +725,9 @@
               "glossMode": {
                 "type": "boolean"
               },
+              "doubleClickLookup": {
+                "type": "boolean"
+              },
               "highlightSavedWords": {
                 "type": "boolean"
               }

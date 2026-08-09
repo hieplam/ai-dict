@@ -22,6 +22,10 @@ export interface SelectionEvent {
    * which reads as false.
    */
   insideResult?: boolean;
+  /** A14: true when this selection came from a native double-click (MouseEvent.detail === 2)
+   * on a non-guarded element, rather than a manual drag-select or the touchend path. Absent for
+   * every other selection. */
+  viaDoubleClick?: boolean;
 }
 
 /**
@@ -218,6 +222,10 @@ export interface PublicSettings {
    * pattern this file already uses for SavedWordSense.related above.
    */
   glossMode?: boolean | undefined;
+  /** A14: opt-in — double-click a word to define it immediately, bypassing the trigger button.
+   * Off (absent/falsy) by default. Read by runLookupWorkflow's selection handler only; nothing
+   * on the router/wire path branches on it. */
+  doubleClickLookup?: boolean | undefined;
   /** B3: paint saved learning-status words on pages. Default true; legacy stored settings lack the key — every reader applies `?? true`. */
   highlightSavedWords: boolean;
 }

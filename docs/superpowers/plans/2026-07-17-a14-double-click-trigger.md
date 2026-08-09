@@ -119,7 +119,7 @@ existing compile-time drift guard (`wire.ts:206`,
 here. The runtime behavior these fields enable is proven by Task 2 (dom-selection-source, the
 producer of `viaDoubleClick`) and Task 3 (workflow.ts, the consumer of `doubleClickLookup`).
 
-- [ ] **Step 1: Add `SelectionEvent.viaDoubleClick?`.** In `packages/app/src/domain/types.ts`,
+- [x] **Step 1: Add `SelectionEvent.viaDoubleClick?`.** In `packages/app/src/domain/types.ts`,
       replace the `SelectionEvent` interface (currently lines 8-14):
 
 ```ts
@@ -148,7 +148,7 @@ export interface SelectionEvent {
 }
 ```
 
-- [ ] **Step 2: Add `PublicSettings.doubleClickLookup?`.** In the same file, replace the
+- [x] **Step 2: Add `PublicSettings.doubleClickLookup?`.** In the same file, replace the
       `PublicSettings` interface (currently lines 164-176):
 
 ```ts
@@ -192,7 +192,7 @@ export interface PublicSettings {
 `export interface Settings extends PublicSettings` (`types.ts:210-217`) inherits the new field
 automatically — no separate edit needed there.
 
-- [ ] **Step 3: Mirror the field on the wire schema.** In `packages/app/src/wire.ts`, replace
+- [x] **Step 3: Mirror the field on the wire schema.** In `packages/app/src/wire.ts`, replace
       `PublicSettingsSchema` (currently lines 61-68):
 
 ```ts
@@ -220,7 +220,7 @@ const PublicSettingsSchema = z.strictObject({
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]
 ```
 
-- [ ] **Step 4: Verify the drift guard + full suite compile.** Run:
+- [x] **Step 4: Verify the drift guard + full suite compile.** Run:
 
 ```
 cd packages/app && bun run typecheck && bun run test
@@ -231,7 +231,7 @@ PublicSettings>` check at `wire.ts:206` passes because both sides now agree); th
 Vitest suite still green (every fixture that omits `doubleClickLookup`/`viaDoubleClick` stays
 valid TypeScript — both fields are optional).
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
