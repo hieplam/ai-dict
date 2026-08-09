@@ -9,7 +9,22 @@ this document.
 
 ## Executive summary
 
-<!-- filled in Task 3 -->
+Chrome's built-in PDF viewer renders PDF content inside a cross-process, site-isolated guest frame
+(a `MimeHandlerView` owned by Chrome's own `mhjfbmdgcfjbbpaeojofohoefgiehjai` extension) behind a
+Shadow DOM specifically added to block other extensions' scripts from reaching it — confirmed both
+by Chromium's own architecture (Sources) and by a scripted probe against this repo's real,
+built extension (Probe 1): our content scripts DO run on a PDF tab's top document, but that
+document has no selectable PDF text for `DomSelectionSource` to ever act on. No `manifest.json`
+change can cross this isolation boundary — it applies uniformly to every extension, not just this
+one, and no additional host permission narrows it.
+
+The only ways to offer a select→define-equivalent experience inside PDFs are to render PDFs
+ourselves (a full `pdf.js`-based viewer, blanket or opt-in) or to reach into the native viewer via
+an unsupported debugging surface (`chrome.debugger`) — see Probe 2's table. Every viable path costs
+materially more than this card's siblings (matching its own Effort L rating) and either asks for a
+new permission with real user-trust cost (`declarativeNetRequest` + `file://` access, or the
+persistent `debugger` warning bar) or takes on an open-ended PDF-rendering maintenance burden this
+product has never carried before.
 
 ## Probe 1 — does today's architecture reach PDF text? (scripted, reproducible)
 
@@ -116,11 +131,38 @@ extensions' processes, which no permission on this extension can cross.
 
 ## Recommendation
 
-<!-- filled in Task 3 -->
+**Lean: do not build PDF support in v1.** None of the three viable candidates in Probe 2's table
+clears a good cost/value bar against this product's "seamless reading UX" theme (`docs/ROADMAP.md`
+§4 intro) without either (a) taking over a core browser capability (native PDF rendering) the
+product has no track record maintaining, or (b) shipping a visibly broken UX signal (the
+`chrome.debugger` warning bar) on every PDF tab regardless of whether the user wants the feature.
+
+If the underlying reader need (define a word while reading a PDF) is still judged worth serving
+cheaply, the "not worth it" row's mitigation — a manual "paste to define" popup, zero new
+permissions, reuses the existing lookup pipeline — is a plausible **separate, much smaller** future
+roadmap card, not a continuation of A11. It is named here for completeness, not proposed for
+immediate action.
+
+If the owner instead judges full PDF support worth the cost despite the above, the opt-in "Open in
+AI Dictionary" variant (Probe 2, row 2) is the least-bad of the two rendering approaches — it
+avoids taking over every PDF navigation by default, containing the blast radius of a
+still-substantial `pdf.js` integration to users who explicitly opt in.
 
 ## Owner decision needed (E4)
 
-<!-- filled in Task 3 -->
+Per `docs/ROADMAP.md` §6 (register item E4) and the 2026-07-16 decision log entry, this report
+does **not** decide:
+
+1. **Go/no-go** — whether to pursue PDF support at all, given the costs above.
+2. **Which approach**, if go — full custom viewer (blanket or opt-in) vs. the debugger-based
+   overlay vs. deferring to the smaller "paste to define" mitigation instead.
+3. **Any new permission** the chosen path requires (`declarativeNetRequest`, `file://` access, or
+   `debugger`) — each carries its own store-listing and user-trust cost per `docs/ROADMAP.md` §1's
+   escalation rules.
+
+This spike's job ends here, per its own scope fence ("Deliverable is a feasibility report, not a
+feature" — `docs/ROADMAP.md` §4 A11). No further roadmap work on A11 proceeds without an explicit
+owner ruling on the above, recorded as a new `docs/ROADMAP.md` §8 Decision Log entry when made.
 
 ## Sources
 
