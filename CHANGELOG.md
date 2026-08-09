@@ -1,5 +1,44 @@
 # Changelog
 
+## [1.11.0](https://github.com/hieplam/ai-dict/compare/v1.10.0...v1.11.0) (2026-08-09)
+
+
+### Features
+
+* A10 — TTS pronunciation speak button on the lookup card ([6e5493c](https://github.com/hieplam/ai-dict/commit/6e5493c84f2f5759ce5fe0f3c5837718d712a6f9))
+* hover-recall — &lt;hover-recall-popup&gt; Paperlight element (B4) ([86d4d0b](https://github.com/hieplam/ai-dict/commit/86d4d0b1ef73f721b930b0a78da4660cc3b36124))
+* hover-recall — caret hit-test + debounce controller (B4) ([3c6bae9](https://github.com/hieplam/ai-dict/commit/3c6bae94b01a8ddef800892e4565199be602c355))
+* hover-recall — ChromeHoverRecallPopup singleton adapter (B4) ([9e81914](https://github.com/hieplam/ai-dict/commit/9e81914db9e84c6fc32c73d07176d1fed40ed3dd))
+* hover-recall — content.ts hover controller + popup + view-full-entry wiring (B4) ([fdb3ef7](https://github.com/hieplam/ai-dict/commit/fdb3ef7451c7fe96ceeac889cf61e53e5bc1f22c))
+* hover-recall — e2e coverage for hover/dismiss/view-full-entry/off-switch (B4) ([f795065](https://github.com/hieplam/ai-dict/commit/f79506594f9c2b81cc7903180faa4e0b75b74d9e))
+* hover-recall — saved.get wire message + router case (B4) ([9d7cbc0](https://github.com/hieplam/ai-dict/commit/9d7cbc02a360d973fbc373fcd7d307690256aa11))
+* re-encounter highlighting — content-script wiring + repaint hooks (B3) ([d15325c](https://github.com/hieplam/ai-dict/commit/d15325c011a3a98326c800b0a7db4af90575612f))
+* re-encounter highlighting — e2e coverage + 100KB fixture (B3) ([a969580](https://github.com/hieplam/ai-dict/commit/a9695805aa261391b2f143622359d978f9edfc1f))
+* re-encounter highlighting — highlightSavedWords off-switch setting (B3) ([91ead23](https://github.com/hieplam/ai-dict/commit/91ead23d8188491bc9eaf7de13e886902d2b8a4b))
+* re-encounter highlighting — idle-chunked PageHighlighter scanner (B3) ([ee8858b](https://github.com/hieplam/ai-dict/commit/ee8858bdeb5f31c7029f8a63c78a485621bef345))
+* re-encounter highlighting — pure highlight-policy matcher (B3) ([15d933a](https://github.com/hieplam/ai-dict/commit/15d933aa97316dd379f11387e3a182f88c7c63bc))
+* re-encounter highlighting — saved.learningWords wire read + router case (B3) ([20ec75b](https://github.com/hieplam/ai-dict/commit/20ec75b2b7bc80aa4fce335121b77d694611e1f2))
+* re-encounter highlighting — underline saved learning words on pages (B3) ([4ec2777](https://github.com/hieplam/ai-dict/commit/4ec277770f9e42f1095b688669ecb0276e5e68cf))
+* streamed answers — Chrome SW-&gt;content-&gt;panel chunk transport wiring (A1) ([cb0a1b1](https://github.com/hieplam/ai-dict/commit/cb0a1b1682cc0a7880a7aa5ead50b880adec9376))
+* streamed answers — e2e coverage for the Gemini streaming flow (A1) ([d3c4e06](https://github.com/hieplam/ai-dict/commit/d3c4e068022037cbe3da62065ba2f3e7d4fb92b9))
+* streamed answers — existing Gemini e2e mocks handle the streaming endpoint (A1) ([19f901d](https://github.com/hieplam/ai-dict/commit/19f901d5b18aeb924f536e4bcf2071074bac3b53))
+* streamed answers — fix aria-live leak, panel over-announce, sender guard, abort test (A1) ([fa4c875](https://github.com/hieplam/ai-dict/commit/fa4c875a7184a609043048629498d4fc45baca61))
+* streamed answers — Gemini SSE streaming client + dispatch (A1) ([728625e](https://github.com/hieplam/ai-dict/commit/728625e41042a49bbe3a8a0f88366ff53f47a139))
+* streamed answers — InlineBottomSheetRenderer.renderPartial with throttle (A1) ([4150fcc](https://github.com/hieplam/ai-dict/commit/4150fcc92c080508606734677efebf93a0caba70))
+* streamed answers — MessageRelayLookupClient receives lookup.chunk pushes (A1) ([5d80988](https://github.com/hieplam/ai-dict/commit/5d80988e0aa6b601ae7ccb755edd495145c18cda))
+* streamed answers — onChunk/renderPartial ports + lookup.chunk message shape (A1) ([2ef859f](https://github.com/hieplam/ai-dict/commit/2ef859ff643630a9eda5c0029471ee58f7017ce3))
+* streamed answers — router onLookupChunk wiring (A1) ([d9d078d](https://github.com/hieplam/ai-dict/commit/d9d078d9be22d0827a14409c497d94c9d3a9987b))
+* streamed answers — streaming CardState + aria-live toggle on lookup-card (A1) ([7c34c6b](https://github.com/hieplam/ai-dict/commit/7c34c6b77aec27c8ac652c0d1ff64804aa96e197))
+* streamed answers — workflow wires onChunk to renderer.renderPartial (A1) ([3f47f5d](https://github.com/hieplam/ai-dict/commit/3f47f5da026c4072888218101a9d35c083a65740))
+
+
+### Bug Fixes
+
+* **docs:** restore 17 unshipped cards' plan/spec pairs from archive ([2528486](https://github.com/hieplam/ai-dict/commit/2528486fbb631cfb838a34021273a00f3be77e3c))
+* **docs:** restore unshipped cards' plan/spec pairs — archive is shipped-only ([224b6d6](https://github.com/hieplam/ai-dict/commit/224b6d63138abd4a7095e90ab2a4e293f07a7842))
+* hover-recall — drive popup cross-world via attributes, not method calls (B4) ([1b0b1d5](https://github.com/hieplam/ai-dict/commit/1b0b1d5b15c7465b7c318f359a6d20709cfa8117))
+* re-encounter highlighting — paint once at startup, real skip-list e2e proof (B3) ([76b89ac](https://github.com/hieplam/ai-dict/commit/76b89ac9832a61ec1b42d5a17ccd8d809a4de886))
+
 ## [1.10.0](https://github.com/hieplam/ai-dict/compare/v1.9.0...v1.10.0) (2026-07-25)
 
 
