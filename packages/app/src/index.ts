@@ -9,6 +9,7 @@ export * from './domain/key-hygiene';
 export * from './domain/cache-policy';
 export * from './domain/history-policy';
 export * from './domain/saved-words-policy';
+export * from './domain/review-deck-policy';
 export * from './domain/words-page-policy';
 export * from './domain/badge-policy';
 export * from './domain/nudge-policy';

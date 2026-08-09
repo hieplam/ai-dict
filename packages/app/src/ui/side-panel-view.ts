@@ -49,6 +49,10 @@ header{display:flex;align-items:center;gap:8px;padding:13px 18px 11px;flex:none}
 .settings:hover,.words-nav:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
 .settings:focus-visible,.words-nav:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
 .settings svg,.words-nav svg{width:15px;height:15px;pointer-events:none}
+.review-btn{display:inline-flex;align-items:center;margin-left:8px;border:0;background:transparent;color:var(--ad-ink-soft);font:inherit;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);padding:5px 8px;border-radius:var(--adp-radius-control);cursor:pointer;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease)}
+.review-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
+.review-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){.review-btn{transition:none}}
 .mark{width:22px;height:22px;flex:none}
 main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:0 18px}
 .focus{padding:6px 0 10px}
@@ -217,7 +221,18 @@ export class SidePanelView extends HTMLElement {
     settings.addEventListener('click', () =>
       this.dispatchEvent(new CustomEvent('open-settings', { bubbles: true, composed: true })),
     );
-    header.append(brand, words, settings);
+    // B11: entry point into the casual-review deck. A plain text button, not part of the pinned
+    // §5.10 icon set — always visible, including with nothing to review, so the feature is
+    // discoverable even at zero saved words (design spec §2.6).
+    const review = document.createElement('button');
+    review.type = 'button';
+    review.className = 'review-btn';
+    review.textContent = 'Review';
+    review.setAttribute('aria-label', 'Review your saved words');
+    review.addEventListener('click', () =>
+      this.dispatchEvent(new CustomEvent('open-review', { bubbles: true, composed: true })),
+    );
+    header.append(brand, review, words, settings);
 
     const main = document.createElement('main');
 

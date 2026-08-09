@@ -292,6 +292,27 @@ describe('<side-panel-view>', () => {
     expect(fired).toBe(true);
   });
 
+  it('the header renders a Review entry point labelled for saved-word review', () => {
+    const el = mount();
+    const btn = el.shadowRoot!.querySelector<HTMLButtonElement>('.review-btn')!;
+    expect(btn).not.toBeNull();
+    expect(btn.getAttribute('aria-label')).toBe('Review your saved words');
+    expect(btn.textContent).toBe('Review');
+  });
+
+  it('clicking the Review button dispatches a composed open-review event', () => {
+    const el = mount();
+    let fired = false;
+    document.body.addEventListener('open-review', () => (fired = true));
+    el.shadowRoot!.querySelector<HTMLButtonElement>('.review-btn')!.click();
+    expect(fired).toBe(true);
+  });
+
+  it('has no axe violations with the Review button present (empty state)', async () => {
+    const el = mount();
+    expect(await axeViolations(el)).toEqual([]);
+  });
+
   it('B14: appendToFocus appends a node into the focus region when a result is showing; false on the empty state', () => {
     const el = mount();
     const extra = document.createElement('div');

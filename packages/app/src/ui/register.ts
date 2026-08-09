@@ -8,6 +8,7 @@ import { SettingsForm } from './settings-form';
 import { SidePanelView } from './side-panel-view';
 import { WordsPageView } from './words-page-view';
 import { OnboardingView } from './onboarding-view';
+import { ReviewFlipView } from './review-flip-view';
 
 export function registerContentElements(): void {
   if (!customElements.get('lookup-trigger')) customElements.define('lookup-trigger', LookupTrigger);
@@ -35,4 +36,9 @@ export function registerSettingsForm(): void {
 export function registerOnboarding(): void {
   if (!customElements.get('onboarding-view'))
     customElements.define('onboarding-view', OnboardingView);
+}
+
+export function registerReviewFlip(): void {
+  if (!customElements.get('review-flip-view'))
+    customElements.define('review-flip-view', ReviewFlipView);
 }

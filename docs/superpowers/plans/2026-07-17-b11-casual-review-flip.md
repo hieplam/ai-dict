@@ -1016,6 +1016,19 @@ git commit -m "feat: add the Review entry point to the side panel header (B11)"
 
 ### Task 5: `side-panel.html` + `side-panel.ts` — wire the review flow together
 
+> **Supersession note (implemented 2026-08-09).** The Step-1 mechanism below (`<div id="app">`
+> wrapper + `app.replaceChildren(...)` swap) was authored when `side-panel.html` held only
+> `<side-panel-view>`. Card B6 has since shipped `<words-page-view>` as a second
+> permanently-mounted top-level element toggled via inline `style.display`. To avoid a second
+> competing navigation mechanism in one composition root (and to avoid restructuring B6's working
+> nav), the shipped code instead adds `<review-flip-view style="display: none">` as a **third
+> permanently-mounted top-level element** and toggles it via `style.display`, matching B6 exactly:
+> `openReview()` hides `view`/`wordsView` and shows `reviewView`; the `close` listener restores
+> `view`. No `<div id="app">` and no `replaceChildren` were introduced. The spec's §2.7 CORE
+> decision (a separate top-level element, not a `SidePanelView` focusState mode) is preserved; see
+> the §2.7 supersession note in the design spec. The Step-1 code block below is retained for
+> historical context only — read it against that note.
+
 **Files:**
 
 - Modify: `packages/extension-chrome/src/side-panel.html`

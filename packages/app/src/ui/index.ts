@@ -8,4 +8,5 @@ export * from './settings-form';
 export * from './side-panel-view';
 export * from './words-page-view';
 export * from './onboarding-view';
+export * from './review-flip-view';
 export * from './register';

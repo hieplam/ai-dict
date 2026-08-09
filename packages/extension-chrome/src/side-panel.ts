@@ -1,5 +1,6 @@
 import {
   registerSidePanel,
+  registerReviewFlip,
   sanitizeMarkdown,
   mapError,
   buildMergePrompt,
@@ -7,9 +8,12 @@ import {
   classifyInbound,
   acceptAny,
   normalizeWordKey,
+  buildReviewDeck,
   type PanelFocusState,
   type SidePanelView,
   type WordsPageView,
+  type ReviewFlipView,
+  type ReviewCard,
   type LookupResult,
   type LookupError,
   type HistoryEntry,
@@ -23,6 +27,7 @@ import type {
   SidePanelFocus,
 } from './side-panel-messages';
 registerSidePanel();
+registerReviewFlip();
 
 // The side panel is a persistent, docked surface — it fills the panel viewport edge-to-edge.
 // CSP (`style-src 'self'`) forbids inline <style>/style="", but a constructable stylesheet is
@@ -34,6 +39,7 @@ document.adoptedStyleSheets = [...document.adoptedStyleSheets, reset];
 
 const view = document.querySelector('side-panel-view') as SidePanelView;
 const wordsView = document.querySelector('words-page-view') as WordsPageView;
+const reviewView = document.querySelector('review-flip-view') as ReviewFlipView;
 
 // Entries currently shown under "Recent", kept in memory so a click can resolve an id back to
 // its full stored result without another round-trip to the service worker.
@@ -59,6 +65,10 @@ let lastStatus: SavedWordStatus | undefined;
 // B5 (F2 audit fix): guards against a stale toggle-save reply resolving after a later
 // click/render has already superseded it — see save-reply-guard.ts's doc comment.
 const saveReplyGuard = createSaveReplyGuard();
+// B11: the panel's currently-applied theme, captured by initFromSettings, re-stamped onto the
+// review view each time review opens — mirrors how options.ts stamps data-ad-theme on the
+// screen it mounts.
+let currentTheme = 'sepia';
 
 function trackSaveContext(
   r: LookupResult,
@@ -315,6 +325,59 @@ wordsView.addEventListener('delete-word', (e) => {
   void chrome.runtime.sendMessage({ type: 'saved.delete', word }).catch(() => undefined);
 });
 
+// B11: the review surface is a third permanently-mounted top-level element (side-panel.html),
+// shown/hidden via style.display exactly like the B6 Words page above. The B11 spec §2.7 pinned
+// an alternative — a shared `<div id="app">` + `replaceChildren` swap (mirroring options.ts) —
+// but that predates B6, which shipped `<words-page-view>` as a second permanently-mounted
+// top-level element toggled via style.display. Adopting the swap now would either introduce a
+// SECOND, competing navigation mechanism in this one file or force restructuring B6's working
+// nav, so we extend B6's established style.display pattern instead. The spec's CORE decision — a
+// separate top-level element, NOT a SidePanelView focusState mode — is preserved either way (see
+// the §2.7 supersession note in the design spec). Its close/mark-known listeners are registered
+// once here, like wordsView's.
+reviewView.addEventListener('close', () => {
+  reviewView.style.display = 'none';
+  view.style.display = '';
+});
+// Reuses the exact saved.setStatus message B5 shipped — no new wire message for "Mark known".
+reviewView.addEventListener('mark-known', (e) => {
+  const { word } = (e as CustomEvent<{ word: string }>).detail;
+  void chrome.runtime
+    .sendMessage({ type: 'saved.setStatus', word, status: 'known' })
+    .catch(() => undefined);
+});
+
+// B11: fetch every saved word, build this session's shuffled deck, and swap the panel over to
+// the review surface. Best-effort like refreshRecent/loadSavedWords: a failed fetch shows the
+// review view's own empty state rather than a separate error UI (design spec §2.5/§2.8).
+async function openReview(): Promise<void> {
+  reviewView.setAttribute('data-ad-theme', currentTheme);
+  let cards: ReviewCard[] = [];
+  try {
+    const raw: unknown = await chrome.runtime.sendMessage({ type: 'saved.list' });
+    const reply = raw as WireReply | undefined;
+    if (reply && reply.ok && reply.type === 'saved.list') {
+      const deck = buildReviewDeck(reply.entries, { nowMs: Date.now() });
+      cards = deck.map((e) => ({
+        word: e.word,
+        sentence: e.senses[0]?.sentence ?? '',
+        // S4: senses[0].definition is stored model output — re-sanitize at render time, exactly
+        // like resultToFocus does for a live lookup (design spec §2.9).
+        safeHtml: sanitizeMarkdown(e.senses[0]?.definition ?? ''),
+        translation: e.senses[0]?.translation ?? '',
+      }));
+    }
+  } catch {
+    // cards stays [] — the review view's own empty state covers this (design spec §2.8).
+  }
+  reviewView.deck = cards;
+  view.style.display = 'none';
+  wordsView.style.display = 'none';
+  reviewView.style.display = '';
+}
+
+view.addEventListener('open-review', () => void openReview());
+
 // On open, one settings probe drives two things: stamp the reader's theme on the panel,
 // and — if no key is configured — swap the teaching empty state for the same setup invite
 // the card shows, pointing the reader straight at Settings. A later lookup overrides it.
@@ -324,6 +387,7 @@ async function initFromSettings(): Promise<void> {
     const reply = raw as WireReply | undefined;
     if (!reply || !reply.ok || reply.type !== 'settings') return;
     view.setAttribute('data-ad-theme', reply.settings.theme);
+    currentTheme = reply.settings.theme;
     // An env-key build (GEMINI_API_KEY baked in) is always usable even with no stored key, so
     // it must never show the setup nag — mirrors how the options page treats the env key.
     if (!__GEMINI_KEY_FROM_ENV__ && !reply.settings.hasKey) {
