@@ -9,6 +9,8 @@ import {
   acceptAny,
   normalizeWordKey,
   buildReviewDeck,
+  HISTORY_CAP,
+  computeWeeklyDigest,
   type PanelFocusState,
   type SidePanelView,
   type WordsPageView,
@@ -160,6 +162,31 @@ async function refreshRecent(): Promise<void> {
     }
   } catch {
     // History is a convenience; a failed query just leaves the section as-is.
+  }
+}
+
+// B10: fetch a week's worth of history + every saved word, once, on panel open — never
+// re-triggered by the live mirror listener below (design spec §2.5: "computed on open," no
+// background recompute). Best-effort, like refreshRecent/recoverFocus: on any failure the
+// section simply stays hidden (view.digest stays undefined).
+async function loadDigest(): Promise<void> {
+  try {
+    // chrome.runtime.sendMessage is typed `any`; pin both results to `unknown` first — same
+    // reasoning as refreshRecent()'s `raw: unknown` above.
+    const [historyRaw, savedRaw] = await Promise.all([
+      chrome.runtime.sendMessage<{ type: 'history.list'; limit: number }, unknown>({
+        type: 'history.list',
+        limit: HISTORY_CAP,
+      }),
+      chrome.runtime.sendMessage<{ type: 'saved.list' }, unknown>({ type: 'saved.list' }),
+    ]);
+    const historyReply = historyRaw as WireReply | undefined;
+    const savedReply = savedRaw as WireReply | undefined;
+    if (!historyReply || !historyReply.ok || historyReply.type !== 'history') return;
+    if (!savedReply || !savedReply.ok || savedReply.type !== 'saved.list') return;
+    view.digest = computeWeeklyDigest(historyReply.entries, savedReply.entries, Date.now());
+  } catch {
+    // Best-effort probe; the digest section simply never appears.
   }
 }
 
@@ -497,3 +524,4 @@ async function recoverFocus(): Promise<void> {
 // in which case initFromSettings swaps it for the setup invite (and stamps the theme).
 void refreshRecent();
 void initFromSettings().then(() => recoverFocus());
+void loadDigest();

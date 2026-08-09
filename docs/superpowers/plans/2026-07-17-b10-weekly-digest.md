@@ -1075,7 +1075,7 @@ history). Task 6's e2e spec proves this task's correctness; still run the typech
 so a regression in existing behavior (recent list, save toggle, etc. — all in the same file) is
 caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/side-panel.ts`:
 
 1. Extend the `@ai-dict/app` import (currently lines 1-13) to add `HISTORY_CAP` and
    `computeWeeklyDigest`:
@@ -1142,7 +1142,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
