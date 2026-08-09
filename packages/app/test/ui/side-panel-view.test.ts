@@ -415,6 +415,14 @@ describe('<side-panel-view>', () => {
       expect(fired).toBe(true);
     });
 
+    it('names the 200-word cap in the idle-state hint copy (spec §5)', () => {
+      const el = mount();
+      const section = el.shadowRoot!.querySelector('.organize')!;
+      const hint = section.querySelector('.organize-hint')!;
+      expect(hint.textContent).toMatch(/200/);
+      expect(hint.textContent).toMatch(/organize|AI/i);
+    });
+
     it('shows a busy row and no button while organize is busy', () => {
       const el = mount();
       el.organize = { kind: 'busy' };

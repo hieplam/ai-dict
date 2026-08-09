@@ -592,7 +592,8 @@ export class SidePanelView extends HTMLElement {
     if (o.kind === 'idle') {
       const hint = document.createElement('p');
       hint.className = 'organize-hint';
-      hint.textContent = 'Group your saved words into topic tags with AI.';
+      hint.textContent =
+        'Group your saved words into topic tags with AI. Sends up to 200 of your most recently saved words to your provider.';
       nodes.push(hint, this.organizeButton('Organize my words'));
     } else if (o.kind === 'busy') {
       const row = document.createElement('div');
