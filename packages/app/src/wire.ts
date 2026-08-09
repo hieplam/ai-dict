@@ -71,6 +71,8 @@ const PublicSettingsSchema = z.strictObject({
   hasKey: z.boolean(),
   theme: z.enum(['sepia', 'dark', 'contrast', 'system']),
   configuredProviders: z.array(ProviderEnum),
+  // A5: opt-in "Compact gloss" render mode. See PublicSettings' doc comment (domain/types.ts).
+  glossMode: z.boolean().optional(),
   // B3: paint saved learning-status words on pages. See PublicSettings' doc comment (domain/types.ts).
   highlightSavedWords: z.boolean(),
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]

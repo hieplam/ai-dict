@@ -53,6 +53,7 @@ const DEFAULTS: Settings = {
   provider: 'gemini',
   openaiApiKey: '',
   anthropicApiKey: '',
+  glossMode: false,
 };
 
 // Where C3's post-activation "Try it on a real page" button sends the user — the public landing
@@ -103,6 +104,7 @@ function toFormValue(s: Settings): SettingsFormValue {
     saveHistory: s.saveHistory,
     highlightSavedWords: s.highlightSavedWords,
     theme: s.theme,
+    glossMode: s.glossMode === true,
   };
 }
 
@@ -131,6 +133,7 @@ function applyProviderKey(
 function mountSettings(initial: Settings, status?: string, opts?: { showTryIt?: boolean }): void {
   const form = document.createElement('settings-form') as unknown as SettingsForm;
   if (KEY_FROM_ENV) form.keyFromEnv = true;
+  form.glossModeAvailable = true;
   (form as unknown as HTMLElement).setAttribute('data-ad-theme', initial.theme);
   app.replaceChildren(form);
   (form as unknown as { value: SettingsFormValue }).value = toFormValue(initial);

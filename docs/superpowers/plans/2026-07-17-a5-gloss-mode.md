@@ -370,6 +370,17 @@ git commit -m "[A5GlossMode] feat: add optional glossMode field to PublicSetting
 
 ### Task 2: anchor plumbing — `ports.ts` + `workflow.ts`
 
+**Obviated — intentionally NOT implemented (reconciliation note, A5 review-response):** the
+spec §4.5 / this task's `ResultRenderContext.anchor` + `workflow.ts` plumbing described below
+was superseded by card A6, which merged after this plan was written. A6 already widened
+`ResultRenderer.renderLoading(word?, anchor?)`, caches the anchor as `this.lastAnchor` on the
+renderer, and made `workflow.ts` pass `e.anchor` into every `renderLoading` call ahead of a
+lookup. `InlineBottomSheetRenderer`'s gloss branch (Task 4) therefore reuses `this.lastAnchor`
+directly — it is reliably set because `renderLoading` always precedes `renderResult` for a
+given lookup. Adding a separate `ctx.anchor` field, as this task specifies, would be redundant
+parallel plumbing carrying the same value through a second path. This task's steps are left
+below verbatim for the historical record; none of its checkboxes were executed.
+
 **Files:**
 
 - Modify: `packages/app/src/ports.ts`
@@ -401,9 +412,9 @@ export interface ResultRenderer {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/workflow.test.ts`, inside
-      the existing `describe('runLookupWorkflow', ...)` block, right after the
-      `'ctx always carries sentence/url/title, even with only one provider configured (no
+- [~] **Step 1: Write the failing tests.** Append to `packages/app/test/workflow.test.ts`, inside
+  the existing `describe('runLookupWorkflow', ...)` block, right after the
+  `'ctx always carries sentence/url/title, even with only one provider configured (no
 picker)'` test (currently ending at line 119):
 
 ```ts
@@ -430,7 +441,7 @@ Expected: both new tests fail with a TypeScript error at `test/fakes/index.ts` (
 Vitest's transpile-only mode, a runtime failure) — `FakeResultRenderer` has no `loadingAnchor`
 field yet and `renderResult`'s `ctx` has no `anchor` key to read.
 
-- [ ] **Step 2: Implement.**
+- [~] **Step 2: Implement.**
 
   In `packages/app/src/ports.ts`, add `anchor?: AnchorRect` to `ResultRenderContext` (currently
   lines 26-48), right after `saved?: boolean` — `AnchorRect` is already imported at the top of
@@ -561,7 +572,7 @@ cd ../extension-chrome && bun run typecheck
 cd ../extension-safari && bun run typecheck
 ```
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [~] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../extension-safari && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -813,7 +824,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** In
+- [x] **Step 1: Write the failing tests.** In
       `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`, add `AnchorRect` to the type
       import at the top of the file (currently `import type { LookupResult, LookupError } from
 '../../src';`):
@@ -975,7 +986,7 @@ Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.t
 Expected: every test in the new `describe` block fails — `InlineBottomSheetRenderer` has no
 `glossMode` setter yet (a TypeScript error) and `renderLoading` doesn't accept a 2nd argument.
 
-- [ ] **Step 2: Implement — TARGETED, ADDITIVE edits only. Never paste a full-file copy.**
+- [x] **Step 2: Implement — TARGETED, ADDITIVE edits only. Never paste a full-file copy.**
 
   > **⚠ Shared-file warning:** `inline-bottom-sheet-renderer.ts` is also modified by A1
   > (streamed answers) and A7 (pin cards) — see this plan's Global Constraints "Concurrency"
@@ -1299,7 +1310,7 @@ Also run the full app unit suite to confirm no regression in the other features 
 shares (B1/B5/B7/A8 all touch it): `cd packages/app && bun run test`
 Expected: all suites green.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1333,7 +1344,7 @@ export class SettingsForm extends HTMLElement {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
       inside the existing `describe('<settings-form>', ...)` block, right before its closing
       `});`:
 
@@ -1396,7 +1407,7 @@ Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: all four new tests fail — `#gloss-mode-row`/`#gloss-mode` don't exist in the DOM yet,
 `glossModeAvailable` is not a settable property, and `collect()` never emits `glossMode`.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
   1. Add `glossMode?: boolean;` to the `SettingsFormValue` interface (currently lines 29-45),
      right after `theme: Theme;`:
 
@@ -1489,7 +1500,7 @@ the same `<form>` the delegated `input`/`change` listener already covers.
 Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts && bun run typecheck`
 Expected: all tests pass (existing + 4 new); typecheck clean.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

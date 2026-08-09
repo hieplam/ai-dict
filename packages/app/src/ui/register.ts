@@ -1,5 +1,6 @@
 import { LookupTrigger } from './lookup-trigger';
 import { LookupCard } from './lookup-card';
+import { LookupGloss } from './lookup-gloss';
 import { BottomSheet } from './bottom-sheet';
 import { HoverRecallPopup } from './hover-recall-popup';
 import { SettingsForm } from './settings-form';
@@ -10,6 +11,7 @@ import { OnboardingView } from './onboarding-view';
 export function registerContentElements(): void {
   if (!customElements.get('lookup-trigger')) customElements.define('lookup-trigger', LookupTrigger);
   if (!customElements.get('lookup-card')) customElements.define('lookup-card', LookupCard);
+  if (!customElements.get('lookup-gloss')) customElements.define('lookup-gloss', LookupGloss);
   if (!customElements.get('bottom-sheet')) customElements.define('bottom-sheet', BottomSheet);
   // B4: registered alongside the other in-page (MAIN-world) elements — same content-elements.ts
   // entry point, no new registration function.

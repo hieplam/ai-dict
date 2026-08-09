@@ -34,6 +34,7 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       theme: 'sepia',
       configuredProviders: ['gemini'],
       highlightSavedWords: true,
+      glossMode: false,
     });
     expect('apiKey' in pub).toBe(false);
   });
@@ -71,11 +72,24 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       theme: 'sepia',
       configuredProviders: [],
       highlightSavedWords: true,
+      glossMode: false,
     });
     const noKey = await new ChromeStorageStore(
       fakeArea({ targetLang: 'en', outputFormat: 't', apiKey: '' }),
     ).get();
     expect(noKey.hasKey).toBe(false);
+  });
+
+  it('get() round-trips a stored glossMode: true (A5)', async () => {
+    const area = fakeArea({
+      targetLang: 'vi',
+      outputFormat: 'tpl',
+      apiKey: 'AIza',
+      hasKey: true,
+      glossMode: true,
+    });
+    const pub = await new ChromeStorageStore(area).get();
+    expect(pub.glossMode).toBe(true);
   });
 
   it('set() merges only targetLang/outputFormat, preserving apiKey + toggles', async () => {

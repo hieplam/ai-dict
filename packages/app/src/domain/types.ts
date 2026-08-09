@@ -208,6 +208,16 @@ export interface PublicSettings {
   theme: Theme;
   /** Provider names that have an API key configured. Keys themselves are never included. */
   configuredProviders: Provider[];
+  /**
+   * A5: opt-in "Compact gloss" render mode. Absent/false until the reader opts in. Declared
+   * optional (unlike `theme`) because PublicSettings literals are built at ~10 call sites +
+   * 900+ test assertions, and every concrete reader normalizes a missing value to false (same
+   * style `theme` uses via normalizeTheme despite theme being required). Declared
+   * `boolean | undefined` (not just `boolean`) to match `exactOptionalPropertyTypes`
+   * (tsconfig.base.json) and the wire schema's z.boolean().optional() inferred shape — same
+   * pattern this file already uses for SavedWordSense.related above.
+   */
+  glossMode?: boolean | undefined;
   /** B3: paint saved learning-status words on pages. Default true; legacy stored settings lack the key — every reader applies `?? true`. */
   highlightSavedWords: boolean;
 }

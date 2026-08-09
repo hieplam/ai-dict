@@ -241,6 +241,69 @@ describe('<settings-form>', () => {
     const el = mountForm();
     expect(await axeViolations(el)).toEqual([]);
   });
+
+  it('glossModeAvailable defaults to false — the Compact gloss row stays hidden (A5)', () => {
+    const el = mountForm();
+    const row = el.shadowRoot!.querySelector<HTMLElement>('#gloss-mode-row')!;
+    expect(row.hidden).toBe(true);
+  });
+
+  it('glossModeAvailable = true un-hides the Compact gloss row (A5)', () => {
+    const el = mountForm();
+    (el as unknown as { glossModeAvailable: boolean }).glossModeAvailable = true;
+    const row = el.shadowRoot!.querySelector<HTMLElement>('#gloss-mode-row')!;
+    expect(row.hidden).toBe(false);
+  });
+
+  it('a hidden gloss-mode row never silently resets a previously-true stored glossMode value (A5)', () => {
+    const el = mountForm();
+    el.value = {
+      provider: 'gemini',
+      apiKey: '',
+      openaiApiKey: '',
+      anthropicApiKey: '',
+      promptEnvelope: '',
+      targetLang: 'vi',
+      outputFormat: 'T',
+      cacheEnabled: true,
+      saveHistory: true,
+      highlightSavedWords: true,
+      theme: 'sepia',
+      glossMode: true,
+    };
+    let captured: SettingsFormValue | undefined;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(captured?.glossMode).toBe(true);
+  });
+
+  it('toggling the visible Compact gloss checkbox is reflected in the submitted save detail (A5)', () => {
+    const el = mountForm();
+    (el as unknown as { glossModeAvailable: boolean }).glossModeAvailable = true;
+    el.shadowRoot!.querySelector<HTMLInputElement>('#gloss-mode')!.checked = true;
+    let captured: SettingsFormValue | undefined;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(captured?.glossMode).toBe(true);
+  });
+
+  it('glossModeAvailable set BEFORE the element is connected does not throw and un-hides the row on connect (A5 regression)', () => {
+    const el = document.createElement('settings-form') as SettingsForm;
+    expect(() => {
+      (el as unknown as { glossModeAvailable: boolean }).glossModeAvailable = true;
+    }).not.toThrow();
+    document.body.append(el); // connectedCallback builds the shadow + must apply the pending flag
+    const row = el.shadowRoot!.querySelector<HTMLElement>('#gloss-mode-row')!;
+    expect(row.hidden).toBe(false);
+  });
 });
 
 describe('<settings-form> restore default prompt', () => {

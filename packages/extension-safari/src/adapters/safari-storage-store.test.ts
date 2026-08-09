@@ -38,6 +38,7 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
       theme: 'sepia',
       configuredProviders: ['gemini'],
       highlightSavedWords: true,
+      glossMode: false,
     });
     expect('apiKey' in pub).toBe(false);
   });
@@ -52,7 +53,20 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
       theme: 'sepia',
       configuredProviders: [],
       highlightSavedWords: true,
+      glossMode: false,
     });
+  });
+
+  it('get() round-trips a stored glossMode: true (A5)', async () => {
+    const area = fakeArea({
+      targetLang: 'vi',
+      outputFormat: 'tpl',
+      apiKey: 'AIza',
+      hasKey: true,
+      glossMode: true,
+    });
+    const pub = await new SafariStorageStore(area).get();
+    expect(pub.glossMode).toBe(true);
   });
 
   it('set() merges only targetLang/outputFormat, preserving apiKey + toggles', async () => {

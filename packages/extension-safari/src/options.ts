@@ -34,6 +34,7 @@ const DEFAULTS: Settings = {
   provider: 'gemini',
   openaiApiKey: '',
   anthropicApiKey: '',
+  glossMode: false,
 };
 
 async function load(): Promise<Settings> {

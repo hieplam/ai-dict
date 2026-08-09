@@ -673,6 +673,9 @@
                   ]
                 }
               },
+              "glossMode": {
+                "type": "boolean"
+              },
               "highlightSavedWords": {
                 "type": "boolean"
               }

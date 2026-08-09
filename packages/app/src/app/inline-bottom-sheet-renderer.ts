@@ -10,7 +10,14 @@ import type {
   RefineKind,
 } from '../index';
 import { computeCardPlacement } from '../domain/card-placement';
-import { renderCardState, type CardState, type LookupCard, type SafeHtml } from '../ui/index';
+import {
+  renderCardState,
+  renderGlossState,
+  type CardState,
+  type LookupCard,
+  type LookupGloss,
+  type SafeHtml,
+} from '../ui/index';
 import { sanitizeMarkdown } from './markdown-sanitize';
 
 export class InlineBottomSheetRenderer implements ResultRenderer {
@@ -43,6 +50,28 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   // renderResult call, supersedes it a moment later.
   private readonly THROTTLE_MS = 80;
   private lastPartialPaintAt = -Infinity;
+  // A5: opt-in compact gloss render mode. Default false — zero behavior change until the reader
+  // opts in via settings (spec §2.5).
+  private _glossMode = false;
+  private glossEl: LookupGloss | null = null;
+  // A5: true once the full card is open for THIS on-page session (via expand OR a gloss-ineligible
+  // render) — every later render then keeps updating the SAME open card and never regresses into a
+  // mini bubble (spec §2.4). Reset only in close(). For every install with glossMode OFF (default),
+  // this becomes true on the first render and stays true — zero behavior change for that path.
+  private cardOpen = false;
+  // A5 (skinner fix): true once the reader outside-press-dismisses the LOADING gloss bubble
+  // while a lookup is still in flight. Suppresses that lookup's late terminal renderResult/
+  // renderError so it can neither re-mount the bubble nor pop the full modal unsolicited. Only
+  // ever set by onOutsidePress, which only fires for a mounted gloss bubble — the non-gloss full
+  // card path can never observe this flag, so this fix is fully contained to A5's interaction.
+  // Cleared by the next renderLoading (a fresh lookup) and by close().
+  private dismissed = false;
+  private readonly onOutsidePress = (e: Event): void => {
+    if (this.glossEl && !e.composedPath().includes(this.glossEl)) {
+      this.dismissed = true;
+      this.removeGloss();
+    }
+  };
 
   constructor(
     private readonly host: HTMLElement,
@@ -64,6 +93,14 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   }
   get theme(): Theme {
     return this._theme;
+  }
+
+  /** A5: the reader's stored "Compact gloss" setting. Default false. */
+  set glossMode(v: boolean) {
+    this._glossMode = v;
+  }
+  get glossMode(): boolean {
+    return this._glossMode;
   }
 
   private ensureCard(): LookupCard {
@@ -146,7 +183,55 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     panel.style.left = `${left}px`;
   }
 
+  /** A5: lazily create the compact gloss bubble, wiring its expand click + outside-press dismiss. */
+  private ensureGloss(): LookupGloss {
+    if (this.glossEl) return this.glossEl;
+    const el = document.createElement('lookup-gloss') as LookupGloss;
+    el.setAttribute('data-ad-theme', this._theme);
+    el.addEventListener('expand', () => this.expand());
+    this.host.append(el);
+    document.addEventListener('mousedown', this.onOutsidePress, true);
+    document.addEventListener('touchstart', this.onOutsidePress, true);
+    this.glossEl = el;
+    return el;
+  }
+
+  /**
+   * A5: position the gloss bubble at the selection anchor — the same AnchorRect → fixed-position
+   * formula ChromeFloatingTrigger.show() uses for the "Define" pill, so the bubble lands where it
+   * just vacated.
+   */
+  private positionGloss(anchor: AnchorRect): void {
+    const el = this.ensureGloss();
+    el.setAttribute('data-ad-theme', this._theme);
+    el.style.position = 'fixed';
+    el.style.left = `${anchor.x}px`;
+    el.style.top = `${anchor.y + anchor.h}px`;
+  }
+
+  /** A5: tear down the gloss bubble and its outside-press listeners, if one is showing. */
+  private removeGloss(): void {
+    if (!this.glossEl) return;
+    document.removeEventListener('mousedown', this.onOutsidePress, true);
+    document.removeEventListener('touchstart', this.onOutsidePress, true);
+    this.glossEl.remove();
+    this.glossEl = null;
+  }
+
+  /**
+   * A5: reader tapped the gloss bubble — show the ALREADY-COMPUTED state in the full card, no
+   * re-lookup, no re-sanitize. Sets cardOpen so no later render this session regresses into a
+   * bubble (spec §2.4).
+   */
+  private expand(): void {
+    this.cardOpen = true;
+    this.removeGloss();
+    if (this.lastState) this.setState(this.lastState);
+  }
+
   renderLoading(word?: string, anchor?: AnchorRect): void {
+    // A5 (skinner fix): a fresh lookup always clears a prior outside-press dismiss.
+    this.dismissed = false;
     // A6: cache the selection anchor so every later render of this same open card (setState →
     // positionNear) reuses it; null when no anchor was passed (spec §2.4 fallback).
     this.lastAnchor = anchor ?? null;
@@ -156,6 +241,21 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // abort guard, leaving data-streaming set on the reused card — clear it here too so the
     // NEXT lookup's loading phase is never silently announced with aria-live="off" (Blocker).
     this.card?.toggleAttribute('data-streaming', false);
+    // A5: gloss mode — show a compact loading bubble at the anchor instead of the full modal card
+    // (spec §2.3), but only on the first render of a session (cardOpen still false).
+    if (!this.cardOpen && this._glossMode && this.lastAnchor) {
+      this.lastState = word === undefined ? { kind: 'loading' } : { kind: 'loading', word };
+      this.positionGloss(this.lastAnchor);
+      this.glossEl!.replaceChildren(
+        ...renderGlossState(word === undefined ? { kind: 'loading' } : { kind: 'loading', word }),
+      );
+      this.glossEl!.setAttribute(
+        'aria-label',
+        `Define result for "${word ?? '…'}" — tap for full card`,
+      );
+      return;
+    }
+    this.removeGloss(); // clear a stale bubble from a prior gloss-eligible render, if any
     this.setState(word === undefined ? { kind: 'loading' } : { kind: 'loading', word });
   }
 
@@ -169,6 +269,10 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     markdown: string,
     definedAs?: { term: string; isIdiom: boolean },
   ): void {
+    // A5: in gloss mode the compact bubble is the active surface until the reader expands — never
+    // flash the full streaming card open behind it (spec §2.3). The bubble keeps its loading state
+    // until the terminal renderResult produces the one-line translation.
+    if (!this.cardOpen && this._glossMode && this.lastAnchor) return;
     const t = this.now();
     if (t - this.lastPartialPaintAt < this.THROTTLE_MS) return; // dropped — see THROTTLE_MS's doc
     this.lastPartialPaintAt = t;
@@ -183,6 +287,8 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   }
 
   renderResult(r: LookupResult, ctx?: ResultRenderContext): void {
+    // A5 (skinner fix): a late terminal render for a dismissed lookup shows nothing.
+    if (this.dismissed) return;
     // `sanitize` already returns `SafeHtml` (the trust boundary lives in sanitizeMarkdown, S4).
     // No cast needed here — the DI param type `(md: string) => SafeHtml` guarantees it.
     this.onSwitch = ctx?.onSwitchProvider;
@@ -220,10 +326,34 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // A3: snapshot only when this is a genuine original (non-refine) result, so restoreOriginal()
     // always has the true original to fall back to, never a previously-refined one.
     if (ctx?.refine === undefined) this.originalState = state;
+    // A5: gloss vs full card is a pure function of the reader's setting + whether THIS result
+    // carries a non-blank one-line translation (spec §2.2) — never word length/frequency/a
+    // classifier. Reuses A6's already-cached lastAnchor (renderLoading always precedes renderResult).
+    const hasGloss = typeof r.translation === 'string' && r.translation.trim() !== '';
+    if (!this.cardOpen && this._glossMode && this.lastAnchor && hasGloss) {
+      this.lastState = state;
+      this.positionGloss(this.lastAnchor);
+      this.glossEl!.replaceChildren(
+        ...renderGlossState({
+          kind: 'result',
+          word: r.word,
+          safeHtml: this.sanitize(r.translation!),
+        }),
+      );
+      this.glossEl!.setAttribute('aria-label', `Define result for "${r.word}" — tap for full card`);
+      return;
+    }
+    this.removeGloss();
+    this.cardOpen = true;
     this.setState(state);
   }
 
   renderError(e: LookupError): void {
+    // A5 (skinner fix): a late terminal render for a dismissed lookup shows nothing.
+    if (this.dismissed) return;
+    // A5: errors are never compact (spec §2.3) — setup/recovery CTAs never get squeezed into a bubble.
+    this.removeGloss();
+    this.cardOpen = true;
     this.card?.toggleAttribute('data-streaming', false);
     // A1: same reasoning as renderResult's own reset above — a terminal error also ends the
     // current streaming session.
@@ -300,6 +430,9 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     // the × button, the A4 dismiss-lookup command) also stops any speech still playing.
     // renderCardState's own cancel-on-render doesn't cover this path: close() never re-renders.
     globalThis.speechSynthesis?.cancel();
+    this.removeGloss();
+    this.cardOpen = false;
+    this.dismissed = false;
     this.sheet?.remove();
     this.sheet = null;
     this.card = null;
