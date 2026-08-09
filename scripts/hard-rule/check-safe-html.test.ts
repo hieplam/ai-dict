@@ -131,7 +131,7 @@ describe('checkRepo — integration on this repository', () => {
     expect(violations).toEqual([]);
   });
 
-  it('the real tree has exactly 21 raw-HTML sink sites (20 annotated + 1 sanctioned-path)', () => {
+  it('the real tree has exactly 24 raw-HTML sink sites (23 annotated + 1 sanctioned-path)', () => {
     // Cross-check against the count Task 3's audit verified via two independent enumeration
     // methods (see the campaign report) — proves this scanner is inspecting every real sink,
     // not silently seeing fewer sites than exist. A10 (TTS pronunciation) added one new
@@ -140,10 +140,19 @@ describe('checkRepo — integration on this repository', () => {
     // `words.innerHTML = ICON_WORDS_LIST;` in side-panel-view.ts's header nav, plus four in the
     // new words-page-view.ts (back icon, two static <select> option lists, delete icon) — raising
     // the count from 16 to 21 and adding words-page-view.ts to the enumerated file list.
+    // Reconciliation (A5): this guard had drifted stale against master HEAD, which already sat at
+    // 23 (not 21) before A5 touched anything — two annotated static-template icon sinks (e.g. A2's
+    // Back button `ICON_BACK`) were added to lookup-card.ts by cards merged after B6 and never
+    // reflected here, because this file lives under scripts/ and the root `vitest run` that covers
+    // it is not part of any CI gate (CI runs only the per-package `bun run --filter ... test`), so
+    // the drift merged green undetected. A5 itself adds exactly one new, sanctioned sink —
+    // `text.innerHTML = state.safeHtml;` in the new packages/app/src/ui/lookup-gloss.ts — bringing
+    // the true count to 24 and enrolling lookup-gloss.ts in the enumerated file list below.
     const repoRoot = new URL('../..', import.meta.url).pathname;
     const SINK_RE = /\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML\(/g;
     const files = [
       'packages/app/src/ui/lookup-card.ts',
+      'packages/app/src/ui/lookup-gloss.ts',
       'packages/app/src/ui/lookup-trigger.ts',
       'packages/app/src/ui/onboarding-view.ts',
       'packages/app/src/ui/settings-form.ts',
@@ -155,7 +164,7 @@ describe('checkRepo — integration on this repository', () => {
       const src = readFileSync(join(repoRoot, f), 'utf8');
       total += (src.match(SINK_RE) ?? []).length;
     }
-    expect(total).toBe(21);
+    expect(total).toBe(24);
   });
 
   it('a deliberately-planted unannotated innerHTML violation is caught (proves the RED path works)', () => {
