@@ -89,6 +89,21 @@ describe('buildRouter', () => {
     expect((await historyList({ storage: d.kv }, {})).entries).toHaveLength(1);
   });
 
+  it('lookup miss stores the request url/title on the history entry (B10)', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route({
+      type: 'lookup',
+      req: { ...req, url: 'https://nautil.us/article', title: 'An Article' },
+      requestId: 'a',
+    });
+    const { entries } = await historyList({ storage: d.kv }, {});
+    expect(entries[0]).toMatchObject({
+      url: 'https://nautil.us/article',
+      title: 'An Article',
+    });
+  });
+
   it('lookup cache hit → fromCache:true, no client call (D1)', async () => {
     const d = deps();
     const route = buildRouter(d);

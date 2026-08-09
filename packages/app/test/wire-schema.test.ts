@@ -127,6 +127,34 @@ describe('wire-schema', () => {
       WireMessageSchema.safeParse({ type: 'history.list', limit: 10, cursor: 'abc' }).success,
     ).toBe(true);
   });
+  it('a history reply entry accepts optional url/title (B10), and still parses without them (back-compat)', () => {
+    const base = {
+      id: 'h1',
+      word: 'bank',
+      context: 'river bank',
+      createdAt: 1,
+      result: {
+        markdown: '#',
+        word: 'bank',
+        target: 'vi',
+        model: 'gemini-2.5-flash',
+        fromCache: false,
+        fetchedAt: 1,
+      },
+    };
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'history',
+        entries: [{ ...base, url: 'https://nautil.us', title: 'Nautilus' }],
+      }).success,
+    ).toBe(true);
+    // Back-compat: an entry recorded before B10 has no url/title at all.
+    expect(WireReplySchema.safeParse({ ok: true, type: 'history', entries: [base] }).success).toBe(
+      true,
+    );
+  });
+
   it('accepts history.clear message', () => {
     expect(WireMessageSchema.safeParse({ type: 'history.clear' }).success).toBe(true);
   });

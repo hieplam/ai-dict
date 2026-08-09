@@ -201,6 +201,14 @@ export interface HistoryEntry {
   context: string;
   result: LookupResult;
   createdAt: number;
+  /**
+   * B10: the page the lookup happened on, carried straight from LookupRequest.url/.title at
+   * write time (router.ts's handleLookup) — used to compute "top source sites" in the weekly
+   * digest (domain/weekly-digest.ts). Absent on entries recorded before B10 shipped; the digest
+   * excludes those from its site tally while still counting them toward the lookup total.
+   */
+  url?: string | undefined;
+  title?: string | undefined;
 }
 
 /**
