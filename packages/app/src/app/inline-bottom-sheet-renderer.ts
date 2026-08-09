@@ -24,6 +24,8 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
   private onForceLiteral: (() => void) | undefined;
   // A3: same pattern as onSwitch/onForceLiteral for the card's one `refine` listener.
   private onRefine: ((k: RefineKind) => void) | undefined;
+  // A2: same pattern for the card's one `lookup-back` listener.
+  private onBack: (() => void) | undefined;
   // A3: the last render where ctx.refine was undefined (a genuine original result), so
   // restoreOriginal() can revert a refined body without a new lookup. null before any render, or
   // after close(). See the design spec's §2.4(b).
@@ -92,6 +94,9 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     card.addEventListener('refine', (e) =>
       this.onRefine?.((e as CustomEvent<{ refine: RefineKind }>).detail.refine),
     );
+    // A2: the card fires `lookup-back` when the reader taps "Back"; delegate to the handler the
+    // workflow installed via the render context (pops the recursive-lookup chain, no network).
+    card.addEventListener('lookup-back', () => this.onBack?.());
     this.host.append(sheet); // connection upgrades both elements + builds their shadow roots
     this.sheet = sheet;
     this.card = card;
@@ -183,6 +188,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
     this.onSwitch = ctx?.onSwitchProvider;
     this.onForceLiteral = ctx?.onForceLiteral;
     this.onRefine = ctx?.onRefine;
+    this.onBack = ctx?.onBack;
     this.card?.toggleAttribute('data-streaming', false);
     // A1: a terminal renderResult always ends the current streaming session — the throttle clock
     // must not carry over and spuriously drop a NEW session's very first renderPartial repaint
@@ -207,6 +213,8 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
       nudge: r.nudge === true,
       // A3: always true for the in-page card — the side panel never sets it (design spec §2.6).
       refineChips: true,
+      // A2: always explicit true/false — present only when the workflow installed onBack.
+      canGoBack: ctx?.onBack !== undefined,
       ...(ctx?.refine !== undefined ? { refine: ctx.refine } : {}),
     };
     // A3: snapshot only when this is a genuine original (non-refine) result, so restoreOriginal()
