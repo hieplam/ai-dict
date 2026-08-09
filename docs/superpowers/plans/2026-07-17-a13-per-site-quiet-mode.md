@@ -958,7 +958,7 @@ get quietSites(): string[];
 // 'remove-quiet-site' detail: { domain: string }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
       as a new `describe` block at the end of the file:
 
 ```ts
@@ -1019,7 +1019,7 @@ Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: all 5 new tests fail — `#quiet-list`/`#quiet-domain`/`#quiet-add` don't exist yet and
 `quietSites` isn't a settable property.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`, add a new "Quiet sites"
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`, add a new "Quiet sites"
       section to `MARKUP`, right after the existing "Privacy & data" `</section>` and before the
       `<div class="savebar">` (current file, between lines 212 and 213):
 
@@ -1190,7 +1190,7 @@ Expected: all tests pass (existing suite + 5 new).
 Run: `cd packages/app && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
