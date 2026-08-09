@@ -95,6 +95,18 @@ export interface MockGeminiOpts {
 }
 
 /**
+ * Wrap a pre-serialized JSON payload as ONE server-sent-events frame, byte-identical to what
+ * `generativelanguage.googleapis.com/…:streamGenerateContent?alt=sse` puts on the wire: the frame
+ * terminator is CRLF CRLF (`\r\n\r\n` — bytes `0d 0a 0d 0a` in a hexdump of a live response), not
+ * the bare `\n\n` these mocks used until the SSE-framing fix. Every Gemini streaming mock in the
+ * e2e suite MUST build frames through this helper — hand-rolled `\n\n` framing is what let a
+ * parser that only recognized `\n\n` pass the whole suite while failing 100% of real lookups.
+ */
+export function sseFrame(json: string): string {
+  return `data: ${json}\r\n\r\n`;
+}
+
+/**
  * Fake the Gemini endpoint and count hits. Routes on the CONTEXT (not the page) because the
  * real fetch originates in the extension's service worker, which page.route cannot intercept.
  * Returns a live counter object: read `.count` after the flow completes.
@@ -120,7 +132,7 @@ export async function mockGemini(
         status,
         contentType: 'text/event-stream',
         headers: opts.headers ?? {},
-        body: `data: ${body}\n\n`,
+        body: sseFrame(body),
       });
       return;
     }
@@ -137,10 +149,10 @@ export async function mockGemini(
 export const GEMINI_STREAM_GLOB = '**/*:streamGenerateContent*';
 
 /**
- * A1: fulfills Gemini's SSE streaming endpoint with `events` joined as `data: <event>\n\n` frames
- * (each `event` a pre-serialized JSON string, e.g. the same shape mockGemini's OK body uses per
- * chunk). Routes on the CONTEXT (not the page), same reasoning mockGemini already documents —
- * the fetch originates in the service worker.
+ * A1: fulfills Gemini's SSE streaming endpoint with `events` joined into real CRLF-terminated
+ * frames via `sseFrame` (each `event` a pre-serialized JSON string, e.g. the same shape
+ * mockGemini's OK body uses per chunk). Routes on the CONTEXT (not the page), same reasoning
+ * mockGemini already documents — the fetch originates in the service worker.
  */
 export async function mockGeminiStream(
   context: BrowserContext,
@@ -149,7 +161,7 @@ export async function mockGeminiStream(
   const calls = { count: 0 };
   await context.route(GEMINI_STREAM_GLOB, async (route) => {
     calls.count++;
-    const body = events.map((e) => `data: ${e}\n\n`).join('');
+    const body = events.map(sseFrame).join('');
     await route.fulfill({ status: 200, contentType: 'text/event-stream', body });
   });
   return calls;

@@ -6,6 +6,7 @@ import {
   openTrigger,
   mockGeminiStream,
   GEMINI_STREAM_GLOB,
+  sseFrame,
 } from './helpers';
 
 function chunk(text: string): string {
@@ -53,7 +54,7 @@ test.describe('A1 streamed answers', () => {
         await new Promise(() => {});
         return;
       }
-      const body = `data: ${chunk('A bound volume of printed pages.')}\n\n`;
+      const body = sseFrame(chunk('A bound volume of printed pages.'));
       await route.fulfill({ status: 200, contentType: 'text/event-stream', body });
     });
     const page = await context.newPage();

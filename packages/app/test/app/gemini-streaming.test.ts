@@ -23,6 +23,17 @@ function sseEvent(text: string): string {
   return `data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] })}\n\n`;
 }
 
+/**
+ * The frame shape Google ACTUALLY puts on the wire, delimited by CRLF CRLF (`\r\n\r\n`) rather
+ * than the bare LF LF (`\n\n`) every other fixture in this file uses. Verified by hexdumping a
+ * live `gemini-2.5-flash:streamGenerateContent?alt=sse` response: the bytes between two frames
+ * are `0d 0a 0d 0a`. The all-`\n\n` fixtures let a parser that only recognizes `\n\n` pass every
+ * test while failing 100% of real lookups, so this helper is the regression guard for that gap.
+ */
+function sseEventCrlf(text: string): string {
+  return `data: ${JSON.stringify({ candidates: [{ content: { parts: [{ text }] } }] })}\r\n\r\n`;
+}
+
 /** A real ReadableStream<Uint8Array>, chunked exactly per `pieces` — gives fully deterministic,
  * non-flaky control over how many reader.read() calls occur (design spec §7.1). */
 function streamOf(pieces: string[]): ReadableStream<Uint8Array> {
@@ -71,6 +82,31 @@ describe('runGeminiStreamingLookup', () => {
     const texts = onChunk.mock.calls.map((c) => c[0] as string);
     for (let i = 1; i < texts.length; i++)
       expect(texts[i]!.length).toBeGreaterThanOrEqual(texts[i - 1]!.length);
+  });
+
+  it('parses CRLF-delimited frames — the framing Google actually sends', async () => {
+    const onChunk = vi.fn();
+    const fetchImpl = okFetch([
+      sseEventCrlf('DEFINED_AS: "bank" | literal\n') + sseEventCrlf('TRANSLATION: "bờ sông"\n\n'),
+      sseEventCrlf('The land ') + sseEventCrlf('alongside a river.'),
+    ]);
+    const deps = { fetch: fetchImpl, getApiKey: () => 'AIza-key' };
+    const result = await runGeminiStreamingLookup(spec, deps, req, onChunk);
+    expect(result.markdown).toBe('The land alongside a river.');
+    expect(result.definedAs).toEqual({ term: 'bank', isIdiom: false });
+    expect(result.translation).toBe('bờ sông');
+    expect(onChunk.mock.calls.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('parses a CRLF frame delivered in pieces that split the delimiter itself', async () => {
+    // The reader hands back arbitrary byte boundaries, so the 4-byte `\r\n\r\n` delimiter can
+    // straddle two reads. Splitting here must not orphan the frame that precedes it.
+    const onChunk = vi.fn();
+    const frame = sseEventCrlf('A riverbank.');
+    const fetchImpl = okFetch([frame.slice(0, frame.length - 3), frame.slice(frame.length - 3)]);
+    const deps = { fetch: fetchImpl, getApiKey: () => 'AIza-key' };
+    const result = await runGeminiStreamingLookup(spec, deps, req, onChunk);
+    expect(result.markdown).toBe('A riverbank.');
   });
 
   it('never exposes a partial/incomplete DEFINED_AS line to onChunk', async () => {

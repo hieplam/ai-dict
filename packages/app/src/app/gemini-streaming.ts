@@ -22,6 +22,23 @@ const STREAM_TIMEOUT_MS = 20000;
 // "body is the ENTIRE text unchanged" fallback).
 const HEADER_MAX_BUFFER_CHARS = 400;
 
+/**
+ * Server-sent events (SSE) separate one event from the next with a BLANK LINE, and the spec
+ * (WHATWG HTML §9.2) accepts any of three line terminators — CRLF (`\r\n`), LF (`\n`), or a bare
+ * CR (`\r`) — so a blank line is any of those doubled. Google's `generativelanguage.googleapis.com`
+ * `:streamGenerateContent?alt=sse` endpoint sends CRLF CRLF; a hexdump of a live response shows
+ * the four bytes `0d 0a 0d 0a` between frames. Splitting on `'\n\n'` alone therefore never finds a
+ * boundary in a real response — the `\r` sits between the two `\n`s — so every frame stays stuck in
+ * the tail buffer, no delta is ever read, and the lookup fails with a PARSE error 100% of the time.
+ * Matching all three terminators keeps this correct whichever form the endpoint sends.
+ *
+ * Longest alternative first: at a `\r`, `\r\n\r\n` must win over the `\r\r` branch, which would
+ * otherwise never match here but would split a CRLF pair down the middle on other inputs.
+ */
+const SSE_FRAME_DELIMITER = /\r\n\r\n|\n\n|\r\r/;
+/** Same three terminators, single — splits an event's `data:`/`event:`/`id:` lines apart. */
+const SSE_LINE_TERMINATOR = /\r\n|\n|\r/;
+
 interface GeminiOkBody {
   candidates?: { content?: { parts?: { text?: string }[] } }[];
 }
@@ -164,10 +181,10 @@ export async function runGeminiStreamingLookup(
       const { done, value } = await reader.read();
       if (done) break;
       sseTail += decoder.decode(value, { stream: true });
-      const events = sseTail.split('\n\n');
+      const events = sseTail.split(SSE_FRAME_DELIMITER);
       sseTail = events.pop() ?? '';
       for (const evt of events) {
-        const dataLine = evt.split('\n').find((l) => l.startsWith('data: '));
+        const dataLine = evt.split(SSE_LINE_TERMINATOR).find((l) => l.startsWith('data: '));
         if (!dataLine) continue;
         const payload = dataLine.slice('data: '.length).trim();
         if (payload.length === 0) continue;
