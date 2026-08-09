@@ -99,12 +99,22 @@ test.describe('B14 sense-aware dedup', () => {
     await expect.poll(async () => (await swStorageDump(context))['saved:bank']).toBeDefined();
     await star.click(); // unsave
     await expect(star).toHaveAttribute('aria-pressed', 'false');
+    // Wait for the delete to actually land server-side (not just the optimistic UI flip) before
+    // re-saving, mirroring saved-word.spec.ts's own toggle-off assertion — otherwise the
+    // following re-save's storage read below can race the async unsave round trip.
+    await expect.poll(async () => (await swStorageDump(context))['saved:bank']).toBeUndefined();
     await star.click(); // re-save — SAME fixture paragraph/sentence + SAME fixture URL
 
     await expect(star).toHaveAttribute('aria-pressed', 'true', { timeout: 10_000 });
     await expect(page.locator('bottom-sheet lookup-card .merge-prompt')).toHaveCount(0);
-    const dump = await swStorageDump(context);
-    const entry = JSON.parse(dump['saved:bank'] as string);
-    expect(entry.senses).toHaveLength(1);
+    // Poll (not a single read): aria-pressed flips optimistically on click, before the
+    // saved.save round trip resolves and the entry actually lands in storage.
+    await expect
+      .poll(async () => {
+        const dump = await swStorageDump(context);
+        const raw = dump['saved:bank'] as string | undefined;
+        return raw ? (JSON.parse(raw) as { senses: unknown[] }).senses.length : undefined;
+      })
+      .toBe(1);
   });
 });
