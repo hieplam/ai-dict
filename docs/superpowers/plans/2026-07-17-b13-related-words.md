@@ -611,6 +611,18 @@ cd packages/app && bunx vitest run test/related-line.test.ts test/app/gemini-loo
 
 Expected: all tests pass (existing + the ones added in Step 1).
 
+> **Correction (found during implementation, fixed in commit `95b4aaa`):** `http-lookup-client.ts`
+> is NOT the only parse site. `packages/app/src/app/gemini-streaming.ts` (`runGeminiStreamingLookup`)
+> is the DEFAULT live path every real Gemini lookup takes whenever `onChunk` is attached (which the
+> composition root always does), and it builds its own `LookupResult` via its own
+> `parseDefinedAs`/`parseTranslation` chain — both per-chunk and in its final tail construction.
+> `parseRelated` MUST also be wired there (mirroring this section), or the `RELATED:` line leaks into
+> the streamed card and `result.related` is always undefined on real traffic. The `bothResolved`
+> stream-start gate must stay `definedAs && translation` only — never gate on RELATED (non-`related`
+> lookups emit no RELATED line and would hang). The design spec §3.5/§4 file lists missed this second
+> parse site; B14 and any future signal-line card should touch BOTH `http-lookup-client.ts` AND
+> `gemini-streaming.ts`.
+
 - [x] **Step 3: Gate + commit.**
 
 ```
@@ -1162,7 +1174,7 @@ git commit -m "[B13RelatedWords] feat: auto-persist related words onto an alread
 - Create: `packages/extension-chrome/e2e/b13-related-words.spec.ts`
 - Modify: `packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts`
 
-- [ ] **Step 1: Fix the already-shipped A3 e2e assertion this card's 5th chip breaks.**
+- [x] **Step 1: Fix the already-shipped A3 e2e assertion this card's 5th chip breaks.**
 
 In `packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts`, find test 1 ("chips render on
 every result, none active, no back button"):
@@ -1227,7 +1239,7 @@ low-cost completeness improvement while this file is already open for the requir
 Run this one spec alone first to confirm the fix (requires a build — see Step 3 for the full
 sequence; a quick local check is optional here and folded into Step 3's full run).
 
-- [ ] **Step 2: Write the new e2e spec.**
+- [x] **Step 2: Write the new e2e spec.**
 
 Create `packages/extension-chrome/e2e/b13-related-words.spec.ts`:
 
@@ -1451,7 +1463,7 @@ cd packages/extension-chrome && bunx playwright test b13-related-words a3-follow
 Expected: 4 passed for `b13-related-words`; all of `a3-follow-up-chips` (6 tests, including the
 fixed test 1) still pass.
 
-- [ ] **Step 3: Full gate.**
+- [x] **Step 3: Full gate.**
 
 ```
 cd packages/app && bun run typecheck
@@ -1478,7 +1490,7 @@ shares the save-payload/persistence path this card's Task 5 extends; `cache-hist
 cache-bypass guard pattern this card's `related` kind inherits; `idiom-expansion` — shares
 `lookup-card.ts`; `onboarding` — shares `content.ts`) all pass.
 
-- [ ] **Step 4: Commit + open the PR.**
+- [x] **Step 4: Commit + open the PR.**
 
 ```
 git add packages/extension-chrome/e2e/b13-related-words.spec.ts packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts
