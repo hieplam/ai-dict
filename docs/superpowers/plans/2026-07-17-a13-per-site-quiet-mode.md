@@ -1213,7 +1213,7 @@ No dedicated unit test exists for `options.ts` (composition root, e2e-covered on
 precedent as Task 4 and as C2's `options.ts` edit). This task's correctness is proven by Task 8's
 e2e; still run the typecheck gate below.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, inside `mountSettings`
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, inside `mountSettings`
       (current file, lines 84-111), fetch the quiet-sites list once on mount and wire the two new
       form events, right after the existing `error-reporting-change` listener block and before the
       trailing `if (status) form.setStatus(status);`:
@@ -1284,7 +1284,7 @@ helpers/functions in this file — unchanged.
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
