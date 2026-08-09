@@ -47,7 +47,16 @@ export class FloatingPin extends HTMLElement {
 
   disconnectedCallback(): void {
     this.removeEventListener('pointerdown', this.onPointerDown);
-    this.endDrag();
+    // Deliberately NOT endDrag() here. The unconditional bring-to-front in onPointerDown
+    // (setTimeout → parentElement.append(this)) reparents the host on EVERY pointerdown, including
+    // mid-drag; a DOM move is a remove+insert, so it fires this disconnectedCallback (then
+    // connectedCallback) in real Chromium even though the host stays in the same parent. Calling
+    // endDrag() here would tear down an in-progress drag the instant that deferred reorder fires
+    // (confirmed against real Chromium — the card moved only ~12px before the drag died). The
+    // pointermove/pointerup/pointercancel listeners live on the element and survive the reparent
+    // untouched, so the drag continues seamlessly; the gesture is always ended by onPointerUp/
+    // onPointercancel instead. A genuine removal (Close → pin.remove()) needs no endDrag: the
+    // detached element and its self-referential listeners are collected together.
   }
 
   private readonly onPointerDown = (e: PointerEvent): void => {

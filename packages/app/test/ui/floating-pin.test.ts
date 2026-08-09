@@ -122,4 +122,31 @@ describe('<floating-pin> (A7)', () => {
     expect(left).toBeGreaterThan(-1000); // clamped, not runaway-negative
     expect(top).toBe(0); // top clamps at 0
   });
+
+  it('a mid-drag bring-to-front reparent (disconnected→connected) does not abort the drag', () => {
+    // Real Chromium fires disconnectedCallback+connectedCallback when the deferred bring-to-front
+    // re-appends the host mid-drag (a DOM move is a remove+insert). happy-dom does not fire these
+    // on append(), so invoke them directly to simulate that reparent. The drag must survive: the
+    // pointermove/pointerup listeners live on the element and are untouched by the move, so only a
+    // stray endDrag() in disconnectedCallback could kill it.
+    //
+    // Deltas are chosen at/above the drag's own left-axis clamp floor (margin - offsetWidth; happy-
+    // dom reports offsetWidth 0, so that floor is 32px) so the assertions isolate the reparent
+    // regression instead of tripping the (unrelated, already-covered) edge clamp.
+    const el = mountPin();
+    placeFloatingPin(el, { left: 0, top: 0 });
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    el.append(bar);
+
+    fireDown(bar, 1, { clientX: 0, clientY: 0 });
+    fireMove(el, 1, 40, 40);
+    expect(el.style.left).toBe('40px');
+
+    el.disconnectedCallback(); // ← the mid-drag reparent, simulated
+    el.connectedCallback();
+
+    fireMove(el, 1, 100, 100);
+    expect(el.style.left).toBe('100px'); // drag survived the reparent
+  });
 });
