@@ -11,6 +11,8 @@ import {
   HoverRecallController,
   buildHighlightMatcher,
   findWordMatches,
+  registrableDomain,
+  isQuietSite,
   type SettingsStore,
   type SavedWordStatus,
   type SavedWordEntry,
@@ -29,6 +31,35 @@ import { isCommandMessage } from './command-messages';
 const inline = new InlineBottomSheetRenderer(document.body, undefined, { sidePanel: true });
 const mirror = new ChromeSidePanelMirror(chrome.runtime);
 const trigger = new ChromeFloatingTrigger();
+
+// A13: this page's registrable domain, computed once — a content script is a fresh instance per
+// page load, so there is no need to recompute this per selection (see design spec §2.4).
+const siteDomain = registrableDomain(location.hostname);
+let quietDomains: string[] = [];
+
+function refreshQuiet(): void {
+  trigger.quiet = isQuietSite(quietDomains, siteDomain);
+}
+
+/** Re-fetch the quiet-sites list and re-apply it to the trigger. Called once at startup and on
+ * every chrome.storage.onChanged event (mirrors MessageRelaySettingsStore's own "any storage
+ * change invalidates the cache" pattern, adapters/message-relay-settings-store.ts:8-12, rather
+ * than filtering on the `quiet:index` key specifically — keeping the KV key name out of the
+ * content script matches ref-kv-storage-prefixes's "adapters never interpret keys" spirit). */
+function loadQuiet(): void {
+  void chrome.runtime
+    .sendMessage({ type: 'quiet.list' })
+    .then((raw: unknown) => {
+      const reply = raw as WireReply | undefined;
+      if (reply?.ok && reply.type === 'quiet') {
+        quietDomains = reply.domains;
+        refreshQuiet();
+      }
+    })
+    .catch(() => undefined); // SW asleep / no reply — keep the last-known (or default false) state
+}
+loadQuiet();
+chrome.storage.onChanged.addListener(() => loadQuiet());
 
 // Decorate the settings store so every fetch also re-applies the reader's theme to the
 // in-page surfaces (bubble + card). The workflow fetches settings on each Define click and
@@ -326,6 +357,13 @@ document.addEventListener('toggle-status', () => {
 // was sent (domain/nudge-policy.ts) — dismissal is purely local, hiding the banner on this card.
 document.addEventListener('dismiss-nudge', () => {
   inline.dismissNudge();
+});
+
+// A13: the card's "Mute this site" header button bubbles a composed `mute-site` event with no
+// payload (the composition root computes the domain, same as every other content.ts write — see
+// design spec §2.3 for why this is one-directional/idempotent, no round-trip UI update needed).
+document.addEventListener('mute-site', () => {
+  void chrome.runtime.sendMessage({ type: 'quiet.add', domain: siteDomain }).catch(() => undefined);
 });
 
 // A3: the card's "Back to original" pill bubbles a composed `refine-back` event. This is a

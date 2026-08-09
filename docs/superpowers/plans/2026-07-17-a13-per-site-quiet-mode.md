@@ -669,7 +669,7 @@ by e2e only (same precedent as B5's/C2's `content.ts`/`options.ts` edits). This 
 correctness is proven by Task 8's e2e; still run the typecheck gate below so a regression in
 existing behavior (save/status/nudge listeners, all in the same file) is caught immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/content.ts`, add two names to the
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/content.ts`, add two names to the
       existing `@ai-dict/app` import (current file, lines 1-11):
 
 ```ts
@@ -752,7 +752,7 @@ included only to make the insertion point unambiguous; do not duplicate it.)
 Run: `cd packages/extension-chrome && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
