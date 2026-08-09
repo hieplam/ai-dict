@@ -307,7 +307,8 @@ view.addEventListener('toggle-save', () => {
                   setStatus(lastStatus);
                 }
               })
-              .catch(() => undefined);
+              .catch(() => undefined)
+              .finally(() => void refreshSiteStats()); // B15: the merge-confirmed new sense also changes the saves tally
           },
         });
         view.appendToFocus(prompt);
