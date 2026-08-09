@@ -583,4 +583,52 @@ describe('runLookupWorkflow — recursive lookup (A2)', () => {
     await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
     expect(h.renderer.lastCtx?.onBack).toBeUndefined(); // still the root — a switch is not a push
   });
+
+  it('a superseded (aborted) recursive lookup that resolves late does not corrupt the stack (A2 abort-race regression)', async () => {
+    let t = 0;
+    let resolveB!: (r: LookupResult) => void;
+    const bPending = new Promise<LookupResult>((res) => {
+      resolveB = res;
+    });
+    const h = harness({
+      now: () => t,
+      impl: (req) => {
+        if (req.word === 'inner') return bPending; // recursive B — stays in flight, then aborted
+        if (req.word === 'child') return Promise.resolve({ ...okResult, word: 'child' });
+        return Promise.resolve({ ...okResult, word: 'bank' }); // root + the superseding selection
+      },
+    });
+
+    // depth 1 root ("bank")
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(1));
+
+    // recursive lookup B ("inner") — starts, stays in flight (bPending)
+    t = COOLDOWN_MS;
+    h.selection.emit(insideSel('inner', 'inner sentence'));
+    h.trigger.click();
+
+    // supersede B with an ordinary page selection ("bank") — aborts B's controller, resets chain
+    t = 2 * COOLDOWN_MS;
+    h.selection.emit(sel);
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.calls.filter((c) => c === 'result').length).toBe(2));
+    expect(h.renderer.lastCtx?.onBack).toBeUndefined(); // fresh root of a new chain
+
+    // B resolves LATE, after being aborted — must NOT mutate the stack
+    resolveB({ ...okResult, word: 'inner' });
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // A fresh recursive lookup now pushes exactly one level; Back must return to the fresh root
+    // ("bank"), never the phantom aborted "inner" frame.
+    t = 3 * COOLDOWN_MS;
+    h.selection.emit(insideSel('child', 'child sentence'));
+    h.trigger.click();
+    await vi.waitFor(() => expect(h.renderer.lastResult?.word).toBe('child'));
+    expect(typeof h.renderer.lastCtx?.onBack).toBe('function');
+    h.renderer.lastCtx!.onBack!();
+    expect(h.renderer.lastResult?.word).toBe('bank'); // guarded: fresh root, not the phantom "inner"
+  });
 });

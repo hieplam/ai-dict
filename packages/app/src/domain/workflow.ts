@@ -197,10 +197,19 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
         providers: settings.configuredProviders,
         ...(refine !== undefined ? { refine } : {}),
       };
-      if (stackOp === 'push') stack.push(frame);
-      else if (stackOp === 'replace-top' && stack.length > 0) stack[stack.length - 1] = frame;
-      else stack = [frame]; // 'reset', or a defensive fallback for 'replace-top' on an empty stack
-      if (!controller.signal.aborted) deps.renderer.renderResult(result, buildCtx(frame));
+      // A2 abort-race guard: a superseded run (a newer selection called inFlight.abort()) whose
+      // lookup still resolves successfully — the relay client only fires a `lookup.cancel` and does
+      // not reject, and the SW reply can land as the cancel arrives — must touch NEITHER the render
+      // NOR the nav stack. An unguarded stack mutation would leave a phantom frame that inflates
+      // depth (premature depth-cap) or that Back later pops into (stale definition shown). The
+      // render was already guarded; the stack mutation moves under the SAME guard so the two stay
+      // atomic with respect to abort.
+      if (!controller.signal.aborted) {
+        if (stackOp === 'push') stack.push(frame);
+        else if (stackOp === 'replace-top' && stack.length > 0) stack[stack.length - 1] = frame;
+        else stack = [frame]; // 'reset', or a defensive fallback for 'replace-top' on an empty stack
+        deps.renderer.renderResult(result, buildCtx(frame));
+      }
     } catch (err) {
       if (!controller.signal.aborted) deps.renderer.renderError(toLookupError(err));
     } finally {
