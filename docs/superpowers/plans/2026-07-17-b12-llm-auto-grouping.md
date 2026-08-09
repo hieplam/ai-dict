@@ -1008,7 +1008,7 @@ export type OrganizeState =
 // New composed events: 'organize-click' (no detail), 'rename-tag' ({tag,newTag}), 'remove-tag' ({tag})
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/side-panel-view.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/side-panel-view.test.ts`,
       inside the existing `describe('<side-panel-view>', ...)` block, just before its closing
       `});`:
 
@@ -1129,7 +1129,7 @@ describe('B12 — organize section', () => {
 Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: failures — `.organize` section doesn't exist, `organize` is not a settable property.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
 
 1. Add the import (alongside the existing `HistoryEntry` import at `:1`):
 
@@ -1454,7 +1454,7 @@ verbatim — same footer construction, just the one extra section threaded throu
 Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: all tests pass (existing + 9 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check

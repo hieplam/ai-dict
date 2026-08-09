@@ -401,6 +401,118 @@ describe('<side-panel-view>', () => {
     };
     expect(await axeViolations(el)).toEqual([]);
   });
+
+  describe('B12 — organize section', () => {
+    it('renders the idle CTA by default and dispatches organize-click on click', () => {
+      const el = mount();
+      const section = el.shadowRoot!.querySelector('.organize')!;
+      expect(section).not.toBeNull();
+      const btn = section.querySelector<HTMLButtonElement>('.organize-btn')!;
+      expect(btn.textContent).toContain('Organize my words');
+      let fired = false;
+      el.addEventListener('organize-click', () => (fired = true));
+      btn.click();
+      expect(fired).toBe(true);
+    });
+
+    it('shows a busy row and no button while organize is busy', () => {
+      const el = mount();
+      el.organize = { kind: 'busy' };
+      const section = el.shadowRoot!.querySelector('.organize')!;
+      expect(section.querySelector('.organize-busy')).not.toBeNull();
+      expect(section.querySelector('.organize-btn')).toBeNull();
+    });
+
+    it('renders one row per group with its words on a result', () => {
+      const el = mount();
+      el.organize = {
+        kind: 'result',
+        groups: [
+          { tag: 'Finance', words: ['bank', 'equity'] },
+          { tag: 'Miscellaneous', words: ['serendipity'] },
+        ],
+        organizedCount: 3,
+        skippedCount: 0,
+      };
+      const rows = el.shadowRoot!.querySelectorAll('.tag-group');
+      expect(rows).toHaveLength(2);
+      expect(rows[0]!.querySelector<HTMLInputElement>('.tag-input')!.value).toBe('Finance');
+      expect(rows[0]!.querySelector('.tag-words')!.textContent).toBe('bank, equity');
+      expect(rows[1]!.querySelector('.tag-words')!.textContent).toBe('serendipity');
+    });
+
+    it('shows the empty-list copy when organizedCount is 0', () => {
+      const el = mount();
+      el.organize = { kind: 'result', groups: [], organizedCount: 0, skippedCount: 0 };
+      expect(el.shadowRoot!.querySelector('.organize-summary')!.textContent).toMatch(
+        /no saved words/i,
+      );
+    });
+
+    it('shows an error message and a retry button on error', () => {
+      const el = mount();
+      el.organize = { kind: 'error', message: 'Hit Gemini rate limit.' };
+      const section = el.shadowRoot!.querySelector('.organize')!;
+      expect(section.textContent).toContain('Hit Gemini rate limit.');
+      const retry = section.querySelector<HTMLButtonElement>('.organize-btn')!;
+      let fired = false;
+      el.addEventListener('organize-click', () => (fired = true));
+      retry.click();
+      expect(fired).toBe(true);
+    });
+
+    it('editing a tag input and blurring dispatches a composed rename-tag event', () => {
+      const el = mount();
+      el.organize = {
+        kind: 'result',
+        groups: [{ tag: 'Finance', words: ['bank'] }],
+        organizedCount: 1,
+        skippedCount: 0,
+      };
+      const input = el.shadowRoot!.querySelector<HTMLInputElement>('.tag-input')!;
+      let detail: { tag: string; newTag: string } | undefined;
+      document.body.addEventListener('rename-tag', (e) => {
+        detail = (e as CustomEvent<{ tag: string; newTag: string }>).detail;
+      });
+      input.value = 'Money';
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      expect(detail).toEqual({ tag: 'Finance', newTag: 'Money' });
+    });
+
+    it('an empty rename reverts the input instead of dispatching', () => {
+      const el = mount();
+      el.organize = {
+        kind: 'result',
+        groups: [{ tag: 'Finance', words: ['bank'] }],
+        organizedCount: 1,
+        skippedCount: 0,
+      };
+      const input = el.shadowRoot!.querySelector<HTMLInputElement>('.tag-input')!;
+      let fired = false;
+      el.addEventListener('rename-tag', () => (fired = true));
+      input.value = '   ';
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+      expect(fired).toBe(false);
+      expect(input.value).toBe('Finance');
+    });
+
+    it("clicking a group's trash button dispatches a composed remove-tag event", () => {
+      const el = mount();
+      el.organize = {
+        kind: 'result',
+        groups: [{ tag: 'Finance', words: ['bank'] }],
+        organizedCount: 1,
+        skippedCount: 0,
+      };
+      const del = el.shadowRoot!.querySelector<HTMLButtonElement>('.tag-del')!;
+      let detail: { tag: string } | undefined;
+      document.body.addEventListener('remove-tag', (e) => {
+        detail = (e as CustomEvent<{ tag: string }>).detail;
+      });
+      del.click();
+      expect(detail).toEqual({ tag: 'Finance' });
+    });
+  });
 });
 
 describe('<side-panel-view> Back button CSS parity (A2)', () => {
