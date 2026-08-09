@@ -442,7 +442,7 @@ git commit -m "[A12NonEnglishSource] feat: add sourceLang/sourceLangOverride req
 export const AUTO_SOURCE_LANG_PHRASE: string;
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 In `packages/app/test/default-template.test.ts`, add a new `describe` block (after the existing
 `PROMPT_ENVELOPE (B2 translation slot)` block):
@@ -514,7 +514,7 @@ Run: `cd packages/app && bunx vitest run test/default-template.test.ts test/prom
 Expected: the new/changed cases fail (`AUTO_SOURCE_LANG_PHRASE` doesn't exist yet; `PROMPT_ENVELOPE`
 still says "of English").
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/domain/default-template.ts`, change line 14's persona sentence:
 
@@ -617,7 +617,7 @@ const prompt = buildPrompt(
 Run: `cd packages/app && bunx vitest run test/default-template.test.ts test/prompt-template.test.ts`
 Expected: all pass, including the new/changed cases.
 
-- [ ] **Step 3: Run the full unit suite to catch any other test asserting the old wording:**
+- [x] **Step 3: Run the full unit suite to catch any other test asserting the old wording:**
 
 ```
 cd packages/app && bun run test
@@ -627,7 +627,7 @@ Expected: all pass (no other test in the repo asserts the literal `"learners of 
 verified by `grep -rn "learners of English" packages` returning only `legacy-templates.ts`, which
 this task does not touch).
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck

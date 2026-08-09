@@ -4,6 +4,7 @@ import {
   IDIOM_FORCE_LITERAL_INSTRUCTION,
   TRANSLATION_INSTRUCTION,
   REFINE_INSTRUCTIONS,
+  AUTO_SOURCE_LANG_PHRASE,
 } from './default-template';
 import { redactPII } from './pii';
 import type { RefineKind } from './types';
@@ -22,7 +23,7 @@ const SUPPORTED = ['word', 'context', 'target_lang', 'source_lang', 'url', 'titl
 export function renderTemplate(template: string, vars: TemplateVars): string {
   const resolved: Record<string, string | undefined> = {
     ...vars,
-    source_lang: vars.source_lang ?? 'English',
+    source_lang: vars.source_lang ?? AUTO_SOURCE_LANG_PHRASE,
   };
   return template.replace(/\{(\w+)\}/g, (match, name: string) => {
     if (!SUPPORTED.includes(name as (typeof SUPPORTED)[number])) return match;

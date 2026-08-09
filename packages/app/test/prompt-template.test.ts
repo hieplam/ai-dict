@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { renderTemplate, buildPrompt } from '../src/domain/prompt-template';
-import { DEFAULT_OUTPUT_FORMAT, REFINE_INSTRUCTIONS } from '../src/domain/default-template';
+import {
+  DEFAULT_OUTPUT_FORMAT,
+  REFINE_INSTRUCTIONS,
+  AUTO_SOURCE_LANG_PHRASE,
+} from '../src/domain/default-template';
 import type { RefineKind } from '../src/domain/types';
 
 describe('renderTemplate', () => {
@@ -23,9 +27,9 @@ describe('renderTemplate', () => {
     expect(out).toBe('bank|river bank');
     expect(out).not.toContain('http://x');
   });
-  it('defaults {source_lang} to English when not supplied', () => {
+  it('defaults {source_lang} to the neutral auto-infer phrase when not supplied (A12)', () => {
     expect(renderTemplate('{source_lang}', { word: '', context: '', target_lang: 'vi' })).toBe(
-      'English',
+      AUTO_SOURCE_LANG_PHRASE,
     );
   });
   it('leaves unknown placeholders untouched', () => {
@@ -77,6 +81,17 @@ describe('buildPrompt', () => {
     expect(out).toContain('Eng -> Eng');
     expect(out).toContain('Eng -> Vietnamese'); // {target_lang} inside the default resolved
     expect(out).toContain('bank');
+  });
+
+  it('a supplied source_lang reaches the assembled persona line (A12)', () => {
+    const out = buildPrompt(DEFAULT_OUTPUT_FORMAT, { ...vars, source_lang: 'fr' });
+    expect(out).toContain('learners of fr');
+  });
+
+  it('falls back to the neutral auto-infer phrase when source_lang is not supplied (A12)', () => {
+    const out = buildPrompt(DEFAULT_OUTPUT_FORMAT, vars); // vars has no source_lang
+    expect(out).toContain(AUTO_SOURCE_LANG_PHRASE);
+    expect(out).not.toContain('learners of English');
   });
 
   it('redacts PII in the page title before it reaches the prompt', () => {
