@@ -70,55 +70,67 @@ A11_PROBE_DIAG {"url":"http://test.fixture/sample.pdf","title":""}
 ```
 
 The navigation itself completed normally (the page's URL is the PDF's real served URL, not
-`about:blank` and not an aborted-download state) — but the document title stayed empty. Chrome's
-native PDF viewer normally sets the document title to the PDF's filename once it renders, so an
-empty title is a second, independent signal (alongside `embedCount: 0`) that the built-in
-`MimeHandlerView` PDF viewer never actually attached in this run.
+`about:blank` and not an aborted-download state) — but the document title stayed empty.
 
-**Reading — an unexpected result, reported honestly, not paraphrased away.** Assertion (a),
-`contentScriptRan: true`, is solidly confirmed in both attempts: our content scripts DO execute on
-a PDF tab's top-level document, exactly as `<all_urls>` promises — this finding is independent of
-the PDF-rendering issue below and stands on its own. Assertions (b)/(c) did **not** confirm what
-the plan expected: `embedCount: 0` (not `>= 1`) means Chrome's own PDF viewer never rendered an
-`<embed>` in this specific harness run at all. This repo's e2e harness always drives Chromium via
-`--headless=new` (`packages/extension-chrome/e2e/fixtures.ts:20`, `E2E_HEADLESS` defaults `true`
-per `packages/extension-chrome/playwright.config.ts:7`), and the evidence collected here (empty
-title, `embedCount: 0`, reproduced twice against independently-regenerated, structurally-valid
-`page.pdf()` fixtures) points at Chromium's built-in PDF-viewer `MimeHandlerView` not attaching for
-a direct navigation to an `application/pdf` response in this specific headless mode — a limitation
-of the harness/environment this probe ran in, not evidence about PDF rendering in the headed
-browser real users actually run. Root-causing that headless gap further (e.g. a `HEADED=1` rerun)
-is outside this probe's own ≤ 1 hour time box, already spent generating, running, regenerating, and
-diagnosing per the plan's Step 4 guidance — it is recorded here as a limitation of Probe 1's own
-method in this environment, not resolved by this report.
+**Root-cause follow-up (post-report investigation, same worktree, same 16638-byte fixture
+recipe) — the headless hypothesis is refuted, not confirmed.** A `HEADED=1` rerun of the identical
+harness-based probe produced the identical result:
 
-Because `embedCount` never reached `>= 1` in either attempt, this specific scripted run could
-**not** independently corroborate the "PDF content lives inside an isolated `MimeHandlerView` guest
-frame, unreachable by content scripts" mechanism end-to-end the way the plan intended — that
-specific mechanism remains grounded here in external Chromium architecture documentation only
-(Sources below), the same evidentiary standing this report would have without a scripted check for
-that one claim. What the probe DID independently and reproducibly confirm: our content scripts run
-on a PDF tab's top document (`contentScriptRan: true`, both attempts); `topDocumentText` was empty
-in both attempts too, but in this run that emptiness is confounded with "the PDF viewer never
-attached at all" rather than cleanly isolating "the viewer attached and rendered the PDF, but its
-text is unreachable from the top document" — the distinction the plan's original assertion set was
-designed to prove. A follow-up run with a **headed** Chromium (`HEADED=1`, per
-`playwright.config.ts:3`) against the same fixture would be needed to close this specific gap if a
-future card needs a definitive scripted confirmation of the guest-frame mechanism itself; that
-rerun was not performed here, per this probe's time box and per this report's brief (regenerate
-once, record both attempts honestly, do not chase further).
+```
+A11_PROBE_RESULT {"contentScriptRan":true,"topDocumentText":"","embedCount":0}
+A11_PROBE_DIAG {"title":"","url":"http://test.fixture/sample.pdf","hasEmbedTag":false,"contentType":"application/pdf"}
+```
+
+Headed vs. headless makes no difference — `embedCount: 0` in both. Two further checks pin the
+actual cause:
+
+1. A bare Playwright Chromium (`chromium.launch()`, no extension flags at all, both headless and
+   headed) navigating to the same `application/pdf` response **threw**
+   `Error: goto: Download is starting` — this browser has no PDF viewer to render the response at
+   all; it falls straight to a file download.
+2. In this repo's harness config (`--disable-extensions-except=${dist}` +
+   `--load-extension=${dist}`, `packages/extension-chrome/e2e/fixtures.ts:19-23`), the navigation
+   did not throw; the top document loaded with `document.contentType === "application/pdf"` and an
+   empty body, but no `<embed>` — i.e. the harness's `--disable-extensions-except` flag suppresses
+   the browser-level download prompt (evidence 1) but there is still no PDF-viewer extension
+   present to render one.
+
+**Precise root cause:** the Playwright-bundled **Chromium** (`bunx playwright --version` → `1.60.0`
+in this worktree — a bundled test browser, not Google Chrome) does **not ship** Chrome's built-in
+PDF Viewer component extension (`mhjfbmdgcfjbbpaeojofohoefgiehjai`); a bare instance of it treats
+`application/pdf` as a download (evidence 1 above), and this repo's harness additionally passes
+`--disable-extensions-except=${dist}`, which disables every component extension except the one
+under test (evidence 2 above). The `MimeHandlerView` `<embed>` therefore cannot render in this
+harness **regardless of `--headless=new` vs. `HEADED=1`** — confirmed by the identical headed
+rerun above. This is a limitation of the **test browser this repo's e2e harness bundles**, not of
+headless mode, and it says nothing about real Google Chrome, where the PDF Viewer component
+extension ships by default and users do get the native in-browser viewer.
+
+**Reading — an unexpected result, reported precisely, not paraphrased away.** Assertion (a),
+`contentScriptRan: true`, is solidly confirmed in both attempts (and the headed rerun): our
+content scripts DO execute on a PDF tab's top-level document, exactly as `<all_urls>` promises —
+this finding is independent of the PDF-rendering gap above and stands on its own. Assertions
+(b)/(c) did **not** confirm what the plan expected, and — per the root cause above — **cannot be
+observed with this repo's Playwright tooling at all**, headed or headless: the tooling has no PDF
+viewer to render a `MimeHandlerView` `<embed>` for `document.body.innerText`/`embed` count to ever
+detect. The "PDF text is rendered but walled off inside an isolated `MimeHandlerView` guest frame"
+half of Probe 1's intended finding therefore remains grounded exactly where it started — in
+external Chromium architecture documentation (Sources below) — not in this scripted run, and no
+further Playwright-based rerun of this probe (headed or headless) can close that gap with this
+repo's current e2e tooling.
 
 **Correction to the roadmap card's stated mechanism:** `docs/ROADMAP.md` §4 A11 says "Chrome's PDF
 viewer does not run content scripts on PDF content" — imprecise, and Probe 1's `contentScriptRan:
-true` result (confirmed in both attempts, not confounded by the headless-rendering gap above)
-already falsifies it directly: content scripts DO run on a PDF tab's top-level document. The
-stronger, guest-frame-isolation half of the mechanism (design spec §1.1) remains grounded in
-external Chromium documentation (Sources below) rather than in this specific scripted run, per the
-limitation recorded above. The distinction still matters for evaluating fixes in Probe 2: no
-`manifest.json` change (wider `matches`, more permissions) can fix a content-script-execution
-problem that Probe 1's `contentScriptRan: true` shows does not exist — per Chromium's own
-architecture docs, the actual blocker is a same-origin/site-isolation wall between two different
-extensions' processes, which no permission on this extension can cross.
+true` result (confirmed across both fixture attempts and the headed rerun, unaffected by the
+test-browser PDF-viewer gap above) already falsifies it directly: content scripts DO run on a PDF
+tab's top-level document. The stronger, guest-frame-isolation half of the mechanism (design spec
+§1.1) remains grounded in external Chromium documentation (Sources below) rather than in this
+scripted run, per the test-browser limitation above. The distinction still matters for evaluating
+fixes in Probe 2: no `manifest.json` change (wider `matches`, more permissions) can fix a
+content-script-execution problem that Probe 1's `contentScriptRan: true` shows does not exist —
+per Chromium's own architecture docs, the actual blocker in real Google Chrome is a same-origin/
+site-isolation wall between two different extensions' processes, which no permission on this
+extension can cross.
 
 ## Probe 2 — build-vs-buy: candidate approaches
 
