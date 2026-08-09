@@ -65,6 +65,86 @@ describe('DomSelectionSource (event wiring)', () => {
   });
 });
 
+describe('DomSelectionSource — A14 double-click detection (viaDoubleClick)', () => {
+  const ev: SelectionEvent = {
+    text: 'bank',
+    sentence: 'the bank.',
+    anchor: { x: 1, y: 2, w: 3, h: 4 },
+    url: 'u',
+    title: 't',
+  };
+
+  function fireOn(el: Element, event: Event) {
+    const read = vi.fn<() => SelectionEvent | null>(() => ev);
+    const src = new DomSelectionSource(document, read);
+    const cb = vi.fn();
+    src.onSelection(cb);
+    el.dispatchEvent(event);
+    return cb;
+  }
+
+  it('sets viaDoubleClick: true for a detail: 2 mouseup on a plain (unguarded) element', () => {
+    document.body.innerHTML = '<p id="plain">text</p>';
+    const cb = fireOn(
+      document.getElementById('plain')!,
+      new MouseEvent('mouseup', { bubbles: true, detail: 2 }),
+    );
+    expect(cb).toHaveBeenCalledWith({ ...ev, viaDoubleClick: true });
+    document.body.innerHTML = '';
+  });
+
+  it('does not set the flag for detail: 1 or detail: 3 (exact match, not >= 2)', () => {
+    document.body.innerHTML = '<p id="plain">text</p>';
+    const el = document.getElementById('plain')!;
+    const cb1 = fireOn(el, new MouseEvent('mouseup', { bubbles: true, detail: 1 }));
+    expect(cb1).toHaveBeenCalledWith(ev);
+    const cb3 = fireOn(el, new MouseEvent('mouseup', { bubbles: true, detail: 3 }));
+    expect(cb3).toHaveBeenCalledWith(ev);
+    document.body.innerHTML = '';
+  });
+
+  it.each(['input', 'textarea', 'select', 'button'])(
+    'does not set the flag when target is a guarded <%s>, but the selection still fires',
+    (tag) => {
+      document.body.innerHTML = `<${tag} id="g"></${tag}>`;
+      const cb = fireOn(
+        document.getElementById('g')!,
+        new MouseEvent('mouseup', { bubbles: true, detail: 2 }),
+      );
+      expect(cb).toHaveBeenCalledWith(ev); // unflagged, but still called — existing flow intact
+      document.body.innerHTML = '';
+    },
+  );
+
+  it('does not set the flag for an element nested inside a contenteditable="true" ancestor', () => {
+    document.body.innerHTML =
+      '<div id="edit" contenteditable="true"><span id="inner">x</span></div>';
+    const cb = fireOn(
+      document.getElementById('inner')!,
+      new MouseEvent('mouseup', { bubbles: true, detail: 2 }),
+    );
+    expect(cb).toHaveBeenCalledWith(ev);
+    document.body.innerHTML = '';
+  });
+
+  it('sets the flag for an <a> target — anchors are deliberately not guarded', () => {
+    document.body.innerHTML = '<a id="link" href="#">word</a>';
+    const cb = fireOn(
+      document.getElementById('link')!,
+      new MouseEvent('mouseup', { bubbles: true, detail: 2 }),
+    );
+    expect(cb).toHaveBeenCalledWith({ ...ev, viaDoubleClick: true });
+    document.body.innerHTML = '';
+  });
+
+  it('never sets the flag on a touchend, regardless of any detail-like value', () => {
+    document.body.innerHTML = '<p id="plain">text</p>';
+    const cb = fireOn(document.getElementById('plain')!, new Event('touchend', { bubbles: true }));
+    expect(cb).toHaveBeenCalledWith(ev);
+    document.body.innerHTML = '';
+  });
+});
+
 describe('defaultReader (DOM selection glue via window.getSelection)', () => {
   // Tests use DomSelectionSource with no injected reader so defaultReader runs.
   it('returns null when there is no selection (collapsed / empty)', () => {

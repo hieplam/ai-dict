@@ -119,7 +119,7 @@ existing compile-time drift guard (`wire.ts:206`,
 here. The runtime behavior these fields enable is proven by Task 2 (dom-selection-source, the
 producer of `viaDoubleClick`) and Task 3 (workflow.ts, the consumer of `doubleClickLookup`).
 
-- [ ] **Step 1: Add `SelectionEvent.viaDoubleClick?`.** In `packages/app/src/domain/types.ts`,
+- [x] **Step 1: Add `SelectionEvent.viaDoubleClick?`.** In `packages/app/src/domain/types.ts`,
       replace the `SelectionEvent` interface (currently lines 8-14):
 
 ```ts
@@ -148,7 +148,7 @@ export interface SelectionEvent {
 }
 ```
 
-- [ ] **Step 2: Add `PublicSettings.doubleClickLookup?`.** In the same file, replace the
+- [x] **Step 2: Add `PublicSettings.doubleClickLookup?`.** In the same file, replace the
       `PublicSettings` interface (currently lines 164-176):
 
 ```ts
@@ -192,7 +192,7 @@ export interface PublicSettings {
 `export interface Settings extends PublicSettings` (`types.ts:210-217`) inherits the new field
 automatically — no separate edit needed there.
 
-- [ ] **Step 3: Mirror the field on the wire schema.** In `packages/app/src/wire.ts`, replace
+- [x] **Step 3: Mirror the field on the wire schema.** In `packages/app/src/wire.ts`, replace
       `PublicSettingsSchema` (currently lines 61-68):
 
 ```ts
@@ -220,7 +220,7 @@ const PublicSettingsSchema = z.strictObject({
 }); // z.strictObject() rejects extra keys (e.g. apiKey) → enforces [S1]
 ```
 
-- [ ] **Step 4: Verify the drift guard + full suite compile.** Run:
+- [x] **Step 4: Verify the drift guard + full suite compile.** Run:
 
 ```
 cd packages/app && bun run typecheck && bun run test
@@ -231,7 +231,7 @@ PublicSettings>` check at `wire.ts:206` passes because both sides now agree); th
 Vitest suite still green (every fixture that omits `doubleClickLookup`/`viaDoubleClick` stays
 valid TypeScript — both fields are optional).
 
-- [ ] **Step 5: Commit.**
+- [x] **Step 5: Commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -261,7 +261,7 @@ function isGuardedTarget(target: EventTarget | null): boolean;
 
 **Interfaces consumed:** `SelectionEvent.viaDoubleClick?` (Task 1).
 
-- [ ] **Step 1: Write the failing tests.** In `packages/app/test/app/dom-selection-source.test.ts`,
+- [x] **Step 1: Write the failing tests.** In `packages/app/test/app/dom-selection-source.test.ts`,
       append a new `describe` block after the existing `describe('DomSelectionSource (event
 wiring)', ...)` block (i.e. right before `describe('defaultReader ...', ...)`):
 
@@ -360,7 +360,7 @@ key is missing from the actual call. The other four (`detail: 1`/`detail: 3`, th
 elements, and `touchend`) all assert `cb` was called with plain `ev` — which is already true today
 with no flag logic at all — so those four pass trivially before Step 2, and stay green after it.
 
-- [ ] **Step 2: Implement.** Replace the entire contents of
+- [x] **Step 2: Implement.** Replace the entire contents of
       `packages/app/src/app/dom-selection-source.ts` with:
 
 ```ts
@@ -451,7 +451,7 @@ cd packages/app && bunx vitest run test/app/dom-selection-source.test.ts
 Expected: all tests pass (existing 7 + 6 new = 13 blocks — the guarded-element block expands to
 4 runtime cases via `it.each`, so `vitest run` reports 16 individual test results).
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -476,7 +476,7 @@ git commit -m "[A14DoubleClickTrigger] feat: detect double-click via MouseEvent.
 **Interfaces consumed:** `SelectionEvent.viaDoubleClick?`, `PublicSettings.doubleClickLookup?`
 (Task 1); the already-existing `WorkflowDeps`/`SettingsStore`/`TriggerUI` ports are unchanged.
 
-- [ ] **Step 1: Write the failing tests.** In `packages/app/test/workflow.test.ts`, first extend
+- [x] **Step 1: Write the failing tests.** In `packages/app/test/workflow.test.ts`, first extend
       `pub()` and `harness()` (currently lines 27-59):
 
 ```ts
@@ -572,7 +572,7 @@ Expected: the 4 new tests **fail** — `viaDoubleClick`/`doubleClickLookup` aren
 yet, so every double-click selection just shows the trigger like any other selection (the first
 and fourth tests fail: no auto-fire ever happens).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/domain/workflow.ts`, replace the `onSelection`
+- [x] **Step 2: Implement.** In `packages/app/src/domain/workflow.ts`, replace the `onSelection`
       callback (currently lines 123-139):
 
 ```ts
@@ -644,7 +644,7 @@ cd packages/app && bunx vitest run test/workflow.test.ts
 
 Expected: all tests pass (existing suite + 4 new).
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -683,7 +683,7 @@ export interface SettingsFormValue {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** In `packages/app/test/ui/settings-form.test.ts`,
+- [x] **Step 1: Write the failing tests.** In `packages/app/test/ui/settings-form.test.ts`,
       replace the section-order test (currently):
 
 ```ts
@@ -773,7 +773,7 @@ cd packages/app && bunx vitest run test/ui/settings-form.test.ts
 Expected: the section-order test fails (no `'Trigger'` heading yet); the control-list test fails
 (`#dblclick-lookup` doesn't exist); the new round-trip test fails (querySelector returns `null`).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
 
   (a) Extend `SettingsFormValue` (currently lines 29-45) — add one field after `saveHistory`:
 
@@ -843,7 +843,7 @@ cd packages/app && bunx vitest run test/ui/settings-form.test.ts
 
 Expected: all tests pass (existing suite, with the two updated tests, + 1 new).
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -869,7 +869,7 @@ git commit -m "[A14DoubleClickTrigger] feat: add the Trigger section + double-cl
 **Interfaces consumed:** `PublicSettings.doubleClickLookup?` (Task 1); `SettingsStore.get()` (an
 existing port method in `packages/app/src/ports.ts` — signature unchanged).
 
-- [ ] **Step 1: Write the failing tests.** Append to
+- [x] **Step 1: Write the failing tests.** Append to
       `packages/extension-chrome/src/adapters/chrome-storage-store.test.ts`, inside the existing
       `describe('ChromeStorageStore (SettingsStore; S1 key isolation)', ...)` block:
 
@@ -912,7 +912,7 @@ Expected: both new tests **fail** — `get()` never reads `doubleClickLookup` ye
 already since the field never appears, but keep it in the same test — it must keep passing after
 Step 2 too).
 
-- [ ] **Step 2: Implement.** In `packages/extension-chrome/src/adapters/chrome-storage-store.ts`,
+- [x] **Step 2: Implement.** In `packages/extension-chrome/src/adapters/chrome-storage-store.ts`,
       replace `get()` (currently lines 44-60):
 
 ```ts
@@ -1017,7 +1017,7 @@ cd ../extension-safari && bunx vitest run src/adapters/safari-storage-store.test
 
 Expected: all tests pass in both files (existing suites + 1 new each).
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 cd packages/extension-chrome && bun run typecheck && cd ../extension-safari && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1046,7 +1046,7 @@ This task's correctness is proven by Task 7's e2e; still run the gate below so a
 existing behavior (settings save, cache/history clear, etc. — all in the same file) is caught
 immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, replace `toFormValue`
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, replace `toFormValue`
       (currently lines 67-80):
 
 ```ts
@@ -1098,7 +1098,7 @@ spread carries it through to `chrome.storage.local.set(...)` automatically, exac
 so it already carries `doubleClickLookup` through verbatim once Task 1/Task 4 land; its `save`
 listener (line 56) uses the same `{ ...cur, ...next }` spread as Chrome's.
 
-- [ ] **Step 2: Verify.**
+- [x] **Step 2: Verify.**
 
 ```
 cd packages/extension-chrome && bun run typecheck
@@ -1107,7 +1107,7 @@ cd packages/extension-chrome && bun run typecheck
 Expected: clean (no other file in this package references `SettingsFormValue`/`Settings` in a way
 that would break from the new optional field).
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 bun run lint && bun run format:check
@@ -1144,7 +1144,7 @@ export async function gotoEditableFixture(
 ): Promise<void>;
 ```
 
-- [ ] **Step 1: Add the two new fixture helpers + the settings override field.** In
+- [x] **Step 1: Add the two new fixture helpers + the settings override field.** In
       `packages/extension-chrome/e2e/helpers.ts`:
 
   (a) Add one field to `SettingsOverrides` (currently lines 24-36), after `anthropicApiKey`:
@@ -1216,7 +1216,7 @@ export async function gotoEditableFixture(
 }
 ```
 
-- [ ] **Step 2: Write the new functional spec.** Create
+- [x] **Step 2: Write the new functional spec.** Create
       `packages/extension-chrome/e2e/a14-double-click-trigger.spec.ts`:
 
 ```ts
@@ -1300,7 +1300,7 @@ cd packages/extension-chrome && bunx playwright test a14-double-click-trigger
 
 Expected: 3 passed.
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 GEMINI_API_KEY= bun run build:chrome

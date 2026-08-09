@@ -41,6 +41,9 @@ export interface SettingsFormValue {
   promptEnvelope: string;
   cacheEnabled: boolean;
   saveHistory: boolean;
+  /** A14: opt-in double-click-to-define. Optional so existing test fixtures that predate this
+   * field stay valid; collect()/the `set value()` setter always supply a concrete boolean. */
+  doubleClickLookup?: boolean;
   // B3: paint saved learning-status words on pages. See PublicSettings' doc comment (domain/types.ts).
   highlightSavedWords: boolean;
   theme: Theme;
@@ -276,6 +279,14 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
           Falls back to the full card automatically when no one-line translation is available.
         </p>
       </div>
+    </section>
+    <section class="sec" aria-labelledby="sec-trigger">
+      <h2 class="sec-h" id="sec-trigger">Trigger</h2>
+      <label class="check"><input type="checkbox" id="dblclick-lookup" /> Double-click to define</label>
+      <p class="seg-help">
+        Off by default. Double-click a word to look it up immediately, skipping the Define button — each
+        double-click spends a lookup. Never fires in text fields, form controls, or editable text.
+      </p>
     </section>
     <section class="sec" aria-labelledby="sec-priv">
       <h2 class="sec-h" id="sec-priv">Privacy &amp; data</h2>
@@ -944,6 +955,7 @@ export class SettingsForm extends HTMLElement {
       promptEnvelope: this._envelopeEdited ? this.q<HTMLTextAreaElement>('#envelope').value : '',
       cacheEnabled: this.q<HTMLInputElement>('#cache').checked,
       saveHistory: this.q<HTMLInputElement>('#history').checked,
+      doubleClickLookup: this.q<HTMLInputElement>('#dblclick-lookup').checked,
       highlightSavedWords: this.q<HTMLInputElement>('#highlight-saved').checked,
       theme: this.getThemePref(),
       glossMode: this.q<HTMLInputElement>('#gloss-mode').checked,
@@ -975,6 +987,7 @@ export class SettingsForm extends HTMLElement {
     this._envelopeEdited = hasOverride;
     this.q<HTMLInputElement>('#cache').checked = v.cacheEnabled;
     this.q<HTMLInputElement>('#history').checked = v.saveHistory;
+    this.q<HTMLInputElement>('#dblclick-lookup').checked = v.doubleClickLookup ?? false;
     this.q<HTMLInputElement>('#highlight-saved').checked = v.highlightSavedWords;
     this.q<HTMLInputElement>('#gloss-mode').checked = v.glossMode === true;
     this.setThemePref(v.theme);

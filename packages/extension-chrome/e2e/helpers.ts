@@ -53,6 +53,8 @@ export interface SettingsOverrides {
   highlightSavedWords?: boolean;
   /** A5: opt-in compact gloss render mode. Omit to exercise the default-off path. */
   glossMode?: boolean;
+  /** A14: opt-in double-click-to-define. Omit to exercise the default-off path. */
+  doubleClickLookup?: boolean;
 }
 
 /** Write a full settings object to storage. Overrides merge onto sensible defaults. */
@@ -355,4 +357,50 @@ export async function relayCommand(
     if (!tab?.id) throw new Error('no active tab found for command relay');
     await chrome.tabs.sendMessage(tab.id, { type: 'command', command: cmd }).catch(() => undefined);
   }, command);
+}
+
+/**
+ * A14: like selectWord, but dispatches the synthetic mouseup ON the container element (not
+ * document) with detail: 2 — the UI Events click-count value a real double-click's second
+ * mouseup carries. Dispatching on the container (not document) means `event.target` is that
+ * element, so DomSelectionSource's `isGuardedTarget(ev.target)` check exercises the real guard
+ * list against whatever element actually contains the word.
+ */
+export async function dblclickWord(page: Page, id: string, word: string): Promise<void> {
+  await page.evaluate(
+    ({ id, word }) => {
+      const container = document.getElementById(id)!;
+      const textNode = container.firstChild!;
+      const text = textNode.textContent ?? '';
+      const start = text.indexOf(word);
+      const range = document.createRange();
+      range.setStart(textNode, start);
+      range.setEnd(textNode, start + word.length);
+      const sel = window.getSelection()!;
+      sel.removeAllRanges();
+      sel.addRange(range);
+      container.dispatchEvent(new MouseEvent('mouseup', { bubbles: true, detail: 2 }));
+    },
+    { id, word },
+  );
+}
+
+/**
+ * A14: like gotoFixture, but the page also ships a `<div id="edit" contenteditable="true">`
+ * region — the guarded-target e2e proves the double-click bypass never fires inside it even
+ * with the feature switched on.
+ */
+export async function gotoEditableFixture(
+  page: Page,
+  paragraph = 'The bank by the river is steep.',
+  editableText = 'Edit this bank statement.',
+): Promise<void> {
+  await page.route('http://test.fixture/', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'text/html',
+      body: `<html><body><p id="t">${paragraph}</p><div id="edit" contenteditable="true">${editableText}</div></body></html>`,
+    }),
+  );
+  await page.goto('http://test.fixture/');
 }

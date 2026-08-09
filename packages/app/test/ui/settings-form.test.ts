@@ -890,7 +890,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
     }
   });
 
-  it('groups controls into Connection, Translation, Appearance, Privacy & data, Saved words, Backup & restore, and Quiet sites sections', () => {
+  it('groups controls into Connection, Translation, Appearance, Trigger, Privacy & data, Saved words, Backup & restore, and Quiet sites sections', () => {
     const el = mountForm();
     const heads = [...el.shadowRoot!.querySelectorAll('.sec .sec-h')].map((h) => h.textContent);
     // 'Developer mode' is a hidden section (revealed only by the Konami code) sitting after Translation.
@@ -900,6 +900,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
       'Translation',
       'Developer mode',
       'Appearance',
+      'Trigger',
       'Privacy & data',
       'Saved words',
       'Backup & restore',
@@ -919,6 +920,7 @@ describe('<settings-form> fully themed (§5.8)', () => {
       '#theme',
       '#cache',
       '#history',
+      '#dblclick-lookup',
       '#save',
       '#test',
       '#clear-cache',
@@ -933,6 +935,35 @@ describe('<settings-form> fully themed (§5.8)', () => {
     ]) {
       expect(r.querySelector(sel), `${sel} must still exist`).not.toBeNull();
     }
+  });
+
+  it('A14: #dblclick-lookup defaults unchecked, round-trips through value/collect, and rides the save event', () => {
+    const el = mountForm();
+    const checkbox = el.shadowRoot!.querySelector<HTMLInputElement>('#dblclick-lookup')!;
+    expect(checkbox.checked).toBe(false);
+    el.value = {
+      provider: 'gemini',
+      apiKey: '',
+      openaiApiKey: '',
+      anthropicApiKey: '',
+      promptEnvelope: '',
+      targetLang: 'vi',
+      outputFormat: 'T',
+      cacheEnabled: true,
+      saveHistory: true,
+      highlightSavedWords: true,
+      theme: 'sepia',
+      doubleClickLookup: true,
+    };
+    expect(checkbox.checked).toBe(true);
+    let captured: SettingsFormValue | undefined;
+    el.addEventListener('save', (e) => {
+      captured = (e as CustomEvent<SettingsFormValue>).detail;
+    });
+    el.shadowRoot!.querySelector('form')!.dispatchEvent(
+      new Event('submit', { bubbles: true, cancelable: true }),
+    );
+    expect(captured!.doubleClickLookup).toBe(true);
   });
 
   it('uses a single adopted stylesheet', () => {

@@ -2,6 +2,18 @@ import type { SelectionSource, SelectionEvent, AnchorRect } from '../index';
 
 const TERMINATORS = ['.', '!', '?'];
 
+// A14: elements where a native double-click means "select text to edit/operate", not "define
+// this word" — the opt-in double-click trigger stays silent there. The ordinary select-then-
+// click-the-button flow is completely UNCHANGED for these elements (this guard only ever
+// suppresses the extra `viaDoubleClick` flag, never the SelectionEvent itself). `a` (anchor) is
+// deliberately NOT in this list — see the design spec's "Guard list" section (§3).
+const GUARDED_SELECTOR =
+  'input, textarea, select, button, [contenteditable]:not([contenteditable="false"])';
+
+function isGuardedTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(GUARDED_SELECTOR) !== null;
+}
+
 // A15: cheap, permanent instrumentation mark — the earliest synchronous JS observation of "the
 // browser told us the selection gesture ended." See docs/superpowers/specs/
 // 2026-07-17-a15-trigger-latency-budget-design.md §3.
@@ -55,11 +67,17 @@ export class DomSelectionSource implements SelectionSource {
   ) {}
 
   onSelection(cb: (e: SelectionEvent) => void): () => void {
-    const handler = (): void => {
+    const handler = (ev: Event): void => {
       const e = this.read();
       if (e) {
         performance.mark(SELECTION_FIRED_MARK);
-        cb(e);
+        // A14: a native double-click (MouseEvent.detail === 2) on a non-guarded element is a
+        // fast-path signal distinct from an ordinary drag-select or the touchend path — flagged
+        // here (the one call site with real DOM/event access) so runLookupWorkflow can decide
+        // whether to bypass the trigger button. See design spec §3.
+        const viaDoubleClick =
+          ev.type === 'mouseup' && (ev as MouseEvent).detail === 2 && !isGuardedTarget(ev.target);
+        cb(viaDoubleClick ? { ...e, viaDoubleClick: true } : e);
       }
     };
     for (const t of ['mouseup', 'touchend'] as const) this.doc.addEventListener(t, handler);

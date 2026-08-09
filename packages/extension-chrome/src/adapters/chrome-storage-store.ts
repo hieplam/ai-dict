@@ -62,6 +62,9 @@ export class ChromeStorageStore implements SettingsStore {
       glossMode: s?.glossMode ?? false,
       // B3: legacy stored settings lack the key — default true (see PublicSettings' doc comment).
       highlightSavedWords: s?.highlightSavedWords ?? true,
+      // A14: never emit an explicit `false` — omit the key entirely when unset so every existing
+      // exact `toEqual({...})` assertion in this file's other tests keeps passing unmodified.
+      ...(s?.doubleClickLookup ? { doubleClickLookup: true } : {}),
     };
   }
 
