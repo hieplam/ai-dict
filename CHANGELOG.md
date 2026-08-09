@@ -1,5 +1,52 @@
 # Changelog
 
+## [1.12.0](https://github.com/hieplam/ai-dict/compare/v1.11.2...v1.12.0) (2026-08-09)
+
+
+### Features
+
+* add buildReviewDeck domain policy (B11) ([853cf6e](https://github.com/hieplam/ai-dict/commit/853cf6ead4b66c25d1ddee1e65e7526b2ca71656))
+* add e2e coverage for the casual review flip (B11) ([94e5f48](https://github.com/hieplam/ai-dict/commit/94e5f48b57640288c360fbf682db2e4dc0d44da0))
+* add e2e coverage for the Sites section (B15) ([a8c1a65](https://github.com/hieplam/ai-dict/commit/a8c1a65980c4e97d3b53e60e823eb3c412bb6850))
+* add site-stats-policy pure domain function (B15) ([18304d4](https://github.com/hieplam/ai-dict/commit/18304d406e100067e8e962c9b94fbc4ee4730155))
+* add Sites section to side-panel-view (B15) ([bb0f2f1](https://github.com/hieplam/ai-dict/commit/bb0f2f16b5620ff160546b1c595d5871c3a97faf))
+* add the Review entry point to the side panel header (B11) ([0285471](https://github.com/hieplam/ai-dict/commit/028547190af9cd2e1a00ea73f95f8be76be70eb4))
+* add the review-flip-view custom element (B11) ([1b97704](https://github.com/hieplam/ai-dict/commit/1b977044487edb50bf5d7dbd73b7c0511fa9af83))
+* additive tags field on SavedWordEntry (B12) ([b8961cd](https://github.com/hieplam/ai-dict/commit/b8961cdcf0852b57fa83f2886c7b04553ec07b5f))
+* auto-group-policy prompt builder + response parser (B12) ([9ac2bb5](https://github.com/hieplam/ai-dict/commit/9ac2bb54ce5bd6520fa477cf0fa2e572a19bf92d))
+* **b14:** sense-aware dedup for re-saving an existing headword ([b553782](https://github.com/hieplam/ai-dict/commit/b553782bf0238b7f1bcea1b08761923f0f493425))
+* buildMergePrompt UI helper (B14) ([5d7553e](https://github.com/hieplam/ai-dict/commit/5d7553ec302c3e411cd3db4e081fe639c25a9073))
+* card-side merge-prompt CSS + toggle-save conflict wiring (B14) ([4ff7113](https://github.com/hieplam/ai-dict/commit/4ff7113a6494cbceda43d753b541feab3e79b0a9))
+* casual review flip (B11) ([2872453](https://github.com/hieplam/ai-dict/commit/287245372aa266691eadc127bc72cd1bb9500674))
+* e2e coverage for organize/rename/remove/error paths (B12) ([bc2f544](https://github.com/hieplam/ai-dict/commit/bc2f54421f1a1c23c5bc4442e5ffd3fc9485f20f))
+* e2e coverage for the sense-aware dedup merge-prompt flow (B14) ([ec5bcfd](https://github.com/hieplam/ai-dict/commit/ec5bcfdbb6136c6412c71cc3f5eeec402f9f087c))
+* LLM auto-grouping for saved words (B12) ([abccade](https://github.com/hieplam/ai-dict/commit/abccade63c3bd44f9b13c6ccb2570e9609be35c6))
+* non-English source pages (A12) ([0cba1c2](https://github.com/hieplam/ai-dict/commit/0cba1c269702c0b908ff91542d290226bfab25b8))
+* panel-side merge-prompt wiring (B14) ([0beee49](https://github.com/hieplam/ai-dict/commit/0beee49c432924a83384e4a2e8817676d946c662))
+* Saved words organize section in the side panel (B12) ([8701d89](https://github.com/hieplam/ai-dict/commit/8701d895f60318ca84fca49d45227ca3a7ece074))
+* saved.organize/saved.setTags wire messages + router (B12) ([39df921](https://github.com/hieplam/ai-dict/commit/39df9212ff9feacdf7c720c7d92ad349e2d5367d))
+* savedWordSetTags domain function (B12) ([6ab5c66](https://github.com/hieplam/ai-dict/commit/6ab5c66db06f50e887cd218275a019fb52ed98fd))
+* sense-aware dedup — upsert conflict result + wire/router (B14) ([488bdc0](https://github.com/hieplam/ai-dict/commit/488bdc0c8b348ac9cb56f87bdd28b28ef70e110a))
+* side-panel.ts confirm/wire/tag-edit wiring (B12) ([13f1ab5](https://github.com/hieplam/ai-dict/commit/13f1ab5c6eec1608a30ea0f327fa82e6590fada4))
+* SidePanelView.appendToFocus + merge-prompt CSS (B14) ([2a445c1](https://github.com/hieplam/ai-dict/commit/2a445c153f21900ef10d49d5d6d6a10f88bb73bc))
+* site lookup stats (B15) ([56e67c6](https://github.com/hieplam/ai-dict/commit/56e67c607fdf029dbe7406606395e35d447ad907))
+* weekly digest — e2e coverage for the This week section (B10) ([cc4e52b](https://github.com/hieplam/ai-dict/commit/cc4e52b00dae8bc237c1606a27c8eacd401d466f))
+* weekly digest — fetch + compute the digest once on panel boot (B10) ([d772076](https://github.com/hieplam/ai-dict/commit/d77207675160ebf8a2bb6b3cd764b04ab4ebc9ed))
+* weekly digest — HISTORY_CAP, computeWeeklyDigest, and HistoryEntry url/title (B10) ([6538c86](https://github.com/hieplam/ai-dict/commit/6538c86f08d165cacbeb36b4d1730e054755b333))
+* weekly digest — side panel "This week" summary (B10) ([4333494](https://github.com/hieplam/ai-dict/commit/4333494762c613364c5d5ef9de5e2e7640de63e7))
+* weekly digest — This week section on SidePanelView (B10) ([62524d6](https://github.com/hieplam/ai-dict/commit/62524d6a76bffbf3f6304d16999b614e3ca6770c))
+* wire site-stats fetch/refresh into side-panel.ts (B15) ([a02ac10](https://github.com/hieplam/ai-dict/commit/a02ac10061bd49b12b185b5f94e10b19472cff68))
+* wire the Review entry point to the deck fetch and panel swap (B11) ([c5f6574](https://github.com/hieplam/ai-dict/commit/c5f657450faeea82f9899812749d8afc4050b2e0))
+
+
+### Bug Fixes
+
+* keep the source-language override row in-page-only (A12) ([b2ff83c](https://github.com/hieplam/ai-dict/commit/b2ff83c94dc27810b8625c5adf48ba9e496c015f))
+* name the 200-word cap in the organize idle copy (B12) ([97732e9](https://github.com/hieplam/ai-dict/commit/97732e92b7c5dfa6de32f83f39cd880210e00d77))
+* poll storage instead of reading it synchronously in the B14 idempotent-resave e2e test ([36474f5](https://github.com/hieplam/ai-dict/commit/36474f5cb8bf51597ba0b5068fd5e0dd1eb17802))
+* refresh site tally after a merge-confirmed new sense (B15) ([eace028](https://github.com/hieplam/ai-dict/commit/eace02816234aedbf58759483d2a7657c4817133))
+* thread source_lang into the Gemini streaming prompt (A12) ([78a2ab6](https://github.com/hieplam/ai-dict/commit/78a2ab62a5a9bb35c189b7d09345880b83623e1e))
+
 ## [1.11.2](https://github.com/hieplam/ai-dict/compare/v1.11.1...v1.11.2) (2026-08-09)
 
 
