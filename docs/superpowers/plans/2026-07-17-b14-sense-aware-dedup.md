@@ -1360,7 +1360,7 @@ git commit -m "feat: panel-side merge-prompt wiring (B14)"
 
 - Create: `packages/extension-chrome/e2e/b14-sense-aware-dedup.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b14-sense-aware-dedup.spec.ts`:
+- [x] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b14-sense-aware-dedup.spec.ts`:
 
 ```ts
 import { test, expect } from './fixtures';
@@ -1484,7 +1484,7 @@ cd packages/extension-chrome && bunx playwright test b14-sense-aware-dedup
 
 Expected: 3 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
