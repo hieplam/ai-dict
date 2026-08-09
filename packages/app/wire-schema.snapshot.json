@@ -249,6 +249,43 @@
         "properties": {
           "type": {
             "type": "string",
+            "const": "saved.organize"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "saved.setTags"
+          },
+          "word": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "type",
+          "word",
+          "tags"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
             "const": "saved.setRelated"
           },
           "word": {
@@ -1013,6 +1050,55 @@
           },
           "type": {
             "type": "string",
+            "const": "organized"
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "tag": {
+                  "type": "string"
+                },
+                "words": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "required": [
+                "tag",
+                "words"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "organizedCount": {
+            "type": "number"
+          },
+          "skippedCount": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "ok",
+          "type",
+          "groups",
+          "organizedCount",
+          "skippedCount"
+        ],
+        "additionalProperties": false
+      },
+      {
+        "type": "object",
+        "properties": {
+          "ok": {
+            "type": "boolean",
+            "const": true
+          },
+          "type": {
+            "type": "string",
             "const": "saved.conflict"
           },
           "word": {
@@ -1349,6 +1435,8 @@
               "saved.save",
               "saved.delete",
               "saved.setStatus",
+              "saved.organize",
+              "saved.setTags",
               "saved.setRelated",
               "saved.list",
               "backup.import",

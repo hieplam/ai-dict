@@ -190,6 +190,17 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
     word: z.string(),
     status: z.enum(['learning', 'known']),
   }),
+  // B12: cluster ALL saved words (server-reads the list itself, capped at 200 most-recent — see
+  // auto-group-policy.ts) into topic tags via ONE model call. Payload-free; gated client-side by
+  // an explicit confirm() before this is ever sent (constraint 4).
+  z.object({ type: z.literal('saved.organize') }),
+  // B12: overwrite one word's tag array — used by both the post-organize persistence step and
+  // the tag-edit UI (rename/remove), never by a model call.
+  z.object({
+    type: z.literal('saved.setTags'),
+    word: z.string(),
+    tags: z.array(z.string()),
+  }),
   // B13: patch the related-words list onto an ALREADY-saved entry's current sense. No-op
   // server-side (replies ack, writes nothing) when the word isn't currently saved — see
   // domain/saved-words-policy.ts's savedWordSetRelated. Sent automatically by content.ts the
@@ -255,6 +266,8 @@ const MessageTypeEnum = z.enum([
   'saved.save',
   'saved.delete',
   'saved.setStatus',
+  'saved.organize',
+  'saved.setTags',
   'saved.setRelated',
   'saved.list',
   'backup.import',
@@ -281,6 +294,16 @@ export const WireReplySchema = z.union([
   }),
   z.object({ ok: z.literal(true), type: z.literal('ack') }),
   z.object({ ok: z.literal(true), type: z.literal('saved'), entry: SavedWordEntrySchema }),
+  // B12: the parsed+persisted clustering result. `groups` mirrors domain/auto-group-policy.ts's
+  // TagGroup shape (kept as an inline zod shape here, like every other reply-only arm — no
+  // AssertEqual drift guard needed since there is no single persisted domain type this mirrors).
+  z.object({
+    ok: z.literal(true),
+    type: z.literal('organized'),
+    groups: z.array(z.strictObject({ tag: z.string(), words: z.array(z.string()) })),
+    organizedCount: z.number(),
+    skippedCount: z.number(),
+  }),
   // B14: returned instead of `saved` when `word` already has a saved entry with a DIFFERENT
   // sentence+url than the incoming payload and confirmNewSense wasn't set — NO write happened.
   // The caller must re-send saved.save with confirmNewSense:true to append, or do nothing

@@ -4,6 +4,7 @@ import { fakeStorage } from '../fakes';
 import {
   historyList,
   historyAppend,
+  savedWordUpsert,
   type LookupResult,
   type WireMessage,
   type LookupRequest,
@@ -1126,6 +1127,87 @@ describe('buildRouter', () => {
     const router = buildRouter({ ...d, onLookupChunk: vi.fn() });
     await router(lookupMsg('r4'));
     expect(typeof capturedOpts?.['onChunk']).toBe('function');
+  });
+
+  it('saved.organize with no saved words replies organized/0 without calling the client (B12)', async () => {
+    const d = deps();
+    const reply = await buildRouter(d)({ type: 'saved.organize' });
+    expect(reply).toEqual({
+      ok: true,
+      type: 'organized',
+      groups: [],
+      organizedCount: 0,
+      skippedCount: 0,
+    });
+    expect(d.client.lookup).not.toHaveBeenCalled();
+  });
+
+  it('saved.organize calls the client once, persists tags, and replies the parsed groups (B12)', async () => {
+    const d = deps({
+      client: {
+        lookup: makeLookupMock(() =>
+          Promise.resolve({
+            ...result,
+            markdown: JSON.stringify([{ tag: 'Finance', words: ['bank'] }]),
+          }),
+        ),
+      },
+    });
+    await savedWordUpsert(
+      { storage: d.kv },
+      {
+        word: 'bank',
+        definition: 'A financial institution.',
+        translation: '',
+        sentence: 's',
+        url: '',
+        title: '',
+      },
+    );
+    const reply = await buildRouter(d)({ type: 'saved.organize' });
+    expect(d.client.lookup).toHaveBeenCalledTimes(1);
+    expect(d.client.lookup.mock.calls[0]?.[0].promptEnvelope).toContain('"bank"');
+    expect(reply).toEqual({
+      ok: true,
+      type: 'organized',
+      groups: [{ tag: 'Finance', words: ['bank'] }],
+      organizedCount: 1,
+      skippedCount: 0,
+    });
+    const stored = JSON.parse((await d.kv.getItem('saved:bank'))!) as { tags?: string[] };
+    expect(stored.tags).toEqual(['Finance']);
+  });
+
+  it('saved.organize replies ok:false/PARSE and writes no tags on a malformed model response (B12)', async () => {
+    const d = deps({
+      client: {
+        lookup: makeLookupMock(() => Promise.resolve({ ...result, markdown: 'not json' })),
+      },
+    });
+    await savedWordUpsert(
+      { storage: d.kv },
+      { word: 'bank', definition: 'def', translation: '', sentence: 's', url: '', title: '' },
+    );
+    const reply = await buildRouter(d)({ type: 'saved.organize' });
+    expect(reply).toMatchObject({ ok: false, type: 'saved.organize', error: { code: 'PARSE' } });
+    const stored = JSON.parse((await d.kv.getItem('saved:bank'))!) as { tags?: string[] };
+    expect(stored.tags).toBeUndefined();
+  });
+
+  it('saved.setTags updates an existing entry and returns it (B12)', async () => {
+    const d = deps();
+    await savedWordUpsert(
+      { storage: d.kv },
+      { word: 'bank', definition: 'def', translation: '', sentence: 's', url: '', title: '' },
+    );
+    const reply = await buildRouter(d)({ type: 'saved.setTags', word: 'bank', tags: ['Finance'] });
+    expect(reply).toMatchObject({ ok: true, type: 'saved', entry: { tags: ['Finance'] } });
+  });
+
+  it('saved.setTags on an unsaved word replies ack (idempotent no-op) (B12)', async () => {
+    const d = deps();
+    const reply = await buildRouter(d)({ type: 'saved.setTags', word: 'ghost', tags: ['x'] });
+    expect(reply).toEqual({ ok: true, type: 'ack' });
   });
 });
 

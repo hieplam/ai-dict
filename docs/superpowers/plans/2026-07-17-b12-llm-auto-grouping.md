@@ -697,7 +697,7 @@ git commit -m "feat: auto-group-policy prompt builder + response parser (B12)" \
 // saved.setTags reuses the existing 'saved' reply arm (entry now carries tags).
 ```
 
-- [ ] **Step 1: Write the failing tests.** Add `savedWordUpsert` to the existing import list from
+- [x] **Step 1: Write the failing tests.** Add `savedWordUpsert` to the existing import list from
       `'../../src'` at the top of `packages/app/test/app/router.test.ts` (it currently imports
       `historyList, historyAppend, type LookupResult, type WireMessage, type LookupRequest, type
 PublicSettings` — add `savedWordUpsert` alongside them). Then append, inside the existing
@@ -792,7 +792,7 @@ errors) and `buildRouter` has no matching cases (runtime: `msg.type` falls throu
 switch, which today is a compile error the moment the test file references the new message
 literals — this is expected and resolves once Step 2 lands both halves together).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/wire.ts`, add two new `WireMessageSchema` arms right after the existing
 `saved.setStatus` arm (`:123-127`):
@@ -973,7 +973,7 @@ cd packages/app && bunx vitest run test/app/router.test.ts test/wire-schema.test
 
 Expected: all pass (existing + 5 new router tests; snapshot stable).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
