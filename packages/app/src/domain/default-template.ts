@@ -79,4 +79,7 @@ export const REFINE_INSTRUCTIONS: Record<RefineKind, string> = {
   examples: `The reader wants MORE EXAMPLES. In addition to the normal sections, add a new "**More examples**" section with 2-3 additional short example sentences that use "{word}" naturally in DIFFERENT contexts from the original sentence.`,
   etymology: `The reader wants this word's ETYMOLOGY. In addition to the normal sections, add a new "**Etymology**" section explaining the word's origin, root language, and how its meaning evolved to today's usage.`,
   usage: `The reader wants to know how to USE this word. In addition to the normal sections, add a new "**How to use it**" section covering common collocations, register (formal/informal), and one short natural example sentence using "{word}".`,
+  related: `The reader wants this word's RELATED WORDS — synonyms, antonyms, and word-family members (words sharing the same root), disambiguated for THIS sentence context. In addition to the normal sections, add a new "**Related words**" section listing them, grouped under "Synonyms", "Antonyms", and "Family" sub-headings where each group has at least one entry (omit an empty group entirely). Immediately after the TRANSLATION line, before any other output, also emit exactly this line:
+RELATED: "word1, word2, word3"
+List at most 8 comma-separated words or short phrases, most relevant to "{word}" in this sentence context first, no explanations on that line.`,
 };

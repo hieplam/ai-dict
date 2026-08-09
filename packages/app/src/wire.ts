@@ -20,7 +20,7 @@ const LookupErrorSchema = z.strictObject({
 
 const ProviderEnum = z.enum(['gemini', 'openai', 'anthropic']);
 
-const RefineKindEnum = z.enum(['simpler', 'examples', 'etymology', 'usage']);
+const RefineKindEnum = z.enum(['simpler', 'examples', 'etymology', 'usage', 'related']);
 
 // A8: the idiom/literal unit the model actually defined.
 const DefinedAsSchema = z.strictObject({ term: z.string(), isIdiom: z.boolean() });
@@ -60,6 +60,8 @@ const LookupResultSchema = z.strictObject({
   translation: z.string().optional(),
   // B7: set once, ever, per word — see LookupResult.nudge's doc comment (domain/types.ts).
   nudge: z.boolean().optional(),
+  // B13: parsed RELATED words for this sense; present only on a 'related' refine result.
+  related: z.array(z.string()).optional(),
 });
 
 const PublicSettingsSchema = z.strictObject({
@@ -87,6 +89,8 @@ const SavedWordSenseSchema = z.strictObject({
   sentence: z.string(),
   url: z.string(),
   title: z.string(),
+  // B13: additive under the E1 lock — see domain/types.ts's SavedWordSense.related doc comment.
+  related: z.array(z.string()).optional(),
 });
 
 // B1: the ratified saved-word entry shape (escalation E1). No `id` field — the (normalized)
@@ -165,6 +169,15 @@ export const WireMessageSchema = z.discriminatedUnion('type', [
     word: z.string(),
     status: z.enum(['learning', 'known']),
   }),
+  // B13: patch the related-words list onto an ALREADY-saved entry's current sense. No-op
+  // server-side (replies ack, writes nothing) when the word isn't currently saved — see
+  // domain/saved-words-policy.ts's savedWordSetRelated. Sent automatically by content.ts the
+  // instant a 'related' refine result renders; never sent by any explicit UI button.
+  z.object({
+    type: z.literal('saved.setRelated'),
+    word: z.string(),
+    related: z.array(z.string()),
+  }),
   // B8: read every saved word (no pagination — mirrors savedWordsList's "full list" contract,
   // saved-words-policy.ts:108-109). Read-only; the only caller today is the Anki/CSV/Markdown
   // export flow in settings-form.ts.
@@ -215,6 +228,7 @@ const MessageTypeEnum = z.enum([
   'saved.save',
   'saved.delete',
   'saved.setStatus',
+  'saved.setRelated',
   'saved.list',
   'backup.import',
   'saved.learningWords',

@@ -15,10 +15,11 @@ export interface SelectionEvent {
 
 /**
  * A3: the fixed v1 refine chip kinds — one-shot re-runs of a lookup asking for a different cut
- * of the same answer. B13 (a later, separate card) appends 'related' to this union — see the A3
- * design spec §2.8 for the full extension-point contract. Do not add 'related' here.
+ * of the same answer. B13 (wave 2) appended 'related' — the result of that refine, when the
+ * word is currently saved, is what B13 persists onto the saved entry's current sense (see
+ * domain/saved-words-policy.ts's savedWordSetRelated and this card's design spec §2.4/§2.5).
  */
-export type RefineKind = 'simpler' | 'examples' | 'etymology' | 'usage';
+export type RefineKind = 'simpler' | 'examples' | 'etymology' | 'usage' | 'related';
 
 export interface LookupRequest {
   word: string;
@@ -97,6 +98,14 @@ export interface LookupResult {
    * ever" (roadmap B7 scope fence).
    */
   nudge?: boolean | undefined;
+  /**
+   * B13: the model's RELATED words for this sense (synonyms/antonyms/family), extracted from
+   * the RELATED: "..." signal line emitted per REFINE_INSTRUCTIONS.related (see
+   * domain/related-line.ts's parseRelated) — present only on a result from a `'related'` refine
+   * call. Transient result metadata, like `translation`; NOT itself the persisted field (that is
+   * SavedWordSense.related, written by content.ts via the saved.setRelated wire message).
+   */
+  related?: string[] | undefined;
 }
 
 /**
@@ -251,6 +260,17 @@ export interface SavedWordSense {
   sentence: string;
   url: string;
   title: string;
+  /**
+   * B13: synonyms/antonyms/word-family for this specific sense, captured from a 'related' refine
+   * tap and persisted ONLY while this headword is already saved (see savedWordSetRelated). Absent
+   * on every entry saved before this card, and on any sense the reader never tapped the chip for
+   * — never blocks rendering (per-sense, per design spec §2.4; ADDITIVE under the E1 lock, per
+   * docs/ROADMAP.md's Decision Log 2026-07-10 B1/B2 entry which names this exact field).
+   * Declared `string[] | undefined` (not just `string[]`) to match `exactOptionalPropertyTypes`
+   * (tsconfig.base.json) and the wire schema's z.array().optional() inferred shape — same
+   * pattern this file already uses for LookupResult.nudge/translation/related above.
+   */
+  related?: string[] | undefined;
 }
 
 /**

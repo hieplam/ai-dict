@@ -106,7 +106,7 @@ const RefineKindEnum = z.enum(['simpler', 'examples', 'etymology', 'usage', 'rel
 export const REFINE_INSTRUCTIONS: Record<RefineKind, string>; // default-template.ts, gains a `related` key
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Modify `packages/app/test/default-template.test.ts`: find A3's existing test inside
 `describe('REFINE_INSTRUCTIONS', ...)`:
@@ -259,7 +259,7 @@ Expected: failures — `REFINE_INSTRUCTIONS.related` is not exported yet, `Looku
 `SavedWordSenseSchema` reject the extra `related` key (strict-object rejection), `RefineKindEnum`
 rejects `'related'`.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/domain/types.ts`, replace the existing A3 `RefineKind` type + its doc comment
 (currently ending "...B13 (a later, separate card) appends 'related' to this union — see the A3
@@ -342,7 +342,7 @@ cd packages/app && bunx vitest run test/default-template.test.ts test/wire-schem
 
 Expected: all tests pass (existing + the ones modified/added in Step 1).
 
-- [ ] **Step 3: Regenerate the wire JSON-schema snapshot.**
+- [x] **Step 3: Regenerate the wire JSON-schema snapshot.**
 
 ```
 cd packages/app && bunx vitest run test/wire-schema.test.ts -u
@@ -358,7 +358,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts
 
 Expected: all pass, no further snapshot diff.
 
-- [ ] **Step 4: Gate + commit.**
+- [x] **Step 4: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -386,7 +386,7 @@ git commit -m "[B13RelatedWords] feat: widen RefineKind + add related fields to 
 export function parseRelated(markdown: string): { related?: string[]; body: string }; // domain/related-line.ts
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Create `packages/app/test/related-line.test.ts`:
 
@@ -526,7 +526,7 @@ cd packages/app && bunx vitest run test/app/gemini-lookup-client.test.ts
 
 Expected: failures — `result.related` is always undefined (not wired yet).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 Create `packages/app/src/domain/related-line.ts`:
 
@@ -611,7 +611,19 @@ cd packages/app && bunx vitest run test/related-line.test.ts test/app/gemini-loo
 
 Expected: all tests pass (existing + the ones added in Step 1).
 
-- [ ] **Step 3: Gate + commit.**
+> **Correction (found during implementation, fixed in commit `95b4aaa`):** `http-lookup-client.ts`
+> is NOT the only parse site. `packages/app/src/app/gemini-streaming.ts` (`runGeminiStreamingLookup`)
+> is the DEFAULT live path every real Gemini lookup takes whenever `onChunk` is attached (which the
+> composition root always does), and it builds its own `LookupResult` via its own
+> `parseDefinedAs`/`parseTranslation` chain — both per-chunk and in its final tail construction.
+> `parseRelated` MUST also be wired there (mirroring this section), or the `RELATED:` line leaks into
+> the streamed card and `result.related` is always undefined on real traffic. The `bothResolved`
+> stream-start gate must stay `definedAs && translation` only — never gate on RELATED (non-`related`
+> lookups emit no RELATED line and would hang). The design spec §3.5/§4 file lists missed this second
+> parse site; B14 and any future signal-line card should touch BOTH `http-lookup-client.ts` AND
+> `gemini-streaming.ts`.
+
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -638,7 +650,7 @@ git commit -m "[B13RelatedWords] feat: parse RELATED signal line and thread it t
 // REFINE_CHIPS (lookup-card.ts) gains a 5th entry: { id: 'related', label: 'Related words' }
 ```
 
-- [ ] **Step 1: Write the failing tests (fixing the two broken A3 assertions IS this step).**
+- [x] **Step 1: Write the failing tests (fixing the two broken A3 assertions IS this step).**
 
 In `packages/app/test/ui/lookup-card.test.ts`, find A3's existing test inside `describe('<lookup-
 card> refine chips + back-to-original (A3)', ...)`:
@@ -719,7 +731,7 @@ cd packages/app && bunx vitest run test/ui/lookup-card.test.ts test/app/inline-b
 Expected: the two modified tests fail (4 chips actually render; 5 expected). Every other existing
 test in both files still passes.
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/ui/lookup-card.ts`, add a 5th entry to the existing A3 `REFINE_CHIPS` array:
 
@@ -745,7 +757,7 @@ cd packages/app && bunx vitest run test/ui/lookup-card.test.ts test/app/inline-b
 
 Expected: all tests pass (both modified tests now green, nothing else regresses).
 
-- [ ] **Step 3: Gate + commit.**
+- [x] **Step 3: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -782,7 +794,7 @@ export async function savedWordSetRelated(
 ): Promise<SavedWordEntry | null>; // domain/saved-words-policy.ts
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 Append to `packages/app/test/wire-schema.test.ts`, as a new top-level `describe` (place it near
 the other `saved.*` describe blocks):
@@ -964,7 +976,7 @@ discriminant), `savedWordSetRelated` is not exported, the router has no matching
 compile error at this point is also expected/acceptable since `router.ts`'s exhaustive switch
 does not yet have a `case` for the new arm — proceed to Step 2).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/wire.ts`, add the new arm to `WireMessageSchema`'s array, positioned
 immediately after the existing `saved.setStatus` arm:
@@ -1034,7 +1046,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts test/saved-words-pol
 
 Expected: all tests pass (existing + the ones added in Step 1).
 
-- [ ] **Step 3: Regenerate the wire JSON-schema snapshot (a 2nd time — the new discriminant arm
+- [x] **Step 3: Regenerate the wire JSON-schema snapshot (a 2nd time — the new discriminant arm
       changes the schema again).**
 
 ```
@@ -1050,7 +1062,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts
 
 Expected: all pass, no further diff.
 
-- [ ] **Step 4: Gate + commit.**
+- [x] **Step 4: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1075,7 +1087,7 @@ is proven by Task 6's e2e scenarios 2 and 3. Still run the full gate below so a 
 existing behavior (save/status/nudge/refine-back handling, all in the same file) is caught
 immediately.
 
-- [ ] **Step 1: Implement.**
+- [x] **Step 1: Implement.**
 
 Update the `renderResult` handler inside the `runLookupWorkflow({ renderer: { ... } })` call —
 find A3's existing code (already carrying `lastOriginalSavePayload`):
@@ -1142,7 +1154,7 @@ cd packages/extension-chrome && bun run typecheck
 
 Expected: clean (no type errors).
 
-- [ ] **Step 2: Gate + commit.**
+- [x] **Step 2: Gate + commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typecheck && cd ../.. && bun run lint && bun run format:check
@@ -1162,7 +1174,7 @@ git commit -m "[B13RelatedWords] feat: auto-persist related words onto an alread
 - Create: `packages/extension-chrome/e2e/b13-related-words.spec.ts`
 - Modify: `packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts`
 
-- [ ] **Step 1: Fix the already-shipped A3 e2e assertion this card's 5th chip breaks.**
+- [x] **Step 1: Fix the already-shipped A3 e2e assertion this card's 5th chip breaks.**
 
 In `packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts`, find test 1 ("chips render on
 every result, none active, no back button"):
@@ -1227,7 +1239,7 @@ low-cost completeness improvement while this file is already open for the requir
 Run this one spec alone first to confirm the fix (requires a build — see Step 3 for the full
 sequence; a quick local check is optional here and folded into Step 3's full run).
 
-- [ ] **Step 2: Write the new e2e spec.**
+- [x] **Step 2: Write the new e2e spec.**
 
 Create `packages/extension-chrome/e2e/b13-related-words.spec.ts`:
 
@@ -1451,7 +1463,7 @@ cd packages/extension-chrome && bunx playwright test b13-related-words a3-follow
 Expected: 4 passed for `b13-related-words`; all of `a3-follow-up-chips` (6 tests, including the
 fixed test 1) still pass.
 
-- [ ] **Step 3: Full gate.**
+- [x] **Step 3: Full gate.**
 
 ```
 cd packages/app && bun run typecheck
@@ -1478,7 +1490,7 @@ shares the save-payload/persistence path this card's Task 5 extends; `cache-hist
 cache-bypass guard pattern this card's `related` kind inherits; `idiom-expansion` — shares
 `lookup-card.ts`; `onboarding` — shares `content.ts`) all pass.
 
-- [ ] **Step 4: Commit + open the PR.**
+- [x] **Step 4: Commit + open the PR.**
 
 ```
 git add packages/extension-chrome/e2e/b13-related-words.spec.ts packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts

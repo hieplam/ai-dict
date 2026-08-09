@@ -13,6 +13,7 @@ import {
   savedWordUpsert,
   savedWordDelete,
   savedWordSetStatus,
+  savedWordSetRelated,
   savedWordsList,
   savedWordGet,
   evaluateNudge,
@@ -306,6 +307,12 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
       case 'saved.setStatus': {
         const entry = await deps.queue.run(() =>
           savedWordSetStatus({ storage: deps.kv }, msg.word, msg.status),
+        );
+        return entry ? { ok: true, type: 'saved', entry } : { ok: true, type: 'ack' };
+      }
+      case 'saved.setRelated': {
+        const entry = await deps.queue.run(() =>
+          savedWordSetRelated({ storage: deps.kv }, msg.word, msg.related),
         );
         return entry ? { ok: true, type: 'saved', entry } : { ok: true, type: 'ack' };
       }

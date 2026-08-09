@@ -174,4 +174,34 @@ describe('runGeminiStreamingLookup', () => {
       .contents[0]?.parts[0]?.text as string;
     expect(sent).not.toContain('ETYMOLOGY');
   });
+
+  it('B13: strips the RELATED signal line from every streamed chunk and returns result.related', async () => {
+    const onChunk = vi.fn();
+    const fetchImpl = okFetch([
+      sseEvent('DEFINED_AS: "bank" | literal\n') +
+        sseEvent('TRANSLATION: "bờ sông"\n') +
+        sseEvent('RELATED: "shore, riverside, embankment"\n\n'),
+      sseEvent('The land ') + sseEvent('alongside a river.'),
+    ]);
+    const deps = { fetch: fetchImpl, getApiKey: () => 'AIza-key' };
+    const result = await runGeminiStreamingLookup(spec, deps, req, onChunk);
+    expect(result.related).toEqual(['shore', 'riverside', 'embankment']);
+    expect(result.markdown).toBe('The land alongside a river.');
+    expect(result.markdown).not.toContain('RELATED:');
+    for (const call of onChunk.mock.calls) {
+      expect(call[0] as string).not.toContain('RELATED:');
+    }
+  });
+
+  it('B13: no RELATED line in the response leaves result.related undefined and the body unaffected', async () => {
+    const onChunk = vi.fn();
+    const fetchImpl = okFetch([
+      sseEvent('DEFINED_AS: "bank" | literal\n') + sseEvent('TRANSLATION: "bờ sông"\n\n'),
+      sseEvent('The land ') + sseEvent('alongside a river.'),
+    ]);
+    const deps = { fetch: fetchImpl, getApiKey: () => 'AIza-key' };
+    const result = await runGeminiStreamingLookup(spec, deps, req, onChunk);
+    expect(result.related).toBeUndefined();
+    expect(result.markdown).toBe('The land alongside a river.');
+  });
 });

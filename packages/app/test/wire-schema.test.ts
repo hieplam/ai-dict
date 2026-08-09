@@ -358,6 +358,24 @@ describe('wire-schema', () => {
     expect(old.success).toBe(true);
   });
 
+  it('lookup req accepts refine="related" (B13)', () => {
+    const base = {
+      word: 'w',
+      context: 'c',
+      url: '',
+      title: '',
+      target: 'vi',
+      outputFormat: 'f',
+      promptEnvelope: '',
+    };
+    const ok = WireMessageSchema.safeParse({
+      type: 'lookup',
+      requestId: '1',
+      req: { ...base, refine: 'related' },
+    });
+    expect(ok.success).toBe(true);
+  });
+
   it('lookup result carries an optional definedAs; rejects an unknown key inside it (strictObject)', () => {
     const result = {
       markdown: 'm',
@@ -600,6 +618,63 @@ describe('wire-schema', () => {
   });
 });
 
+describe('LookupResultSchema.related (B13)', () => {
+  const okResult = {
+    markdown: '#',
+    word: 'bank',
+    target: 'vi',
+    model: 'gemini-2.5-flash',
+    fromCache: false,
+    fetchedAt: 1,
+  };
+  it('accepts an optional related string array', () => {
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'lookup',
+        requestId: 'r',
+        result: { ...okResult, related: ['shore', 'embankment'] },
+      }).success,
+    ).toBe(true);
+  });
+  it('rejects a non-string entry in related', () => {
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'lookup',
+        requestId: 'r',
+        result: { ...okResult, related: [1, 2] },
+      }).success,
+    ).toBe(false);
+  });
+});
+
+describe('SavedWordEntrySchema senses[].related (B13)', () => {
+  it('a saved reply with senses[0].related accepted', () => {
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'saved',
+        entry: {
+          word: 'bank',
+          status: 'learning',
+          savedAt: 1,
+          senses: [
+            {
+              definition: 'd',
+              translation: '',
+              sentence: 's',
+              url: 'u',
+              title: 't',
+              related: ['shore', 'embankment'],
+            },
+          ],
+        },
+      }).success,
+    ).toBe(true);
+  });
+});
+
 describe('saved.save / saved.delete wire messages (B1)', () => {
   const senseFields = {
     word: 'bank',
@@ -684,6 +759,48 @@ describe('saved.save / saved.delete wire messages (B1)', () => {
     expect(WireMessageSchema.safeParse({ type: 'saved.setStatus', word: 'bank' }).success).toBe(
       false,
     );
+  });
+});
+
+describe('saved.setRelated wire message (B13)', () => {
+  it('accepts a valid saved.setRelated message', () => {
+    const parsed = WireMessageSchema.safeParse({
+      type: 'saved.setRelated',
+      word: 'bank',
+      related: ['shore', 'embankment'],
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it('rejects a saved.setRelated message missing word', () => {
+    const parsed = WireMessageSchema.safeParse({
+      type: 'saved.setRelated',
+      related: ['shore'],
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('rejects a saved.setRelated message missing related', () => {
+    const parsed = WireMessageSchema.safeParse({ type: 'saved.setRelated', word: 'bank' });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('rejects a saved.setRelated message where related contains a non-string', () => {
+    const parsed = WireMessageSchema.safeParse({
+      type: 'saved.setRelated',
+      word: 'bank',
+      related: ['shore', 1],
+    });
+    expect(parsed.success).toBe(false);
+  });
+
+  it('accepts an empty related array (clears the field)', () => {
+    const parsed = WireMessageSchema.safeParse({
+      type: 'saved.setRelated',
+      word: 'bank',
+      related: [],
+    });
+    expect(parsed.success).toBe(true);
   });
 });
 

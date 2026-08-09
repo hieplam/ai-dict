@@ -6,6 +6,7 @@ import {
   savedWordsList,
   savedWordsClear,
   savedWordSetStatus,
+  savedWordSetRelated,
   savedWordImport,
   normalizeWordKey,
 } from '../src/domain/saved-words-policy';
@@ -149,6 +150,46 @@ describe('saved-words-policy', () => {
   it('savedWordSetStatus on an unsaved word is a no-op returning null (no throw)', async () => {
     const s = memStorage();
     await expect(savedWordSetStatus({ storage: s }, 'ghost', 'known')).resolves.toBeNull();
+  });
+
+  it('savedWordSetRelated patches senses[0].related on an existing entry, preserving everything else (B13)', async () => {
+    const s = memStorage();
+    const original = await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    const updated = await savedWordSetRelated({ storage: s }, 'bank', [
+      'shore',
+      'embankment',
+      'bluff',
+    ]);
+    expect(updated).not.toBeNull();
+    expect(updated!.senses[0]!.related).toEqual(['shore', 'embankment', 'bluff']);
+    expect(updated!.status).toBe(original.status);
+    expect(updated!.savedAt).toBe(original.savedAt);
+    expect(updated!.senses[0]!.definition).toBe(original.senses[0]!.definition);
+    expect(await s.getItem('saved:bank')).toBe(JSON.stringify(updated));
+  });
+
+  it('savedWordSetRelated is case-insensitive on the word key (B13)', async () => {
+    const s = memStorage();
+    await savedWordUpsert({ storage: s, now: () => 1000 }, input('Bank'));
+    const updated = await savedWordSetRelated({ storage: s }, 'BANK', ['shore']);
+    expect(updated!.senses[0]!.related).toEqual(['shore']);
+  });
+
+  it('savedWordSetRelated on an unsaved word is a no-op returning null (no throw) (B13)', async () => {
+    const s = memStorage();
+    await expect(savedWordSetRelated({ storage: s }, 'ghost', ['x'])).resolves.toBeNull();
+    expect(await s.getItem('saved:ghost')).toBeNull();
+  });
+
+  it('a subsequent plain savedWordUpsert (a normal re-save) clears a previously-persisted related array (B13, design spec §2.6)', async () => {
+    const s = memStorage();
+    await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    await savedWordSetRelated({ storage: s }, 'bank', ['shore', 'embankment']);
+    const resaved = await savedWordUpsert(
+      { storage: s, now: () => 2000 },
+      input('bank', { definition: 'new context' }),
+    );
+    expect(resaved.senses[0]!.related).toBeUndefined();
   });
 
   it('savedWordImport writes an entry verbatim (not now()-derived) and adds it to the index', async () => {

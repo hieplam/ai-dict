@@ -208,6 +208,17 @@ runLookupWorkflow({
       // re-run, so a later "Back to original" tap can restore exactly what Save would have
       // persisted before any refine tap happened (design spec §2.5).
       if (ctx?.refine === undefined) lastOriginalSavePayload = lastSavePayload;
+      // B13: a 'related' refine tap auto-persists the parsed related-words list onto the
+      // ALREADY-saved entry — fire-and-forget; the router's savedWordSetRelated no-ops
+      // server-side when the word isn't currently saved (design spec §2.5 — "show but don't
+      // persist"). No client-side is-saved tracking needed or possible here: lastSaved is reset
+      // below on every render, including this one, so it can never answer "was this saved
+      // before this tap" reliably (design spec §2.5's rejected alternative).
+      if (ctx?.refine === 'related' && r.related && r.related.length > 0) {
+        void chrome.runtime
+          .sendMessage({ type: 'saved.setRelated', word: r.word, related: r.related })
+          .catch(() => undefined);
+      }
       lastSaved = false;
       lastStatus = undefined;
       saveReplyGuard.next();
