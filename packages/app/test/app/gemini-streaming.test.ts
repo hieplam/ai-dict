@@ -211,6 +211,33 @@ describe('runGeminiStreamingLookup', () => {
     expect(sent).not.toContain('ETYMOLOGY');
   });
 
+  it('[A12] req.sourceLang reaches the persona line of the prompt sent over the streaming path', async () => {
+    let capturedBody = '';
+    const fetchImpl = vi.fn((_url: string, init: { body: string }) => {
+      capturedBody = init.body;
+      return okFetch([sseEvent('A riverbank.')])();
+    });
+    const deps = { fetch: fetchImpl, getApiKey: () => 'AIza-key' };
+    await runGeminiStreamingLookup(spec, deps, { ...req, sourceLang: 'fr' }, vi.fn());
+    const sent = (JSON.parse(capturedBody) as { contents: { parts: { text: string }[] }[] })
+      .contents[0]?.parts[0]?.text as string;
+    expect(sent).toContain('learners of fr');
+  });
+
+  it('[A12] req.sourceLang absent falls back to the auto-infer phrase, never "learners of English"', async () => {
+    let capturedBody = '';
+    const fetchImpl = vi.fn((_url: string, init: { body: string }) => {
+      capturedBody = init.body;
+      return okFetch([sseEvent('A riverbank.')])();
+    });
+    const deps = { fetch: fetchImpl, getApiKey: () => 'AIza-key' };
+    await runGeminiStreamingLookup(spec, deps, req, vi.fn()); // req has no sourceLang
+    const sent = (JSON.parse(capturedBody) as { contents: { parts: { text: string }[] }[] })
+      .contents[0]?.parts[0]?.text as string;
+    expect(sent).not.toContain('learners of English');
+    expect(sent).toContain('infer the source language');
+  });
+
   it('B13: strips the RELATED signal line from every streamed chunk and returns result.related', async () => {
     const onChunk = vi.fn();
     const fetchImpl = okFetch([
