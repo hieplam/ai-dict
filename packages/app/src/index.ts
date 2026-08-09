@@ -11,6 +11,7 @@ export * from './domain/saved-words-policy';
 export * from './domain/words-page-policy';
 export * from './domain/badge-policy';
 export * from './domain/nudge-policy';
+export * from './domain/quiet-site-policy';
 export * from './domain/card-placement';
 export * from './domain/onboarding-policy'; // C1
 export * from './domain/setup-health-policy';

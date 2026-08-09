@@ -86,7 +86,7 @@ export function quietSiteList(deps: QuietSiteDeps): Promise<string[]>;
 export function isQuietSite(domains: string[], hostname: string): boolean;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Create `packages/app/test/quiet-site-policy.test.ts`:
+- [x] **Step 1: Write the failing tests.** Create `packages/app/test/quiet-site-policy.test.ts`:
 
 ```ts
 import { describe, it, expect } from 'vitest';
@@ -201,7 +201,7 @@ Run: `cd packages/app && bunx vitest run test/quiet-site-policy.test.ts`
 Expected: failure — `Cannot find module '../src/domain/quiet-site-policy'` (the file doesn't exist
 yet).
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/domain/quiet-site-policy.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/domain/quiet-site-policy.ts`:
 
 ```ts
 import type { Storage } from '../ports';
@@ -287,7 +287,7 @@ Expected: all 12 tests pass.
 Run: `cd packages/app && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
