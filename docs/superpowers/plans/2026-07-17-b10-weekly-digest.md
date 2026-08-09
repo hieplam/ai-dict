@@ -1164,7 +1164,7 @@ git commit -m "feat: weekly digest — fetch + compute the digest once on panel 
 
 - Create: `packages/extension-chrome/e2e/b10-weekly-digest.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b10-weekly-digest.spec.ts`:
+- [x] **Step 1: Write the spec.** Create `packages/extension-chrome/e2e/b10-weekly-digest.spec.ts`:
 
 ```ts
 import { test, expect } from './fixtures';
@@ -1277,7 +1277,7 @@ cd packages/extension-chrome && bunx playwright test b10-weekly-digest
 
 Expected: 2 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
