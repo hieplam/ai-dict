@@ -7,6 +7,7 @@ import {
   savedWordsClear,
   savedWordSetStatus,
   savedWordSetRelated,
+  savedWordSetTags,
   savedWordImport,
   normalizeWordKey,
 } from '../src/domain/saved-words-policy';
@@ -316,5 +317,37 @@ describe('saved-words-policy', () => {
     );
     const list = await savedWordsList({ storage: s });
     expect(list.map((e) => e.word).sort()).toEqual(['imported', 'live']);
+  });
+
+  it('savedWordSetTags writes the tags array onto an existing entry, preserving other fields (B12)', async () => {
+    const s = memStorage();
+    const original = await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
+    const updated = await savedWordSetTags({ storage: s }, 'bank', ['Finance']);
+    expect(updated).not.toBeNull();
+    expect(updated!.tags).toEqual(['Finance']);
+    expect(updated!.status).toBe(original.status);
+    expect(updated!.savedAt).toBe(original.savedAt);
+    expect(updated!.senses).toEqual(original.senses);
+    expect(await s.getItem('saved:bank')).toBe(JSON.stringify(updated));
+  });
+
+  it('savedWordSetTags overwrites a previous tags array (last-organize-wins) (B12)', async () => {
+    const s = memStorage();
+    await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
+    await savedWordSetTags({ storage: s }, 'bank', ['Finance']);
+    const updated = await savedWordSetTags({ storage: s }, 'bank', ['Money', 'Business']);
+    expect(updated!.tags).toEqual(['Money', 'Business']);
+  });
+
+  it('savedWordSetTags is case-insensitive on the word key (B12)', async () => {
+    const s = memStorage();
+    await upsertOk({ storage: s, now: () => 1000 }, input('Bank'));
+    const updated = await savedWordSetTags({ storage: s }, 'BANK', ['Finance']);
+    expect(updated!.tags).toEqual(['Finance']);
+  });
+
+  it('savedWordSetTags on an unsaved word is a no-op returning null (no throw) (B12)', async () => {
+    const s = memStorage();
+    await expect(savedWordSetTags({ storage: s }, 'ghost', ['Finance'])).resolves.toBeNull();
   });
 });

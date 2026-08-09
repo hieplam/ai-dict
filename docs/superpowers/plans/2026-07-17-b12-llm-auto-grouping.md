@@ -232,7 +232,7 @@ export async function savedWordSetTags(
 ): Promise<SavedWordEntry | null>;
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/saved-words-policy.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/saved-words-policy.test.ts`,
       inside the existing `describe('saved-words-policy', ...)` block, just before its closing
       `});` (after the existing `'savedWordSetStatus on an unsaved word is a no-op...'` test).
       First add `savedWordSetTags` to the top import list (alongside `savedWordSetStatus`):
@@ -289,7 +289,7 @@ it('savedWordSetTags on an unsaved word is a no-op returning null (no throw) (B1
 Run: `cd packages/app && bunx vitest run test/saved-words-policy.test.ts`
 Expected: failures — `savedWordSetTags` is not exported / not a function.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/domain/saved-words-policy.ts`, add, right after
+- [x] **Step 2: Implement.** In `packages/app/src/domain/saved-words-policy.ts`, add, right after
       `savedWordSetStatus` (`:86-98`):
 
 ```ts
@@ -317,7 +317,7 @@ export async function savedWordSetTags(
 Run: `cd packages/app && bunx vitest run test/saved-words-policy.test.ts`
 Expected: all tests pass (existing + 4 new).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check

@@ -130,6 +130,26 @@ export async function savedWordSetStatus(
 }
 
 /**
+ * B12: overwrite an existing saved word's tag(s) — used both by "Organize my words" (one call
+ * per grouped word, immediately after a successful cluster) and by the tag-edit UI (rename via
+ * a full-array replace, remove via filtering the removed tag out before calling this). No-op
+ * (returns null) when the word isn't currently saved, mirroring savedWordSetStatus's contract.
+ */
+export async function savedWordSetTags(
+  deps: SavedWordsDeps,
+  word: string,
+  tags: string[],
+): Promise<SavedWordEntry | null> {
+  const key = normalizeWordKey(word);
+  const raw = await deps.storage.getItem(`saved:${key}`);
+  if (!raw) return null;
+  const existing = JSON.parse(raw) as SavedWordEntry;
+  const entry: SavedWordEntry = { ...existing, tags };
+  await deps.storage.setItem(`saved:${key}`, JSON.stringify(entry));
+  return entry;
+}
+
+/**
  * B13: patch the related-words list onto an ALREADY-saved word's current (senses[0]) sense.
  * No-op (returns null) when the word isn't currently saved — mirrors savedWordSetStatus's own
  * contract exactly: "only persists when the word IS saved" (roadmap fence) is enforced HERE,
