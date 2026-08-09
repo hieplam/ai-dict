@@ -56,3 +56,4 @@ export * from './app/hover-recall-controller';
 export { buildGa4Request, GA4_ENDPOINT, type Ga4Config, type Ga4Request } from './app/ga4-payload';
 export { ErrorReporter, type ErrorReporterDeps, type ErrorLogStatus } from './app/error-reporter';
 export { buildConsentFooter } from './ui/error-consent';
+export { buildMergePrompt } from './ui/merge-prompt';

@@ -776,7 +776,7 @@ export function buildMergePrompt(opts: {
 }): HTMLElement;
 ```
 
-- [ ] **Step 1: Write the failing test.** Create `packages/app/test/ui/merge-prompt.test.ts`:
+- [x] **Step 1: Write the failing test.** Create `packages/app/test/ui/merge-prompt.test.ts`:
 
 ```ts
 import { describe, it, expect, vi } from 'vitest';
@@ -817,7 +817,7 @@ describe('buildMergePrompt', () => {
 Run: `cd packages/app && bunx vitest run test/ui/merge-prompt.test.ts`
 Expected: failure — `src/ui/merge-prompt.ts` does not exist yet (module not found).
 
-- [ ] **Step 2: Implement.** Create `packages/app/src/ui/merge-prompt.ts`:
+- [x] **Step 2: Implement.** Create `packages/app/src/ui/merge-prompt.ts`:
 
 ```ts
 /**
@@ -875,7 +875,7 @@ export { buildMergePrompt } from './ui/merge-prompt';
 Run: `cd packages/app && bunx vitest run test/ui/merge-prompt.test.ts`
 Expected: all 3 tests pass.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
