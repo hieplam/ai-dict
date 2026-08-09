@@ -1144,7 +1144,7 @@ export async function gotoEditableFixture(
 ): Promise<void>;
 ```
 
-- [ ] **Step 1: Add the two new fixture helpers + the settings override field.** In
+- [x] **Step 1: Add the two new fixture helpers + the settings override field.** In
       `packages/extension-chrome/e2e/helpers.ts`:
 
   (a) Add one field to `SettingsOverrides` (currently lines 24-36), after `anthropicApiKey`:
@@ -1216,7 +1216,7 @@ export async function gotoEditableFixture(
 }
 ```
 
-- [ ] **Step 2: Write the new functional spec.** Create
+- [x] **Step 2: Write the new functional spec.** Create
       `packages/extension-chrome/e2e/a14-double-click-trigger.spec.ts`:
 
 ```ts
@@ -1300,7 +1300,7 @@ cd packages/extension-chrome && bunx playwright test a14-double-click-trigger
 
 Expected: 3 passed.
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 GEMINI_API_KEY= bun run build:chrome
