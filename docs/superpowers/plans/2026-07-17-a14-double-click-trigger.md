@@ -683,7 +683,7 @@ export interface SettingsFormValue {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** In `packages/app/test/ui/settings-form.test.ts`,
+- [x] **Step 1: Write the failing tests.** In `packages/app/test/ui/settings-form.test.ts`,
       replace the section-order test (currently):
 
 ```ts
@@ -773,7 +773,7 @@ cd packages/app && bunx vitest run test/ui/settings-form.test.ts
 Expected: the section-order test fails (no `'Trigger'` heading yet); the control-list test fails
 (`#dblclick-lookup` doesn't exist); the new round-trip test fails (querySelector returns `null`).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
 
   (a) Extend `SettingsFormValue` (currently lines 29-45) — add one field after `saveHistory`:
 
@@ -843,7 +843,7 @@ cd packages/app && bunx vitest run test/ui/settings-form.test.ts
 
 Expected: all tests pass (existing suite, with the two updated tests, + 1 new).
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check
