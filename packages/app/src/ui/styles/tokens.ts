@@ -21,6 +21,13 @@
 // warm-shifted, body contrast lands ~8–11:1 (comfortable, not the harsh 21:1 of #000-on-#fff),
 // and the spruce accent is low-chroma — a quiet signal, never a glare source.
 
+// A7: floating pinned cards' base z-index — one below --adp-z-overlay's max-int ceiling
+// (below) so a live/ambient modal <bottom-sheet>, when also open, always paints above every
+// pinned card. Exported as a plain number (not just the CSS custom property) so
+// floating-pin.ts can read the exact same source of truth for DOM-order bring-to-front
+// (see the design spec §2.6 for why no per-instance z-index arithmetic is needed).
+export const Z_PINNED_BASE = 2147483646;
+
 // ── 1. PRIMITIVES — never themed ──────────────────────────────────────────
 export const ADP_PRIMITIVES = [
   // Type families
@@ -69,6 +76,7 @@ export const ADP_PRIMITIVES = [
   '--adp-dur-theme:360ms',
   // Stacking — must beat any host page
   '--adp-z-overlay:2147483647',
+  `--adp-z-pinned:${Z_PINNED_BASE}`,
 ].join(';');
 
 // ── 2. SEMANTIC — re-bound per theme. Components read ONLY these (+ --adp-*). ──

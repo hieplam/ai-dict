@@ -2,6 +2,7 @@ import { LookupTrigger } from './lookup-trigger';
 import { LookupCard } from './lookup-card';
 import { LookupGloss } from './lookup-gloss';
 import { BottomSheet } from './bottom-sheet';
+import { FloatingPin } from './floating-pin';
 import { HoverRecallPopup } from './hover-recall-popup';
 import { SettingsForm } from './settings-form';
 import { SidePanelView } from './side-panel-view';
@@ -13,6 +14,7 @@ export function registerContentElements(): void {
   if (!customElements.get('lookup-card')) customElements.define('lookup-card', LookupCard);
   if (!customElements.get('lookup-gloss')) customElements.define('lookup-gloss', LookupGloss);
   if (!customElements.get('bottom-sheet')) customElements.define('bottom-sheet', BottomSheet);
+  if (!customElements.get('floating-pin')) customElements.define('floating-pin', FloatingPin);
   // B4: registered alongside the other in-page (MAIN-world) elements — same content-elements.ts
   // entry point, no new registration function.
   if (!customElements.get('hover-recall-popup'))
