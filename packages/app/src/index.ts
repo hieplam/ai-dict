@@ -14,6 +14,7 @@ export * from './domain/review-deck-policy';
 export * from './domain/words-page-policy';
 export * from './domain/badge-policy';
 export * from './domain/nudge-policy';
+export * from './domain/site-stats-policy';
 export * from './domain/weekly-digest';
 export * from './domain/quiet-site-policy';
 export * from './domain/card-placement';
