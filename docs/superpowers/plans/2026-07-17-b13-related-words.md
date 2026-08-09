@@ -38,10 +38,10 @@ every rejected alternative, and the exact pinned prompt copy:
 ## Global Constraints
 
 - Implementer: dispatch each task to the `hunter` subagent — never a generic implementer.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/B13RelatedWords`,
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/b13-related-words`,
   branched from a `master` that already contains A3's merged PR.
-- Commit subject: `[B13RelatedWords] feat: <imperative summary> (B13)` — matches repo history
-  convention (CONTRACTS §2; e.g. `[A3FollowUpChips] feat: add ResultRenderContext.onRefine +
+- Commit subject: `feat: <imperative summary> (B13)` — matches repo history
+  convention (CONTRACTS §2; e.g. `feat: add ResultRenderContext.onRefine +
 workflow one-shot refine re-run (A3)`). No `Co-Authored-By` trailer, no attribution footer.
 - `bun run lint` and `bun run format:check` green before every commit; `cd packages/app && bun run
 typecheck` green after every task from Task 1 onward; `cd packages/extension-chrome && bun run
@@ -366,7 +366,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/domain/types.ts packages/app/src/wire.ts packages/app/src/domain/default-template.ts packages/app/test/default-template.test.ts packages/app/test/wire-schema.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[B13RelatedWords] feat: widen RefineKind + add related fields to LookupResult/SavedWordSense (B13)"
+git commit -m "feat: widen RefineKind + add related fields to LookupResult/SavedWordSense (B13)"
 ```
 
 ---
@@ -631,7 +631,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/domain/related-line.ts packages/app/test/related-line.test.ts packages/app/src/app/http-lookup-client.ts packages/app/test/app/gemini-lookup-client.test.ts
-git commit -m "[B13RelatedWords] feat: parse RELATED signal line and thread it through runHttpLookup (B13)"
+git commit -m "feat: parse RELATED signal line and thread it through runHttpLookup (B13)"
 ```
 
 ---
@@ -765,7 +765,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/ui/lookup-card.ts packages/app/test/ui/lookup-card.test.ts packages/app/test/app/inline-bottom-sheet-renderer.test.ts
-git commit -m "[B13RelatedWords] feat: add Related words as the 5th REFINE_CHIPS entry, fix A3's 4-chip assertions (B13)"
+git commit -m "feat: add Related words as the 5th REFINE_CHIPS entry, fix A3's 4-chip assertions (B13)"
 ```
 
 ---
@@ -1070,7 +1070,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/wire.ts packages/app/src/domain/saved-words-policy.ts packages/app/src/app/router.ts packages/app/test/wire-schema.test.ts packages/app/test/saved-words-policy.test.ts packages/app/test/app/router.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[B13RelatedWords] feat: add saved.setRelated wire message + router case + savedWordSetRelated (B13)"
+git commit -m "feat: add saved.setRelated wire message + router case + savedWordSetRelated (B13)"
 ```
 
 ---
@@ -1162,7 +1162,7 @@ cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typech
 
 ```
 git add packages/extension-chrome/src/content.ts
-git commit -m "[B13RelatedWords] feat: auto-persist related words onto an already-saved entry in content.ts (B13)"
+git commit -m "feat: auto-persist related words onto an already-saved entry in content.ts (B13)"
 ```
 
 ---
@@ -1494,19 +1494,17 @@ cache-bypass guard pattern this card's `related` kind inherits; `idiom-expansion
 
 ```
 git add packages/extension-chrome/e2e/b13-related-words.spec.ts packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts
-git commit -m "[B13RelatedWords] feat: e2e coverage for related words persistence + fix A3's 4-chip e2e assertion (B13)"
+git commit -m "feat: e2e coverage for related words persistence + fix A3's 4-chip e2e assertion (B13)"
 ```
 
-Open the PR: title `[B13RelatedWords] Related words on save`, body follows the repo's de facto
-PR-body convention (no `.github/PULL_REQUEST_TEMPLATE.md` file exists — confirmed absent in
-REPO-FACTS §13; treat "Testing performed" as the required section per owner ruling 2026-07-16),
-including:
+Open the PR: title `feat: related words on save (B13)`, body follows
+`.github/pull_request_template.md` ("Testing performed" is the required section per owner ruling
+2026-07-16), including:
 
 - **Description** (1-3 sentences): what changed + why, per this plan's Goal.
 - **Design choices** (≤3 bullets): link to the design spec for the full rationale; call out the
   **server-side no-op persistence guarantee** (savedWordSetRelated never creates a new saved
   entry) as the one fact a reviewer must not miss.
-- **JIRA ticket**: n/a — this repo is not Jira-tracked.
 - **Testing performed**: the suite counts and e2e scenario list from Step 3 above — no
   screenshots/video (owner ruling 2026-07-16).
 

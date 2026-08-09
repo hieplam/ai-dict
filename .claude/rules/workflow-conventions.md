@@ -7,6 +7,9 @@ Project workflow conventions — an imperative checklist that complements the na
 - Use `raw.githubusercontent.com` evidence URLs (different origin → 404 on this private repo).
 - Drive installed Google Chrome for extension work (Chrome 136+ ignores `--load-extension`).
 - Hand-edit `.c3/` (it is CLI-only).
+- Prefix a commit subject, branch name, or PR title with a `[CardName]`/ticket-style bracket —
+  it breaks release-please's Conventional Commits parser. No `## JIRA ticket` PR section either
+  (this repo has no ticket tracker). See `docs/git-conventions.md`.
 
 ## Always
 

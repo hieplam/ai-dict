@@ -33,9 +33,9 @@ the live probe that grounds the problem statement and every rejected alternative
 
 - Implementer: dispatch each implementation/fix task to the `hunter` subagent — never a generic
   implementer.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/A2RecursiveLookup`.
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/a2-recursive-lookup`.
 - Commit subject convention for every task in this plan:
-  `[A2RecursiveLookup] feat: <imperative summary> (A2)`. No `Co-Authored-By` trailer, no Claude
+  `feat: <imperative summary> (A2)`. No `Co-Authored-By` trailer, no Claude
   attribution footer.
 - **Do not touch `packages/app/src/wire.ts`, `packages/app/src/app/router.ts`,
   `packages/extension-chrome/src/content.ts`, `packages/extension-chrome/src/side-panel.ts`, or
@@ -66,7 +66,7 @@ the live probe that grounds the problem statement and every rejected alternative
   package).
 - The e2e build must clear any ambient `GEMINI_API_KEY`: `GEMINI_API_KEY= bun run build:chrome`.
 - E2e must never fetch the live landing page (not relevant to this card, but a standing rule).
-- PR: title `[A2RecursiveLookup] A2 — Recursive lookup`; body includes a written **"Testing
+- PR: title `feat: recursive lookup (A2)`; body includes a written **"Testing
   performed"** section (suites, counts, e2e scenarios, gates) — **no screenshots or video** (owner
   ruling 2026-07-16). Merge: **regular merge commit only — squash prohibited.**
 - S1 (API key isolation): not touched by this card (no wire message, no settings field, no code
@@ -274,7 +274,7 @@ Commit:
 
 ```
 git add packages/app/src/domain/types.ts packages/app/src/app/dom-selection-source.ts packages/app/test/app/dom-selection-source.test.ts
-git commit -m "[A2RecursiveLookup] feat: stamp SelectionEvent.insideResult for in-definition selections (A2)"
+git commit -m "feat: stamp SelectionEvent.insideResult for in-definition selections (A2)"
 ```
 
 ---
@@ -705,7 +705,7 @@ Commit:
 
 ```
 git add packages/app/src/ports.ts packages/app/src/domain/workflow.ts packages/app/test/workflow.test.ts
-git commit -m "[A2RecursiveLookup] feat: recursive-lookup stack, depth cap, and Back in runLookupWorkflow (A2)"
+git commit -m "feat: recursive-lookup stack, depth cap, and Back in runLookupWorkflow (A2)"
 ```
 
 ---
@@ -1004,7 +1004,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/styles/tokens.ts packages/app/src/ui/lookup-card.ts packages/app/test/ui/lookup-card.test.ts
-git commit -m "[A2RecursiveLookup] feat: Back button, canGoBack, and the lookup-answer marker in lookup-card (A2)"
+git commit -m "feat: Back button, canGoBack, and the lookup-answer marker in lookup-card (A2)"
 ```
 
 ---
@@ -1170,7 +1170,7 @@ Commit:
 
 ```
 git add packages/app/src/app/inline-bottom-sheet-renderer.ts packages/app/test/app/inline-bottom-sheet-renderer.test.ts
-git commit -m "[A2RecursiveLookup] feat: wire ctx.onBack through InlineBottomSheetRenderer (A2)"
+git commit -m "feat: wire ctx.onBack through InlineBottomSheetRenderer (A2)"
 ```
 
 ---
@@ -1254,7 +1254,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/side-panel-view.ts packages/app/test/ui/side-panel-view.test.ts
-git commit -m "[A2RecursiveLookup] feat: mirror the Back-button CSS in side-panel-view for parity (A2)"
+git commit -m "feat: mirror the Back-button CSS in side-panel-view for parity (A2)"
 ```
 
 ---
@@ -1489,7 +1489,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/e2e/helpers.ts packages/extension-chrome/e2e/a2-recursive-lookup.spec.ts
-git commit -m "[A2RecursiveLookup] feat: e2e coverage for the recursive-lookup chain, reset, and panel parity (A2)"
+git commit -m "feat: e2e coverage for the recursive-lookup chain, reset, and panel parity (A2)"
 ```
 
 ---
@@ -1517,8 +1517,8 @@ all pass.
 
 ## PR
 
-Title: `[A2RecursiveLookup] A2 — Recursive lookup`. Regular merge (no squash). `## JIRA ticket`
-section reads `n/a — this repo is not Jira-tracked`. Include a **"Testing performed"** section per
+Title: `feat: recursive lookup (A2)`. Regular merge (no squash). No `## JIRA ticket` section
+(`docs/git-conventions.md` — this repo has no ticket tracker). Include a **"Testing performed"** section per
 this worktree's evidence policy
 (§10 of the design spec) instead of screenshots/video — list the suites above with pass counts,
 and explicitly call out: unit test counts per file (Tasks 1-5), the 3 e2e scenarios in

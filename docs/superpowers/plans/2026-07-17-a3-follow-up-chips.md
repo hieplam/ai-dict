@@ -31,9 +31,9 @@ copy: `docs/superpowers/specs/2026-07-17-a3-follow-up-chips-design.md`.
 ## Global Constraints
 
 - Implementer: dispatch each task to the `hunter` subagent — never a generic implementer.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/A3FollowUpChips`.
-- Commit subject: `[A3FollowUpChips] feat: <imperative summary> (A3)` — matches repo history
-  convention (CONTRACTS §2; e.g. `[C10FunnelE2e] feat: deterministic funnel e2e — add
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/a3-follow-up-chips`.
+- Commit subject: `feat: <imperative summary> (A3)` — matches repo history
+  convention (CONTRACTS §2; e.g. `feat: deterministic funnel e2e — add
 build:chrome:e2e env-clearing script (C10)`). No `Co-Authored-By` trailer, no attribution
   footer.
 - `bun run lint` and `bun run format:check` green before every commit; `cd packages/app && bun run
@@ -340,7 +340,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/domain/types.ts packages/app/src/domain/default-template.ts packages/app/src/domain/prompt-template.ts packages/app/test/default-template.test.ts packages/app/test/prompt-template.test.ts
-git commit -m "[A3FollowUpChips] feat: add RefineKind + REFINE_INSTRUCTIONS + refine_instruction prompt slot (A3)"
+git commit -m "feat: add RefineKind + REFINE_INSTRUCTIONS + refine_instruction prompt slot (A3)"
 ```
 
 ---
@@ -561,7 +561,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/src/app/http-lookup-client.ts packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts packages/app/test/app/gemini-lookup-client.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[A3FollowUpChips] feat: wire LookupRequest.refine through schema, router cache guard, and buildPrompt call (A3)"
+git commit -m "feat: wire LookupRequest.refine through schema, router cache guard, and buildPrompt call (A3)"
 ```
 
 ---
@@ -790,7 +790,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/ports.ts packages/app/src/domain/workflow.ts packages/app/test/workflow.test.ts
-git commit -m "[A3FollowUpChips] feat: add ResultRenderContext.onRefine + workflow one-shot refine re-run (A3)"
+git commit -m "feat: add ResultRenderContext.onRefine + workflow one-shot refine re-run (A3)"
 ```
 
 ---
@@ -1051,7 +1051,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/ui/lookup-card.ts packages/app/test/ui/lookup-card.test.ts
-git commit -m "[A3FollowUpChips] feat: add REFINE_CHIPS + refine row rendering to lookup-card (A3)"
+git commit -m "feat: add REFINE_CHIPS + refine row rendering to lookup-card (A3)"
 ```
 
 ---
@@ -1246,7 +1246,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/app/inline-bottom-sheet-renderer.ts packages/app/test/app/inline-bottom-sheet-renderer.test.ts
-git commit -m "[A3FollowUpChips] feat: wire onRefine + snapshot/restore the original result in InlineBottomSheetRenderer (A3)"
+git commit -m "feat: wire onRefine + snapshot/restore the original result in InlineBottomSheetRenderer (A3)"
 ```
 
 ---
@@ -1363,7 +1363,7 @@ cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typech
 
 ```
 git add packages/extension-chrome/src/content.ts
-git commit -m "[A3FollowUpChips] feat: track the original save payload and handle refine-back in content.ts (A3)"
+git commit -m "feat: track the original save payload and handle refine-back in content.ts (A3)"
 ```
 
 ---
@@ -1627,18 +1627,16 @@ shares the save-payload tracking this card's Task 6 modifies; `onboarding` — s
 
 ```
 git add packages/extension-chrome/e2e/a3-follow-up-chips.spec.ts
-git commit -m "[A3FollowUpChips] feat: e2e coverage for refine chips, back-to-original, and save-after-back (A3)"
+git commit -m "feat: e2e coverage for refine chips, back-to-original, and save-after-back (A3)"
 ```
 
-Open the PR: title `[A3FollowUpChips] Follow-up chips — Simpler / More examples / Etymology /
-Use it`, body follows the repo's de facto PR-body convention (no
-`.github/PULL_REQUEST_TEMPLATE.md` file exists — confirmed absent in REPO-FACTS §13; treat
-"Testing performed" as the required section per owner ruling 2026-07-16), including:
+Open the PR: title `feat: follow-up chips — Simpler / More examples / Etymology /
+Use it (A3)`, body follows `.github/pull_request_template.md`
+("Testing performed" is the required section per owner ruling 2026-07-16), including:
 
 - **Description** (1-3 sentences): what changed + why, per this plan's Goal.
 - **Design choices** (≤3 bullets): link to the design spec for the full rationale; call out the
   zero-token "Back to original" restore as the one fact a reviewer must not miss.
-- **JIRA ticket**: n/a — this repo is not Jira-tracked.
 - **Testing performed**: the suite counts and e2e scenario list from Step 2 above — no
   screenshots/video (owner ruling 2026-07-16).
 

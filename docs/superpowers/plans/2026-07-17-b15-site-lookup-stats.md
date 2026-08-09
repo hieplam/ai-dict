@@ -25,9 +25,9 @@ today and why the wire needs a new message, is in
 
 - Implementer: dispatch each implementation/fix task to the `hunter` subagent — never a generic
   implementer.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/B15SiteLookupStats`.
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/b15-site-lookup-stats`.
 - Commit subject convention for every task in this plan:
-  `[B15SiteLookupStats] feat: <imperative summary> (B15)`. No `Co-Authored-By` trailer, no
+  `feat: <imperative summary> (B15)`. No `Co-Authored-By` trailer, no
   attribution footer.
 - `bun run lint` and `bun run format:check` must be clean before every commit.
 - Every task must leave `cd packages/app && bun run typecheck` (and, from Task 5 on,
@@ -253,7 +253,7 @@ Commit:
 git add packages/app/src/domain/types.ts packages/app/src/wire.ts packages/app/src/app/router.ts \
   packages/app/test/history-policy.test.ts packages/app/test/wire-schema.test.ts \
   packages/app/test/app/router.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[B15SiteLookupStats] feat: add optional url to HistoryEntry (B15)" \
+git commit -m "feat: add optional url to HistoryEntry (B15)" \
   -m $'Tribe-Card: b15-site-lookup-stats\nTribe-Task: 1/7'
 ```
 
@@ -518,7 +518,7 @@ Commit:
 ```
 git add packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/test/wire-schema.test.ts \
   packages/app/test/app/router.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[B15SiteLookupStats] feat: add saved.list wire message + router case (B15)" \
+git commit -m "feat: add saved.list wire message + router case (B15)" \
   -m $'Tribe-Card: b15-site-lookup-stats\nTribe-Task: 2/7'
 ```
 
@@ -532,7 +532,7 @@ Commit:
 
 ```
 git add packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts
-git commit -m "[B15SiteLookupStats] test: regression-cover the already-shipped saved.list message (B15)" \
+git commit -m "test: regression-cover the already-shipped saved.list message (B15)" \
   -m $'Tribe-Card: b15-site-lookup-stats\nTribe-Task: 2/7'
 ```
 
@@ -797,7 +797,7 @@ Commit:
 ```
 git add packages/app/src/domain/site-stats-policy.ts packages/app/test/site-stats-policy.test.ts \
   packages/app/src/index.ts
-git commit -m "[B15SiteLookupStats] feat: add site-stats-policy pure domain function (B15)" \
+git commit -m "feat: add site-stats-policy pure domain function (B15)" \
   -m $'Tribe-Card: b15-site-lookup-stats\nTribe-Task: 3/7'
 ```
 
@@ -1053,7 +1053,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/side-panel-view.ts packages/app/test/ui/side-panel-view.test.ts
-git commit -m "[B15SiteLookupStats] feat: add Sites section to side-panel-view (B15)" \
+git commit -m "feat: add Sites section to side-panel-view (B15)" \
   -m $'Tribe-Card: b15-site-lookup-stats\nTribe-Task: 4/7'
 ```
 
@@ -1235,7 +1235,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/src/side-panel.ts
-git commit -m "[B15SiteLookupStats] feat: wire site-stats fetch/refresh into side-panel.ts (B15)" \
+git commit -m "feat: wire site-stats fetch/refresh into side-panel.ts (B15)" \
   -m $'Tribe-Card: b15-site-lookup-stats\nTribe-Task: 5/7'
 ```
 
@@ -1396,7 +1396,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/e2e/b15-site-lookup-stats.spec.ts
-git commit -m "[B15SiteLookupStats] feat: add e2e coverage for the Sites section (B15)" \
+git commit -m "feat: add e2e coverage for the Sites section (B15)" \
   -m $'Tribe-Card: b15-site-lookup-stats\nTribe-Task: 6/7'
 ```
 
@@ -1439,8 +1439,8 @@ guidance rather than this plan's expectation (the design spec's §10 flags this 
 the CLI was unavailable during authoring).
 
 - [ ] **Step 3: Open the PR.** Regular merge (no squash — owner ruling 2026-07-16). Title
-      `[B15SiteLookupStats] Site lookup stats`. No `.github/PULL_REQUEST_TEMPLATE` file exists in
-      this repo (verified 2026-07-17) — the required body element is a written
+      `feat: site lookup stats (B15)`. Body follows `.github/pull_request_template.md` —
+      the required element is a written
       **"Testing performed"** section (no screenshots/video, per this worktree's `CLAUDE.md`):
 
 ```
@@ -1455,9 +1455,6 @@ non-breaking primitives no earlier card added.
   B3's naive word matching; see design spec §2.2.
 - Always-visible section (not a lazy/click-to-reveal toggle) — matches the card's own "glanceable"
   payoff language; see design spec §2.4.
-
-## JIRA ticket
-* n/a (repo is not Jira-tracked)
 
 ## Testing performed
 - Unit: `bun run test` — full suite green, including new suites in

@@ -25,9 +25,9 @@ including every rejected alternative:
 
 - Implementer: dispatch each implementation/fix task to the `hunter` subagent — never a generic
   implementer.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/B10WeeklyDigest`.
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/b10-weekly-digest`.
 - Commit subject convention for every task in this plan (CONTRACTS §2 format —
-  `[<BranchSuffix>] feat: <summary> (<card>)`): `[B10WeeklyDigest] feat: weekly digest — <task
+  `[<BranchSuffix>] feat: <summary> (<card>)`): `feat: weekly digest — <task
 summary> (B10)`. No `Co-Authored-By` trailer, no attribution footer.
 - `bun run lint` and `bun run format:check` clean before every commit.
 - Every task must leave `cd packages/app && bun run typecheck` (and, from Task 3 on,
@@ -356,7 +356,7 @@ Commit:
 
 ```
 git add packages/app/src/domain/history-policy.ts packages/app/src/domain/weekly-digest.ts packages/app/src/index.ts packages/app/test/weekly-digest.test.ts
-git commit -m "[B10WeeklyDigest] feat: weekly digest — export HISTORY_CAP + computeWeeklyDigest pure function (B10)" \
+git commit -m "feat: weekly digest — export HISTORY_CAP + computeWeeklyDigest pure function (B10)" \
   -m $'Tribe-Card: b10-weekly-digest\nTribe-Task: 1/6'
 ```
 
@@ -550,7 +550,7 @@ Commit:
 
 ```
 git add packages/app/src/domain/types.ts packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/test/app/router.test.ts packages/app/test/wire-schema.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[B10WeeklyDigest] feat: weekly digest — HistoryEntry carries url/title from the request (B10)" \
+git commit -m "feat: weekly digest — HistoryEntry carries url/title from the request (B10)" \
   -m $'Tribe-Card: b10-weekly-digest\nTribe-Task: 2/6'
 ```
 
@@ -784,7 +784,7 @@ Commit:
 
 ```
 git add packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[B10WeeklyDigest] feat: weekly digest — add saved.list wire message + router case (B10)" \
+git commit -m "feat: weekly digest — add saved.list wire message + router case (B10)" \
   -m $'Tribe-Card: b10-weekly-digest\nTribe-Task: 3/6'
 ```
 
@@ -1057,7 +1057,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/side-panel-view.ts packages/app/test/ui/side-panel-view.test.ts
-git commit -m "[B10WeeklyDigest] feat: weekly digest — This week section on SidePanelView (B10)" \
+git commit -m "feat: weekly digest — This week section on SidePanelView (B10)" \
   -m $'Tribe-Card: b10-weekly-digest\nTribe-Task: 4/6'
 ```
 
@@ -1152,7 +1152,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/src/side-panel.ts
-git commit -m "[B10WeeklyDigest] feat: weekly digest — fetch + compute the digest once on panel boot (B10)" \
+git commit -m "feat: weekly digest — fetch + compute the digest once on panel boot (B10)" \
   -m $'Tribe-Card: b10-weekly-digest\nTribe-Task: 5/6'
 ```
 
@@ -1288,7 +1288,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/e2e/b10-weekly-digest.spec.ts
-git commit -m "[B10WeeklyDigest] feat: weekly digest — e2e coverage for the This week section (B10)" \
+git commit -m "feat: weekly digest — e2e coverage for the This week section (B10)" \
   -m $'Tribe-Card: b10-weekly-digest\nTribe-Task: 6/6'
 ```
 
@@ -1315,7 +1315,8 @@ cleared; the new `b10-weekly-digest.spec.ts` (2 tests) and the existing `side-pa
 
 ## PR
 
-Regular merge (no squash). Branch `feature/B10WeeklyDigest`, title
-`[B10WeeklyDigest] Weekly digest — side panel "This week" summary`. JIRA ticket: n/a — this repo is not Jira-tracked.
+Regular merge (no squash). Branch `feat/b10-weekly-digest`, title
+`feat: weekly digest — side panel "This week" summary (B10)`. No `## JIRA ticket` section
+(`docs/git-conventions.md` — this repo has no ticket tracker).
 Include a **"Testing performed"** section per this worktree's evidence policy (§7 of the design
 spec) instead of screenshots/video — list the suites above with pass counts.

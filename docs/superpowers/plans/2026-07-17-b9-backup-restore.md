@@ -25,8 +25,8 @@ E2 envelope quoted verbatim — is in
 ## Global Constraints
 
 - Implementer: dispatch each implementation/fix task to the `hunter` subagent.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/B9BackupRestore`.
-- Commit subject: `[B9BackupRestore] feat: <imperative summary> (B9)` — no Co-Authored-By
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/b9-backup-restore`.
+- Commit subject: `feat: <imperative summary> (B9)` — no Co-Authored-By
   trailer, no attribution footer.
 - `bun run lint` + `bun run format:check` green before every commit; `cd packages/app && bun run
 typecheck` green after every task touching that package; `cd packages/extension-chrome && bun run
@@ -39,10 +39,10 @@ typecheck` (and, from Task 6 on, `cd packages/extension-safari && bun run typech
   `build:chrome:e2e`) — never rely on shell state.
 - E2e must never fetch the live landing page — not applicable to this card (Settings-only,
   no landing-page touchpoint), noted for completeness.
-- PR: title `[B9BackupRestore] Backup & restore`; body includes a written **"Testing performed"**
+- PR: title `feat: backup & restore (B9)`; body follows `.github/pull_request_template.md`
+  — required element is a written **"Testing performed"**
   section (suites, counts, e2e scenarios, gates) — **no screenshots or video** (owner ruling
-  2026-07-16). No `.github/PULL_REQUEST_TEMPLATE` file exists in this repo (verified) — don't cite
-  template headings as fact.
+  2026-07-16).
 - Merge: **regular merge commit only — squash prohibited** (owner ruling 2026-07-16).
 - UI reads only `--ad-*`/`--adp-*` tokens; no hard-coded colors.
 - S1: the API key never appears in the export, never crosses the wire on `backup.import`, and
@@ -227,7 +227,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 ```
 git add packages/app/src/domain/saved-words-policy.ts packages/app/test/saved-words-policy.test.ts \
   packages/app/src/domain/history-policy.ts packages/app/test/history-policy.test.ts
-git commit -m "[B9BackupRestore] feat: add savedWordImport + historyImportEntry domain primitives (B9)"
+git commit -m "feat: add savedWordImport + historyImportEntry domain primitives (B9)"
 ```
 
 ---
@@ -480,7 +480,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/domain/backup-policy.ts packages/app/test/backup-policy.test.ts
-git commit -m "[B9BackupRestore] feat: add importBackup merge/replace orchestrator (B9)"
+git commit -m "feat: add importBackup merge/replace orchestrator (B9)"
 ```
 
 ---
@@ -810,7 +810,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/app/backup.ts packages/app/test/app/backup.test.ts
-git commit -m "[B9BackupRestore] feat: add buildBackupExport + parseBackupFile (B9)"
+git commit -m "feat: add buildBackupExport + parseBackupFile (B9)"
 ```
 
 ---
@@ -1235,7 +1235,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 ```
 git add packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/src/index.ts \
   packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts
-git commit -m "[B9BackupRestore] feat: add saved.list + backup.import wire message and router cases (B9)"
+git commit -m "feat: add saved.list + backup.import wire message and router cases (B9)"
 ```
 
 ---
@@ -1474,7 +1474,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/ui/settings-form.ts packages/app/test/ui/settings-form.test.ts
-git commit -m "[B9BackupRestore] feat: add Backup & restore section to settings-form (B9)"
+git commit -m "feat: add Backup & restore section to settings-form (B9)"
 ```
 
 ---
@@ -1602,7 +1602,7 @@ cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typech
 
 ```
 git add packages/extension-chrome/src/options.ts
-git commit -m "[B9BackupRestore] feat: wire Backup & restore export/import in Chrome options page (B9)"
+git commit -m "feat: wire Backup & restore export/import in Chrome options page (B9)"
 ```
 
 ---
@@ -1732,7 +1732,7 @@ cd packages/app && bun run typecheck && cd ../extension-safari && bun run typech
 
 ```
 git add packages/extension-safari/src/options.ts
-git commit -m "[B9BackupRestore] feat: mirror Backup & restore wiring into Safari options page (B9)"
+git commit -m "feat: mirror Backup & restore wiring into Safari options page (B9)"
 ```
 
 ---
@@ -1987,7 +1987,7 @@ bun run lint && bun run format:check
 
 ```
 git add packages/extension-chrome/e2e/b9-backup-restore.spec.ts
-git commit -m "[B9BackupRestore] feat: e2e coverage for backup export/import/merge/replace (B9)"
+git commit -m "feat: e2e coverage for backup export/import/merge/replace (B9)"
 ```
 
 ---
@@ -2025,7 +2025,7 @@ extension-chrome`, and `c3-3 extension-safari` components (no new component, no 
       C3 change-unit is required to open this PR.
 
 - [ ] **Step 3: Open the PR.** Regular merge (no squash — owner ruling 2026-07-16). Title:
-      `[B9BackupRestore] Backup & restore`. Body includes:
+      `feat: backup & restore (B9)`. Body includes:
 
 ```
 ## Description
@@ -2051,10 +2051,6 @@ is never exported and never touched by import).
   options-actions.spec.ts regression guard.
 - Gates: typecheck (app, extension-chrome, extension-safari), lint, format:check,
   build:chrome (env-cleared), build:safari — all green.
-
-## JIRA ticket
-* n/a (repo is not Jira-tracked)
 ```
 
-      (This repo carries no Jira tracker at all — the `## JIRA ticket` section always reads
-      `n/a`; there is no roadmap-campaign tracking system to substitute a real ticket ID from.)
+      (No `## JIRA ticket` section — `docs/git-conventions.md`: this repo has no ticket tracker.)

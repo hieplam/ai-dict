@@ -28,8 +28,8 @@ the behavior for free through the shared core but has no e2e harness in this rep
 
 - Implementer: dispatch each implementation/fix task to the `hunter` subagent — never a generic
   implementer.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/A14DoubleClickTrigger`.
-- Commit subject for every task in this plan: `[A14DoubleClickTrigger] feat: <task summary> (A14)`
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/a14-double-click-trigger`.
+- Commit subject for every task in this plan: `feat: <task summary> (A14)`
   — no `Co-Authored-By` trailer, no attribution footer (repo + global convention).
 - `bun run lint` and `bun run format:check` green before every commit; `cd packages/app && bun
 run typecheck` green after every task from Task 1 on; `cd packages/extension-chrome && bun run
@@ -61,10 +61,10 @@ typecheck` green from Task 5 on (once `Settings`/`SettingsFormValue` gain the fi
   state).
 - E2e must never fetch the live landing page — this card's e2e uses only the existing
   `gotoFixture`/new `gotoEditableFixture` local fixtures.
-- PR: title `[A14DoubleClickTrigger] Double-click trigger`; body carries a written **"Testing
+- PR: title `feat: double-click trigger (A14)`; body carries a written **"Testing
   performed"** section (suites, counts, e2e scenarios, gates) — **no screenshots or video**
-  (owner ruling 2026-07-16); `## JIRA ticket` section reads `n/a` (this repo is not Jira-tracked —
-  see PR #117's own precedent).
+  (owner ruling 2026-07-16); no `## JIRA ticket` section (`docs/git-conventions.md` — this repo
+  has no ticket tracker).
 - Merge: **regular merge commit only — squash prohibited** (owner ruling 2026-07-16).
 - UI reads only `--ad-*`/`--adp-*` tokens; the new "Trigger" section reuses the existing `.check`/
   `.seg-help` classes verbatim — no new CSS, no hard-coded colors.
@@ -239,7 +239,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/domain/types.ts packages/app/src/wire.ts
-git commit -m "[A14DoubleClickTrigger] feat: add viaDoubleClick + doubleClickLookup optional fields (A14)" \
+git commit -m "feat: add viaDoubleClick + doubleClickLookup optional fields (A14)" \
   -m $'Tribe-Card: a14-double-click-trigger\nTribe-Task: 1/8'
 ```
 
@@ -459,7 +459,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/app/dom-selection-source.ts packages/app/test/app/dom-selection-source.test.ts
-git commit -m "[A14DoubleClickTrigger] feat: detect double-click via MouseEvent.detail on mouseup + guard interactive elements (A14)" \
+git commit -m "feat: detect double-click via MouseEvent.detail on mouseup + guard interactive elements (A14)" \
   -m $'Tribe-Card: a14-double-click-trigger\nTribe-Task: 2/8'
 ```
 
@@ -652,7 +652,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/domain/workflow.ts packages/app/test/workflow.test.ts
-git commit -m "[A14DoubleClickTrigger] feat: double-click auto-fires the cooldown-gated lookup when opted in (A14)" \
+git commit -m "feat: double-click auto-fires the cooldown-gated lookup when opted in (A14)" \
   -m $'Tribe-Card: a14-double-click-trigger\nTribe-Task: 3/8'
 ```
 
@@ -851,7 +851,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/ui/settings-form.ts packages/app/test/ui/settings-form.test.ts
-git commit -m "[A14DoubleClickTrigger] feat: add the Trigger section + double-click checkbox to settings-form (A14)" \
+git commit -m "feat: add the Trigger section + double-click checkbox to settings-form (A14)" \
   -m $'Tribe-Card: a14-double-click-trigger\nTribe-Task: 4/8'
 ```
 
@@ -1025,7 +1025,7 @@ cd packages/extension-chrome && bun run typecheck && cd ../extension-safari && b
 
 ```
 git add packages/extension-chrome/src/adapters/chrome-storage-store.ts packages/extension-chrome/src/adapters/chrome-storage-store.test.ts packages/extension-safari/src/adapters/safari-storage-store.ts packages/extension-safari/src/adapters/safari-storage-store.test.ts
-git commit -m "[A14DoubleClickTrigger] feat: surface doubleClickLookup from storage on both platforms (A14)" \
+git commit -m "feat: surface doubleClickLookup from storage on both platforms (A14)" \
   -m $'Tribe-Card: a14-double-click-trigger\nTribe-Task: 5/8'
 ```
 
@@ -1115,7 +1115,7 @@ bun run lint && bun run format:check
 
 ```
 git add packages/extension-chrome/src/options.ts
-git commit -m "[A14DoubleClickTrigger] feat: persist doubleClickLookup through the Chrome options page reload (A14)" \
+git commit -m "feat: persist doubleClickLookup through the Chrome options page reload (A14)" \
   -m $'Tribe-Card: a14-double-click-trigger\nTribe-Task: 6/8'
 ```
 
@@ -1309,7 +1309,7 @@ bun run lint && bun run format:check
 
 ```
 git add packages/extension-chrome/e2e/helpers.ts packages/extension-chrome/e2e/a14-double-click-trigger.spec.ts
-git commit -m "[A14DoubleClickTrigger] feat: e2e coverage for the double-click bypass + guard list (A14)" \
+git commit -m "feat: e2e coverage for the double-click bypass + guard list (A14)" \
   -m $'Tribe-Card: a14-double-click-trigger\nTribe-Task: 7/8'
 ```
 
@@ -1339,7 +1339,7 @@ pass.
 
 - [ ] **Step 2: Open the PR.**
 
-Title: `[A14DoubleClickTrigger] Double-click trigger`
+Title: `feat: double-click trigger (A14)`
 
 Body:
 
@@ -1367,9 +1367,6 @@ elements; the ordinary select-then-click flow is unchanged.
 - e2e (`GEMINI_API_KEY= bun run build:chrome` then `bunx playwright test`): new
   `a14-double-click-trigger.spec.ts` — 3/3 passed (off-by-default, opted-in, opted-in-but-guarded);
   `onboarding`, `lookup`, `cooldown` regression suites — all passed.
-
-## JIRA ticket
-* n/a — this repo is not Jira-tracked (see PR #117's own precedent).
 
 ## Merge checklist
 - [x] Regular merge commit (no squash — owner ruling 2026-07-16)

@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.11.2](https://github.com/hieplam/ai-dict/compare/v1.11.1...v1.11.2) (2026-08-09)
+
+
+### Bug Fixes
+
+* enforce Conventional Commits so release-please can parse every commit ([f33d696](https://github.com/hieplam/ai-dict/commit/f33d696191ea07378fb6a7c749c641f76389cfd1))
+* enforce Conventional Commits so release-please can parse every commit ([0e2af8c](https://github.com/hieplam/ai-dict/commit/0e2af8ce33f68cd7c2bff3e3f56ea041cb9ce7ba))
+* **gemini:** parse the CRLF-delimited SSE frames Google actually sends ([d855675](https://github.com/hieplam/ai-dict/commit/d8556752116051cb44f30f95dff96dd8077d12b3))
+* **gemini:** parse the CRLF-delimited SSE frames Google actually sends ([c64ddaf](https://github.com/hieplam/ai-dict/commit/c64ddaf387defad81dc4d0aae93248f4020cf1d4))
+
 ## [1.11.1](https://github.com/hieplam/ai-dict/compare/v1.11.0...v1.11.1) (2026-08-09)
 
 

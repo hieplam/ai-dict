@@ -1,0 +1,7 @@
+#!/bin/sh
+# Shared, version-controlled commit-msg hook (wired via core.hooksPath = .githooks, same as
+# pre-commit). Rejects a commit whose subject isn't a Conventional Commit — see
+# docs/git-conventions.md for the format and why release-please needs it.
+set -e
+
+bun scripts/check-conventional-commit.mjs --hook "$1"

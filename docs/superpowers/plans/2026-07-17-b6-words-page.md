@@ -27,9 +27,9 @@ cascade-origin bug), plus every rejected alternative:
 
 - Implementer: dispatch each implementation/fix task to the `hunter` subagent — never a generic
   implementer.
-- Work happens on branch `feature/B6WordsPage`, started from a fresh worktree under
+- Work happens on branch `feat/b6-words-page`, started from a fresh worktree under
   `.claude/worktrees/` per this repo's `CLAUDE.md`.
-- Commit subject convention for every task: `[B6WordsPage] feat: <imperative summary> (B6)`
+- Commit subject convention for every task: `feat: <imperative summary> (B6)`
   (`test:` prefix for the e2e-only task). No `Co-Authored-By` trailer, no attribution footer.
 - **Task 2 (wire.ts + router.ts) is ONE task** — per the B5/B3 plan-authoring rule
   (`docs/ROADMAP.md` §8, 2026-07-16): `router.ts`'s exhaustive `switch(msg.type)` has no
@@ -380,7 +380,7 @@ Commit:
 
 ```
 git add packages/app/src/domain/words-page-policy.ts packages/app/src/index.ts packages/app/test/words-page-policy.test.ts
-git commit -m "[B6WordsPage] feat: pure filter/sort/site domain helpers for the words page (B6)"
+git commit -m "feat: pure filter/sort/site domain helpers for the words page (B6)"
 ```
 
 ---
@@ -612,7 +612,7 @@ Commit:
 
 ```
 git add packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts packages/app/wire-schema.snapshot.json
-git commit -m "[B6WordsPage] feat: saved.list wire message + router handler (B6)"
+git commit -m "feat: saved.list wire message + router handler (B6)"
 ```
 
 ---
@@ -1156,7 +1156,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/styles/tokens.ts packages/app/src/ui/words-page-view.ts packages/app/src/ui/register.ts packages/app/src/ui/index.ts packages/app/test/ui/words-page-view.test.ts
-git commit -m "[B6WordsPage] feat: words-page-view custom element (B6)"
+git commit -m "feat: words-page-view custom element (B6)"
 ```
 
 ---
@@ -1266,7 +1266,7 @@ Commit:
 
 ```
 git add packages/app/src/ui/side-panel-view.ts packages/app/test/ui/side-panel-view.test.ts
-git commit -m "[B6WordsPage] feat: My Words nav entry point on the side panel (B6)"
+git commit -m "feat: My Words nav entry point on the side panel (B6)"
 ```
 
 ---
@@ -1406,7 +1406,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/src/side-panel.html packages/extension-chrome/src/side-panel.ts
-git commit -m "[B6WordsPage] feat: wire the words page into the Chrome side panel composition root (B6)"
+git commit -m "feat: wire the words page into the Chrome side panel composition root (B6)"
 ```
 
 ---
@@ -1589,7 +1589,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/e2e/b6-words-page.spec.ts
-git commit -m "[B6WordsPage] test: e2e coverage for the words page (B6)"
+git commit -m "test: e2e coverage for the words page (B6)"
 ```
 
 ---
@@ -1617,7 +1617,8 @@ regression-guard specs that share files with this card (`side-panel.spec.ts`,
 
 ## PR
 
-Regular merge (no squash — owner ruling 2026-07-16). Title: `[B6WordsPage] Words page`. JIRA ticket: n/a — this repo is not Jira-tracked. Include a **"Testing
+Regular merge (no squash — owner ruling 2026-07-16). Title: `feat: words page (B6)`. No `## JIRA
+ticket` section (`docs/git-conventions.md` — this repo has no ticket tracker). Include a **"Testing
 performed"** section per this worktree's evidence policy (design spec §6) instead of
 screenshots/video — list every suite above with pass counts (unit test file count, e2e scenario
 count, gates run). No `pr-assets/*` branch for this card.

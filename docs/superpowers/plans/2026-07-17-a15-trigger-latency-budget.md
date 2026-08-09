@@ -46,8 +46,8 @@ questions and every empirical measurement backing the pinned numbers:
 - The e2e build must clear any ambient `GEMINI_API_KEY`
   (`GEMINI_API_KEY= bun run build:chrome:e2e`) before every e2e run in this plan.
 - Commit subject convention for every task in this plan:
-  `[A15TriggerLatencyBudget] feat: <task summary> (A15)`.
-- Branch: `feature/A15TriggerLatencyBudget`, started fresh under `.claude/worktrees/`.
+  `feat: <task summary> (A15)`.
+- Branch: `feat/a15-trigger-latency-budget`, started fresh under `.claude/worktrees/`.
 
 ---
 
@@ -184,7 +184,7 @@ Commit:
 
 ```
 git add packages/app/src/app/dom-selection-source.ts packages/app/test/app/dom-selection-source.test.ts
-git commit -m "[A15TriggerLatencyBudget] feat: mark SELECTION_FIRED_MARK on real selections (A15)"
+git commit -m "feat: mark SELECTION_FIRED_MARK on real selections (A15)"
 ```
 
 ---
@@ -362,7 +362,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/src/adapters/trigger-marks.ts packages/extension-chrome/src/adapters/chrome-floating-trigger.ts packages/extension-chrome/src/adapters/chrome-floating-trigger.test.ts
-git commit -m "[A15TriggerLatencyBudget] feat: mark TRIGGER_SHOWN_MARK one rAF tick after show() (A15)"
+git commit -m "feat: mark TRIGGER_SHOWN_MARK one rAF tick after show() (A15)"
 ```
 
 ---
@@ -544,7 +544,7 @@ Commit:
 
 ```
 git add packages/extension-chrome/e2e/a15-trigger-latency-budget.spec.ts
-git commit -m "[A15TriggerLatencyBudget] feat: e2e latency budget + forced-reflow guard for the trigger (A15)"
+git commit -m "feat: e2e latency budget + forced-reflow guard for the trigger (A15)"
 ```
 
 ---
@@ -570,7 +570,7 @@ total in this final invocation.
 
 ## PR
 
-Regular merge (no squash). Title: `[A15TriggerLatencyBudget] Trigger latency budget`. Include a
+Regular merge (no squash). Title: `feat: trigger latency budget (A15)`. Include a
 **"Testing performed"** section per this worktree's evidence policy (design spec §11) instead of
 screenshots/video:
 
@@ -581,7 +581,3 @@ screenshots/video:
   passed (regression guard).
 - Gates: `bun run lint`, `bun run format:check`, `bun run typecheck` (all 3 packages),
   `GEMINI_API_KEY= bun run build:chrome:e2e` — all green.
-
-## JIRA ticket
-
-- n/a — this repo is not Jira-tracked (see PR #117's own precedent).
