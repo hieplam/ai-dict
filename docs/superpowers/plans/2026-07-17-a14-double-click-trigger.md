@@ -476,7 +476,7 @@ git commit -m "[A14DoubleClickTrigger] feat: detect double-click via MouseEvent.
 **Interfaces consumed:** `SelectionEvent.viaDoubleClick?`, `PublicSettings.doubleClickLookup?`
 (Task 1); the already-existing `WorkflowDeps`/`SettingsStore`/`TriggerUI` ports are unchanged.
 
-- [ ] **Step 1: Write the failing tests.** In `packages/app/test/workflow.test.ts`, first extend
+- [x] **Step 1: Write the failing tests.** In `packages/app/test/workflow.test.ts`, first extend
       `pub()` and `harness()` (currently lines 27-59):
 
 ```ts
@@ -572,7 +572,7 @@ Expected: the 4 new tests **fail** — `viaDoubleClick`/`doubleClickLookup` aren
 yet, so every double-click selection just shows the trigger like any other selection (the first
 and fourth tests fail: no auto-fire ever happens).
 
-- [ ] **Step 2: Implement.** In `packages/app/src/domain/workflow.ts`, replace the `onSelection`
+- [x] **Step 2: Implement.** In `packages/app/src/domain/workflow.ts`, replace the `onSelection`
       callback (currently lines 123-139):
 
 ```ts
@@ -644,7 +644,7 @@ cd packages/app && bunx vitest run test/workflow.test.ts
 
 Expected: all tests pass (existing suite + 4 new).
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

@@ -24,7 +24,7 @@ const okResult: LookupResult = {
   fromCache: false,
   fetchedAt: 1,
 };
-const pub = (hasKey: boolean, configuredProviders?: Provider[]) => {
+const pub = (hasKey: boolean, configuredProviders?: Provider[], doubleClickLookup?: boolean) => {
   const fallback: Provider[] = hasKey ? ['gemini'] : [];
   return {
     targetLang: 'vi',
@@ -34,6 +34,7 @@ const pub = (hasKey: boolean, configuredProviders?: Provider[]) => {
     theme: 'sepia' as const,
     configuredProviders: configuredProviders ?? fallback,
     highlightSavedWords: true,
+    ...(doubleClickLookup ? { doubleClickLookup: true } : {}),
   };
 };
 
@@ -42,12 +43,15 @@ function harness(opts: {
   configuredProviders?: Provider[];
   impl?: FakeLookupClient['lookup'];
   now?: () => number;
+  doubleClickLookup?: boolean;
 }) {
   const selection = new FakeSelectionSource();
   const trigger = new FakeTriggerUI();
   const renderer = new FakeResultRenderer();
   const client = new FakeLookupClient(opts.impl ?? (() => Promise.resolve(okResult)));
-  const settings = new FakeSettingsStore(pub(opts.hasKey ?? true, opts.configuredProviders));
+  const settings = new FakeSettingsStore(
+    pub(opts.hasKey ?? true, opts.configuredProviders, opts.doubleClickLookup),
+  );
   const teardown = runLookupWorkflow({
     selection,
     trigger,
@@ -459,6 +463,45 @@ describe('runLookupWorkflow', () => {
     await vi.waitFor(() => expect(renderer.calls).toContain('result'));
     capturedOnChunk?.('stale, should not render');
     expect(renderer.partials).toEqual([]);
+  });
+
+  describe('A14: double-click bypass', () => {
+    const dblSel: SelectionEvent = { ...sel, viaDoubleClick: true };
+
+    it('doubleClickLookup on + a viaDoubleClick selection auto-fires runLookup, trigger never shown', async () => {
+      const h = harness({ doubleClickLookup: true });
+      h.selection.emit(dblSel);
+      await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+      expect(h.trigger.shown).toBeNull(); // never shown — bypassed entirely
+      expect(h.client.lastReq).toMatchObject({ word: 'bank', context: 'river bank' });
+    });
+
+    it('setting off (default) + a viaDoubleClick selection only shows the trigger, no auto-fire', async () => {
+      const h = harness({}); // doubleClickLookup absent → off
+      h.selection.emit(dblSel);
+      await vi.waitFor(() => expect(h.trigger.shown).not.toBeNull());
+      expect(h.renderer.calls).toEqual([]);
+      h.trigger.click();
+      await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+    });
+
+    it('setting on + a plain (non-double-click) selection never auto-fires — only viaDoubleClick bypasses', () => {
+      const h = harness({ doubleClickLookup: true });
+      h.selection.emit(sel); // no viaDoubleClick
+      expect(h.trigger.shown).not.toBeNull();
+      expect(h.renderer.calls).toEqual([]);
+    });
+
+    it('the double-click auto-fire path is still cooldown-gated (same RATE_LIMIT as a rapid double-click)', async () => {
+      let t = 0;
+      const h = harness({ doubleClickLookup: true, now: () => t });
+      h.selection.emit(dblSel);
+      await vi.waitFor(() => expect(h.renderer.calls).toContain('result'));
+      t = COOLDOWN_MS - 1; // still inside the window
+      h.selection.emit(dblSel);
+      await vi.waitFor(() => expect(h.renderer.lastError?.code).toBe('RATE_LIMIT'));
+      expect(h.renderer.lastError?.message).toContain('Slow down');
+    });
   });
 });
 

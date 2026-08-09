@@ -222,12 +222,14 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
     // trigger at all — same silent-no-op precedent as a collapsed selection (DomSelectionSource
     // returns null for those; see design spec §4).
     if (e.insideResult === true && stack.length >= RECURSIVE_LOOKUP_DEPTH_CAP) return;
-    deps.trigger.show(e.anchor, () => {
-      // Cooldown gate, checked BEFORE runLookup. runLookup begins by aborting the in-flight
-      // request, so gating here means a too-fast second click neither fires a new request NOR
-      // cancels the first one already in flight — first-come-first-served. A2: this gate is NOT
-      // bypassed for recursive in-definition lookups (design spec §3) — only the deliberate
-      // provider-switch/force-literal/refine re-runs bypass it.
+    // Cooldown gate, checked BEFORE runLookup. runLookup begins by aborting the in-flight
+    // request, so gating here means a too-fast second click neither fires a new request NOR
+    // cancels the first one already in flight — first-come-first-served. A2: this gate is NOT
+    // bypassed for recursive in-definition lookups (design spec §3) — only the deliberate
+    // provider-switch/force-literal/refine re-runs bypass it. Shared by the trigger button's
+    // click AND the A14 double-click auto-fire below — both routes to firing a lookup go
+    // through this exact same gate.
+    const fire = (): void => {
       const t = now();
       if (t - lastFireAt < COOLDOWN_MS) {
         deps.trigger.hide();
@@ -242,7 +244,24 @@ export function runLookupWorkflow(deps: WorkflowDeps): () => void {
       void runLookup(e, undefined, undefined, undefined, stackOp).catch((err) =>
         deps.renderer.renderError(mapError({ kind: 'thrown', error: err })),
       );
-    });
+    };
+    // A14: an opt-in double-click bypasses the trigger button entirely. Decide BEFORE ever
+    // showing the bubble, so an opted-in reader never sees it flash open and instantly close
+    // (design spec §5) — settings.get() resolves first, then either fires immediately (on) or
+    // shows the button exactly like any other selection (off, the default). A settings-read
+    // failure fails toward the existing behavior: show the button rather than silently doing
+    // nothing.
+    if (e.viaDoubleClick) {
+      void deps.settings.get().then(
+        (s) => {
+          if (s.doubleClickLookup) fire();
+          else deps.trigger.show(e.anchor, fire);
+        },
+        () => deps.trigger.show(e.anchor, fire),
+      );
+      return;
+    }
+    deps.trigger.show(e.anchor, fire);
   });
 
   return () => {
