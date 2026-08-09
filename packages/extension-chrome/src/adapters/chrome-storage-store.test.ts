@@ -119,4 +119,22 @@ describe('ChromeStorageStore (SettingsStore; S1 key isolation)', () => {
       saveHistory: true,
     });
   });
+
+  it('A14: get() omits doubleClickLookup when unset, and surfaces it when stored true', async () => {
+    const off = await new ChromeStorageStore(
+      fakeArea({ targetLang: 'vi', outputFormat: 'tpl', apiKey: 'AIza', hasKey: true }),
+    ).get();
+    expect('doubleClickLookup' in off).toBe(false);
+
+    const on = await new ChromeStorageStore(
+      fakeArea({
+        targetLang: 'vi',
+        outputFormat: 'tpl',
+        apiKey: 'AIza',
+        hasKey: true,
+        doubleClickLookup: true,
+      }),
+    ).get();
+    expect(on.doubleClickLookup).toBe(true);
+  });
 });

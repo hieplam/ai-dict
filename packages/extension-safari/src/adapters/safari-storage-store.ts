@@ -57,6 +57,9 @@ export class SafariStorageStore implements SettingsStore {
       glossMode: s?.glossMode ?? false,
       // B3: legacy stored settings lack the key — default true (see PublicSettings' doc comment).
       highlightSavedWords: s?.highlightSavedWords ?? true,
+      // A14: never emit an explicit `false` — omit the key entirely when unset, platform parity
+      // with ChromeStorageStore.get().
+      ...(s?.doubleClickLookup ? { doubleClickLookup: true } : {}),
     };
   }
 

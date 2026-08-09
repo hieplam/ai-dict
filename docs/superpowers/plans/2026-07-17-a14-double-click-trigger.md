@@ -869,7 +869,7 @@ git commit -m "[A14DoubleClickTrigger] feat: add the Trigger section + double-cl
 **Interfaces consumed:** `PublicSettings.doubleClickLookup?` (Task 1); `SettingsStore.get()` (an
 existing port method in `packages/app/src/ports.ts` — signature unchanged).
 
-- [ ] **Step 1: Write the failing tests.** Append to
+- [x] **Step 1: Write the failing tests.** Append to
       `packages/extension-chrome/src/adapters/chrome-storage-store.test.ts`, inside the existing
       `describe('ChromeStorageStore (SettingsStore; S1 key isolation)', ...)` block:
 
@@ -912,7 +912,7 @@ Expected: both new tests **fail** — `get()` never reads `doubleClickLookup` ye
 already since the field never appears, but keep it in the same test — it must keep passing after
 Step 2 too).
 
-- [ ] **Step 2: Implement.** In `packages/extension-chrome/src/adapters/chrome-storage-store.ts`,
+- [x] **Step 2: Implement.** In `packages/extension-chrome/src/adapters/chrome-storage-store.ts`,
       replace `get()` (currently lines 44-60):
 
 ```ts
@@ -1017,7 +1017,7 @@ cd ../extension-safari && bunx vitest run src/adapters/safari-storage-store.test
 
 Expected: all tests pass in both files (existing suites + 1 new each).
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 cd packages/extension-chrome && bun run typecheck && cd ../extension-safari && bun run typecheck && cd ../.. && bun run lint && bun run format:check

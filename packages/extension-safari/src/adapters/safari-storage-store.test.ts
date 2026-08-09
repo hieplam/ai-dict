@@ -98,6 +98,24 @@ describe('SafariStorageStore (SettingsStore; S1 key isolation)', () => {
       outputFormat: 'custom',
     });
   });
+
+  it('A14: get() omits doubleClickLookup when unset, and surfaces it when stored true', async () => {
+    const off = await new SafariStorageStore(
+      fakeArea({ targetLang: 'vi', outputFormat: 'tpl', apiKey: 'AIza', hasKey: true }),
+    ).get();
+    expect('doubleClickLookup' in off).toBe(false);
+
+    const on = await new SafariStorageStore(
+      fakeArea({
+        targetLang: 'vi',
+        outputFormat: 'tpl',
+        apiKey: 'AIza',
+        hasKey: true,
+        doubleClickLookup: true,
+      }),
+    ).get();
+    expect(on.doubleClickLookup).toBe(true);
+  });
 });
 
 // FIX 4 (D3 / S1 wire proof): Wire a REAL SafariStorageStore (seeded WITH an apiKey) as
