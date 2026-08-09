@@ -292,7 +292,7 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
         return { ok: true, type: 'ack' };
       }
       case 'saved.save': {
-        const entry = await deps.queue.run(() =>
+        const result = await deps.queue.run(() =>
           savedWordUpsert(
             { storage: deps.kv },
             {
@@ -303,9 +303,12 @@ export function buildRouter(deps: RouterDeps): (msg: WireMessage) => Promise<Rou
               url: msg.url,
               title: msg.title,
             },
+            { confirmNewSense: msg.confirmNewSense === true },
           ),
         );
-        return { ok: true, type: 'saved', entry };
+        return result.kind === 'conflict'
+          ? { ok: true, type: 'saved.conflict', word: msg.word, senseCount: result.senseCount }
+          : { ok: true, type: 'saved', entry: result.entry };
       }
       case 'saved.delete':
         await deps.queue.run(() => savedWordDelete({ storage: deps.kv }, msg.word));

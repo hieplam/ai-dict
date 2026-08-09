@@ -763,6 +763,24 @@ describe('saved.save / saved.delete wire messages (B1)', () => {
     expect(parsed.success).toBe(false);
   });
 
+  it('accepts a saved.save message with confirmNewSense:true (B14)', () => {
+    const parsed = WireMessageSchema.safeParse({
+      type: 'saved.save',
+      ...senseFields,
+      confirmNewSense: true,
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it('rejects a saved.save message with a non-boolean confirmNewSense (B14)', () => {
+    const parsed = WireMessageSchema.safeParse({
+      type: 'saved.save',
+      ...senseFields,
+      confirmNewSense: 'yes',
+    });
+    expect(parsed.success).toBe(false);
+  });
+
   it('accepts a valid saved.delete message', () => {
     expect(WireMessageSchema.safeParse({ type: 'saved.delete', word: 'bank' }).success).toBe(true);
   });
@@ -798,6 +816,30 @@ describe('saved.save / saved.delete wire messages (B1)', () => {
       senses: [{ definition: 'd', translation: 't', sentence: 's', url: 'u', title: 'ti' }],
     };
     expect(WireReplySchema.safeParse({ ok: true, type: 'saved', entry }).success).toBe(false);
+  });
+
+  it('accepts a saved.conflict reply (B14)', () => {
+    const parsed = WireReplySchema.safeParse({
+      ok: true,
+      type: 'saved.conflict',
+      word: 'bank',
+      senseCount: 1,
+    });
+    expect(parsed.success).toBe(true);
+  });
+
+  it('rejects a saved.conflict reply missing senseCount, or with a non-numeric one (B14)', () => {
+    expect(
+      WireReplySchema.safeParse({ ok: true, type: 'saved.conflict', word: 'bank' }).success,
+    ).toBe(false);
+    expect(
+      WireReplySchema.safeParse({
+        ok: true,
+        type: 'saved.conflict',
+        word: 'bank',
+        senseCount: 'one',
+      }).success,
+    ).toBe(false);
   });
 
   it('accepts a valid saved.setStatus message (B5)', () => {

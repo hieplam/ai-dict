@@ -10,7 +10,7 @@ import {
   savedWordImport,
   normalizeWordKey,
 } from '../src/domain/saved-words-policy';
-import type { Storage, SavedWordInput } from '../src';
+import type { Storage, SavedWordInput, SavedWordEntry, SavedWordsDeps } from '../src';
 
 function memStorage(): Storage {
   const m = new Map<string, string>();
@@ -38,6 +38,18 @@ const input = (word: string, overrides: Partial<SavedWordInput> = {}): SavedWord
   ...overrides,
 });
 
+/** Test helper: call savedWordUpsert and unwrap the 'saved' branch, failing loudly if the call
+ * instead returned a B14 conflict — every pre-B14 test path expects an outright write. */
+async function upsertOk(
+  deps: SavedWordsDeps,
+  in_: SavedWordInput,
+  opts?: { confirmNewSense?: boolean },
+): Promise<SavedWordEntry> {
+  const result = await savedWordUpsert(deps, in_, opts);
+  if (result.kind !== 'saved') throw new Error(`expected 'saved', got '${result.kind}'`);
+  return result.entry;
+}
+
 describe('saved-words-policy', () => {
   it('normalizeWordKey trims and lowercases', () => {
     expect(normalizeWordKey('  Bank ')).toBe('bank');
@@ -45,7 +57,7 @@ describe('saved-words-policy', () => {
 
   it('upsert creates a new entry: status learning, savedAt = now(), one sense', async () => {
     const s = memStorage();
-    const entry = await savedWordUpsert({ storage: s, now: () => 1000 }, input('Serendipity'));
+    const entry = await upsertOk({ storage: s, now: () => 1000 }, input('Serendipity'));
     expect(entry).toEqual({
       word: 'Serendipity',
       status: 'learning',
@@ -63,41 +75,95 @@ describe('saved-words-policy', () => {
     expect(await s.getItem('saved:serendipity')).toBe(JSON.stringify(entry));
   });
 
-  it('upsert on an existing (case-insensitive) word preserves savedAt/status, replaces senses', async () => {
+  it('upsert preserves a manually-set status (e.g. known) across an exact-duplicate re-save', async () => {
     const s = memStorage();
-    await savedWordUpsert({ storage: s, now: () => 1000 }, input('Bank', { definition: 'first' }));
-    const second = await savedWordUpsert(
-      { storage: s, now: () => 2000 },
-      input('bank', { definition: 'second' }),
-    );
-    expect(second.savedAt).toBe(1000); // preserved from the first save
-    expect(second.status).toBe('learning');
-    expect(second.senses).toHaveLength(1);
-    expect(second.senses[0]!.definition).toBe('second'); // replaced, not accumulated (B14's job)
-    expect(second.word).toBe('bank'); // latest casing wins for display
-  });
-
-  it('upsert preserves a manually-set status (e.g. known) across a re-save', async () => {
-    const s = memStorage();
-    await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
     // Simulate a future B5 marking it known directly in storage (no B5 UI exists yet).
     const stored = JSON.parse((await s.getItem('saved:bank'))!) as { status: string };
     stored.status = 'known';
     await s.setItem('saved:bank', JSON.stringify(stored));
-    const again = await savedWordUpsert({ storage: s, now: () => 3000 }, input('bank'));
+    // Same word, same sentence/url as the first save (input()'s defaults) — an exact-duplicate
+    // no-op, not a conflict, so this still returns 'saved' with the preserved status.
+    const again = await upsertOk({ storage: s, now: () => 3000 }, input('bank'));
     expect(again.status).toBe('known');
+  });
+
+  it('B14: a second upsert for the same word with a DIFFERENT sentence/url returns a conflict and writes nothing', async () => {
+    const s = memStorage();
+    await upsertOk({ storage: s, now: () => 1000 }, input('Bank', { definition: 'first' }));
+    const before = await s.getItem('saved:bank');
+    const result = await savedWordUpsert(
+      { storage: s, now: () => 2000 },
+      input('bank', {
+        definition: 'second',
+        sentence: 'a different sentence',
+        url: 'https://other.example/',
+      }),
+    );
+    expect(result).toEqual({ kind: 'conflict', senseCount: 1 });
+    expect(await s.getItem('saved:bank')).toBe(before); // byte-identical — no write happened
+  });
+
+  it('B14: confirmNewSense:true appends a new sense, preserving savedAt/status, updating word casing', async () => {
+    const s = memStorage();
+    await upsertOk({ storage: s, now: () => 1000 }, input('Bank', { definition: 'first def' }));
+    const entry = await upsertOk(
+      { storage: s, now: () => 2000 },
+      input('bank', {
+        definition: 'second def',
+        sentence: 'a different sentence',
+        url: 'https://other.example/',
+      }),
+      { confirmNewSense: true },
+    );
+    expect(entry.savedAt).toBe(1000); // preserved from the first save
+    expect(entry.status).toBe('learning');
+    expect(entry.word).toBe('bank'); // latest casing wins for display
+    expect(entry.senses).toHaveLength(2);
+    expect(entry.senses[0]!.definition).toBe('first def'); // original sense untouched
+    expect(entry.senses[1]!.definition).toBe('second def'); // appended, not replaced
+  });
+
+  it('B14: an exact sentence+url repeat is a silent no-op (kind:saved, unchanged entry, no write)', async () => {
+    const s = memStorage();
+    const first = await upsertOk(
+      { storage: s, now: () => 1000 },
+      input('bank', { definition: 'first' }),
+    );
+    const before = await s.getItem('saved:bank');
+    const result = await savedWordUpsert(
+      { storage: s, now: () => 2000 },
+      input('bank', { definition: 'second' }),
+    );
+    expect(result).toEqual({ kind: 'saved', entry: first });
+    expect(await s.getItem('saved:bank')).toBe(before); // byte-identical — no write happened
+  });
+
+  it('B14: a THIRD upsert after a decline (no confirmNewSense) still offers the conflict again, never accumulates silently', async () => {
+    const s = memStorage();
+    await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
+    const declined = await savedWordUpsert(
+      { storage: s, now: () => 2000 },
+      input('bank', { sentence: 'second sentence', url: 'https://second.example/' }),
+    );
+    expect(declined).toEqual({ kind: 'conflict', senseCount: 1 });
+    const declinedAgain = await savedWordUpsert(
+      { storage: s, now: () => 3000 },
+      input('bank', { sentence: 'second sentence', url: 'https://second.example/' }),
+    );
+    expect(declinedAgain).toEqual({ kind: 'conflict', senseCount: 1 }); // still 1 — nothing was ever written
   });
 
   it('savedWordGet returns the stored entry (case-insensitively), or null on miss', async () => {
     const s = memStorage();
-    await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
     expect(await savedWordGet({ storage: s }, 'BANK')).not.toBeNull();
     expect(await savedWordGet({ storage: s }, 'ghost')).toBeNull();
   });
 
   it('savedWordDelete removes the entry and its index id; idempotent on unknown word', async () => {
     const s = memStorage();
-    await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
     await savedWordDelete({ storage: s }, 'BANK');
     expect(await s.getItem('saved:bank')).toBeNull();
     expect(await savedWordsList({ storage: s })).toEqual([]);
@@ -106,15 +172,15 @@ describe('saved-words-policy', () => {
 
   it('savedWordsList returns every saved entry', async () => {
     const s = memStorage();
-    await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
-    await savedWordUpsert({ storage: s, now: () => 2000 }, input('river'));
+    await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
+    await upsertOk({ storage: s, now: () => 2000 }, input('river'));
     const list = await savedWordsList({ storage: s });
     expect(list.map((e) => e.word).sort()).toEqual(['bank', 'river']);
   });
 
   it('savedWordsClear removes all saved:* keys and nothing else (scope fence)', async () => {
     const s = memStorage();
-    await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
     await s.setItem('history:x', '{}'); // unrelated keyspace must survive
     await savedWordsClear({ storage: s });
     expect(await savedWordsList({ storage: s })).toEqual([]);
@@ -123,7 +189,7 @@ describe('saved-words-policy', () => {
 
   it('savedWordSetStatus flips an existing entry to known, preserving senses/savedAt', async () => {
     const s = memStorage();
-    const original = await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    const original = await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
     const updated = await savedWordSetStatus({ storage: s }, 'bank', 'known');
     expect(updated).not.toBeNull();
     expect(updated!.status).toBe('known');
@@ -134,14 +200,14 @@ describe('saved-words-policy', () => {
 
   it('savedWordSetStatus is case-insensitive on the word key', async () => {
     const s = memStorage();
-    await savedWordUpsert({ storage: s, now: () => 1000 }, input('Bank'));
+    await upsertOk({ storage: s, now: () => 1000 }, input('Bank'));
     const updated = await savedWordSetStatus({ storage: s }, 'BANK', 'known');
     expect(updated!.status).toBe('known');
   });
 
   it('savedWordSetStatus can flip back from known to learning', async () => {
     const s = memStorage();
-    await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
     await savedWordSetStatus({ storage: s }, 'bank', 'known');
     const back = await savedWordSetStatus({ storage: s }, 'bank', 'learning');
     expect(back!.status).toBe('learning');
@@ -154,7 +220,7 @@ describe('saved-words-policy', () => {
 
   it('savedWordSetRelated patches senses[0].related on an existing entry, preserving everything else (B13)', async () => {
     const s = memStorage();
-    const original = await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    const original = await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
     const updated = await savedWordSetRelated({ storage: s }, 'bank', [
       'shore',
       'embankment',
@@ -170,7 +236,7 @@ describe('saved-words-policy', () => {
 
   it('savedWordSetRelated is case-insensitive on the word key (B13)', async () => {
     const s = memStorage();
-    await savedWordUpsert({ storage: s, now: () => 1000 }, input('Bank'));
+    await upsertOk({ storage: s, now: () => 1000 }, input('Bank'));
     const updated = await savedWordSetRelated({ storage: s }, 'BANK', ['shore']);
     expect(updated!.senses[0]!.related).toEqual(['shore']);
   });
@@ -181,15 +247,22 @@ describe('saved-words-policy', () => {
     expect(await s.getItem('saved:ghost')).toBeNull();
   });
 
-  it('a subsequent plain savedWordUpsert (a normal re-save) clears a previously-persisted related array (B13, design spec §2.6)', async () => {
+  it('B14: an exact-duplicate re-save is a true no-op — a previously-persisted related array survives untouched', async () => {
+    // Superseded by B14's dedup design: a plain re-save with the SAME sentence/url is now a
+    // silent no-op (design spec §2.2 — "reply as if the save simply succeeded", no write at
+    // all), so it can no longer clear senses[0].related the way the old always-replace
+    // savedWordUpsert used to. Clearing related now only happens if the caller writes a
+    // genuinely new sense (B13's own scope — not exercised by this no-op path).
     const s = memStorage();
-    await savedWordUpsert({ storage: s, now: () => 1000 }, input('bank'));
+    await upsertOk({ storage: s, now: () => 1000 }, input('bank'));
     await savedWordSetRelated({ storage: s }, 'bank', ['shore', 'embankment']);
-    const resaved = await savedWordUpsert(
+    const before = await s.getItem('saved:bank');
+    const resaved = await upsertOk(
       { storage: s, now: () => 2000 },
-      input('bank', { definition: 'new context' }),
+      input('bank', { definition: 'new context' }), // same sentence/url as the first save
     );
-    expect(resaved.senses[0]!.related).toBeUndefined();
+    expect(resaved.senses[0]!.related).toEqual(['shore', 'embankment']);
+    expect(await s.getItem('saved:bank')).toBe(before); // byte-identical — no write happened
   });
 
   it('savedWordImport writes an entry verbatim (not now()-derived) and adds it to the index', async () => {
@@ -231,7 +304,7 @@ describe('saved-words-policy', () => {
 
   it('savedWordImport coexists with entries written by savedWordUpsert', async () => {
     const s = memStorage();
-    await savedWordUpsert({ storage: s, now: () => 1000 }, input('live'));
+    await upsertOk({ storage: s, now: () => 1000 }, input('live'));
     await savedWordImport(
       { storage: s },
       {

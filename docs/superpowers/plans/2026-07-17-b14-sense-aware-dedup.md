@@ -99,7 +99,7 @@ export function savedWordUpsert(
 { ok: true, type: 'saved.conflict', word: string, senseCount: number }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Replace the entire contents of
+- [x] **Step 1: Write the failing tests.** Replace the entire contents of
       `packages/app/test/saved-words-policy.test.ts`:
 
 ```ts
@@ -328,7 +328,7 @@ Expected: failures — `savedWordUpsert` still returns a bare entry (not `{kind,
 `upsertOk`'s `result.kind !== 'saved'` check throws on every call, and the two new conflict-shaped
 assertions fail outright.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/domain/saved-words-policy.ts`, replace the whole
+- [x] **Step 2: Implement.** In `packages/app/src/domain/saved-words-policy.ts`, replace the whole
       file:
 
 ```ts
@@ -493,7 +493,7 @@ export async function savedWordsClear(deps: SavedWordsDeps): Promise<void> {
 Run: `cd packages/app && bunx vitest run test/saved-words-policy.test.ts`
 Expected: all tests pass (15 total).
 
-- [ ] **Step 3: Write the failing wire tests.** In `packages/app/test/wire-schema.test.ts`, inside the
+- [x] **Step 3: Write the failing wire tests.** In `packages/app/test/wire-schema.test.ts`, inside the
       existing `describe('saved.save / saved.delete wire messages (B1)', ...)` block
       (`wire-schema.test.ts:412-497`), add these tests right after the existing
       `'accepts a valid saved.save message'` test (after line 425, before
@@ -555,7 +555,7 @@ Expected: 4 new failures (the schema doesn't know `confirmNewSense` or `saved.co
 discriminated union match entirely, and `saved.conflict` has no matching arm in `WireReplySchema`
 yet); the JSON-schema snapshot test also now needs regeneration once the schema changes (Step 5).
 
-- [ ] **Step 4: Implement.** In `packages/app/src/wire.ts`:
+- [x] **Step 4: Implement.** In `packages/app/src/wire.ts`:
   1. Add `confirmNewSense` to the `saved.save` arm (`wire.ts:111-119`):
 
 ```ts
@@ -601,7 +601,7 @@ Run: `cd packages/app && bunx vitest run test/wire-schema.test.ts -t "B14"`
 Expected: the 4 new B14 tests pass. The snapshot test (`'JSON-schema snapshot is stable'`) now
 fails — expected, fixed in Step 5.
 
-- [ ] **Step 5: Regenerate the JSON-schema snapshot.**
+- [x] **Step 5: Regenerate the JSON-schema snapshot.**
 
 ```
 cd packages/app && bunx vitest run test/wire-schema.test.ts -u
@@ -616,7 +616,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts
 
 Expected: all tests pass, including the snapshot test (no `-u` needed this second run).
 
-- [ ] **Step 6: Update the router.** In `packages/app/src/app/router.ts`, replace the `saved.save`
+- [x] **Step 6: Update the router.** In `packages/app/src/app/router.ts`, replace the `saved.save`
       case (`router.ts:242-257`):
 
 ```ts
@@ -641,7 +641,7 @@ Expected: all tests pass, including the snapshot test (no `-u` needed this secon
       }
 ```
 
-- [ ] **Step 7: Write the failing router tests.** In `packages/app/test/app/router.test.ts`,
+- [x] **Step 7: Write the failing router tests.** In `packages/app/test/app/router.test.ts`,
       replace the existing test
       `'a second saved.save for the same word (different casing) preserves savedAt, replaces senses'`
       (`router.test.ts:474-500`) with:
@@ -743,7 +743,7 @@ Expected (after Step 6): all tests in `router.test.ts` pass, including the 3 new
 `'saved.save persists a new entry'`, `'saved.delete removes the entry'`, and
 `'history.clear and cache.clear never touch saved:*'` tests unchanged from before.
 
-- [ ] **Step 8: Commit** — gate, then commit:
+- [x] **Step 8: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
