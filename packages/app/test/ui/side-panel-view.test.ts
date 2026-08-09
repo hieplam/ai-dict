@@ -292,3 +292,17 @@ describe('<side-panel-view>', () => {
     expect(fired).toBe(true);
   });
 });
+
+describe('<side-panel-view> Back button CSS parity (A2)', () => {
+  it('renders a .back-btn when focusState.canGoBack is set directly (defensive parity — side-panel.ts itself never sets this field today; see design spec §6/§7.10)', () => {
+    const el = mount();
+    el.focusState = {
+      kind: 'result',
+      word: 'institution',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      canGoBack: true,
+    };
+    expect(el.shadowRoot!.querySelector('.back-btn')).not.toBeNull();
+  });
+});

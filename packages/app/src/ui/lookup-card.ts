@@ -10,6 +10,7 @@ import {
   ICON_SIDE_PANEL,
   ICON_STAR,
   ICON_SPEAKER,
+  ICON_BACK,
 } from './styles/tokens';
 
 // Re-exported so existing consumers (side-panel-view) and the c3-117 public surface keep
@@ -64,6 +65,11 @@ export type CardState =
       /** A3: which refine (if any) produced this rendered result; undefined = the original.
        * Only meaningful when refineChips is true. */
       refine?: RefineKind;
+      /** A2: true when this result has a parent frame to return to (a Back button renders).
+       * Only ever set by the in-page card's own recursive-lookup workflow — the side panel
+       * deliberately omits it (see side-panel.ts's resultToFocus), mirroring how A8's
+       * onForceLiteral / the one-shot provider picker are also in-page-card-only. */
+      canGoBack?: boolean;
     }
   | {
       kind: 'streaming';
@@ -170,6 +176,7 @@ button[data-act="settings"] .lbl{line-height:1}
    descendants). */
 ::slotted(.meta-row){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:9px 0 0;font-size:var(--adp-text-2xs);color:var(--ad-ink-faint)}
 ::slotted(.defined-as){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 8px;font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
+::slotted(.back-row){display:flex;margin:2px 0 8px}
 ::slotted(.save-row){display:flex;margin:6px 0 10px}
 ::slotted(.refine-row){display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0 2px}
 ::slotted(.speak-btn){display:inline-flex;vertical-align:middle;margin:0 0 .35em 8px}
@@ -196,6 +203,11 @@ lookup-card .defined-as__label{font-style:italic}
 lookup-card .defined-as__literal-btn{border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:2px 10px;font:inherit;font-size:var(--adp-text-2xs);cursor:pointer}
 lookup-card .defined-as__literal-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
 lookup-card .defined-as__literal-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .back-btn{display:inline-flex;align-items:center;gap:6px;border:0;background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:5px 10px 5px 6px;font:inherit;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);cursor:pointer;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease)}
+lookup-card .back-btn svg{width:15px;height:15px;pointer-events:none}
+lookup-card .back-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
+lookup-card .back-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){lookup-card .back-btn{transition:none}}
 lookup-card .save-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:5px 12px;font:inherit;font-size:var(--adp-text-xs);font-weight:var(--adp-weight-semi);cursor:pointer;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease),border-color var(--adp-dur-fast) var(--adp-ease)}
 lookup-card .save-btn svg{width:15px;height:15px;pointer-events:none;fill:none;stroke:currentColor}
 lookup-card .save-btn:hover{background:var(--ad-surface-raised);color:var(--ad-ink)}
@@ -351,8 +363,13 @@ export function renderCardState(state: CardState): Node[] {
   const h = document.createElement('h2');
   h.textContent = state.word;
   const body = document.createElement('div');
+  // A2: marks the definition body so DomSelectionSource can tell a selection inside it apart
+  // from an ordinary page selection (see dom-selection-source.ts's defaultReader).
+  body.className = 'lookup-answer';
   body.innerHTML = state.safeHtml; // trusted: sanitized upstream by adapters-shared (S4)
-  const nodes: Node[] = [h];
+  const nodes: Node[] = [];
+  if (state.canGoBack === true) nodes.push(renderBackRow());
+  nodes.push(h);
   const speakBtn = renderSpeakButton(state.word);
   if (speakBtn) nodes.push(speakBtn);
   nodes.push(renderSaveRow(state));
@@ -364,6 +381,28 @@ export function renderCardState(state: CardState): Node[] {
   const meta = renderMetaRow(state);
   if (meta) nodes.push(meta);
   return nodes;
+}
+
+/**
+ * A2: the Back button — rendered only when `state.canGoBack` is true (a recursive lookup has a
+ * parent frame to return to). Dispatches a composed, payload-free `lookup-back` event (mirrors
+ * `close`'s parameterless composed-event pattern); the workflow's own `onBack` closure (installed
+ * via `ResultRenderContext`, see `domain/workflow.ts`) does the actual pop + re-render — this
+ * function is pure UI, no stack awareness.
+ */
+function renderBackRow(): HTMLElement {
+  const row = document.createElement('div');
+  row.className = 'back-row';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'back-btn';
+  btn.setAttribute('aria-label', 'Back to previous definition');
+  btn.innerHTML = `${ICON_BACK}<span>Back</span>`; // s4: static-template — decorative aria-hidden SVG + literal "Back" copy; accessible name via aria-label
+  btn.addEventListener('click', () =>
+    btn.dispatchEvent(new CustomEvent('lookup-back', { bubbles: true, composed: true })),
+  );
+  row.append(btn);
+  return row;
 }
 
 /**

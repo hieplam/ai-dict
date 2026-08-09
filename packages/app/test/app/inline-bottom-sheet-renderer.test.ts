@@ -547,3 +547,28 @@ describe('renderPartial (A1)', () => {
     expect(card(h).textContent).toContain('b');
   });
 });
+
+describe('InlineBottomSheetRenderer — Back navigation (A2)', () => {
+  it('renderResult(r, { onBack }) sets CardState.canGoBack and shows a .back-btn', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result, { onBack: () => undefined });
+    expect(card(h).querySelector('.back-btn')).not.toBeNull();
+  });
+
+  it('renderResult(r) without ctx.onBack renders no .back-btn', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderResult(result);
+    expect(card(h).querySelector('.back-btn')).toBeNull();
+  });
+
+  it("clicking the card's back-btn invokes ctx.onBack", () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    const calls: number[] = [];
+    r.renderResult(result, { onBack: () => calls.push(1) });
+    card(h).querySelector<HTMLButtonElement>('.back-btn')!.click();
+    expect(calls).toEqual([1]);
+  });
+});

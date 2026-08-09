@@ -1101,6 +1101,72 @@ describe('A10 speak button (TTS pronunciation)', () => {
   });
 });
 
+describe('<lookup-card> Back button (A2)', () => {
+  it('canGoBack: true renders a .back-btn; absent/false renders none', () => {
+    const withBack = mountCard();
+    withBack.state = {
+      kind: 'result',
+      word: 'institution',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      canGoBack: true,
+    };
+    expect(withBack.querySelector('.back-btn')).not.toBeNull();
+
+    const withoutBack = mountCard();
+    withoutBack.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+    };
+    expect(withoutBack.querySelector('.back-btn')).toBeNull();
+  });
+
+  it('clicking .back-btn fires a composed, bubbling lookup-back event', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'institution',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      canGoBack: true,
+    };
+    const handler = vi.fn();
+    document.body.addEventListener('lookup-back', handler);
+    el.querySelector<HTMLButtonElement>('.back-btn')!.click();
+    document.body.removeEventListener('lookup-back', handler);
+    expect(handler).toHaveBeenCalledTimes(1);
+    const evt = handler.mock.calls[0]![0] as CustomEvent;
+    expect(evt.composed).toBe(true);
+    expect(evt.bubbles).toBe(true);
+  });
+
+  it('the result body carries class "lookup-answer" (the A2 recursion-detection marker)', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>A financial institution.</p>'),
+    };
+    expect(el.querySelector('.lookup-answer')).not.toBeNull();
+    expect(el.querySelector('.lookup-answer')!.innerHTML).toContain('A financial institution.');
+  });
+
+  it('has no axe violations with the Back button present (result state)', async () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'institution',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      canGoBack: true,
+    };
+    expect(await axeViolations(el)).toEqual([]);
+  });
+});
+
 describe('renderCardState — streaming (A1)', () => {
   it('renders the headword + sanitized body and nothing interactive', () => {
     const nodes = renderCardState({

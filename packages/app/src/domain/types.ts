@@ -11,6 +11,17 @@ export interface SelectionEvent {
   anchor: AnchorRect;
   url: string;
   title: string;
+  /**
+   * A2: true when this selection's start lands inside the currently-rendered lookup result's
+   * definition body (`.lookup-answer`, stamped by `renderCardState` in `ui/lookup-card.ts`) — the
+   * reader selected a word INSIDE an existing definition, not on the surrounding page.
+   * `runLookupWorkflow` uses this to decide whether to push a new frame onto the recursive
+   * lookup chain (this flag true) or start a fresh chain (flag absent/false). Computed only by
+   * `DomSelectionSource`'s `defaultReader` (the one call site with real DOM access, per
+   * rule-domain-purity); every other `SelectionEvent` producer (tests, fakes) simply omits it,
+   * which reads as false.
+   */
+  insideResult?: boolean;
 }
 
 /**
