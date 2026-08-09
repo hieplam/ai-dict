@@ -813,7 +813,7 @@ export class InlineBottomSheetRenderer implements ResultRenderer {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** In
+- [x] **Step 1: Write the failing tests.** In
       `packages/app/test/app/inline-bottom-sheet-renderer.test.ts`, add `AnchorRect` to the type
       import at the top of the file (currently `import type { LookupResult, LookupError } from
 '../../src';`):
@@ -975,7 +975,7 @@ Run: `cd packages/app && bunx vitest run test/app/inline-bottom-sheet-renderer.t
 Expected: every test in the new `describe` block fails — `InlineBottomSheetRenderer` has no
 `glossMode` setter yet (a TypeScript error) and `renderLoading` doesn't accept a 2nd argument.
 
-- [ ] **Step 2: Implement — TARGETED, ADDITIVE edits only. Never paste a full-file copy.**
+- [x] **Step 2: Implement — TARGETED, ADDITIVE edits only. Never paste a full-file copy.**
 
   > **⚠ Shared-file warning:** `inline-bottom-sheet-renderer.ts` is also modified by A1
   > (streamed answers) and A7 (pin cards) — see this plan's Global Constraints "Concurrency"
@@ -1299,7 +1299,7 @@ Also run the full app unit suite to confirm no regression in the other features 
 shares (B1/B5/B7/A8 all touch it): `cd packages/app && bun run test`
 Expected: all suites green.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

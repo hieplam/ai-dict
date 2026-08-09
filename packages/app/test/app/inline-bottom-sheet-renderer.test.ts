@@ -572,3 +572,158 @@ describe('InlineBottomSheetRenderer — Back navigation (A2)', () => {
     expect(calls).toEqual([1]);
   });
 });
+
+describe('InlineBottomSheetRenderer — gloss mode (A5)', () => {
+  afterEach(() => document.body.replaceChildren());
+  const anchor: AnchorRect = { x: 10, y: 20, w: 30, h: 40 };
+  function gloss(h: HTMLElement): HTMLElement | null {
+    return h.querySelector('lookup-gloss');
+  }
+
+  it('regression: glossMode default false — renderResult opens the full card even with a translation + anchor', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.renderLoading('bank', anchor);
+    r.renderResult({ ...result, translation: 'ngân hàng' });
+    expect(card(h)).not.toBeNull();
+    expect(gloss(h)).toBeNull();
+  });
+
+  it('glossMode=true + anchor + translation mounts a compact gloss bubble at the anchor, not the full card', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    r.renderResult({ ...result, translation: 'ngân hàng' });
+    const g = gloss(h);
+    expect(g).not.toBeNull();
+    expect(g!.style.left).toBe('10px');
+    expect(g!.style.top).toBe('60px'); // anchor.y(20) + anchor.h(40)
+    expect(h.querySelector('bottom-sheet')).toBeNull();
+    expect(g!.textContent).toContain('ngân hàng');
+  });
+
+  it('glossMode=true with no translation on the result falls back to the full card', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    r.renderResult(result);
+    expect(card(h)).not.toBeNull();
+    expect(gloss(h)).toBeNull();
+  });
+
+  it('glossMode=true with a BLANK translation also falls back to the full card', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    r.renderResult({ ...result, translation: '   ' });
+    expect(card(h)).not.toBeNull();
+    expect(gloss(h)).toBeNull();
+  });
+
+  it('glossMode=true + translation present but NO anchor falls back to the full card', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank'); // no anchor → lastAnchor null
+    r.renderResult({ ...result, translation: 'ngân hàng' });
+    expect(card(h)).not.toBeNull();
+    expect(gloss(h)).toBeNull();
+  });
+
+  it('glossMode=true renderLoading(word, anchor) mounts a loading gloss bubble, not the full card', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    const g = gloss(h);
+    expect(g).not.toBeNull();
+    expect(g!.querySelector('.gloss-spinner')).not.toBeNull();
+    expect(h.querySelector('bottom-sheet')).toBeNull();
+  });
+
+  it('gloss mode: renderPartial during streaming does NOT open the full card behind the bubble', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    r.renderPartial('bank', '**partial**');
+    expect(h.querySelector('bottom-sheet')).toBeNull();
+    expect(gloss(h)).not.toBeNull();
+  });
+
+  it('dispatching "expand" swaps to the full card with the SAME already-computed result (no re-sanitize, no re-lookup)', () => {
+    const h = host();
+    let sanitizeCalls = 0;
+    const r = new InlineBottomSheetRenderer(h, (md) => {
+      sanitizeCalls++;
+      return `SAFE:${md}` as SafeHtml;
+    });
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    r.renderResult({ ...result, translation: 'ngân hàng' });
+    expect(gloss(h)).not.toBeNull();
+    const callsAfterFirstRender = sanitizeCalls;
+    gloss(h)!.dispatchEvent(new CustomEvent('expand', { bubbles: true, composed: true }));
+    const c = card(h);
+    expect(c).not.toBeNull();
+    expect(c.querySelector('h2')!.textContent).toBe('bank');
+    expect(c.innerHTML).toContain(`SAFE:${result.markdown}`);
+    expect(gloss(h)).toBeNull();
+    expect(sanitizeCalls).toBe(callsAfterFirstRender);
+  });
+
+  it('post-expand stays expanded: a second renderResult (provider-switch re-run) updates the SAME open card — the bubble never reappears', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    r.renderResult({ ...result, translation: 'ngân hàng' });
+    gloss(h)!.dispatchEvent(new CustomEvent('expand', { bubbles: true, composed: true }));
+    expect(h.querySelectorAll('bottom-sheet').length).toBe(1);
+    r.renderResult({ ...result, translation: 'ngân hàng' });
+    expect(gloss(h)).toBeNull();
+    expect(h.querySelectorAll('bottom-sheet').length).toBe(1);
+  });
+
+  it('errors always render the full card: renderError after a gloss-mode renderLoading removes the loading bubble', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    expect(gloss(h)).not.toBeNull();
+    r.renderError(error);
+    expect(gloss(h)).toBeNull();
+    expect(card(h).querySelector('.err')!.textContent).toBe('Network failed.');
+  });
+
+  it('a mousedown outside the gloss bubble dismisses it without opening the full card', () => {
+    const h = host();
+    const outside = document.createElement('div');
+    document.body.append(outside);
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    r.renderResult({ ...result, translation: 'ngân hàng' });
+    expect(gloss(h)).not.toBeNull();
+    outside.dispatchEvent(new MouseEvent('mousedown', { bubbles: true, composed: true }));
+    expect(gloss(h)).toBeNull();
+    expect(card(h)).toBeNull();
+  });
+
+  it('close() resets cardOpen — a fresh gloss-eligible renderResult after close() mounts a gloss bubble again', () => {
+    const h = host();
+    const r = new InlineBottomSheetRenderer(h);
+    r.glossMode = true;
+    r.renderLoading('bank', anchor);
+    r.renderResult({ ...result, translation: 'ngân hàng' });
+    gloss(h)!.dispatchEvent(new CustomEvent('expand', { bubbles: true, composed: true }));
+    r.close();
+    r.renderLoading('bank', anchor); // re-sets lastAnchor (close() nulled it)
+    r.renderResult({ ...result, translation: 'ngân hàng' });
+    expect(gloss(h)).not.toBeNull();
+    expect(h.querySelector('bottom-sheet')).toBeNull();
+  });
+});
