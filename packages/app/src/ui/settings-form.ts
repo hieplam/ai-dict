@@ -166,7 +166,7 @@ details.advanced>summary:focus-visible{outline:2px solid var(--ad-accent);outlin
 .health-url{font-family:var(--adp-font-mono);background:var(--ad-surface-sunken);padding:2px 6px;border-radius:4px;user-select:all}
 #quiet-help{margin:7px 0 12px;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
 .quiet-list{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
-.quiet-list li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;background:var(--ad-surface-sunken);border:1px solid var(--ad-line);border-radius:8px;font-size:var(--adp-text-sm);color:var(--ad-ink)}
+.quiet-list li:not(.quiet-empty){display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 12px;background:var(--ad-surface-sunken);border:1px solid var(--ad-line);border-radius:8px;font-size:var(--adp-text-sm);color:var(--ad-ink)}
 .quiet-list button{padding:5px 11px;font-size:var(--adp-text-xs)}
 .quiet-empty{margin:0;font-size:var(--adp-text-xs);color:var(--ad-ink-faint)}
 [hidden]{display:none}`;
@@ -859,7 +859,7 @@ export class SettingsForm extends HTMLElement {
     const ul = this.q<HTMLUListElement>('#quiet-list');
     ul.replaceChildren();
     if (this._quietSites.length === 0) {
-      const empty = document.createElement('p');
+      const empty = document.createElement('li');
       empty.className = 'quiet-empty';
       empty.textContent = 'No muted sites yet.';
       ul.append(empty);

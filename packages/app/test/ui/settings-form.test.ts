@@ -1450,12 +1450,15 @@ describe('<settings-form> quiet sites (A13)', () => {
     expect(el.shadowRoot!.querySelector<HTMLButtonElement>('#quiet-list li button')).not.toBeNull();
   });
 
-  it('an empty quietSites list renders the empty-state message', () => {
+  it('an empty quietSites list renders the empty-state message', async () => {
     const el = mountForm();
     el.quietSites = [];
     const ul = el.shadowRoot!.querySelector('#quiet-list')!;
     expect(ul.querySelector('.quiet-empty')).not.toBeNull();
-    expect(ul.querySelectorAll('li').length).toBe(0);
+    // The empty-state message is a valid <li> (not a <p> child of <ul>); it carries no Remove
+    // button, so there are zero *removable domain rows*.
+    expect(ul.querySelectorAll('li button').length).toBe(0);
+    expect(await axeViolations(el)).toEqual([]);
   });
 
   it('typing a domain and clicking Add dispatches a composed add-quiet-site event with the trimmed domain, then clears the input', () => {

@@ -87,9 +87,13 @@ test.describe('A13 per-site quiet mode', () => {
       timeout: 10_000,
     });
 
-    // Collapse the still-live "river bank" selection so the mute button's mouseup does not
-    // re-fire DomSelectionSource (a synthetic-harness artifact; a real click collapses the
-    // selection). Matches the removeAllRanges idiom in lookup.spec.ts / selection.spec.ts / a15.
+    // Collapse the leftover "river bank" selection before the mute click. DomSelectionSource
+    // re-fires on ANY document mouseup while a selection is live (dom-selection-source.ts), so the
+    // mute button's own mouseup would otherwise mount a fresh trigger from the stale selection —
+    // a pre-existing race (Close/star buttons do the same; not introduced by A13, and it
+    // self-heals on the next interaction). Collapsing here isolates the assertion below to its
+    // real intent: the NEXT genuine selection ("steep") stays silent once the site is muted.
+    // Matches the removeAllRanges idiom in lookup.spec.ts / selection.spec.ts / a15.
     await page.evaluate(() => window.getSelection()?.removeAllRanges());
     await page.locator('bottom-sheet lookup-card button[data-act="mute-site"]').click();
 
