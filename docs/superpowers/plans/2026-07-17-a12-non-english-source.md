@@ -33,8 +33,8 @@ alternative:
 ## Global Constraints
 
 - Implementer: dispatch each task to the `hunter` subagent — never a generic implementer.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/A12NonEnglishSource`.
-- Commit subject: `[A12NonEnglishSource] feat: <imperative summary> (A12)` for every task's commit —
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/a12-non-english-source`.
+- Commit subject: `feat: <imperative summary> (A12)` for every task's commit —
   no `Co-Authored-By` trailer, no attribution footer.
 - `bun run lint` && `bun run format:check` green before every commit; `cd packages/app && bun run
 typecheck` green after every task from Task 2 onward (Task 1 alone is enough to typecheck on its
@@ -209,7 +209,7 @@ cd ../.. && bun run lint && bun run format:check
 
 ```
 git add packages/app/src/domain/source-lang.ts packages/app/test/source-lang.test.ts packages/app/src/index.ts
-git commit -m "[A12NonEnglishSource] feat: add the recognized source-language code table + detection (A12)" \
+git commit -m "feat: add the recognized source-language code table + detection (A12)" \
   -m $'Tribe-Card: a12-non-english-source\nTribe-Task: 1/9'
 ```
 
@@ -419,7 +419,7 @@ cd ../.. && bun run lint && bun run format:check
 ```
 git add packages/app/src/domain/types.ts packages/app/src/wire.ts packages/app/src/app/router.ts \
   packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts
-git commit -m "[A12NonEnglishSource] feat: add sourceLang/sourceLangOverride request fields + cache-skip guard (A12)" \
+git commit -m "feat: add sourceLang/sourceLangOverride request fields + cache-skip guard (A12)" \
   -m $'Tribe-Card: a12-non-english-source\nTribe-Task: 2/9'
 ```
 
@@ -638,7 +638,7 @@ cd ../.. && bun run lint && bun run format:check
 git add packages/app/src/domain/default-template.ts packages/app/src/domain/prompt-template.ts \
   packages/app/src/app/http-lookup-client.ts packages/app/test/default-template.test.ts \
   packages/app/test/prompt-template.test.ts
-git commit -m "[A12NonEnglishSource] feat: resolve {source_lang} in the persona line instead of hard-coding English (A12)" \
+git commit -m "feat: resolve {source_lang} in the persona line instead of hard-coding English (A12)" \
   -m $'Tribe-Card: a12-non-english-source\nTribe-Task: 3/9'
 ```
 
@@ -845,7 +845,7 @@ cd ../.. && bun run lint && bun run format:check
 
 ```
 git add packages/app/src/app/dom-selection-source.ts packages/app/test/app/dom-selection-source.test.ts
-git commit -m "[A12NonEnglishSource] feat: capture page/element lang on selection (A12)" \
+git commit -m "feat: capture page/element lang on selection (A12)" \
   -m $'Tribe-Card: a12-non-english-source\nTribe-Task: 4/9'
 ```
 
@@ -1254,7 +1254,7 @@ cd ../.. && bun run lint && bun run format:check
 
 ```
 git add packages/app/src/domain/workflow.ts packages/app/src/ports.ts packages/app/test/workflow.test.ts
-git commit -m "[A12NonEnglishSource] feat: thread source-language detection + one-shot override through the workflow (A12)" \
+git commit -m "feat: thread source-language detection + one-shot override through the workflow (A12)" \
   -m $'Tribe-Card: a12-non-english-source\nTribe-Task: 5/9'
 ```
 
@@ -1508,7 +1508,7 @@ cd ../.. && bun run lint && bun run format:check
 
 ```
 git add packages/app/src/ui/lookup-card.ts packages/app/test/ui/lookup-card.test.ts
-git commit -m "[A12NonEnglishSource] feat: add the card's Source language row + override picker (A12)" \
+git commit -m "feat: add the card's Source language row + override picker (A12)" \
   -m $'Tribe-Card: a12-non-english-source\nTribe-Task: 6/9'
 ```
 
@@ -1618,7 +1618,7 @@ cd ../.. && bun run lint && bun run format:check
 
 ```
 git add packages/app/src/app/inline-bottom-sheet-renderer.ts packages/app/test/app/inline-bottom-sheet-renderer.test.ts
-git commit -m "[A12NonEnglishSource] feat: wire the card's source-language override into the in-page renderer (A12)" \
+git commit -m "feat: wire the card's source-language override into the in-page renderer (A12)" \
   -m $'Tribe-Card: a12-non-english-source\nTribe-Task: 7/9'
 ```
 
@@ -1821,7 +1821,7 @@ bun run lint && bun run format:check
 
 ```
 git add packages/extension-chrome/e2e/a12-non-english-source.spec.ts
-git commit -m "[A12NonEnglishSource] feat: e2e coverage for source-language detection, display, and override (A12)" \
+git commit -m "feat: e2e coverage for source-language detection, display, and override (A12)" \
   -m $'Tribe-Card: a12-non-english-source\nTribe-Task: 8/9'
 ```
 
@@ -1849,9 +1849,9 @@ new A12 e2e spec plus the regression guards for the shared prompt-builder/provid
 
 - [ ] **Step 2: Open the PR.**
 
-Branch: `feature/A12NonEnglishSource`. Title: `[A12NonEnglishSource] Non-English source pages`.
-Regular merge (no squash — owner ruling 2026-07-16). `## JIRA ticket` section reads `n/a — this
-repo is not Jira-tracked`. Include a **"Testing performed"** section per the design spec's §7
+Branch: `feat/a12-non-english-source`. Title: `feat: non-English source pages (A12)`.
+Regular merge (no squash — owner ruling 2026-07-16). No `## JIRA ticket` section
+(`docs/git-conventions.md` — this repo has no ticket tracker). Include a **"Testing performed"** section per the design spec's §7
 policy (no screenshots/video) — list every
 suite from Step 1 with its pass count. Mention explicitly in the PR body: _no landing-page, store-
 listing, or marketing copy changes_ (per the E3 "build, don't advertise" ruling), so a reviewer does

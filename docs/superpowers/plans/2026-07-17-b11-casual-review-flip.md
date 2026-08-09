@@ -25,7 +25,7 @@ how the `saved.list` wire message is shared with the concurrently-authored B10 c
 
 - Implementer: dispatch each implementation/fix task to the `hunter` subagent — never a generic
   implementer.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/B11CasualReviewFlip`.
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/b11-casual-review-flip`.
 - **Task 2 (wire + router) starts with a repo-state check, not an assumption.** `saved.list` is
   independently needed by the concurrently-authored B10 (weekly digest) card with the identical
   shape (design spec §2.1/§9). If `saved.list` already exists in `packages/app/src/wire.ts` when
@@ -50,7 +50,7 @@ how the `saved.list` wire message is shared with the concurrently-authored B10 c
 - Every task must leave `cd packages/app && bun run typecheck` (and, from Task 2 on,
   `cd packages/extension-chrome && bun run typecheck`) green.
 - Commit subject convention for every task in this plan:
-  `[B11CasualReviewFlip] feat: <imperative summary> (B11)`.
+  `feat: <imperative summary> (B11)`.
 
 ---
 
@@ -229,7 +229,7 @@ Commit:
 
 ```
 git add packages/app/src/domain/review-deck-policy.ts packages/app/test/review-deck-policy.test.ts packages/app/src/index.ts
-git commit -m "[B11CasualReviewFlip] feat: add buildReviewDeck domain policy (B11)"
+git commit -m "feat: add buildReviewDeck domain policy (B11)"
 ```
 
 ---
@@ -431,7 +431,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts packages/app/test/__snapshots__ 2>/dev/null; git add -u
-git commit -m "[B11CasualReviewFlip] feat: add saved.list wire message + router case (B11)"
+git commit -m "feat: add saved.list wire message + router case (B11)"
 ```
 
 If Step 2 ran (the arm already existed):
@@ -442,7 +442,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts
-git commit -m "[B11CasualReviewFlip] test: regression-cover the already-shipped saved.list message (B11)"
+git commit -m "test: regression-cover the already-shipped saved.list message (B11)"
 ```
 
 ---
@@ -889,7 +889,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/ui/review-flip-view.ts packages/app/test/ui/review-flip-view.test.ts packages/app/src/ui/register.ts packages/app/src/ui/index.ts
-git commit -m "[B11CasualReviewFlip] feat: add the review-flip-view custom element (B11)"
+git commit -m "feat: add the review-flip-view custom element (B11)"
 ```
 
 ---
@@ -1009,7 +1009,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/ui/side-panel-view.ts packages/app/test/ui/side-panel-view.test.ts
-git commit -m "[B11CasualReviewFlip] feat: add the Review entry point to the side panel header (B11)"
+git commit -m "feat: add the Review entry point to the side panel header (B11)"
 ```
 
 ---
@@ -1176,7 +1176,7 @@ cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typech
 
 ```
 git add packages/extension-chrome/src/side-panel.html packages/extension-chrome/src/side-panel.ts
-git commit -m "[B11CasualReviewFlip] feat: wire the Review entry point to the deck fetch and panel swap (B11)"
+git commit -m "feat: wire the Review entry point to the deck fetch and panel swap (B11)"
 ```
 
 ---
@@ -1339,7 +1339,7 @@ bun run lint && bun run format:check
 
 ```
 git add packages/extension-chrome/e2e/b11-casual-review-flip.spec.ts
-git commit -m "[B11CasualReviewFlip] feat: add e2e coverage for the casual review flip (B11)"
+git commit -m "feat: add e2e coverage for the casual review flip (B11)"
 ```
 
 ---
@@ -1374,10 +1374,9 @@ all pass.
       Record in the PR description that a follow-up `c3 sweep` picks up the new files; do not run
       `.c3/` edits by hand as part of this plan.
 
-- [ ] **Open the PR.** Title: `[B11CasualReviewFlip] Casual review flip`. Body follows the repo's
-      PR-body convention (no `.github/PULL_REQUEST_TEMPLATE` file exists in this repo — confirmed;
-      the required element is a written **"Testing performed"** section, no screenshots/video per
-      the 2026-07-16 evidence-policy ruling):
+- [ ] **Open the PR.** Title: `feat: casual review flip (B11)`. Body follows
+      `.github/pull_request_template.md` — the required element is a written **"Testing
+      performed"** section, no screenshots/video per the 2026-07-16 evidence-policy ruling:
 
 ```
 ## Description
@@ -1393,9 +1392,6 @@ scheduling, due dates, or streaks.
 - Review is a brand-new top-level `<review-flip-view>` element, swapped in via `#app.
 replaceChildren(...)` (mirrors options.ts's onboarding/settings swap) rather than a mode flag on
   `SidePanelView` — see the design spec §2.7 for the `:host`/`[hidden]` cascade pitfall this avoids.
-
-## JIRA ticket
-* n/a — this repo is not Jira-tracked (see PR #117's own precedent).
 
 ## Testing performed
 - Unit: `bun run test` — full Vitest suite green, including new suites

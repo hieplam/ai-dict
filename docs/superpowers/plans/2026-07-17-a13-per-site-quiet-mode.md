@@ -27,8 +27,8 @@ all rejected: `docs/superpowers/specs/2026-07-17-a13-per-site-quiet-mode-design.
 ## Global Constraints
 
 - Implementer: dispatch each task to the `hunter` subagent.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/A13QuietMode`.
-- Commit subject: `[A13QuietMode] feat: <imperative summary> (A13)`. No `Co-Authored-By` trailer,
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/a13-per-site-quiet-mode`.
+- Commit subject: `feat: <imperative summary> (A13)`. No `Co-Authored-By` trailer,
   no attribution footer.
 - `bun run lint` + `bun run format:check` green before every commit; per-package
   `bun run typecheck` green after every task (`packages/app`, and `packages/extension-chrome` from
@@ -295,7 +295,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/domain/quiet-site-policy.ts packages/app/test/quiet-site-policy.test.ts packages/app/src/index.ts
-git commit -m "[A13QuietMode] feat: add quiet-site-policy domain module (A13)"
+git commit -m "feat: add quiet-site-policy domain module (A13)"
 ```
 
 ---
@@ -511,7 +511,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/wire.ts packages/app/src/app/router.ts packages/app/test/wire-schema.test.ts packages/app/test/app/router.test.ts
-git commit -m "[A13QuietMode] feat: add quiet.list/quiet.add/quiet.remove wire messages + router cases (A13)"
+git commit -m "feat: add quiet.list/quiet.add/quiet.remove wire messages + router cases (A13)"
 ```
 
 ---
@@ -653,7 +653,7 @@ cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typech
 
 ```
 git add packages/extension-chrome/src/adapters/chrome-floating-trigger.ts packages/extension-chrome/src/adapters/chrome-floating-trigger.test.ts
-git commit -m "[A13QuietMode] feat: add quiet property + gated show() to ChromeFloatingTrigger (A13)"
+git commit -m "feat: add quiet property + gated show() to ChromeFloatingTrigger (A13)"
 ```
 
 ---
@@ -760,7 +760,7 @@ cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typech
 
 ```
 git add packages/extension-chrome/src/content.ts
-git commit -m "[A13QuietMode] feat: wire quiet-site check + mute-site listener into content.ts (A13)"
+git commit -m "feat: wire quiet-site check + mute-site listener into content.ts (A13)"
 ```
 
 ---
@@ -936,7 +936,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/ui/styles/tokens.ts packages/app/src/ui/lookup-card.ts packages/app/test/ui/lookup-card.test.ts
-git commit -m "[A13QuietMode] feat: add Mute this site card header action (A13)"
+git commit -m "feat: add Mute this site card header action (A13)"
 ```
 
 ---
@@ -1198,7 +1198,7 @@ cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run form
 
 ```
 git add packages/app/src/ui/settings-form.ts packages/app/test/ui/settings-form.test.ts
-git commit -m "[A13QuietMode] feat: add Quiet sites section to settings-form (A13)"
+git commit -m "feat: add Quiet sites section to settings-form (A13)"
 ```
 
 ---
@@ -1292,7 +1292,7 @@ cd packages/app && bun run typecheck && cd ../extension-chrome && bun run typech
 
 ```
 git add packages/extension-chrome/src/options.ts
-git commit -m "[A13QuietMode] feat: wire quiet-sites list into the settings composition root (A13)"
+git commit -m "feat: wire quiet-sites list into the settings composition root (A13)"
 ```
 
 ---
@@ -1454,7 +1454,7 @@ bun run lint && bun run format:check
 
 ```
 git add packages/extension-chrome/e2e/a13-per-site-quiet-mode.spec.ts
-git commit -m "[A13QuietMode] feat: add per-site quiet mode e2e coverage (A13)"
+git commit -m "feat: add per-site quiet mode e2e coverage (A13)"
 ```
 
 ---
@@ -1481,10 +1481,9 @@ cleared; the new `a13-per-site-quiet-mode.spec.ts` passes, and the regression gu
 ## PR
 
 - [ ] Open the PR:
-  - Title: `[A13QuietMode] Per-site quiet mode`
+  - Title: `feat: per-site quiet mode (A13)`
   - Regular merge commit — **squash prohibited** (owner ruling 2026-07-16).
-  - `## JIRA ticket` section reads `n/a` — this repo carries no Jira tracker at all, so there is
-    no ticket ID to substitute.
+  - No `## JIRA ticket` section (`docs/git-conventions.md` — this repo has no ticket tracker).
   - Body includes a **"Testing performed"** section (owner ruling 2026-07-16 — no
     screenshots/video for this PR; no `pr-assets/*` branch) listing:
     - Unit: `bun run test` — full suite green, including the new `quiet-site-policy.test.ts`

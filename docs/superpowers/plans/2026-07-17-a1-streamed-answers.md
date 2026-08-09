@@ -55,7 +55,7 @@ alternatives (a `chrome.runtime.connect` Port transport; streaming all three pro
   (`GEMINI_API_KEY= bun run build:chrome:e2e`).
 - Commit subject convention for every task in this plan:
   `feat: streamed answers — <task summary> (A1)`.
-- Start in a fresh git worktree under `.claude/worktrees/` on branch `feature/A1StreamedAnswers`.
+- Start in a fresh git worktree under `.claude/worktrees/` on branch `feat/a1-streamed-answers`.
 - **Concurrency — serialize against A5/A6 on `workflow.ts` and `test/fakes/index.ts`.** The
   already-merged A5 (gloss mode) and A6 (smart card placement) plans also modify
   `packages/app/src/domain/workflow.ts`'s `renderLoading`/`ctx` call sites and
@@ -2112,8 +2112,8 @@ all pass.
 
 ## PR
 
-Regular merge (no squash). `## JIRA ticket` section reads `n/a — this repo is not Jira-tracked`.
-Include a **"Testing performed"** section per this worktree's evidence policy (§8 of the design
+Regular merge (no squash). No `## JIRA ticket` section (`docs/git-conventions.md` — this repo has
+no ticket tracker). Include a **"Testing performed"** section per this worktree's evidence policy (§8 of the design
 spec) instead of screenshots/video — list the suites above with pass counts, explicitly noting the
 empty `git diff --stat` proof that
 `http-lookup-client.ts`/`openai-lookup-client.ts`/`anthropic-lookup-client.ts` are untouched.
