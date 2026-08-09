@@ -327,6 +327,80 @@ describe('<side-panel-view>', () => {
     expect(el.appendToFocus(extra)).toBe(true);
     expect(el.shadowRoot!.querySelector('.focus')!.contains(extra)).toBe(true);
   });
+
+  it('the digest section is hidden before `digest` is ever set (B10)', () => {
+    const el = mount();
+    const digest = el.shadowRoot!.querySelector('.digest') as HTMLElement;
+    expect(digest.hidden).toBe(true);
+  });
+
+  it('a zero-stat digest shows the pinned empty-state copy (B10)', () => {
+    const el = mount();
+    el.digest = { windowStart: 0, lookups: 0, saves: 0, repeatWords: 0, topSites: [] };
+    const digest = el.shadowRoot!.querySelector('.digest') as HTMLElement;
+    expect(digest.hidden).toBe(false);
+    expect(digest.textContent).toContain(
+      'Nothing yet this week — look something up and check back.',
+    );
+  });
+
+  it('renders all four stat rows with correct singular/plural copy (B10)', () => {
+    const el = mount();
+    el.digest = {
+      windowStart: 0,
+      lookups: 1,
+      saves: 1,
+      repeatWords: 1,
+      topSites: [{ domain: 'nautil.us', count: 3 }],
+    };
+    const rows = [...el.shadowRoot!.querySelectorAll('.digest-row')].map((r) => r.textContent);
+    expect(rows).toEqual([
+      '1 lookup this week',
+      '1 saved',
+      '1 repeat lookup',
+      'Mostly from nautil.us',
+    ]);
+  });
+
+  it('pluralizes stat copy for counts other than 1 (B10)', () => {
+    const el = mount();
+    el.digest = {
+      windowStart: 0,
+      lookups: 23,
+      saves: 6,
+      repeatWords: 3,
+      topSites: [
+        { domain: 'nautil.us', count: 5 },
+        { domain: 'wikipedia.org', count: 2 },
+      ],
+    };
+    const rows = [...el.shadowRoot!.querySelectorAll('.digest-row')].map((r) => r.textContent);
+    expect(rows).toEqual([
+      '23 lookups this week',
+      '6 saved',
+      '3 repeat lookups',
+      'Mostly from nautil.us, wikipedia.org',
+    ]);
+  });
+
+  it('omits the "Mostly from" row when topSites is empty (B10)', () => {
+    const el = mount();
+    el.digest = { windowStart: 0, lookups: 4, saves: 0, repeatWords: 0, topSites: [] };
+    const rows = [...el.shadowRoot!.querySelectorAll('.digest-row')].map((r) => r.textContent);
+    expect(rows).toEqual(['4 lookups this week', '0 saved', '0 repeat lookups']);
+  });
+
+  it('has no axe violations (populated digest) (B10)', async () => {
+    const el = mount();
+    el.digest = {
+      windowStart: 0,
+      lookups: 23,
+      saves: 6,
+      repeatWords: 3,
+      topSites: [{ domain: 'nautil.us', count: 5 }],
+    };
+    expect(await axeViolations(el)).toEqual([]);
+  });
 });
 
 describe('<side-panel-view> Back button CSS parity (A2)', () => {
