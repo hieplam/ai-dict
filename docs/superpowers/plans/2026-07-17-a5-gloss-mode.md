@@ -1333,7 +1333,7 @@ export class SettingsForm extends HTMLElement {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/settings-form.test.ts`,
       inside the existing `describe('<settings-form>', ...)` block, right before its closing
       `});`:
 
@@ -1396,7 +1396,7 @@ Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts`
 Expected: all four new tests fail — `#gloss-mode-row`/`#gloss-mode` don't exist in the DOM yet,
 `glossModeAvailable` is not a settable property, and `collect()` never emits `glossMode`.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/settings-form.ts`:
   1. Add `glossMode?: boolean;` to the `SettingsFormValue` interface (currently lines 29-45),
      right after `theme: Theme;`:
 
@@ -1489,7 +1489,7 @@ the same `<form>` the delegated `input`/`change` listener already covers.
 Run: `cd packages/app && bunx vitest run test/ui/settings-form.test.ts && bun run typecheck`
 Expected: all tests pass (existing + 4 new); typecheck clean.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

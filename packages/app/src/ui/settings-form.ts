@@ -44,6 +44,8 @@ export interface SettingsFormValue {
   // B3: paint saved learning-status words on pages. See PublicSettings' doc comment (domain/types.ts).
   highlightSavedWords: boolean;
   theme: Theme;
+  // A5: opt-in compact-gloss render mode; absent/false until the reader checks the box.
+  glossMode?: boolean;
   // NOTE: `hasKey` and `configuredProviders` are intentionally absent — they are
   // derived fields computed on save/read and never emitted by the form's 'save' event.
 }
@@ -262,6 +264,13 @@ const MARKUP = `<header><span class="brand">${BRAND_MARK_SVG}<span>AI Dictionary
         ).join('')}
       </div>
       <p class="seg-help">Changes how the lookup card and side panel look. Saved on this device only.</p>
+      <div class="row" id="gloss-mode-row" hidden>
+        <label class="check"><input type="checkbox" id="gloss-mode" /> Compact gloss</label>
+        <p class="seg-help" id="gloss-mode-help">
+          Define shows a one-line translation next to the word — click it to open the full card.
+          Falls back to the full card automatically when no one-line translation is available.
+        </p>
+      </div>
     </section>
     <section class="sec" aria-labelledby="sec-priv">
       <h2 class="sec-h" id="sec-priv">Privacy &amp; data</h2>
@@ -567,6 +576,16 @@ export class SettingsForm extends HTMLElement {
     return this._errorReporting;
   }
 
+  /**
+   * A5: shows/hides the "Compact gloss" row. Default false — the checkbox always exists in the DOM
+   * and always round-trips through collect()/set value() regardless of visibility (mirrors
+   * keyFromEnv's "present in the DOM, hidden until flagged" shape). Chrome's composition root sets
+   * this true; Safari's never does, so the row stays hidden there.
+   */
+  set glossModeAvailable(v: boolean) {
+    this.q<HTMLElement>('#gloss-mode-row').hidden = !v;
+  }
+
   /** C9: the current keyboard-shortcut assignment state, supplied by the composition root (the
    * only layer allowed to call `chrome.commands.getAll()`). Renders one row per entry; empty
    * until the composition root's first `chrome.commands.getAll()` resolves. */
@@ -839,6 +858,7 @@ export class SettingsForm extends HTMLElement {
       saveHistory: this.q<HTMLInputElement>('#history').checked,
       highlightSavedWords: this.q<HTMLInputElement>('#highlight-saved').checked,
       theme: this.getThemePref(),
+      glossMode: this.q<HTMLInputElement>('#gloss-mode').checked,
     };
   }
 
@@ -868,6 +888,7 @@ export class SettingsForm extends HTMLElement {
     this.q<HTMLInputElement>('#cache').checked = v.cacheEnabled;
     this.q<HTMLInputElement>('#history').checked = v.saveHistory;
     this.q<HTMLInputElement>('#highlight-saved').checked = v.highlightSavedWords;
+    this.q<HTMLInputElement>('#gloss-mode').checked = v.glossMode === true;
     this.setThemePref(v.theme);
     // Render the key row for the (possibly changed) provider + lock state.
     this.syncKeyField();
