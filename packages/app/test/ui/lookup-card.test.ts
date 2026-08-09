@@ -106,9 +106,10 @@ describe('<lookup-card>', () => {
   it('the header offers a Settings action (before Close) that emits a composed "open-settings"', () => {
     const el = mountCard();
     const acts = [...el.shadowRoot!.querySelectorAll<HTMLButtonElement>('button[data-act]')];
-    // Settings sits left of Close so Close keeps its familiar right-most spot.
-    expect(acts.map((b) => b.dataset['act'])).toEqual(['settings', 'close']);
-    const gear = acts[0]!;
+    // Settings sits left of Close so Close keeps its familiar right-most spot. mute-site (A13)
+    // sits left of Settings.
+    expect(acts.map((b) => b.dataset['act'])).toEqual(['mute-site', 'settings', 'close']);
+    const gear = acts[1]!;
     expect(gear.getAttribute('aria-label')).toBe('Settings');
     let evt: CustomEvent | null = null;
     const handler = (e: Event): void => {
@@ -365,13 +366,18 @@ describe('<lookup-card>', () => {
     const el = mountCard();
     expect(el.shadowRoot!.querySelector('[data-act="side-panel"]')).toBeNull();
     const acts = [...el.shadowRoot!.querySelectorAll<HTMLButtonElement>('button[data-act]')];
-    expect(acts.map((b) => b.dataset['act'])).toEqual(['settings', 'close']);
+    expect(acts.map((b) => b.dataset['act'])).toEqual(['mute-site', 'settings', 'close']);
   });
 
   it('with the side-panel attribute, renders the action FIRST (before Settings and Close)', () => {
     const el = mountCardWithSidePanel();
     const acts = [...el.shadowRoot!.querySelectorAll<HTMLButtonElement>('button[data-act]')];
-    expect(acts.map((b) => b.dataset['act'])).toEqual(['side-panel', 'settings', 'close']);
+    expect(acts.map((b) => b.dataset['act'])).toEqual([
+      'side-panel',
+      'mute-site',
+      'settings',
+      'close',
+    ]);
     const btn = acts[0]!;
     expect(btn.getAttribute('aria-label')).toBe('Open in side panel');
     expect(btn.getAttribute('title')).toBe('Open in side panel');
@@ -1209,5 +1215,35 @@ describe('LookupCard — data-streaming aria-live toggle (A1)', () => {
     el.toggleAttribute('data-streaming', false);
     expect(region.getAttribute('aria-live')).toBe('polite');
     el.remove();
+  });
+});
+
+describe('<lookup-card> mute-site header action (A13)', () => {
+  it('a result state renders a mute-site button with the expected aria-label', () => {
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>x</p>') };
+    const btn = el.shadowRoot!.querySelector<HTMLButtonElement>('button[data-act="mute-site"]')!;
+    expect(btn).not.toBeNull();
+    expect(btn.getAttribute('aria-label')).toBe('Mute this site');
+  });
+
+  it('clicking mute-site dispatches a composed mute-site event with no detail, then disables itself', () => {
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>x</p>') };
+    const handler = vi.fn();
+    document.body.addEventListener('mute-site', handler);
+    const btn = el.shadowRoot!.querySelector<HTMLButtonElement>('button[data-act="mute-site"]')!;
+    btn.click();
+    document.body.removeEventListener('mute-site', handler);
+    expect(handler).toHaveBeenCalledTimes(1);
+    const event = handler.mock.calls[0]![0] as CustomEvent;
+    expect(event.detail).toBeNull();
+    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute('aria-label')).toBe('Site muted — manage in Settings');
+  });
+
+  it('the mute-site button is present in the loading and error states too (a header action, not state-gated)', () => {
+    const el = mountCard();
+    expect(el.shadowRoot!.querySelector('button[data-act="mute-site"]')).not.toBeNull();
   });
 });

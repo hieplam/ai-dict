@@ -788,7 +788,7 @@ export const ICON_MUTE: string;
 type Act = 'settings' | 'close' | 'side-panel' | 'mute-site';
 ```
 
-- [ ] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/lookup-card.test.ts`,
+- [x] **Step 1: Write the failing tests.** Append to `packages/app/test/ui/lookup-card.test.ts`,
       as a new `describe` block at the end of the file (after the current last `describe('<lookup-card> — pin control (A7)', ...)` block's closing `});`):
 
 ```ts
@@ -826,7 +826,7 @@ describe('<lookup-card> mute-site header action (A13)', () => {
 Run: `cd packages/app && bunx vitest run test/ui/lookup-card.test.ts`
 Expected: all 3 new tests fail — no `button[data-act="mute-site"]` exists yet.
 
-- [ ] **Step 2: Add the icon.** In `packages/app/src/ui/styles/tokens.ts`, append after the
+- [x] **Step 2: Add the icon.** In `packages/app/src/ui/styles/tokens.ts`, append after the
       existing `ICON_PIN` export (current end of file):
 
 ```ts
@@ -838,7 +838,7 @@ export const ICON_MUTE =
   '<line x1="4" y1="4" x2="20" y2="20"/></svg>';
 ```
 
-- [ ] **Step 3: Implement the card action.** In `packages/app/src/ui/lookup-card.ts`, add
+- [x] **Step 3: Implement the card action.** In `packages/app/src/ui/lookup-card.ts`, add
       `ICON_MUTE` to the existing `tokens.ts` import list (current file, lines 3-13):
 
 ```ts
@@ -928,7 +928,7 @@ Expected: all tests pass (existing suite + 3 new).
 Run: `cd packages/app && bun run typecheck`
 Expected: clean.
 
-- [ ] **Step 4: Commit** — gate, then commit:
+- [x] **Step 4: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd ../.. && bun run lint && bun run format:check

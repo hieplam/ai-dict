@@ -11,6 +11,7 @@ import {
   ICON_STAR,
   ICON_SPEAKER,
   ICON_BACK,
+  ICON_MUTE,
 } from './styles/tokens';
 
 // Re-exported so existing consumers (side-panel-view) and the c3-117 public surface keep
@@ -763,6 +764,7 @@ export class LookupCard extends HTMLElement {
       actions.append(this.actionButton('side-panel', 'Open in side panel', ICON_SIDE_PANEL));
     }
     actions.append(
+      this.actionButton('mute-site', 'Mute this site', ICON_MUTE),
       this.actionButton('settings', 'Settings', ICON_SETTINGS),
       this.actionButton('close', 'Close', ICON_CLOSE),
     );
@@ -810,7 +812,7 @@ export class LookupCard extends HTMLElement {
   }
 
   private actionButton(
-    act: 'settings' | 'close' | 'side-panel',
+    act: 'settings' | 'close' | 'side-panel' | 'mute-site',
     label: string,
     icon: string,
   ): HTMLButtonElement {
@@ -831,12 +833,26 @@ export class LookupCard extends HTMLElement {
       b.append(lbl);
     }
     // Each action maps to the composed event name the shell already routes:
-    //  settings → open-settings (options page); close → close; side-panel → open-side-panel.
+    //  settings → open-settings; close → close; side-panel → open-side-panel;
+    //  mute-site → mute-site (A13).
     const event =
-      act === 'settings' ? 'open-settings' : act === 'side-panel' ? 'open-side-panel' : 'close';
-    b.addEventListener('click', () =>
-      this.dispatchEvent(new CustomEvent(event, { bubbles: true, composed: true })),
-    );
+      act === 'settings'
+        ? 'open-settings'
+        : act === 'side-panel'
+          ? 'open-side-panel'
+          : act === 'mute-site'
+            ? 'mute-site'
+            : 'close';
+    b.addEventListener('click', () => {
+      // A13: optimistic, local-only feedback — quietSiteAdd (domain/quiet-site-policy.ts) is
+      // idempotent, so the button never needs to know if this site is already muted; it just
+      // disables itself so a double-click can't fire two wire messages.
+      if (act === 'mute-site') {
+        b.disabled = true;
+        b.setAttribute('aria-label', 'Site muted — manage in Settings');
+      }
+      this.dispatchEvent(new CustomEvent(event, { bubbles: true, composed: true }));
+    });
     return b;
   }
 
