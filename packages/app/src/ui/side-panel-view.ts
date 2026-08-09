@@ -1,4 +1,5 @@
 import type { HistoryEntry } from '../domain/types';
+import type { SiteLookupStat } from '../domain/site-stats-policy';
 import type { WeeklyDigest } from '../domain/weekly-digest';
 import type { TagGroup } from '../domain/auto-group-policy';
 import { adoptStyles } from './styles/adopt';
@@ -169,6 +170,13 @@ main{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;padd
 .recent-del svg{width:14px;height:14px;pointer-events:none}
 .recent-word{font-size:14px;font-weight:var(--adp-weight-semi);color:var(--ad-ink)}
 .recent-context{display:block;margin-top:1px;font-size:var(--adp-text-xs);line-height:1.4;color:var(--ad-ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sites{margin-top:6px}
+.sites[hidden]{display:none}
+.sites-head{margin:0;padding:14px 0 8px;border-top:1px solid var(--ad-line);font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-bold);letter-spacing:0.06em;text-transform:uppercase;color:var(--ad-ink-soft)}
+.sites-list{list-style:none;margin:0 0 8px;padding:0;display:flex;flex-direction:column;gap:2px}
+.site-row{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding:6px 10px;margin:0 -10px;border-radius:var(--adp-radius-control)}
+.site-name{font-size:14px;font-weight:var(--adp-weight-semi);color:var(--ad-ink);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.site-counts{flex:none;font-size:var(--adp-text-xs);color:var(--ad-ink-soft)}
 .organize {
   margin-top: 6px;
 }
@@ -340,9 +348,12 @@ export class SidePanelView extends HTMLElement {
   private _recent: HistoryEntry[] = [];
   private _digest: WeeklyDigest | undefined = undefined;
   private _organize: OrganizeState = { kind: 'idle' };
+  private _siteStats: SiteLookupStat[] = [];
   private focusEl!: HTMLElement;
   private recentEl!: HTMLElement;
   private recentList!: HTMLUListElement;
+  private sitesEl!: HTMLElement;
+  private sitesList!: HTMLUListElement;
   private digestEl!: HTMLElement;
   private organizeEl!: HTMLElement;
 
@@ -350,6 +361,7 @@ export class SidePanelView extends HTMLElement {
     if (this.shadowRoot) {
       this.renderFocus();
       this.renderRecent();
+      this.renderSites();
       this.renderDigest();
       this.renderOrganize();
       return;
@@ -430,7 +442,20 @@ export class SidePanelView extends HTMLElement {
     this.organizeEl.className = 'organize';
     this.organizeEl.setAttribute('aria-label', 'Saved words organizer');
 
-    main.append(this.focusEl, this.recentEl, this.digestEl, this.organizeEl);
+    // B15: per-domain lookup/save tally — same hidden-when-empty contract as Recent, placed
+    // directly below it (design spec §2.4). A plain-text heading (no icon), like Recent's.
+    this.sitesEl = document.createElement('section');
+    this.sitesEl.className = 'sites';
+    this.sitesEl.setAttribute('aria-label', 'Site lookup stats');
+    this.sitesEl.hidden = true;
+    const sitesHead = document.createElement('h2');
+    sitesHead.className = 'sites-head';
+    sitesHead.textContent = 'Sites';
+    this.sitesList = document.createElement('ul');
+    this.sitesList.className = 'sites-list';
+    this.sitesEl.append(sitesHead, this.sitesList);
+
+    main.append(this.focusEl, this.recentEl, this.sitesEl, this.digestEl, this.organizeEl);
 
     const footer = document.createElement('footer');
     footer.innerHTML = `${ICON_SHIELD}<span>Stays on your device</span>`; // s4: static-template — fixed shield icon + literal copy, no model content
@@ -438,6 +463,7 @@ export class SidePanelView extends HTMLElement {
     root.append(accent, header, main, footer);
     this.renderFocus();
     this.renderRecent();
+    this.renderSites();
     this.renderDigest();
     this.renderOrganize();
   }
@@ -458,6 +484,16 @@ export class SidePanelView extends HTMLElement {
   }
   get recent(): HistoryEntry[] {
     return this._recent;
+  }
+
+  /** B15: per-domain tally, top-N already applied by the caller (computeSiteLookupStats). An
+   * empty array collapses the section — same contract as `recent`. */
+  set siteStats(stats: SiteLookupStat[]) {
+    this._siteStats = stats;
+    if (this.shadowRoot) this.renderSites();
+  }
+  get siteStats(): SiteLookupStat[] {
+    return this._siteStats;
   }
 
   /** The weekly digest (B10), computed once per panel-open. `undefined` = not loaded yet
@@ -578,6 +614,26 @@ export class SidePanelView extends HTMLElement {
       ),
     );
     li.append(b, del);
+    return li;
+  }
+
+  private renderSites(): void {
+    this.sitesEl.hidden = this._siteStats.length === 0;
+    this.sitesList.replaceChildren(...this._siteStats.map((s) => this.siteRow(s)));
+  }
+
+  private siteRow(s: SiteLookupStat): HTMLLIElement {
+    const li = document.createElement('li');
+    li.className = 'site-row';
+    const name = document.createElement('span');
+    name.className = 'site-name';
+    name.textContent = s.site;
+    const counts = document.createElement('span');
+    counts.className = 'site-counts';
+    const lookupWord = s.lookups === 1 ? 'lookup' : 'lookups';
+    counts.textContent =
+      s.saves > 0 ? `${s.lookups} ${lookupWord} · ${s.saves} saved` : `${s.lookups} ${lookupWord}`;
+    li.append(name, counts);
     return li;
   }
 
