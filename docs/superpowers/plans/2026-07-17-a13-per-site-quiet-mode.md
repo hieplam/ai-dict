@@ -1303,7 +1303,7 @@ git commit -m "[A13QuietMode] feat: wire quiet-sites list into the settings comp
 
 - Create: `packages/extension-chrome/e2e/a13-per-site-quiet-mode.spec.ts`
 
-- [ ] **Step 1: Write the spec.** Create
+- [x] **Step 1: Write the spec.** Create
       `packages/extension-chrome/e2e/a13-per-site-quiet-mode.spec.ts`:
 
 ```ts
@@ -1445,7 +1445,7 @@ cd packages/extension-chrome && bunx playwright test a13-per-site-quiet-mode
 
 Expected: 4 passed.
 
-- [ ] **Step 2: Commit** — gate, then commit:
+- [x] **Step 2: Commit** — gate, then commit:
 
 ```
 GEMINI_API_KEY= bun run build:chrome
