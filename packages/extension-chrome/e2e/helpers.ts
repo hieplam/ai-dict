@@ -7,6 +7,22 @@ export const GEMINI_OK_BODY = JSON.stringify({
   candidates: [{ content: { parts: [{ text: '## bank\nA financial institution.' }] } }],
 });
 
+/**
+ * A5: an OK Gemini body that carries a TRANSLATION signal line, so the parsed LookupResult's
+ * `translation` field is populated (see domain/translation-line.ts) — the gloss bubble only
+ * renders when a translation is present. Same envelope shape as GEMINI_OK_BODY; mockGemini
+ * auto-detects the streaming endpoint and wraps this as an SSE frame when needed.
+ */
+export const GEMINI_TRANSLATION_BODY = JSON.stringify({
+  candidates: [
+    {
+      content: {
+        parts: [{ text: 'TRANSLATION: "ngân hàng"\n\n## bank\nA financial institution.' }],
+      },
+    },
+  ],
+});
+
 export const OPENAI_GLOB = 'https://api.openai.com/**';
 
 /** Default OK OpenAI chat-completions body for the canonical "bank" fixture. */
@@ -35,6 +51,8 @@ export interface SettingsOverrides {
   anthropicApiKey?: string;
   /** B3: paint saved learning-status words on pages. Omit to exercise the `?? true` default. */
   highlightSavedWords?: boolean;
+  /** A5: opt-in compact gloss render mode. Omit to exercise the default-off path. */
+  glossMode?: boolean;
 }
 
 /** Write a full settings object to storage. Overrides merge onto sensible defaults. */
