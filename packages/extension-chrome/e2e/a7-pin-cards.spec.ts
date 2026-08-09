@@ -157,4 +157,48 @@ test.describe('A7 pin cards', () => {
     await gotoFixture(page, 'A brand new page with fresh words.');
     await expect(page.locator('floating-pin')).toHaveCount(0);
   });
+
+  test('a fast single-sample drag flick still moves the card and leaves no ghost drag', async ({
+    context,
+    extensionId,
+  }) => {
+    await mockGemini(context);
+    const page = await context.newPage();
+    await page.goto(`chrome-extension://${extensionId}/options.html`);
+    await seedSettings(page);
+    await doLookup(page, 'The bank by the river is steep.', 'bank');
+
+    await page.locator('bottom-sheet lookup-card .pin-btn').click();
+    const pin = page.locator('floating-pin');
+    await expect(pin).toBeVisible();
+    const before = await pin.boundingBox();
+    expect(before).not.toBeNull();
+
+    const brandBox = await page.evaluate(() => {
+      const host = document.querySelector('floating-pin')!;
+      const brand = host.querySelector('lookup-card')!.shadowRoot!.querySelector('.brand')!;
+      const r = brand.getBoundingClientRect();
+      return { x: r.x, y: r.y, width: r.width, height: r.height };
+    });
+    const startX = brandBox.x + brandBox.width / 2;
+    const startY = brandBox.y + brandBox.height / 2;
+
+    // A single large jump (steps:1) — an ordinary fast flick. This is the case that silently died
+    // when the deferred bring-to-front released pointer capture mid-gesture (card never moved,
+    // `dragging` stuck true).
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 240, startY + 40, { steps: 1 });
+    await page.mouse.up();
+
+    const after = await pin.boundingBox();
+    expect(after).not.toBeNull();
+    expect(after!.x - before!.x).toBeGreaterThan(120); // the flick actually moved it (not ~0)
+
+    // No ghost drag: with the button released, moving the cursor must NOT drag the card further.
+    await page.mouse.move(startX + 500, startY + 300);
+    const after2 = await pin.boundingBox();
+    expect(Math.abs(after2!.x - after!.x)).toBeLessThan(5);
+    expect(Math.abs(after2!.y - after!.y)).toBeLessThan(5);
+  });
 });

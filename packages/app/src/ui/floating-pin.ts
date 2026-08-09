@@ -60,21 +60,31 @@ export class FloatingPin extends HTMLElement {
   }
 
   private readonly onPointerDown = (e: PointerEvent): void => {
-    // Bring-to-front on ANY interaction, not just a drag: same-z-index fixed siblings paint in
-    // DOM order, so re-appending as the host's last child is enough (design spec §2.6) — no
-    // per-instance z-index bookkeeping needed. DEFERRED to a macrotask (setTimeout, not
-    // queueMicrotask — a microtask still runs before the browser's own pointerup/mouseup/click
-    // dispatch, which are separate tasks): moving a node synchronously between pointerdown and
-    // the matching pointerup suppresses Chromium's synthetic `click` event entirely (confirmed
-    // empirically against real Chromium — a same-tick reparent silently ate every button click
-    // inside a pinned card, including Close/Pin, even though the identical listener fired fine
-    // when the button's own `.click()` was called directly via script). The reorder must happen
-    // strictly after the click has had a chance to fire (design spec §2.6).
-    setTimeout(() => this.parentElement?.append(this), 0);
     const path = e.composedPath();
     const onBar = path.some((n) => n instanceof Element && n.classList.contains('bar'));
     const onButton = path.some((n) => n instanceof Element && n.tagName === 'BUTTON');
-    if (!onBar || onButton) return; // only the card's title bar drags it, never a button inside it
+    if (!onBar || onButton) {
+      // Not a drag (a button press, or a press off the title bar): bring-to-front ONLY. Same-z
+      // fixed siblings paint in DOM order, so re-appending as the last child suffices (design
+      // spec §2.6) — no per-instance z-index bookkeeping. DEFERRED to a macrotask (setTimeout,
+      // not queueMicrotask — the browser's click dispatch is a separate task, not a microtask):
+      // moving the host between pointerdown and the matching click suppresses Chromium's
+      // synthetic `click` for every button inside it, including Close/Pin (confirmed empirically
+      // against real Chromium). The reorder must run strictly AFTER the click has fired.
+      setTimeout(() => this.parentElement?.append(this), 0);
+      return; // only the card's title bar drags it, never a button inside it
+    }
+    // Drag start. Bring-to-front SYNCHRONOUSLY, once, BEFORE claiming pointer capture — never on
+    // a deferred macrotask for a drag. Re-appending an already-connected node is a remove+insert
+    // that RELEASES any pointer capture the moved node holds; deferred to mid-gesture it would
+    // silently drop capture, and a fast flick whose first pointermove samples far from the
+    // not-yet-moved card would then miss the (un-captured) host entirely — the drag dies with
+    // `dragging` stuck true (a later cursor pass becomes a "ghost drag"). Reordering here, once,
+    // before setPointerCapture means capture is established on the final reconnected host and
+    // held for the whole gesture, so every pointermove/up is delivered regardless of cursor
+    // position. A drag on the bar has no button click to swallow, so §2.6's macrotask deferral
+    // (which exists only to protect button clicks) does not apply here.
+    this.parentElement?.append(this);
     e.preventDefault(); // suppress text-selection/native-drag ghosting while dragging
     this.dragging = true;
     try {

@@ -149,4 +149,21 @@ describe('<floating-pin> (A7)', () => {
     fireMove(el, 1, 100, 100);
     expect(el.style.left).toBe('100px'); // drag survived the reparent
   });
+
+  it('a drag-start brings the host to front SYNCHRONOUSLY (before capture), not on a deferred macrotask', () => {
+    const parent = document.createElement('div');
+    document.body.append(parent);
+    const a = document.createElement('floating-pin') as FloatingPin;
+    const b = document.createElement('floating-pin') as FloatingPin;
+    parent.append(a, b);
+    const bar = document.createElement('div');
+    bar.className = 'bar';
+    a.append(bar);
+
+    fireDown(bar); // drag-start on `a`
+    // Reordered immediately — no macrotask await. (A non-drag pointerdown defers this to a
+    // macrotask to protect button clicks; a drag reorders now so pointer capture, claimed next,
+    // is never released mid-gesture — see onPointerDown.)
+    expect([...parent.children]).toEqual([b, a]);
+  });
 });
