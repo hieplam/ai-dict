@@ -1046,7 +1046,7 @@ This task's correctness is proven by Task 7's e2e; still run the gate below so a
 existing behavior (settings save, cache/history clear, etc. — all in the same file) is caught
 immediately.
 
-- [ ] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, replace `toFormValue`
+- [x] **Step 1: Implement.** In `packages/extension-chrome/src/options.ts`, replace `toFormValue`
       (currently lines 67-80):
 
 ```ts
@@ -1098,7 +1098,7 @@ spread carries it through to `chrome.storage.local.set(...)` automatically, exac
 so it already carries `doubleClickLookup` through verbatim once Task 1/Task 4 land; its `save`
 listener (line 56) uses the same `{ ...cur, ...next }` spread as Chrome's.
 
-- [ ] **Step 2: Verify.**
+- [x] **Step 2: Verify.**
 
 ```
 cd packages/extension-chrome && bun run typecheck
@@ -1107,7 +1107,7 @@ cd packages/extension-chrome && bun run typecheck
 Expected: clean (no other file in this package references `SettingsFormValue`/`Settings` in a way
 that would break from the new optional field).
 
-- [ ] **Step 3: Commit.**
+- [x] **Step 3: Commit.**
 
 ```
 bun run lint && bun run format:check

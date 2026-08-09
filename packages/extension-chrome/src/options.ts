@@ -102,6 +102,10 @@ function toFormValue(s: Settings): SettingsFormValue {
     promptEnvelope: s.promptEnvelope,
     cacheEnabled: s.cacheEnabled,
     saveHistory: s.saveHistory,
+    // Settings.doubleClickLookup is `boolean | undefined` (PublicSettings); SettingsFormValue's
+    // field is a plain optional boolean under exactOptionalPropertyTypes, so coerce the same way
+    // toFormValue already coerces glossMode below.
+    doubleClickLookup: s.doubleClickLookup === true,
     highlightSavedWords: s.highlightSavedWords,
     theme: s.theme,
     glossMode: s.glossMode === true,
