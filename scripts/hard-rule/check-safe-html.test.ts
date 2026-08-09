@@ -148,6 +148,9 @@ describe('checkRepo — integration on this repository', () => {
     // the drift merged green undetected. A5 itself adds exactly one new, sanctioned sink —
     // `text.innerHTML = state.safeHtml;` in the new packages/app/src/ui/lookup-gloss.ts — bringing
     // the true count to 24 and enrolling lookup-gloss.ts in the enumerated file list below.
+    // A7 (pin cards) adds exactly one more sanctioned sink — `btn.innerHTML = ICON_PIN;` in
+    // lookup-card.ts's renderPinRow (s4:-annotated, static template) — raising the true count
+    // to 25 (lookup-card.ts is already enumerated below, so no file-list change).
     const repoRoot = new URL('../..', import.meta.url).pathname;
     const SINK_RE = /\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML\(/g;
     const files = [
@@ -164,7 +167,7 @@ describe('checkRepo — integration on this repository', () => {
       const src = readFileSync(join(repoRoot, f), 'utf8');
       total += (src.match(SINK_RE) ?? []).length;
     }
-    expect(total).toBe(24);
+    expect(total).toBe(25);
   });
 
   it('a deliberately-planted unannotated innerHTML violation is caught (proves the RED path works)', () => {

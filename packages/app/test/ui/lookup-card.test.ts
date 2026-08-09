@@ -1247,3 +1247,91 @@ describe('<lookup-card> mute-site header action (A13)', () => {
     expect(el.shadowRoot!.querySelector('button[data-act="mute-site"]')).not.toBeNull();
   });
 });
+
+describe('<lookup-card> — pin control (A7)', () => {
+  it('canPin undefined renders no .pin-row', () => {
+    const el = mountCard();
+    el.state = { kind: 'result', word: 'bank', target: 'vi', safeHtml: safe('<p>x</p>') };
+    expect(el.querySelector('.pin-row')).toBeNull();
+  });
+
+  it('canPin true renders an enabled button with the pinnable label', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      canPin: true,
+    };
+    const btn = el.querySelector<HTMLButtonElement>('.pin-btn')!;
+    expect(btn.disabled).toBe(false);
+    expect(btn.getAttribute('aria-label')).toBe('Pin this card so it stays open');
+    expect(btn.querySelector('.pin-lbl')!.textContent).toBe('Pin');
+  });
+
+  it('canPin false renders a disabled button whose aria-label mentions the max-3 cap', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      canPin: false,
+    };
+    const btn = el.querySelector<HTMLButtonElement>('.pin-btn')!;
+    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute('aria-label')).toContain('max 3');
+  });
+
+  it('pinned true renders a disabled, aria-pressed Pinned badge', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      canPin: true,
+      pinned: true,
+    };
+    const btn = el.querySelector<HTMLButtonElement>('.pin-btn')!;
+    expect(btn.disabled).toBe(true);
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+    expect(btn.querySelector('.pin-lbl')!.textContent).toBe('Pinned');
+  });
+
+  it('clicking the enabled pin button dispatches a composed pin event', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      canPin: true,
+    };
+    const handler = vi.fn();
+    document.body.addEventListener('pin', handler);
+    el.querySelector<HTMLButtonElement>('.pin-btn')!.click();
+    document.body.removeEventListener('pin', handler);
+    expect(handler).toHaveBeenCalledTimes(1);
+  });
+
+  it('a pinned state omits .save-btn, .nudge-row, and .defined-as even when present on the state object', () => {
+    const el = mountCard();
+    el.state = {
+      kind: 'result',
+      word: 'bank',
+      target: 'vi',
+      safeHtml: safe('<p>x</p>'),
+      canPin: true,
+      pinned: true,
+      saved: true,
+      status: 'learning',
+      nudge: true,
+      definedAs: { term: 'kick the bucket', isIdiom: true },
+    };
+    expect(el.querySelector('.save-btn')).toBeNull();
+    expect(el.querySelector('.nudge-row')).toBeNull();
+    expect(el.querySelector('.defined-as')).toBeNull();
+  });
+});

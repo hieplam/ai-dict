@@ -1,6 +1,7 @@
 export * from './lookup-trigger';
 export * from './lookup-card';
 export * from './bottom-sheet';
+export * from './floating-pin';
 export * from './lookup-gloss';
 export * from './hover-recall-popup';
 export * from './settings-form';

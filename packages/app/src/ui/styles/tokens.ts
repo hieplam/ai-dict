@@ -21,6 +21,13 @@
 // warm-shifted, body contrast lands ~8–11:1 (comfortable, not the harsh 21:1 of #000-on-#fff),
 // and the spruce accent is low-chroma — a quiet signal, never a glare source.
 
+// A7: floating pinned cards' base z-index — one below --adp-z-overlay's max-int ceiling so a
+// live/ambient modal <bottom-sheet>, when also open, always paints above every pinned card.
+// Feeds the `--adp-z-pinned` primitive below; every pinned card shares this one static value and
+// is re-ordered among its siblings purely by DOM order (design spec §2.6 — no per-instance
+// z-index arithmetic, so floating-pin.ts never needs to read this constant at runtime).
+export const Z_PINNED_BASE = 2147483646;
+
 // ── 1. PRIMITIVES — never themed ──────────────────────────────────────────
 export const ADP_PRIMITIVES = [
   // Type families
@@ -69,6 +76,7 @@ export const ADP_PRIMITIVES = [
   '--adp-dur-theme:360ms',
   // Stacking — must beat any host page
   '--adp-z-overlay:2147483647',
+  `--adp-z-pinned:${Z_PINNED_BASE}`,
 ].join(';');
 
 // ── 2. SEMANTIC — re-bound per theme. Components read ONLY these (+ --adp-*). ──
@@ -213,6 +221,12 @@ export const ICON_SIDE_PANEL =
 export const ICON_STAR =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M12 3.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg>';
+
+// Pin (keep this card open, floating) — card body, A7. A pushpin silhouette: angled head +
+// tail, geometric, matching the set's stroke/viewBox/aria-hidden conventions exactly.
+export const ICON_PIN =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M14.5 3.5l6 6-3.2 1.9-1 4.3-2.3-2.3-5 5-1-1 5-5-2.3-2.3 4.3-1z"/><line x1="7.5" y1="16.5" x2="4" y2="20"/></svg>';
 
 // Speaker (say the word aloud) — card headword row, A10. A speaker cone + two sound-wave arcs,
 // stroked with currentColor like every other icon in this set.
