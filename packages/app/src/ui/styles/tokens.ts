@@ -214,6 +214,12 @@ export const ICON_STAR =
   '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" aria-hidden="true">' +
   '<path d="M12 3.5l2.6 5.6 6.1.7-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6-4.5-4.2 6.1-.7z"/></svg>';
 
+// Pin (keep this card open, floating) — card body, A7. A pushpin silhouette: angled head +
+// tail, geometric, matching the set's stroke/viewBox/aria-hidden conventions exactly.
+export const ICON_PIN =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+  '<path d="M14.5 3.5l6 6-3.2 1.9-1 4.3-2.3-2.3-5 5-1-1 5-5-2.3-2.3 4.3-1z"/><line x1="7.5" y1="16.5" x2="4" y2="20"/></svg>';
+
 // Speaker (say the word aloud) — card headword row, A10. A speaker cone + two sound-wave arcs,
 // stroked with currentColor like every other icon in this set.
 export const ICON_SPEAKER =

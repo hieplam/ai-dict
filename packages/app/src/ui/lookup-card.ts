@@ -12,6 +12,7 @@ import {
   ICON_SPEAKER,
   ICON_BACK,
   ICON_MUTE,
+  ICON_PIN,
 } from './styles/tokens';
 
 // Re-exported so existing consumers (side-panel-view) and the c3-117 public surface keep
@@ -71,6 +72,15 @@ export type CardState =
        * deliberately omits it (see side-panel.ts's resultToFocus), mirroring how A8's
        * onForceLiteral / the one-shot provider picker are also in-page-card-only. */
       canGoBack?: boolean;
+      /** A7: whether this rendering surface supports pinning at all — undefined means "not
+       * applicable" (e.g. the side panel, which is already persistent and never sets this — see
+       * side-panel-view.ts, unchanged by this card); when defined, true means capacity remains
+       * (fewer than 3 pinned) and false means the cap is reached. */
+      canPin?: boolean;
+      /** A7: whether this specific card instance has already been detached into a pinned floating
+       * card. Only meaningful when canPin !== undefined. Renders the pin control as an inert
+       * "Pinned" badge and strips the word-level controls entirely (see renderCardState). */
+      pinned?: boolean;
     }
   | {
       kind: 'streaming';
@@ -179,6 +189,7 @@ button[data-act="settings"] .lbl{line-height:1}
 ::slotted(.defined-as){display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:2px 0 8px;font-size:var(--adp-text-2xs);color:var(--ad-ink-soft)}
 ::slotted(.back-row){display:flex;margin:2px 0 8px}
 ::slotted(.save-row){display:flex;margin:6px 0 10px}
+::slotted(.pin-row){display:flex;justify-content:flex-end;margin:0 0 6px}
 ::slotted(.refine-row){display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin:10px 0 2px}
 ::slotted(.speak-btn){display:inline-flex;vertical-align:middle;margin:0 0 .35em 8px}
 ::slotted(.nudge-row){display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:7px 10px;border:1px solid var(--ad-accent);border-radius:var(--adp-radius-control);background:var(--ad-surface-raised)}`;
@@ -242,7 +253,14 @@ lookup-card .nudge-row__save-btn:focus-visible{outline:2px solid var(--ad-accent
 lookup-card .nudge-row__dismiss-btn{flex:none;display:inline-grid;place-items:center;width:22px;height:22px;border:0;background:transparent;color:var(--ad-ink-faint);border-radius:var(--adp-radius-control);cursor:pointer}
 lookup-card .nudge-row__dismiss-btn svg{width:12px;height:12px;pointer-events:none}
 lookup-card .nudge-row__dismiss-btn:hover{background:var(--ad-surface);color:var(--ad-ink)}
-lookup-card .nudge-row__dismiss-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}`;
+lookup-card .nudge-row__dismiss-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .pin-btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ad-line);background:transparent;color:var(--ad-ink-soft);border-radius:var(--adp-radius-control);padding:4px 10px;font:inherit;font-size:var(--adp-text-2xs);font-weight:var(--adp-weight-semi);cursor:pointer;transition:background var(--adp-dur-fast) var(--adp-ease),color var(--adp-dur-fast) var(--adp-ease),border-color var(--adp-dur-fast) var(--adp-ease)}
+lookup-card .pin-btn svg{width:15px;height:15px;pointer-events:none}
+lookup-card .pin-btn:hover:not(:disabled){background:var(--ad-surface-raised);color:var(--ad-ink)}
+lookup-card .pin-btn:focus-visible{outline:2px solid var(--ad-accent);outline-offset:2px}
+lookup-card .pin-btn[aria-pressed='true']{border-color:var(--ad-accent);color:var(--ad-accent-ink)}
+lookup-card .pin-btn:disabled{opacity:.55;cursor:not-allowed}
+@media (prefers-reduced-motion:reduce){lookup-card .pin-btn{transition:none}}`;
 
 // Inject the document-scoped card styles once: the @keyframes spin (so Firefox/Safari, which
 // follow CSS Scoping Level 1 strictly, can resolve the animation on the light-DOM spinner) and
@@ -368,19 +386,30 @@ export function renderCardState(state: CardState): Node[] {
   // from an ordinary page selection (see dom-selection-source.ts's defaultReader).
   body.className = 'lookup-answer';
   body.innerHTML = state.safeHtml; // trusted: sanitized upstream by adapters-shared (S4)
+  // A7: a pinned card is a read-only reference copy — every word-level / one-shot control
+  // (save/status/nudge, "Show literal word", the refine chips, the recursive-lookup Back
+  // button, and the speak button) acts through the renderer's SINGLETON "current lookup"
+  // state, which no longer describes this card once it is pinned and detached (design spec
+  // §2.2). They are omitted entirely rather than left inert; a pinned card shows the headword,
+  // body, and static provider badge only.
+  const interactive = state.pinned !== true;
   const nodes: Node[] = [];
-  if (state.canGoBack === true) nodes.push(renderBackRow());
+  if (interactive && state.canGoBack === true) nodes.push(renderBackRow());
   nodes.push(h);
-  const speakBtn = renderSpeakButton(state.word);
-  if (speakBtn) nodes.push(speakBtn);
-  nodes.push(renderSaveRow(state));
-  if (state.nudge === true) nodes.push(renderNudgeRow(state));
-  const definedAsRow = state.definedAs ? renderDefinedAsRow(state.definedAs) : null;
+  if (interactive) {
+    const speakBtn = renderSpeakButton(state.word);
+    if (speakBtn) nodes.push(speakBtn);
+    nodes.push(renderSaveRow(state));
+    if (state.nudge === true) nodes.push(renderNudgeRow(state));
+  }
+  const definedAsRow = interactive && state.definedAs ? renderDefinedAsRow(state.definedAs) : null;
   if (definedAsRow) nodes.push(definedAsRow);
   nodes.push(body);
-  if (state.refineChips === true) nodes.push(renderRefineRow(state));
+  if (interactive && state.refineChips === true) nodes.push(renderRefineRow(state));
   const meta = renderMetaRow(state);
   if (meta) nodes.push(meta);
+  const pinRow = renderPinRow(state);
+  if (pinRow) nodes.unshift(pinRow);
   return nodes;
 }
 
@@ -537,6 +566,49 @@ function renderSpeakButton(word: string): HTMLButtonElement | null {
     synth.speak(utter);
   });
   return btn;
+}
+
+/**
+ * A7: the pin control — keeps this card open as an independent, draggable floating copy that
+ * survives Esc, scrolling, and clicking elsewhere on the page (up to 3 at once). Returns null
+ * when `state.canPin` is undefined: this rendering surface does not support pinning at all
+ * (e.g. the side panel — already persistent, see side-panel-view.ts, unchanged by this card).
+ * Dispatches a composed `pin` event; the in-page renderer (not a platform shell) performs the
+ * actual detach (inline-bottom-sheet-renderer.ts's pinCurrent) — this function is pure UI, the
+ * same separation every other card action already has.
+ */
+function renderPinRow(state: { canPin?: boolean; pinned?: boolean }): HTMLElement | null {
+  if (state.canPin === undefined) return null;
+  const row = document.createElement('div');
+  row.className = 'pin-row';
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'pin-btn';
+  const isPinned = state.pinned === true;
+  if (isPinned) {
+    btn.disabled = true;
+    btn.setAttribute('aria-pressed', 'true');
+    btn.setAttribute('aria-label', 'Pinned — use Close to remove it');
+  } else {
+    const atCap = state.canPin === false;
+    btn.disabled = atCap;
+    btn.setAttribute('aria-pressed', 'false');
+    const label = atCap
+      ? 'Unpin another card to pin this one (max 3)'
+      : 'Pin this card so it stays open';
+    btn.setAttribute('aria-label', label);
+    if (atCap) btn.title = label; // native tooltip, mirrors the side-panel action's own `title`
+    btn.addEventListener('click', () =>
+      btn.dispatchEvent(new CustomEvent('pin', { bubbles: true, composed: true })),
+    );
+  }
+  btn.innerHTML = ICON_PIN; // s4: static-template — decorative aria-hidden SVG; name comes from aria-label
+  const lbl = document.createElement('span');
+  lbl.className = 'pin-lbl';
+  lbl.textContent = isPinned ? 'Pinned' : 'Pin';
+  btn.append(lbl);
+  row.append(btn);
+  return row;
 }
 
 /**
