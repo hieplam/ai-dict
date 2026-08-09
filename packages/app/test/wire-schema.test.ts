@@ -1119,3 +1119,17 @@ describe('typed-errors: wire-flatten contract (rule-typed-errors)', () => {
     expect(roundTripped.message).toBeUndefined();
   });
 });
+
+describe('saved.list wire message (B11 regression over the B8-shipped arm)', () => {
+  // The B8 malformed-entry test (line ~939 above) exercises an invalid enum value with every
+  // other required field present. This covers the sibling failure path — an entry missing its
+  // required fields entirely — which nothing else in this file asserts.
+  it('rejects a saved.list reply whose entry is missing required fields', () => {
+    const parsed = WireReplySchema.safeParse({
+      ok: true,
+      type: 'saved.list',
+      entries: [{ word: 'bank' }],
+    });
+    expect(parsed.success).toBe(false);
+  });
+});
