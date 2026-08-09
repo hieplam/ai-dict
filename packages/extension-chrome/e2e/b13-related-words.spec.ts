@@ -128,7 +128,7 @@ test.describe('B13 related words on save', () => {
     expect(after.senses[0]!.title).toBe(before.senses[0]!.title);
   });
 
-  test('a subsequent normal re-save clears the previously-persisted related array', async ({
+  test('an exact-duplicate re-save (same sentence+url) is a no-op so the previously-persisted related array SURVIVES (B14 §2.2/§4.1 supersedes B13 §2.6, ruling R6)', async ({
     context,
     extensionId,
   }) => {
@@ -159,9 +159,14 @@ test.describe('B13 related words on save', () => {
       })
       .toEqual(['shore', 'embankment', 'bluff']);
 
-    // Simulate a genuine re-save with a fresh lookup+star cycle (fresh navigation, new
+    // Re-save the SAME sentence/url with a fresh lookup+star cycle (fresh navigation, new
     // selection) — gotoFixture re-navigates the page, which is enough to reset the in-page
-    // card/trigger state without an extra explicit reload.
+    // card/trigger state without an extra explicit reload. Because gotoFixture always serves
+    // http://test.fixture/ and the sentence is identical, this is an EXACT sentence+url
+    // duplicate, which B14's sense-aware dedup treats as a silent no-op (no write) — so the
+    // related array persisted above SURVIVES untouched (ruling R6: B14 §2.2/§4.1 supersedes
+    // B13 §2.6 on the exact-duplicate path; B13's staleness rationale only covers a genuinely
+    // DIFFERENT context, which B14 now routes to a freshly-appended sense with no related).
     await context.unroute('https://generativelanguage.googleapis.com/**');
     await mockGemini(context, { body: ORIGINAL_BODY });
     await gotoFixture(page, 'The bank by the river is steep.');
@@ -179,7 +184,7 @@ test.describe('B13 related words on save', () => {
         };
         return entry.senses[0]?.related;
       })
-      .toBeUndefined();
+      .toEqual(['shore', 'embankment', 'bluff']);
   });
 
   test('a related tap always hits the network, even for an already-cached word/sentence/target', async ({

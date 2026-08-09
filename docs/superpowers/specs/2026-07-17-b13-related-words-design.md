@@ -249,6 +249,24 @@ best-effort client guess.
 
 ### 2.6 Interaction with a normal re-save (star click): related is cleared on a plain re-save, not preserved
 
+> **SUPERSEDED IN PART BY B14 (ruling R6, campaign outstanding-17, 2026-08-09).** B14's
+> sense-aware dedup (`docs/superpowers/specs/2026-07-17-b14-sense-aware-dedup-design.md` §2.2/§4.1)
+> changed the exact-duplicate re-save path this section assumed. The clarified, ruled behavior is:
+>
+> - **Exact `sentence+url` re-save (SAME context):** now a silent no-op — `savedWordUpsert`
+>   detects the duplicate and writes nothing, so the persisted `senses[0].related` **survives
+>   untouched**. §2.6's "cleared on a plain re-save" no longer holds here, because the persisted
+>   `related` is NOT stale for the same context — point 2's staleness rationale below never applied
+>   to it. (The B13 e2e that asserted clearing on this path was flipped to assert survival.)
+> - **Different `sentence/url` re-save (DIFFERENT context):** B14 routes this to a newly-appended
+>   sense (`senses[1]`, on confirmation) that correctly starts with **no `related`** — so §2.6's
+>   point-2 staleness concern is still honored: the new context never inherits the old sense's
+>   word family. The original sense keeps its own `related`.
+>
+> Net: both specs' spirit survives — same context changes nothing, different context yields a
+> fresh sense without `related`. The paragraphs below describe the pre-B14 always-replace
+> mechanism and are retained for historical context only.
+
 **Pinned:** `savedWordUpsert` (used by every ordinary star-click `saved.save`, §1) is **not**
 modified to carry forward a previously-persisted `related` array across a re-save. Its existing
 behavior — build a fresh `senses[0]` from exactly the five fields in `SavedWordInput`
