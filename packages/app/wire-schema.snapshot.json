@@ -44,6 +44,12 @@
               "forceLiteral": {
                 "type": "boolean"
               },
+              "sourceLang": {
+                "type": "string"
+              },
+              "sourceLangOverride": {
+                "type": "boolean"
+              },
               "refine": {
                 "type": "string",
                 "enum": [

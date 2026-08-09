@@ -128,6 +128,34 @@ describe('buildRouter', () => {
     expect(d.client.lookup).toHaveBeenCalledTimes(1);
   });
 
+  it('[A12] sourceLangOverride (req.sourceLangOverride) skips the cache read — the re-picked language is fetched fresh', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route(lookupMsg('a')); // populate cache with the default (auto-detected) answer
+    d.client.lookup.mockClear();
+    const reply = await route({
+      type: 'lookup',
+      req: { ...req, sourceLang: 'ja', sourceLangOverride: true },
+      requestId: 'b',
+    });
+    expect(reply).toMatchObject({ ok: true, type: 'lookup', result: { fromCache: false } });
+    expect(d.client.lookup).toHaveBeenCalledTimes(1);
+  });
+
+  it('[A12] an ordinary req.sourceLang WITHOUT sourceLangOverride still hits the cache normally', async () => {
+    const d = deps();
+    const route = buildRouter(d);
+    await route(lookupMsg('a')); // populate cache
+    d.client.lookup.mockClear();
+    const reply = await route({
+      type: 'lookup',
+      req: { ...req, sourceLang: 'fr' },
+      requestId: 'b',
+    });
+    expect(reply).toMatchObject({ ok: true, type: 'lookup', result: { fromCache: true } });
+    expect(d.client.lookup).not.toHaveBeenCalled();
+  });
+
   it('refine override (req.refine) skips the cache read — the refined answer is fetched fresh (A3)', async () => {
     const d = deps();
     const route = buildRouter(d);

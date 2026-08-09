@@ -244,7 +244,7 @@ export interface LookupRequest {
 }
 ```
 
-- [ ] **Step 1: Write the failing tests.**
+- [x] **Step 1: Write the failing tests.**
 
 In `packages/app/test/wire-schema.test.ts`, add (anywhere inside the `describe('wire-schema', ...)`
 block):
@@ -316,7 +316,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts test/app/router.test
 Expected: the two new `router.test.ts` cases and the new `wire-schema.test.ts` case fail (schema
 rejects the extra fields / router has no `sourceLangOverride` guard yet).
 
-- [ ] **Step 2: Implement.**
+- [x] **Step 2: Implement.**
 
 In `packages/app/src/domain/types.ts`, extend `SelectionEvent` (currently 8-14):
 
@@ -409,7 +409,7 @@ cd packages/app && bunx vitest run test/wire-schema.test.ts test/app/router.test
 
 Expected: all pass, including the 3 new cases.
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck

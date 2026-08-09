@@ -400,6 +400,29 @@ describe('wire-schema', () => {
     expect(ok.success).toBe(true);
   });
 
+  it('[A12] accepts an optional req.sourceLang and req.sourceLangOverride on a lookup message', () => {
+    const base = {
+      type: 'lookup' as const,
+      requestId: 'r1',
+      req: {
+        word: 'a',
+        context: 'b',
+        url: '',
+        title: '',
+        target: 'vi',
+        outputFormat: 't',
+        promptEnvelope: '',
+      },
+    };
+    expect(WireMessageSchema.safeParse(base).success).toBe(true); // both fields omitted
+    expect(
+      WireMessageSchema.safeParse({
+        ...base,
+        req: { ...base.req, sourceLang: 'fr', sourceLangOverride: true },
+      }).success,
+    ).toBe(true);
+  });
+
   it('lookup result carries an optional definedAs; rejects an unknown key inside it (strictObject)', () => {
     const result = {
       markdown: 'm',
