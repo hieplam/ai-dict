@@ -131,7 +131,7 @@ describe('checkRepo — integration on this repository', () => {
     expect(violations).toEqual([]);
   });
 
-  it('the real tree has exactly 24 raw-HTML sink sites (21 annotated + 3 sanctioned-path)', () => {
+  it('the real tree has exactly 26 raw-HTML sink sites (annotated static-template + sanctioned-path)', () => {
     // Cross-check against the count Task 3's audit verified via two independent enumeration
     // methods (see the campaign report) — proves this scanner is inspecting every real sink,
     // not silently seeing fewer sites than exist. A10 (TTS pronunciation) added one new
@@ -151,6 +151,10 @@ describe('checkRepo — integration on this repository', () => {
     // A7 (pin cards) adds exactly one more sanctioned sink — `btn.innerHTML = ICON_PIN;` in
     // lookup-card.ts's renderPinRow (s4:-annotated, static template) — raising the true count
     // to 25 (lookup-card.ts is already enumerated below, so no file-list change).
+    // B12 (LLM auto-grouping) adds exactly one more annotated static-template sink —
+    // `del.innerHTML = ICON_TRASH;` in side-panel-view.ts's tagGroupRow (the per-tag remove
+    // button, s4:-annotated, decorative aria-hidden SVG) — raising the true count to 26
+    // (side-panel-view.ts is already enumerated below, so no file-list change).
     const repoRoot = new URL('../..', import.meta.url).pathname;
     const SINK_RE = /\.innerHTML\s*=|\.outerHTML\s*=|insertAdjacentHTML\(/g;
     const files = [
@@ -167,7 +171,7 @@ describe('checkRepo — integration on this repository', () => {
       const src = readFileSync(join(repoRoot, f), 'utf8');
       total += (src.match(SINK_RE) ?? []).length;
     }
-    expect(total).toBe(25);
+    expect(total).toBe(26);
   });
 
   it('a deliberately-planted unannotated innerHTML violation is caught (proves the RED path works)', () => {
