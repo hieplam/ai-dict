@@ -905,7 +905,7 @@ class SidePanelView extends HTMLElement {
 }
 ```
 
-- [ ] **Step 1: Write the failing test.** Append to
+- [x] **Step 1: Write the failing test.** Append to
       `packages/app/test/ui/side-panel-view.test.ts`, inside the existing
       `describe('<side-panel-view>', ...)` block, just before its closing `});`:
 
@@ -929,7 +929,7 @@ it('B14: appendToFocus appends a node into the focus region when a result is sho
 Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: failure — `appendToFocus` is not a function on `SidePanelView`.
 
-- [ ] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
+- [x] **Step 2: Implement.** In `packages/app/src/ui/side-panel-view.ts`:
   1. Add the CSS rules right after the existing
      `.focus .save-btn[aria-pressed="true"] svg{...}` line and its reduced-motion block
      (`side-panel-view.ts:67-68`):
@@ -1014,7 +1014,7 @@ Expected: failure — `appendToFocus` is not a function on `SidePanelView`.
 Run: `cd packages/app && bunx vitest run test/ui/side-panel-view.test.ts`
 Expected: all tests pass (existing + the new B14 test).
 
-- [ ] **Step 3: Commit** — gate, then commit:
+- [x] **Step 3: Commit** — gate, then commit:
 
 ```
 cd packages/app && bun run typecheck && cd .. && cd .. && bun run lint && bun run format:check
