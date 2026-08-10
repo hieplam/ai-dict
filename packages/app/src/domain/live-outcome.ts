@@ -1,3 +1,5 @@
+import { mapError } from './error-mapper';
+
 /**
  * The verdict for one live-API e2e run, decided from the card's rendered text alone.
  *
@@ -16,15 +18,21 @@ export type LiveOutcome =
   | { kind: 'setup'; detail: string }
   | { kind: 'contract'; detail: string };
 
-// Verbatim from error-mapper.ts. Transport is matched FIRST so a card that somehow carries
-// both messages can never be reported as drift — a false drift alarm would burn the signal.
+// Derived from error-mapper.ts's actual mapError() output for the gemini provider — NOT
+// retyped literals — so a future wording tweak to error-mapper.ts changes these automatically
+// instead of silently drifting out of sync with what the card can actually render. Transport is
+// matched FIRST so a card that somehow carries both messages can never be reported as drift — a
+// false drift alarm would burn the signal.
 const TRANSPORT = [
-  'Network failed. Check connection and retry.',
-  'Gemini server error. Retry.',
-  'Hit Gemini rate limit.',
+  mapError({ kind: 'offline' }).message, // 'Network failed. Check connection and retry.'
+  mapError({ kind: 'http', status: 500 }).message, // 'Gemini server error. Retry.'
+  mapError({ kind: 'http', status: 429 }).message, // 'Hit Gemini rate limit.'
 ];
-const SETUP = ['Google rejected the API key.', 'Add your Gemini API key in Settings.'];
-const CONTRACT = ['Gemini returned unexpected output.'];
+const SETUP = [
+  mapError({ kind: 'http', status: 401 }).message, // 'Google rejected the API key.'
+  mapError({ kind: 'no-key' }).message, // 'Add your Gemini API key in Settings.'
+];
+const CONTRACT = [mapError({ kind: 'parse' }).message]; // 'Gemini returned unexpected output.'
 
 /** Minimum body length that separates a rendered definition from an empty/stub card. */
 export const MIN_DEFINITION_CHARS = 60;
