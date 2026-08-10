@@ -33,9 +33,20 @@ export async function useLiveGemini(page: Page): Promise<void> {
 /**
  * Wait for the card to settle, then classify what it rendered.
  *
- * "Settled" means either a definition long enough to pass the threshold, or one of the known
- * error messages. A still-streaming card is neither, so polling on that condition reads the
- * final text rather than a half-painted chunk — the reason a fixed wait is not used here.
+ * "Settled" means either one of the known error messages, or a terminal (non-streaming)
+ * definition. A still-streaming card is neither, so polling on that condition reads the final
+ * text rather than a half-painted chunk — the reason a fixed wait is not used here.
+ *
+ * Text length alone is NOT a safe settle signal for the 'ok' case: inline-bottom-sheet-renderer.ts's
+ * renderPartial() repeatedly repaints CardState `{kind:'streaming'}` while the model is still
+ * talking, and lookup-card.ts's `renderCardState` only calls `renderMetaRow` (which creates
+ * `.prov-badge`) from the terminal 'result' branch — the 'streaming' branch never renders it. A
+ * real definition can cross MIN_DEFINITION_CHARS well before the stream finishes, so settling on
+ * length alone would let expectLiveLookup's h2/`.prov-badge` assertions race the live stream with
+ * only Playwright's default ~5s expect timeout, not this file's 60s LIVE_TIMEOUT_MS. `data-streaming`
+ * is the fix: it is cleared by the SAME synchronous call that produces the terminal DOM
+ * (renderResult/renderError in inline-bottom-sheet-renderer.ts), so its absence is the real
+ * "renderMetaRow has run" signal, checked only once the text is long enough to matter.
  */
 export async function readLiveOutcome(page: Page): Promise<LiveOutcome> {
   const card = page.locator('lookup-card');
@@ -43,11 +54,17 @@ export async function readLiveOutcome(page: Page): Promise<LiveOutcome> {
   const settledText = async (): Promise<string | null> => {
     if ((await card.count()) === 0) return null;
     const text = await card.innerText();
-    // 'ok' means past the length threshold; any error kind carries a matched message. Both are
-    // terminal. Only a short, message-free card ("still streaming") keeps us polling — that is
-    // the one contract verdict produced by length alone, so it must not settle early.
     const outcome = classifyCardText(text);
-    const stillStreaming = outcome.kind === 'contract' && !text.includes('unexpected output');
+    // A short, message-free card ("still loading" or "streaming but under threshold") is the one
+    // contract verdict produced by length alone — never settle on it.
+    const belowThreshold = outcome.kind === 'contract' && !text.includes('unexpected output');
+    if (belowThreshold) return null;
+    // Every other kind (transport/setup, or contract WITH a matched message) can only be produced
+    // by a terminal renderError — settled on sight.
+    if (outcome.kind !== 'ok') return text;
+    // 'ok': text crossed the threshold, but that can still be a mid-stream repaint. Require the
+    // terminal DOM signal too.
+    const stillStreaming = await card.evaluate((el) => el.hasAttribute('data-streaming'));
     return stillStreaming ? null : text;
   };
 
