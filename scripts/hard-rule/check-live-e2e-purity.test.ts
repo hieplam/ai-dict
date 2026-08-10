@@ -14,6 +14,15 @@ describe('check-live-e2e-purity', () => {
     expect(checkFile(LIVE, `await context.route('**', r => r.abort());`)).toHaveLength(1);
   });
 
+  it('flags page.route in a live spec (same bypass, different receiver)', () => {
+    const v = checkFile(
+      LIVE,
+      `await page.route('**/generativelanguage.googleapis.com/**', r => r.fulfill({ body: 'fake' }));`,
+    );
+    expect(v).toHaveLength(1);
+    expect(v[0].match).toBe('page.route(');
+  });
+
   it('allows non-mock helpers in a live spec', () => {
     expect(checkFile(LIVE, `import { seedSettings, selectWord } from './helpers';`)).toEqual([]);
   });

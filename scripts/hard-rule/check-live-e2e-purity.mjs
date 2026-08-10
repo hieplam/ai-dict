@@ -22,7 +22,10 @@ export const RULE_ID = 'rule-live-e2e-purity';
 const SCAN_DIR = 'packages/extension-chrome/e2e';
 const IS_LIVE_SPEC = /\.live\.spec\.ts$/;
 
-// Every mock entry point in helpers.ts, plus the raw interception primitive.
+// Every mock entry point in helpers.ts, plus the raw interception primitives. Both
+// `context.route(` and `page.route(` can fulfill a fake response for the real Gemini/OpenAI/
+// Anthropic URL from inside a *.live.spec.ts file, recreating the exact tautology this scanner
+// exists to block — so both receivers are banned, not just the one the mock helpers happen to use.
 const FORBIDDEN = [
   'mockGemini',
   'mockGeminiStream',
@@ -30,6 +33,7 @@ const FORBIDDEN = [
   'mockAnthropic',
   'sseFrame',
   'context.route(',
+  'page.route(',
 ];
 
 /** Check one already-read file's source. Non-live specs are always clean by definition. */
@@ -79,9 +83,9 @@ function main() {
   }
   console.error(
     'Build blocked. A *.live.spec.ts file must reach the real provider — importing a mock ' +
-      'helper (or calling context.route) makes it a fake live test that proves nothing. ' +
-      'Use useLiveGemini/expectLiveLookup from e2e/helpers-live.ts, or rename the file to ' +
-      'drop the .live suffix.',
+      'helper (or calling context.route/page.route) makes it a fake live test that proves ' +
+      'nothing. Use useLiveGemini/expectLiveLookup from e2e/helpers-live.ts, or rename the ' +
+      'file to drop the .live suffix.',
   );
   process.exit(1);
 }
