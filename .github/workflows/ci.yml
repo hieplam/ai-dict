@@ -183,6 +183,13 @@ jobs:
           GA4_MEASUREMENT_ID: G-E2ETEST
           GA4_API_SECRET: e2e-secret
       - run: cd packages/extension-chrome && bunx playwright install --with-deps chromium
+        # Fail loud, not silent-skip: an empty/misnamed/rotated-away GEMINI_API_KEY secret makes
+        # useLiveGemini() (helpers-live.ts) skip the live spec with a warning annotation, and a
+        # Playwright test.skip() exits 0 — the job would stay green with zero live coverage
+        # having run. Catch that here instead of relying on someone reading the log.
+      - run: test -n "$GEMINI_API_KEY" || { echo "::error::GEMINI_API_KEY secret is unset — the live e2e spec would silently skip and this job would report green with no live coverage. Configure the repo secret (gh secret set GEMINI_API_KEY)." >&2; exit 1; }
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       - run: cd packages/extension-chrome && xvfb-run -a bunx playwright test
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
