@@ -54,3 +54,47 @@ export function classifyCardText(text: string): LiveOutcome {
 
   return { kind: 'ok' };
 }
+
+/**
+ * Decide whether one poll of the card counts as "settled" or must keep polling, given its
+ * rendered text and whether the DOM still carries the `data-streaming` attribute. Pure — takes
+ * both DOM reads as plain values (the caller is responsible for performing them) so the decision
+ * is unit-testable without a browser, per pure-core.md: I/O stays at the edge, the verdict is a
+ * function of its inputs alone.
+ *
+ * - A short, message-free card ('contract' by length alone, no matched error string) is "still
+ *   loading" — never settle on it.
+ * - Any other non-'ok' kind (transport/setup, or 'contract' WITH a matched message) can only be
+ *   produced by a terminal renderError — settled on sight.
+ * - 'ok' can still be a mid-stream repaint (renderPartial keeps painting `{kind:'streaming'}`
+ *   past MIN_DEFINITION_CHARS), so it additionally requires `isStreaming` to be false.
+ */
+export function classifyPoll(text: string, isStreaming: boolean): 'settled' | 'poll' {
+  const outcome = classifyCardText(text);
+  const belowThreshold = outcome.kind === 'contract' && !text.includes('unexpected output');
+  if (belowThreshold) return 'poll';
+  if (outcome.kind !== 'ok') return 'settled';
+  return isStreaming ? 'poll' : 'settled';
+}
+
+/**
+ * Decide the verdict when the card never settled within the poll timeout. `sawStreaming` records
+ * whether `data-streaming` was ever observed true during polling — its presence proves Gemini
+ * answered and bytes reached the renderer, so a subsequent timeout is a rendering regression
+ * (`contract`) at least as severe as the 2026-08-09 SSE-framing bug, not a transport symptom. Its
+ * absence means the card never even started streaming, which IS a transport symptom.
+ */
+export function classifyTimeout(sawStreaming: boolean, timeoutMs: number): LiveOutcome {
+  if (sawStreaming) {
+    return {
+      kind: 'contract',
+      detail:
+        `card began streaming but never reached a terminal state within ${timeoutMs}ms ` +
+        '(data-streaming stuck true) — Gemini answered but rendering never completed',
+    };
+  }
+  return {
+    kind: 'transport',
+    detail: `card never settled within ${timeoutMs}ms`,
+  };
+}

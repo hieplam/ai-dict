@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { classifyCardText } from '../../src/domain/live-outcome';
+import { classifyCardText, classifyPoll, classifyTimeout } from '../../src/domain/live-outcome';
 
 describe('classifyCardText', () => {
   it('classifies a rendered definition as ok', () => {
@@ -43,5 +43,48 @@ describe('classifyCardText', () => {
       'Network failed. Check connection and retry.\nGemini returned unexpected output.',
     );
     expect(out.kind).toBe('transport');
+  });
+});
+
+describe('classifyPoll', () => {
+  it('keeps polling on a short, message-free card (still loading)', () => {
+    expect(classifyPoll('bank', false)).toBe('poll');
+  });
+
+  it('settles immediately on a matched error message, regardless of the streaming flag', () => {
+    expect(classifyPoll('Lookup failed\nHit Gemini rate limit.', true)).toBe('settled');
+  });
+
+  it('settles immediately on the contract (PARSE) message, regardless of the streaming flag', () => {
+    expect(classifyPoll('Lookup failed\nGemini returned unexpected output.', true)).toBe('settled');
+  });
+
+  it('keeps polling on an ok-length card while data-streaming is still true (mid-stream repaint)', () => {
+    expect(
+      classifyPoll('bank\nThe sloping land alongside a river, lake, or other body of water.', true),
+    ).toBe('poll');
+  });
+
+  it('settles on an ok-length card once data-streaming is false', () => {
+    expect(
+      classifyPoll(
+        'bank\nThe sloping land alongside a river, lake, or other body of water.',
+        false,
+      ),
+    ).toBe('settled');
+  });
+});
+
+describe('classifyTimeout', () => {
+  it('reports contract drift when streaming was observed but never reached a terminal state', () => {
+    const out = classifyTimeout(true, 60_000);
+    expect(out.kind).toBe('contract');
+    expect((out as { detail: string }).detail).toContain('60000ms');
+  });
+
+  it('reports transport when streaming was never observed at all', () => {
+    const out = classifyTimeout(false, 60_000);
+    expect(out.kind).toBe('transport');
+    expect((out as { detail: string }).detail).toContain('60000ms');
   });
 });

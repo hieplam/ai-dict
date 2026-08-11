@@ -1,7 +1,17 @@
 import { expect, type Page } from '@playwright/test';
 import { test } from './fixtures';
 import { seedSettings } from './helpers';
-import { classifyCardText, type LiveOutcome } from '../../app/src/domain/live-outcome';
+// Deep-imported (not from '@ai-dict/app') on purpose: the barrel re-exports the UI web
+// components, which run registerContentElements() at module load and call
+// `customElements.define` — a browser-only API. This e2e file runs in Node (the Playwright test
+// process), so importing the barrel would crash at import time with "HTMLElement is not
+// defined." packages/app/src/domain/live-outcome.ts has zero such side effects.
+import {
+  classifyCardText,
+  classifyPoll,
+  classifyTimeout,
+  type LiveOutcome,
+} from '../../app/src/domain/live-outcome';
 
 /** How long a real Gemini call may take end to end. Generous: gemini-2.5-flash spends thinking
  * tokens before emitting text (a trivial prompt reported thoughtsTokenCount 251), and CI runners
@@ -47,55 +57,36 @@ export async function useLiveGemini(page: Page): Promise<void> {
  * is the fix: it is cleared by the SAME synchronous call that produces the terminal DOM
  * (renderResult/renderError in inline-bottom-sheet-renderer.ts), so its absence is the real
  * "renderMetaRow has run" signal, checked only once the text is long enough to matter.
+ *
+ * This function performs ONLY I/O (reading the card's text and its `data-streaming` attribute);
+ * every settle/timeout decision is delegated to the pure `classifyPoll`/`classifyTimeout` in
+ * packages/app/src/domain/live-outcome.ts, per pure-core.md — the edge stays thin and
+ * decision-free, and the decisions themselves are unit-tested without a browser.
  */
 export async function readLiveOutcome(page: Page): Promise<LiveOutcome> {
   const card = page.locator('lookup-card');
-  // Set the instant settledText observes `data-streaming` true. Its presence proves Gemini
-  // answered and bytes reached the renderer — so a SUBSEQUENT timeout is not "Google was slow",
-  // it is the terminal render (renderResult/renderError, inline-bottom-sheet-renderer.ts:335/401)
-  // never firing, or a code path that forgets to clear the attribute. That is a rendering
-  // regression at least as severe as the 2026-08-09 SSE-framing bug — it must not be reported as
-  // a transport warning, which would silently pass a hung render.
+  // Set the instant a poll observes `data-streaming` true. classifyTimeout uses this to tell a
+  // hung render (bytes arrived, terminal state never followed) apart from a transport symptom
+  // (nothing ever arrived) — see classifyTimeout's doc comment for why that distinction matters.
   let sawStreaming = false;
 
   const settledText = async (): Promise<string | null> => {
     if ((await card.count()) === 0) return null;
     const text = await card.innerText();
-    const outcome = classifyCardText(text);
-    // A short, message-free card ("still loading" or "streaming but under threshold") is the one
-    // contract verdict produced by length alone — never settle on it.
-    const belowThreshold = outcome.kind === 'contract' && !text.includes('unexpected output');
-    if (belowThreshold) return null;
-    // Every other kind (transport/setup, or contract WITH a matched message) can only be produced
-    // by a terminal renderError — settled on sight.
-    if (outcome.kind !== 'ok') return text;
-    // 'ok': text crossed the threshold, but that can still be a mid-stream repaint. Require the
-    // terminal DOM signal too.
-    const stillStreaming = await card.evaluate((el) => el.hasAttribute('data-streaming'));
-    if (stillStreaming) sawStreaming = true;
-    return stillStreaming ? null : text;
+    // The DOM attribute is only relevant once the text itself reads 'ok' (classifyPoll ignores
+    // `isStreaming` for every other outcome kind), so avoid the extra DOM read otherwise.
+    const isStreaming =
+      classifyCardText(text).kind === 'ok'
+        ? await card.evaluate((el) => el.hasAttribute('data-streaming'))
+        : false;
+    if (isStreaming) sawStreaming = true;
+    return classifyPoll(text, isStreaming) === 'poll' ? null : text;
   };
 
   try {
     await expect.poll(settledText, { timeout: LIVE_TIMEOUT_MS }).not.toBeNull();
   } catch {
-    if (sawStreaming) {
-      // Bytes arrived (data-streaming went true) but the card never reached a terminal state.
-      // That is drift in the rendering pipeline, not a transport symptom — fail loudly rather
-      // than let expectLiveLookup downgrade it to a warning.
-      return {
-        kind: 'contract',
-        detail:
-          `card began streaming but never reached a terminal state within ${LIVE_TIMEOUT_MS}ms ` +
-          '(data-streaming stuck true) — Gemini answered but rendering never completed',
-      };
-    }
-    // Never even started streaming. An absent or still-empty card is a transport symptom, not
-    // drift — claiming drift here would raise a false alarm every time Gemini is merely slow.
-    return {
-      kind: 'transport',
-      detail: `card never settled within ${LIVE_TIMEOUT_MS}ms`,
-    };
+    return classifyTimeout(sawStreaming, LIVE_TIMEOUT_MS);
   }
 
   return classifyCardText(await card.innerText());
