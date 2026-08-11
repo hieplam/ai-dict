@@ -11,7 +11,7 @@ grep -c '| \[gap:'     docs/testing/e2e-case-inventory.md
 grep -c '| \[gap:P1\]' docs/testing/e2e-case-inventory.md
 ```
 
-**Baseline (2026-07-16): 99 covered / 128 total = 77.3%.** Gaps: 10 P1, 14 P2, 5 P3.
+**Baseline (2026-08-10): 117 covered / 140 total = 83.6%.** Gaps: 4 P1, 14 P2, 5 P3.
 
 **Frozen target (owner ruling 2026-07-16): coverage ≥ 80%** — reached at 103/128 (80.5%), i.e.
 closing at least 4 gaps, P1 first in ranked order. Walls in force: zero flaky tests (3
@@ -31,6 +31,10 @@ Rules of the file:
   becomes a test asserting it or a bug fix. **P3** = unit-proven already; e2e adds little.
 - Env-gated media/evidence recorder specs (`PLAYWRIGHT_RUN_*`) are asset tooling, not coverage,
   and are excluded from both sides of the metric.
+- `*.live.spec.ts` cases mark `[covered]` under a different pass ladder than every other row:
+  the spec asserts structure only, warns (does not fail) on a transport hiccup, and skips locally
+  when its secret is unset — CI always has the secret, so the skip path never affects the CI
+  signal this metric tracks. See `docs/testing/e2e-live.md` for the full verdict table.
 
 ## A. Selection & trigger (in-page)
 
