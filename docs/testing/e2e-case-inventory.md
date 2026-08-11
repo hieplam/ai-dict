@@ -51,16 +51,17 @@ Rules of the file:
 
 ## B. Lookup core flow
 
-| Case                                                            | Status                                     |
-| --------------------------------------------------------------- | ------------------------------------------ |
-| Cache hit renders without a network call                        | [covered] `lookup.spec.ts`                 |
-| Cache miss calls the provider and renders the result            | [covered] `lookup.spec.ts`                 |
-| Repeat lookup of the same word served from cache                | [covered] `lookup.spec.ts`                 |
-| Cooldown: rapid second Define within 2s blocked, no extra call  | [covered] `cooldown.spec.ts`               |
-| Context disambiguation: same word, two sentences, two senses    | [covered] `lookup.spec.ts`                 |
-| New selection while a lookup is in-flight (abort / ordering)    | [gap:P1]                                   |
-| Dismiss the card while a lookup is pending — no orphaned render | [covered] `lookup-pending-dismiss.spec.ts` |
-| In-page card loading state (before result arrives)              | [gap:P2]                                   |
+| Case                                                            | Status                                       |
+| --------------------------------------------------------------- | -------------------------------------------- |
+| Cache hit renders without a network call                        | [covered] `lookup.spec.ts`                   |
+| Cache miss calls the provider and renders the result            | [covered] `lookup.spec.ts`                   |
+| Repeat lookup of the same word served from cache                | [covered] `lookup.spec.ts`                   |
+| Cooldown: rapid second Define within 2s blocked, no extra call  | [covered] `cooldown.spec.ts`                 |
+| Context disambiguation: same word, two sentences, two senses    | [covered] `lookup.spec.ts`                   |
+| New selection while a lookup is in-flight (abort / ordering)    | [gap:P1]                                     |
+| Dismiss the card while a lookup is pending — no orphaned render | [covered] `lookup-pending-dismiss.spec.ts`   |
+| In-page card loading state (before result arrives)              | [gap:P2]                                     |
+| Primary flow against the real Gemini API (contract drift)       | [covered] `lookup-primary-flow.live.spec.ts` |
 
 ## C. Providers
 

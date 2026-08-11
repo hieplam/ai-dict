@@ -105,6 +105,32 @@ This is the **project-scoped exception to the global "prefer agent-browser for b
 
 **Guardrail: never drive your installed Google Chrome** — Chrome 136+ silently ignores `--remote-debugging-port` (default profile) and `--load-extension`. The Playwright-managed Chromium (a bundled/standalone build, not Google Chrome) honors both, which is exactly why the harness uses it.
 
+## Two kinds of e2e — mocked (default) and live
+
+**Mocked is the default**: fast, deterministic, and the only way to cover error branches
+(401/429/500), cache, cooldown, accessibility, theming, onboarding.
+
+**Live** is for a flow that (a) kills the whole app when it breaks and (b) depends on a third
+party's response contract. Today that is exactly one flow: select → Define → card → Gemini
+(`packages/extension-chrome/e2e/lookup-primary-flow.live.spec.ts`).
+
+When asked to make a flow "e2e live":
+
+1. Name the file `*.live.spec.ts`.
+2. Use `useLiveGemini` + `expectLiveLookup` from `e2e/helpers-live.ts`. Import **no** mock helper
+   and never call `context.route`/`page.route`/`routeFromHAR` — `scripts/hard-rule/check-live-e2e-purity.mjs`
+   blocks it, because a "live" spec still wired to a mock is worse than no test: it looks like
+   coverage.
+3. Assert structure only — never generated wording. The same prompt returned 434 characters with
+   a translation line on one run and 284 without it on another.
+4. Red on contract drift and on setup failure; warning-only on transport failure.
+5. Build with `bun run build:chrome:e2e`, never plain `build:chrome` — `e2e/build-guard.ts` fails
+   every test if `dist` was built with `GEMINI_API_KEY` baked in. The key reaches the extension
+   only via `useLiveGemini`'s runtime `chrome.storage` seeding.
+
+Details, the full verdict table, and the DOM signal that tells a stuck stream apart from a slow
+network: `docs/testing/e2e-live.md`.
+
 # Public landing page (GitHub Pages)
 
 The project ships a public landing page at **<https://hieplam.github.io/ai-dict/>** that
