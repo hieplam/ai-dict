@@ -23,6 +23,15 @@ describe('check-live-e2e-purity', () => {
     expect(v[0].match).toBe('page.route(');
   });
 
+  it('flags routeFromHAR in a live spec regardless of receiver', () => {
+    const v = checkFile(
+      LIVE,
+      `await context.routeFromHAR('./fixtures/fake-gemini.har', { url: '**/generativelanguage.googleapis.com/**' });`,
+    );
+    expect(v).toHaveLength(1);
+    expect(v[0].match).toBe('routeFromHAR(');
+  });
+
   it('allows non-mock helpers in a live spec', () => {
     expect(checkFile(LIVE, `import { seedSettings, selectWord } from './helpers';`)).toEqual([]);
   });

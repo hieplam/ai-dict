@@ -50,6 +50,13 @@ export async function useLiveGemini(page: Page): Promise<void> {
  */
 export async function readLiveOutcome(page: Page): Promise<LiveOutcome> {
   const card = page.locator('lookup-card');
+  // Set the instant settledText observes `data-streaming` true. Its presence proves Gemini
+  // answered and bytes reached the renderer — so a SUBSEQUENT timeout is not "Google was slow",
+  // it is the terminal render (renderResult/renderError, inline-bottom-sheet-renderer.ts:335/401)
+  // never firing, or a code path that forgets to clear the attribute. That is a rendering
+  // regression at least as severe as the 2026-08-09 SSE-framing bug — it must not be reported as
+  // a transport warning, which would silently pass a hung render.
+  let sawStreaming = false;
 
   const settledText = async (): Promise<string | null> => {
     if ((await card.count()) === 0) return null;
@@ -65,14 +72,26 @@ export async function readLiveOutcome(page: Page): Promise<LiveOutcome> {
     // 'ok': text crossed the threshold, but that can still be a mid-stream repaint. Require the
     // terminal DOM signal too.
     const stillStreaming = await card.evaluate((el) => el.hasAttribute('data-streaming'));
+    if (stillStreaming) sawStreaming = true;
     return stillStreaming ? null : text;
   };
 
   try {
     await expect.poll(settledText, { timeout: LIVE_TIMEOUT_MS }).not.toBeNull();
   } catch {
-    // Never settled. An absent or still-empty card is a transport symptom, not drift — claiming
-    // drift here would raise a false alarm every time Gemini is merely slow.
+    if (sawStreaming) {
+      // Bytes arrived (data-streaming went true) but the card never reached a terminal state.
+      // That is drift in the rendering pipeline, not a transport symptom — fail loudly rather
+      // than let expectLiveLookup downgrade it to a warning.
+      return {
+        kind: 'contract',
+        detail:
+          `card began streaming but never reached a terminal state within ${LIVE_TIMEOUT_MS}ms ` +
+          '(data-streaming stuck true) — Gemini answered but rendering never completed',
+      };
+    }
+    // Never even started streaming. An absent or still-empty card is a transport symptom, not
+    // drift — claiming drift here would raise a false alarm every time Gemini is merely slow.
     return {
       kind: 'transport',
       detail: `card never settled within ${LIVE_TIMEOUT_MS}ms`,
@@ -117,13 +136,14 @@ export async function expectLiveLookup(page: Page, opts: { word: string }): Prom
   // without this a Gemini break on a machine holding an OpenAI key would still pass green.
   await expect(page.locator('lookup-card .prov-badge')).toHaveText('Gemini');
 
-  // Warning rung 8: whether the model still obeys the prompt template is a property of the
-  // model, not of our wire handling, so it annotates and never fails.
-  const body = await page.locator('lookup-card').innerText();
-  if (!body.includes('TRANSLATION')) {
-    test.info().annotations.push({
-      type: 'warning',
-      description: 'no translation line rendered — model may have stopped obeying the template',
-    });
-  }
+  // Rung 8 ("a translation line rendered") is deliberately NOT checked here, for the same reason
+  // rung 7 is not implemented above: this spec drives the full-card path (glossMode unset,
+  // defaulting off — see helpers.ts). translation-line.ts's parseTranslation unconditionally
+  // strips the raw `TRANSLATION: "..."` signal line out of the body before it ever reaches the
+  // renderer, and inline-bottom-sheet-renderer.ts only reads the PARSED `r.translation` inside
+  // the gloss-bubble branch (guarded by `!cardOpen && glossMode && hasGloss`), which lookup-card's
+  // full-card 'result' state never surfaces at all (grep confirms lookup-card.ts never reads
+  // `translation`). So a body/text search for the literal string 'TRANSLATION' can never be true
+  // on this code path regardless of model behavior — checking it here would be a warning that
+  // fires unconditionally on every run, which is worse than no check at all.
 }
