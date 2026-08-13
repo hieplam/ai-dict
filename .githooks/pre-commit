@@ -9,6 +9,14 @@ if command -v "${WTGUARD_BIN:-wtguard}" >/dev/null 2>&1; then
   "${WTGUARD_BIN:-wtguard}" hook pre-commit "$@"
 fi
 
+# Fast-fail on a fresh worktree: with no node_modules, the typed-ESLint rules below can't
+# resolve imports and report hundreds of false no-unsafe-* errors (UC-1, campaign outstanding-17).
+if [ ! -d node_modules ]; then
+  echo 'error: node_modules is missing -- run bun install first.' >&2
+  echo '       (repo-wide typed lint reports hundreds of false no-unsafe-* errors without it)' >&2
+  exit 1
+fi
+
 # Enforce formatting before a commit lands, matching the CI format-check gate.
 bun run format:check
 
