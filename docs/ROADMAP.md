@@ -585,6 +585,34 @@ savedAt, status, senses[] }`. **Depends on:** B1.
   Uses the `senses[]` field from B2's schema. **Depends on:** B1. **Lead decides:** merge-prompt UX.
   **Escalate:** none (schema field via the B2 lock).
 
+#### B16 — Sense-targeted setRelated `Impact 2 · Effort S · Score 2.0` · _needs B14_
+
+> **Status: Deferred defect, not yet shipped.** Opened per ruling R7 (campaign outstanding-17,
+> 2026-08-09); PR #200's body carries the "Known deferred defect (R7)" section that documents the
+> bug this card fixes.
+
+- **Today:** `saved.setRelated` / `savedWordSetRelated`
+  (`packages/app/src/domain/saved-words-policy.ts`, the function that patches a related-words
+  result onto a saved entry) hard-codes `senses[0]`.
+- **Missing:** Sense addressing — the wire message and the composition-root plumbing that
+  resolves a related-words save to the correct `senses[]` entry (not always `senses[0]`).
+- **Why:** B14 (already shipped) makes multi-sense entries real; once a headword has 2+ senses, a
+  related-tap on any sense other than the first silently corrupts which sense the related-word
+  family gets attached to, with no error.
+- **Payoff:** A related-tap always writes onto the sense it was triggered from, regardless of its
+  position in `senses[]`.
+- **Design refs:** `docs/superpowers/specs/2026-07-17-b13-related-words-design.md` lines 869-871
+  (B13's spec explicitly handed this obligation to "B14's own future spec"); B14's shipped
+  `senses[]` multi-sense model (see the E1 schema entry in §8's Decision Log).
+- **Scope fence:** Add sense addressing to the `saved.setRelated` wire message (e.g. a sense index
+  or stable id alongside the existing payload) plus the composition-root wiring that resolves it —
+  do not change how related words are found (B13's fetch/prompt logic) or B14's dedup behavior,
+  targeting only. **Depends on:** B14 (multi-sense entries must exist for the bug to matter).
+  **Lead decides:** the wire-message shape for the sense address (index vs. stable id),
+  composition-root wiring. **Escalate:** none — this is an additive wire-message field, not a
+  persisted-schema restructure (same reasoning already used in §8's Decision Log for A8/B2/B7's
+  optional wire fields, 2026-07-10 entries).
+
 ---
 
 ### Category C — First-run onboarding & activation
@@ -1070,15 +1098,15 @@ new permission remain owner calls, as does E5 and E6).
 | 5    | B8 Anki export                      | 4.0   | 26   | B13 Related words                    | 2.0   |
 | 5    | C8 Gesture demo                     | 4.0   | 26   | B15 Site stats                       | 2.0   |
 | 12   | A6 Smart placement ✅ Shipped       | 3.0   | 26   | C4 Any-provider onboarding           | 2.0   |
-| 12   | A16 Sticky save bar ✅ Shipped      | 3.0   | 34   | A7 Pin cards                         | 1.5   |
-| 12   | A9 Instant cache                    | 3.0   | 34   | A12 Non-English source               | 1.5   |
-| 12   | A10 TTS ✅ Shipped                  | 3.0   | 34   | B10 Weekly digest                    | 1.5   |
-| 12   | A15 Latency budget ✅ Shipped       | 3.0   | 34   | B11 Review flip                      | 1.5   |
-| 12   | B5 Status lifecycle ✅ Shipped      | 3.0   | 34   | B12 Auto-grouping                    | 1.5   |
-| 12   | B9 Backup/restore                   | 3.0   | 34   | B14 Sense dedup                      | 1.5   |
-| 12   | C5 Key paste hygiene                | 3.0   | 34   | C9 Setup health check                | 1.5   |
-| 12   | C6 Invalid-key recovery             | 3.0   | 41   | A11 PDF (spike)                      | 1.3   |
-| 12   | C7 Finish-setup badge               | 3.0   | —    |                                      |       |
+| 12   | A16 Sticky save bar ✅ Shipped      | 3.0   | 26   | B16 Sense-targeted setRelated        | 2.0   |
+| 12   | A9 Instant cache                    | 3.0   | 35   | A7 Pin cards                         | 1.5   |
+| 12   | A10 TTS ✅ Shipped                  | 3.0   | 35   | A12 Non-English source               | 1.5   |
+| 12   | A15 Latency budget ✅ Shipped       | 3.0   | 35   | B10 Weekly digest                    | 1.5   |
+| 12   | B5 Status lifecycle ✅ Shipped      | 3.0   | 35   | B11 Review flip                      | 1.5   |
+| 12   | B9 Backup/restore                   | 3.0   | 35   | B12 Auto-grouping                    | 1.5   |
+| 12   | C5 Key paste hygiene                | 3.0   | 35   | B14 Sense dedup                      | 1.5   |
+| 12   | C6 Invalid-key recovery             | 3.0   | 35   | C9 Setup health check                | 1.5   |
+| 12   | C7 Finish-setup badge               | 3.0   | 42   | A11 PDF (spike)                      | 1.3   |
 
 **Score ≠ sequence.** B1 leads despite being foundational-first, not because of raw score; the lead
 sequences by dependency (B1→B2→B5→B3) and by quick-win clustering (the S-effort A-ideas), escalating
@@ -1343,3 +1371,38 @@ since it is user-blocking breakage, not a backlog item competing on score.
   this card) before proceeding · decided by Shaman (operational diagnostics, not a product
   decision). **Flagged for the owner: `resume-check.sh` needs hardening against stale historical
   state files** — worth its own idea card later.
+
+**Campaign: "outstanding-17" (2026-08-08 to 2026-08-09).** Owner directive: implement all 17
+remaining roadmap ideas one by one via orchestration. All 17 shipped and independently verified
+(PRs #182-#205, per the campaign diary at `docs/superpowers/campaign/2026-aug-08-log.md`). Only
+the campaign's two genuine cross-spec/product rulings (R6, R7) are logged here; the rest of the
+campaign's rulings (R1-R5) were workflow/operational and are captured instead as repo convention
+updates in `.claude/rules/workflow-conventions.md` (same PR as this log entry).
+
+- 2026-08-09 · B14 · **R6 — B13 §2.6 vs B14 §2.2/§4.1 collision on the exact-duplicate save
+  path.** Ruled: B14 supersedes B13 §2.6. An exact sentence+url re-save is the SAME context, so
+  the persisted `related` array on the saved entry is not stale — §2.6's staleness rationale only
+  covers a DIFFERENT context, which B14 routes to a freshly-appended sense that correctly starts
+  with no `related`. B13's e2e (`packages/extension-chrome/e2e/b13-related-words.spec.ts`) was
+  updated so an exact-duplicate re-save now expects `related` to SURVIVE, and B13's spec
+  (`docs/superpowers/specs/2026-07-17-b13-related-words-design.md` §2.6) gained a supersession
+  note pointing at B14 §2.2/§4.1 and this ruling — both landed in PR #200 ("feat(b14): sense-aware
+  dedup", merged at `b553782b`) · decided by Shaman (campaign outstanding-17; a real cross-spec
+  product call, not owner-only, since it changes no data shape, product promise, permission, or
+  privacy surface, and is reversible). Source: the campaign's `answers.md`, ruling R6 (machine-local;
+  cited by name only, not attached to this repo).
+- 2026-08-09 · B14 · **R7 — `saved.setRelated` hard-codes `senses[0]`.** The wire message that
+  persists a related-words chip result onto a saved entry always writes onto the first sense.
+  Once B14 enables multi-sense entries, a related-tap on a non-first sense silently writes onto
+  the WRONG sense. B13's own spec
+  (`docs/superpowers/specs/2026-07-17-b13-related-words-design.md`, lines 869-871) had explicitly
+  flagged this as an obligation for "B14's own future spec" to pick up, but the batch-authored
+  B14 spec never inherited it — discovered mid-card by the second independent skinner reviewer
+  (Skinner B), not the first. Ruled: ship B14 as-is (its ratified scope fence is dedup-only, and
+  its own contract was fully green), and defer the sense-targeting fix as tracked debt to a new
+  roadmap card, **B16** (§4) — designing a new wire-message shape for sense-addressing inside an
+  implementer card is exactly the kind of scope-creep the tribe workflow forbids; the defect is
+  latent (needs a multi-sense entry AND a related-tap on a non-first sense to trigger),
+  non-destructive, reversible, and does not change the persisted schema. PR #200's body carries a
+  "Known deferred defect (R7)" section documenting exactly this · decided by Shaman (campaign
+  outstanding-17). Source: `answers.md`, ruling R7.
