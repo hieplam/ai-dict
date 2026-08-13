@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.13.0](https://github.com/hieplam/ai-dict/compare/v1.12.0...v1.13.0) (2026-08-13)
+
+
+### Features
+
+* add hard-rule scanner forbidding mocks in live e2e specs ([1df8ea1](https://github.com/hieplam/ai-dict/commit/1df8ea112840ba1bd2713a5bb3b035bed6e1b635))
+* add live-Gemini e2e helpers mirroring the mock helpers ([7253d49](https://github.com/hieplam/ai-dict/commit/7253d49153760a2839cc290257ac8fd99bcfab6b))
+* add pure classifier for live-API e2e outcomes ([40184fb](https://github.com/hieplam/ai-dict/commit/40184fbd65f9999c819e0840fcc83281d6b04121))
+
+
+### Bug Fixes
+
+* close three adjudicated gaps in the live-Gemini e2e helpers ([e870fa4](https://github.com/hieplam/ai-dict/commit/e870fa499a6bae531e2dbac873f1befd5b78312d))
+* derive live-outcome message constants from mapError instead of retyping them ([b115d89](https://github.com/hieplam/ai-dict/commit/b115d892db0c87f54a966250975560fc271ebeb8))
+* move live-e2e settle/timeout decisions into the pure domain core ([cea8e21](https://github.com/hieplam/ai-dict/commit/cea8e212807f09536d189b711112d6aa1074154c))
+* settle live-outcome polling on data-streaming, not text length ([43ea8d0](https://github.com/hieplam/ai-dict/commit/43ea8d0d43a3fc5f396bd8abff97ad77cd81db3b))
+
 ## [1.12.0](https://github.com/hieplam/ai-dict/compare/v1.11.2...v1.12.0) (2026-08-09)
 
 
