@@ -547,16 +547,16 @@ savedAt, status, senses[] }`. **Depends on:** B1.
   resolves a related-words save to the correct `senses[]` entry (not always `senses[0]`).
 - **Why:** B14 (already shipped) makes multi-sense entries real; once a headword has 2+ senses, a
   related-tap on any sense other than the first silently corrupts which sense the related-word
-  family gets attached to, with no error.
+  family gets attached to, with no error. B13's spec explicitly handed this obligation to "B14's
+  own future spec" (`docs/superpowers/specs/2026-07-17-b13-related-words-design.md` lines
+  869-871).
 - **Payoff:** A related-tap always writes onto the sense it was triggered from, regardless of its
   position in `senses[]`.
-- **Design refs:** `docs/superpowers/specs/2026-07-17-b13-related-words-design.md` lines 869-871
-  (B13's spec explicitly handed this obligation to "B14's own future spec"); B14's shipped
-  `senses[]` multi-sense model (see the E1 schema entry in §8's Decision Log).
 - **Scope fence:** Add sense addressing to the `saved.setRelated` wire message (e.g. a sense index
   or stable id alongside the existing payload) plus the composition-root wiring that resolves it —
   do not change how related words are found (B13's fetch/prompt logic) or B14's dedup behavior —
-  this card implements sense targeting only. **Depends on:** B14 (multi-sense entries must exist
+  this card implements sense targeting only. Uses B14's shipped `senses[]` multi-sense model (see
+  the E1 schema entry in §8's Decision Log). **Depends on:** B14 (multi-sense entries must exist
   for the bug to matter). **Lead decides:** the wire-message shape for the sense address (index
   vs. stable id), composition-root wiring. **Escalate:** none — this is an additive wire-message
   field, not a persisted-schema restructure (same reasoning already used in §8's Decision Log for
