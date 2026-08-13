@@ -8,8 +8,15 @@ Project workflow conventions — an imperative checklist that complements the na
 - Drive installed Google Chrome for extension work (Chrome 136+ ignores `--load-extension`).
 - Hand-edit `.c3/` (it is CLI-only).
 - Treat undesigned `ports.ts` / schema-lock drift as a quiet opt-out — a schema-lock trip whose
-  delta is NOT what the card's own spec designs must escalate first, never get waved through
-  (ruling R2/UC-3, campaign outstanding-17 — the companion rule to the Always bullet above).
+  delta is NOT what the card's own written spec (`docs/superpowers/specs/<date>-<card-slug>-design.md`)
+  designs must escalate first, never get waved through. Mechanically, "schema-lock trip" means the
+  campaign runner's schemaGuard: it reads the dispatched plan file's `allowsSchemaChange`
+  front-matter and diffs `packages/app/src/ports.ts` against the card's baseSha
+  (`docs/superpowers/campaign/2026-aug-08-log.md:165-166,176-177`). Outside a runner context (e.g.
+  a plain Hunter/PR author who touched `ports.ts` directly), "escalate" means raising a
+  NEEDS_DIRECTION question to the Warchief/Shaman and getting a ruling before merging — never
+  deciding alone that the drift is fine (ruling R2/UC-3, campaign outstanding-17 — the companion
+  rule to the Always bullet at the end of this file).
 - Prefix a commit subject, branch name, or PR title with a `[CardName]`/ticket-style bracket —
   it breaks release-please's Conventional Commits parser. No `## JIRA ticket` PR section either
   (this repo has no ticket tracker). See `docs/git-conventions.md`.
@@ -38,6 +45,13 @@ Project workflow conventions — an imperative checklist that complements the na
   done means the next task starts clean on latest changes (ruling R1/UC-2, campaign
   outstanding-17).
 - Grant a schema-lock (`allowsSchemaChange`) opt-out ONLY when the delta is exactly what the
-  card's own spec designs, and declare it explicitly in the PR body with the literal phrase
-  pattern "schema-lock opt-out: designed in spec section X" (ruling R2/UC-3, campaign
-  outstanding-17).
+  card's own written spec (`docs/superpowers/specs/<date>-<card-slug>-design.md`) designs. Two
+  things must both be true, not just the first: (1) declare it explicitly in the PR body with the
+  literal phrase pattern "schema-lock opt-out: designed in spec section X", AND (2) add
+  `allowsSchemaChange: true` to the dispatched plan file's own front-matter. The PR-body sentence
+  alone does NOT clear the gate — the campaign runner's schemaGuard mechanically reads the PLAN
+  FILE's front-matter (not the PR body, not answers.md) and diffs `packages/app/src/ports.ts`
+  against the card's baseSha, so skipping step (2) leaves the guard tripping on re-run (ruling
+  R2/UC-3, campaign outstanding-17; evidence:
+  `docs/superpowers/campaign/2026-aug-08-log.md:176-185`, "The answers.md ruling alone could NOT
+  clear the schemaGuard").

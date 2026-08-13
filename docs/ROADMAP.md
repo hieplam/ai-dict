@@ -534,6 +534,34 @@ savedAt, status, senses[] }`. **Depends on:** B1.
   content (that would be surveillance). **Depends on:** — · **Lead decides:** presentation. Constraint
   is a rule, not a choice.
 
+#### B16 — Sense-targeted setRelated `Impact 2 · Effort S · Score 2.0` · _needs B14_
+
+> **Status: Deferred defect, not yet shipped.** Opened per ruling R7 (campaign outstanding-17,
+> 2026-08-09); PR #200's body carries the "Known deferred defect (R7)" section that documents the
+> bug this card fixes.
+
+- **Today:** `saved.setRelated` / `savedWordSetRelated`
+  (`packages/app/src/domain/saved-words-policy.ts`, the function that patches a related-words
+  result onto a saved entry) hard-codes `senses[0]`.
+- **Missing:** Sense addressing — the wire message and the composition-root plumbing that
+  resolves a related-words save to the correct `senses[]` entry (not always `senses[0]`).
+- **Why:** B14 (already shipped) makes multi-sense entries real; once a headword has 2+ senses, a
+  related-tap on any sense other than the first silently corrupts which sense the related-word
+  family gets attached to, with no error.
+- **Payoff:** A related-tap always writes onto the sense it was triggered from, regardless of its
+  position in `senses[]`.
+- **Design refs:** `docs/superpowers/specs/2026-07-17-b13-related-words-design.md` lines 869-871
+  (B13's spec explicitly handed this obligation to "B14's own future spec"); B14's shipped
+  `senses[]` multi-sense model (see the E1 schema entry in §8's Decision Log).
+- **Scope fence:** Add sense addressing to the `saved.setRelated` wire message (e.g. a sense index
+  or stable id alongside the existing payload) plus the composition-root wiring that resolves it —
+  do not change how related words are found (B13's fetch/prompt logic) or B14's dedup behavior —
+  this card implements sense targeting only. **Depends on:** B14 (multi-sense entries must exist
+  for the bug to matter). **Lead decides:** the wire-message shape for the sense address (index
+  vs. stable id), composition-root wiring. **Escalate:** none — this is an additive wire-message
+  field, not a persisted-schema restructure (same reasoning already used in §8's Decision Log for
+  A8/B2/B7's optional wire fields, 2026-07-10 entries).
+
 #### B10 — Weekly digest `Impact 3 · Effort M · Score 1.5`
 
 - **Today:** No sense of progress exists; words scroll by and nothing sums a week.
@@ -584,34 +612,6 @@ savedAt, status, senses[] }`. **Depends on:** B1.
 - **Scope fence:** Case-insensitive exact headword match only; "run"/"running" stay separate in v1.
   Uses the `senses[]` field from B2's schema. **Depends on:** B1. **Lead decides:** merge-prompt UX.
   **Escalate:** none (schema field via the B2 lock).
-
-#### B16 — Sense-targeted setRelated `Impact 2 · Effort S · Score 2.0` · _needs B14_
-
-> **Status: Deferred defect, not yet shipped.** Opened per ruling R7 (campaign outstanding-17,
-> 2026-08-09); PR #200's body carries the "Known deferred defect (R7)" section that documents the
-> bug this card fixes.
-
-- **Today:** `saved.setRelated` / `savedWordSetRelated`
-  (`packages/app/src/domain/saved-words-policy.ts`, the function that patches a related-words
-  result onto a saved entry) hard-codes `senses[0]`.
-- **Missing:** Sense addressing — the wire message and the composition-root plumbing that
-  resolves a related-words save to the correct `senses[]` entry (not always `senses[0]`).
-- **Why:** B14 (already shipped) makes multi-sense entries real; once a headword has 2+ senses, a
-  related-tap on any sense other than the first silently corrupts which sense the related-word
-  family gets attached to, with no error.
-- **Payoff:** A related-tap always writes onto the sense it was triggered from, regardless of its
-  position in `senses[]`.
-- **Design refs:** `docs/superpowers/specs/2026-07-17-b13-related-words-design.md` lines 869-871
-  (B13's spec explicitly handed this obligation to "B14's own future spec"); B14's shipped
-  `senses[]` multi-sense model (see the E1 schema entry in §8's Decision Log).
-- **Scope fence:** Add sense addressing to the `saved.setRelated` wire message (e.g. a sense index
-  or stable id alongside the existing payload) plus the composition-root wiring that resolves it —
-  do not change how related words are found (B13's fetch/prompt logic) or B14's dedup behavior,
-  targeting only. **Depends on:** B14 (multi-sense entries must exist for the bug to matter).
-  **Lead decides:** the wire-message shape for the sense address (index vs. stable id),
-  composition-root wiring. **Escalate:** none — this is an additive wire-message field, not a
-  persisted-schema restructure (same reasoning already used in §8's Decision Log for A8/B2/B7's
-  optional wire fields, 2026-07-10 entries).
 
 ---
 
